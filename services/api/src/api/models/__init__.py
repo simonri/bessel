@@ -12,7 +12,16 @@ from .calendar_event import CalendarEvent
 from .calendar_person import CalendarPerson
 from .category import Category
 from .category_rule import CategoryRule
-from .contact import Contact, ContactMethod, ContactMethodKind, ContactSource
+from .contact import (
+  Contact,
+  ContactEventDismissal,
+  ContactInteraction,
+  ContactInteractionKind,
+  ContactInteractionSource,
+  ContactMethod,
+  ContactMethodKind,
+  ContactSource,
+)
 from .counter import Counter, CounterReset
 from .device import Device
 from .document import Document, TransactionDocument
@@ -44,6 +53,10 @@ from .user import User
 
 __all__ = [
   "Contact",
+  "ContactEventDismissal",
+  "ContactInteraction",
+  "ContactInteractionKind",
+  "ContactInteractionSource",
   "ContactMethod",
   "ContactMethodKind",
   "ContactSource",

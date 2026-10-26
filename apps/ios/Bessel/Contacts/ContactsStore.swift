@@ -1,31 +1,39 @@
 import Foundation
 import Observation
+import os
 import SwiftUI
 
 /// The Google address book as Bessel mirrors it, with Bessel's own layer on
-/// top: tags, who to keep in touch with, upcoming birthdays.
+/// top: tags, a log of when you were in touch, dates coming up and events to
+/// follow up on.
 @MainActor
 @Observable
 final class ContactsStore {
     private(set) var contacts: [ContactItem] = []
     private(set) var sections: [ContactSection] = []
     private(set) var reminders: ContactReminders?
+    /// Events that just ended with people who were, or might have been, there.
+    private(set) var followUps: [ContactFollowUp] = []
     private(set) var sources: [ContactSource] = []
+    /// Each contact's log, newest first, once their page has asked for it.
+    private(set) var interactions: [UUID: [ContactInteraction]] = [:]
     private(set) var hasLoaded = false
     /// A change that didn't go through; shown as an alert.
     var errorMessage: String?
     /// A refresh that didn't go through; shown quietly over what's already there.
     var loadError: String?
 
+    private static let log = Logger(subsystem: "app.bessel", category: "contacts")
     private let client: APIClient
     private let cache: ResponseCache
     @ObservationIgnored private var loads = LoadGeneration()
     @ObservationIgnored private let changes = SerialQueues<UUID>()
-    private static let cacheKey = "contacts.v1"
-    private static let remindersCacheKey = "contacts.reminders.v1"
+    private static let cacheKey = "contacts.v2"
+    private static let remindersCacheKey = "contacts.reminders.v2"
+    private static let followUpsCacheKey = "contacts.follow-ups.v1"
     private static let sourcesCacheKey = "contacts.sources.v1"
-    /// How far ahead the Birthdays section looks, today included.
-    static let birthdayDays = 14
+    /// How far ahead Coming up looks, today included.
+    static let comingUpDays = 14
     /// About how long the server takes to pull a small address book from Google.
     @ObservationIgnored var syncWait: Duration = .seconds(3)
 
@@ -39,6 +47,7 @@ final class ContactsStore {
         if let saved = cache.load([ContactItem].self, key: Self.cacheKey) {
             setContacts(saved)
             reminders = cache.load(ContactReminders.self, key: Self.remindersCacheKey)
+            followUps = cache.load([ContactFollowUp].self, key: Self.followUpsCacheKey) ?? []
             sources = cache.load([ContactSource].self, key: Self.sourcesCacheKey) ?? []
             hasLoaded = true
         }
@@ -67,21 +76,42 @@ final class ContactsStore {
         defer { hasLoaded = true }
         do {
             async let items: [ContactItem] = client.getAllPages("/v1/contacts")
-            async let upcoming = fetchReminders()
             async let accounts: [ContactSource] = client.get("/v1/contacts/sources")
-            let (loaded, loadedReminders, loadedSources) = try await (items, upcoming, accounts)
+            async let upcoming = extra("reminders") { [self] in try await fetchReminders() }
+            async let events = extra("follow-ups") { [client] () -> [ContactFollowUp] in try await client.get("/v1/contacts/follow-ups") }
+            let (loaded, loadedSources) = try await (items, accounts)
+            let (loadedReminders, loadedFollowUps) = await (upcoming, events)
             guard loads.isCurrent(ticket) else { return }
             setContacts(loaded)
-            reminders = loadedReminders
             sources = loadedSources
             loadError = nil
             loads.finish(ticket)
             cache.save(loaded, as: Self.cacheKey)
-            cache.save(loadedReminders, as: Self.remindersCacheKey)
             cache.save(loadedSources, as: Self.sourcesCacheKey)
+            if let loadedReminders {
+                reminders = loadedReminders
+                cache.save(loadedReminders, as: Self.remindersCacheKey)
+            }
+            if let loadedFollowUps {
+                followUps = loadedFollowUps.filter { $0.prompt != nil }
+                cache.save(followUps, as: Self.followUpsCacheKey)
+            }
         } catch {
             guard loads.isCurrent(ticket), !error.isCancellation else { return }
             loadError = error.userMessage
+        }
+    }
+
+    /// A part of the list that can fail on its own: what was shown before
+    /// stays, and the failure is only logged.
+    private func extra<T>(_ name: String, _ fetch: () async throws -> T) async -> T? {
+        do {
+            return try await fetch()
+        } catch {
+            if !error.isCancellation {
+                Self.log.error("Contact \(name, privacy: .public) didn't load: \(error.userMessage, privacy: .public)")
+            }
+            return nil
         }
     }
 
@@ -103,7 +133,7 @@ final class ContactsStore {
         }
     }
 
-    /// Reads one contact again, for its latest last-seen and catch-up dates.
+    /// Reads one contact again, for when they were last seen.
     func reload(_ id: UUID) async {
         do {
             let fresh: ContactItem = try await client.get("/v1/contacts/\(id)")
@@ -115,60 +145,114 @@ final class ContactsStore {
         }
     }
 
-    // MARK: - Keeping in touch
-
-    /// Marks today as the last catch-up, with Undo putting back the day it replaced.
-    func markCaughtUp(_ contact: ContactItem, toasts: ToastCenter) async {
-        let previous = contact.caughtUpOn
-        guard await updateKeepUp(contact, ContactKeepUpUpdate(caughtUpOn: .some(Date.now))) else { return }
-        toasts.show("Marked as caught up today") { [weak self] in
-            guard let self, let current = self.contact(contact.id) else { return }
-            Task { await self.updateKeepUp(current, ContactKeepUpUpdate(caughtUpOn: .some(previous))) }
-        }
-    }
-
-    /// Every `days` days, or off with nil. Shown straight away and put back if the server says no.
-    func setKeepInTouch(_ contact: ContactItem, days: Int?) async {
-        await updateKeepUp(contact, ContactKeepUpUpdate(keepInTouchDays: .some(days))) { $0.keepInTouchDays = days }
-    }
-
     func setTags(_ contact: ContactItem, _ tags: [String]) async {
-        await updateKeepUp(contact, ContactKeepUpUpdate(tags: .some(tags))) { $0.tags = tags }
-    }
-
-    /// Sends Bessel's own fields, showing `optimistic` until the server answers.
-    /// The reminders are read again after, since the change can move someone
-    /// in or out of Catch up.
-    @discardableResult
-    private func updateKeepUp(_ contact: ContactItem, _ update: ContactKeepUpUpdate, optimistic: ((inout ContactItem) -> Void)? = nil) async -> Bool {
         loads.invalidate()
-        if let optimistic {
-            var shown = contact
-            optimistic(&shown)
-            replace(shown)
-        }
+        var shown = contact
+        shown.tags = tags
+        replace(shown)
         do {
             let updated: ContactItem = try await changes.run(contact.id) { [client] in
-                try await client.patch("/v1/contacts/\(contact.id)/keep-up", body: update)
+                try await client.put("/v1/contacts/\(contact.id)/tags", body: API.ContactTagsUpdate(tags: tags))
             }
             replace(updated)
-            await reloadReminders()
+        } catch {
+            replace(contact)
+            errorMessage = error.userMessage
+        }
+    }
+
+    // MARK: - The log
+
+    /// The contact's log and the calendar events they were surely at. A log
+    /// that can't be read leaves what's shown and says why.
+    @discardableResult
+    func loadInteractions(_ contactID: UUID) async -> String? {
+        do {
+            let entries: [ContactInteraction] = try await client.get("/v1/contacts/\(contactID)/interactions")
+            interactions[contactID] = entries
+            return nil
+        } catch {
+            return error.isCancellation ? nil : error.userMessage
+        }
+    }
+
+    /// Logs something that happened today, shows it at the top of the log
+    /// and reads the contact again for their new last-seen line.
+    @discardableResult
+    func log(_ contact: ContactItem, kind: ContactInteractionKind, note: String) async -> Bool {
+        let note = note.trimmingCharacters(in: .whitespacesAndNewlines)
+        let entry = API.ContactInteractionCreate(kind: kind, note: note.isEmpty ? nil : note)
+        do {
+            let logged: ContactInteraction = try await client.post("/v1/contacts/\(contact.id)/interactions", body: entry)
+            if interactions[contact.id] != nil {
+                withAnimation(.snappy) { interactions[contact.id]?.insert(logged, at: 0) }
+            } else {
+                await loadInteractions(contact.id)
+            }
+            await reload(contact.id)
             return true
         } catch {
-            if optimistic != nil { replace(contact) }
             errorMessage = error.userMessage
             return false
         }
     }
 
-    private func reloadReminders() async {
-        guard let fresh = try? await fetchReminders() else { return }
-        withAnimation(.snappy) { reminders = fresh }
-        cache.save(fresh, as: Self.remindersCacheKey)
+    /// Removes an entry straight away, putting it back if the server says no.
+    /// Calendar entries have no id and can't be removed.
+    func delete(_ entry: ContactInteraction, of contact: ContactItem) async {
+        guard let entryID = entry.id, let previous = interactions[contact.id] else { return }
+        withAnimation(.snappy) { interactions[contact.id] = previous.filter { $0.id != entryID } }
+        do {
+            try await client.deleteNoContent("/v1/contacts/\(contact.id)/interactions/\(entryID)")
+            await reload(contact.id)
+        } catch {
+            withAnimation(.snappy) { interactions[contact.id] = previous }
+            errorMessage = error.userMessage
+        }
+    }
+
+    // MARK: - Following up
+
+    /// They were there: logs the event, with a note when one's given. Skipping
+    /// a note logs it too, which is what clears the prompt.
+    func confirm(_ followUp: ContactFollowUp, note: String? = nil) async {
+        let note = note?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let entry = API.ContactInteractionCreate(note: note?.isEmpty == false ? note : nil, calendarEventId: followUp.event.id)
+        await settle(followUp) { [client] in
+            let _: ContactInteraction = try await client.post("/v1/contacts/\(followUp.contact.id)/interactions", body: entry)
+        }
+    }
+
+    /// They weren't there, so the event isn't suggested for them again.
+    func dismiss(_ followUp: ContactFollowUp) async {
+        await settle(followUp) { [client] in
+            let body = try JSONEncoder.api.encode(API.ContactEventDismiss(calendarEventId: followUp.event.id))
+            try await client.postNoContent("/v1/contacts/\(followUp.contact.id)/dismissals", json: body)
+        }
+    }
+
+    /// Takes the follow-up off the list while `answer` goes through, putting it
+    /// back if it doesn't. The contact's log and last-seen line are read again
+    /// after, since the answer can change both.
+    private func settle(_ followUp: ContactFollowUp, _ answer: () async throws -> Void) async {
+        loads.invalidate()
+        let previous = followUps
+        withAnimation(.snappy) { followUps.removeAll { $0.id == followUp.id } }
+        do {
+            try await answer()
+            cache.save(followUps, as: Self.followUpsCacheKey)
+        } catch {
+            withAnimation(.snappy) { followUps = previous }
+            errorMessage = error.userMessage
+            return
+        }
+        let contactID = followUp.contact.id
+        if interactions[contactID] != nil { await loadInteractions(contactID) }
+        await reload(contactID)
     }
 
     private func fetchReminders() async throws -> ContactReminders {
-        try await client.get("/v1/contacts/reminders", query: [URLQueryItem(name: "days", value: String(Self.birthdayDays))])
+        try await client.get("/v1/contacts/reminders", query: [URLQueryItem(name: "days", value: String(Self.comingUpDays))])
     }
 
     private func replace(_ contact: ContactItem) {

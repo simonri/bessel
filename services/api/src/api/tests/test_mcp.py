@@ -150,7 +150,7 @@ class TestTools:
     async with connect() as client:
       tools = (await client.list_tools()).tools
     assert len(tools) == len(TOOLS)
-    writes = {"add_tasks", "update_tasks", "complete_tasks", "undo_complete_tasks", "start_task", "update_recipe"}
+    writes = {"add_tasks", "update_tasks", "complete_tasks", "undo_complete_tasks", "start_task", "update_recipe", "log_interaction"}
     for tool in tools:
       assert tool.annotations is not None
       assert tool.annotations.destructive_hint is False, tool.name
@@ -180,6 +180,8 @@ ISOLATION_TESTED = {
   "find_contacts",
   "get_contact",
   "get_contact_reminders",
+  "get_meeting_brief",
+  "log_interaction",
   "find_tasks",
   "find_completed_tasks",
   "get_task",

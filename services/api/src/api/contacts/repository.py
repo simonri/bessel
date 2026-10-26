@@ -1,13 +1,15 @@
 from collections.abc import Sequence
+from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Select, exists, func, or_, select
+from sqlalchemy import Select, delete, exists, func, or_, select
+from sqlalchemy.dialects.postgresql import distinct_on, insert
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
-from api.common.utils import utc_now
+from api.common.utils import generate_uuid, utc_now
 from api.contacts.person import ParsedPerson
 from api.models.calendar_account import CalendarAccount, CalendarProvider
-from api.models.contact import Contact, ContactMethod, ContactSource
+from api.models.contact import Contact, ContactEventDismissal, ContactInteraction, ContactMethod, ContactSource
 
 
 class ContactSourceRepository(RepositoryBase[ContactSource], RepositoryIDMixin[ContactSource, UUID]):
@@ -67,6 +69,10 @@ class ContactRepository(RepositoryBase[Contact], RepositoryIDMixin[Contact, UUID
   async def list_for_user(self, user_id: UUID) -> Sequence[Contact]:
     return await self.get_all(self.get_filtered_statement(user_id))
 
+  async def purge_deleted(self, before: datetime) -> int:
+    """Removes contacts deleted from the address book before `before`, and with them everything Bessel kept on them."""
+    return await self.execute_for_rowcount(delete(Contact).where(Contact.deleted_at.is_not(None), Contact.deleted_at < before))
+
   async def apply(self, source: ContactSource, people: Sequence[ParsedPerson], *, full: bool) -> int:
     """Saves what Google sent, by its id for each person, so Bessel's own notes
     on a contact survive any resync. On a full sync, anyone not sent is gone."""
@@ -119,3 +125,67 @@ def _copy(person: ParsedPerson, contact: Contact) -> None:
   contact.photo_url = person.photo_url
   contact.notes = person.notes
   contact.methods = [ContactMethod(kind=m.kind, label=m.label, value=m.value, position=i) for i, m in enumerate(person.methods)]
+
+
+class ContactInteractionRepository(RepositoryBase[ContactInteraction], RepositoryIDMixin[ContactInteraction, UUID]):
+  model = ContactInteraction
+
+  async def list_for_contact(self, contact: Contact, *, limit: int) -> Sequence[ContactInteraction]:
+    statement = (
+      self.get_base_statement()
+      .where(ContactInteraction.contact_id == contact.id, ContactInteraction.deleted_at.is_(None))
+      .order_by(ContactInteraction.occurred_on.desc(), ContactInteraction.created_at.desc())
+      .limit(limit)
+    )
+    return await self.get_all(statement)
+
+  async def latest_for_contacts(self, contact_ids: Sequence[UUID]) -> dict[UUID, ContactInteraction]:
+    """Each contact's newest entry, in one query."""
+    if not contact_ids:
+      return {}
+    statement = (
+      self.get_base_statement()
+      .where(ContactInteraction.contact_id.in_(contact_ids), ContactInteraction.deleted_at.is_(None))
+      .ext(distinct_on(ContactInteraction.contact_id))
+      .order_by(ContactInteraction.contact_id, ContactInteraction.occurred_on.desc(), ContactInteraction.created_at.desc())
+    )
+    return {i.contact_id: i for i in await self.get_all(statement)}
+
+  async def logged_events(self, user_id: UUID) -> set[tuple[UUID, str]]:
+    """(contact, event) pairs already logged from the calendar."""
+    statement = select(ContactInteraction.contact_id, ContactInteraction.event_key).where(
+      ContactInteraction.user_id == user_id, ContactInteraction.event_key.is_not(None), ContactInteraction.deleted_at.is_(None)
+    )
+    return {(contact_id, key) for contact_id, key in (await self.session.execute(statement)).all()}
+
+  async def get_for_event(self, contact: Contact, event_key: str) -> ContactInteraction | None:
+    statement = self.get_base_statement().where(
+      ContactInteraction.contact_id == contact.id, ContactInteraction.event_key == event_key, ContactInteraction.deleted_at.is_(None)
+    )
+    return (await self.session.execute(statement)).scalars().first()
+
+  async def get_for_contact(self, contact: Contact, interaction_id: UUID) -> ContactInteraction | None:
+    statement = self.get_base_statement().where(
+      ContactInteraction.id == interaction_id, ContactInteraction.contact_id == contact.id, ContactInteraction.deleted_at.is_(None)
+    )
+    return (await self.session.execute(statement)).scalars().first()
+
+  async def remove(self, interaction: ContactInteraction) -> None:
+    await self.session.delete(interaction)
+    await self.session.flush()
+
+
+class ContactEventDismissalRepository(RepositoryBase[ContactEventDismissal]):
+  model = ContactEventDismissal
+
+  async def keys_for_user(self, user_id: UUID) -> set[tuple[UUID, str]]:
+    statement = (
+      select(ContactEventDismissal.contact_id, ContactEventDismissal.event_key)
+      .join(Contact, Contact.id == ContactEventDismissal.contact_id)
+      .where(Contact.user_id == user_id)
+    )
+    return {(contact_id, key) for contact_id, key in (await self.session.execute(statement)).all()}
+
+  async def dismiss(self, contact: Contact, event_key: str) -> None:
+    statement = insert(ContactEventDismissal).values(id=generate_uuid(), created_at=utc_now(), contact_id=contact.id, event_key=event_key)
+    await self.session.execute(statement.on_conflict_do_nothing(index_elements=["contact_id", "event_key"]))

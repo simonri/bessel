@@ -6,12 +6,12 @@ typealias ContactMethod = API.ContactMethodSchema
 typealias ContactBirthday = API.ContactBirthday
 typealias ContactSighting = API.ContactSighting
 typealias ContactSource = API.ContactSourceSchema
+typealias ContactDate = API.ContactDate
 typealias ContactReminders = API.ContactReminders
-typealias BirthdayReminder = API.BirthdayReminder
-typealias CatchUpReminder = API.CatchUpReminder
-/// Bessel's own fields, which never reach Google. Only set fields are sent;
-/// `.some(nil)` clears one.
-typealias ContactKeepUpUpdate = API.ContactKeepUpUpdate
+typealias ContactDateReminder = API.ContactDateReminder
+typealias ContactInteraction = API.ContactInteractionSchema
+typealias ContactInteractionKind = API.ContactInteractionKind
+typealias ContactFollowUp = API.ContactFollowUp
 
 extension ContactItem: Identifiable {
     var initials: String { ContactText.initials(displayName) }
@@ -49,9 +49,75 @@ extension ContactItem: Identifiable {
             return number.contains(wanted) || local.contains(wanted)
         }
     }
+}
 
-    func wasCaughtUp(on day: Date, calendar: Calendar = .current) -> Bool {
-        caughtUpOn.map { calendar.isDate($0, inSameDayAs: day) } ?? false
+extension ContactInteractionKind {
+    /// What can be logged by hand; events come from the calendar.
+    static let loggable: [ContactInteractionKind] = [.met, .call, .message, .note]
+
+    var label: String {
+        switch self {
+        case .met: "Met"
+        case .call: "Call"
+        case .message: "Message"
+        case .event: "Event"
+        case .note: "Note"
+        case .unknown: "Other"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .met: "person.2"
+        case .call: "phone"
+        case .message: "message"
+        case .event: "calendar"
+        case .note: "note.text"
+        case .unknown: "circle"
+        }
+    }
+}
+
+extension ContactInteraction {
+    /// The event's title, else the note, else what kind of entry it is.
+    var headline: String {
+        eventTitle?.nilIfBlank ?? note?.nilIfBlank ?? kind.label
+    }
+
+    /// The note under an event's title.
+    var detail: String? {
+        eventTitle?.nilIfBlank == nil ? nil : note?.nilIfBlank
+    }
+
+    /// Calendar entries have no id, so they're told apart by day and title.
+    var listKey: String {
+        id?.uuidString ?? "\(DateParsing.dateOnly.string(from: occurredOn)) \(eventTitle ?? "")"
+    }
+}
+
+extension ContactFollowUp: Identifiable {
+    enum Prompt {
+        /// They were surely at an event that just ended: anything to note?
+        case note
+        /// They might have been: were they?
+        case confirm
+    }
+
+    var id: String { "\(contact.id) \(event.id)" }
+
+    /// Nil for a kind added on the server after this build, which isn't shown.
+    var prompt: Prompt? {
+        switch kind {
+        case "note": .note
+        case "confirm": .confirm
+        default: nil
+        }
+    }
+
+    /// "Anything to note about Anna Berg?" or "Was Anna Berg at Lunch?"
+    var question: String {
+        let name = contact.displayName.isEmpty ? "them" : contact.displayName
+        return prompt == .confirm ? "Was \(name) at \(event.title)?" : "Anything to note about \(name)?"
     }
 }
 
@@ -77,28 +143,6 @@ struct ContactSection: Identifiable, Equatable {
         }
         if let hash = letters.firstIndex(of: "#") { letters.append(letters.remove(at: hash)) }
         return letters.map { ContactSection(letter: $0, contacts: byLetter[$0] ?? []) }
-    }
-}
-
-/// Keep in touch every so many days; nil is off.
-enum KeepInTouch {
-    static let presets: [(days: Int, label: String)] = [
-        (7, "Every week"),
-        (14, "Every 2 weeks"),
-        (30, "Every month"),
-        (91, "Every 3 months"),
-        (182, "Every 6 months"),
-        (365, "Every year"),
-    ]
-
-    static func isPreset(_ days: Int) -> Bool {
-        presets.contains { $0.days == days }
-    }
-
-    /// A preset's name, or "Every 10 days" for one set elsewhere.
-    static func label(_ days: Int?) -> String {
-        guard let days else { return "Off" }
-        return presets.first { $0.days == days }?.label ?? (days == 1 ? "Every day" : "Every \(days) days")
     }
 }
 
@@ -194,34 +238,22 @@ enum ContactText {
         }
     }
 
-    /// "Last seen 3 weeks ago - Lunch with Anna", or "Not seen in the past
-    /// year", which is as far back as the calendar is searched.
+    /// "Seen 3 weeks ago - Lunch", "Called yesterday - Moving to Berlin", or
+    /// "Not seen in the past year", which is as far back as the calendar is searched.
     static func lastSeen(_ sighting: ContactSighting?, today: Date = .now, calendar: Calendar = .current) -> String {
         guard let sighting else { return "Not seen in the past year" }
-        let line = "Last seen \(ago(sighting.on, today: today, calendar: calendar))"
-        guard let title = sighting.eventTitle?.trimmingCharacters(in: .whitespaces), !title.isEmpty else { return line }
-        return "\(line) - \(title)"
-    }
-
-    /// The catch-up list's shorter "Last seen 3 weeks ago" or "Never seen".
-    static func lastSeenShort(_ sighting: ContactSighting?, today: Date = .now, calendar: Calendar = .current) -> String {
-        guard let sighting else { return "Never seen" }
-        return "Last seen \(ago(sighting.on, today: today, calendar: calendar))"
-    }
-
-    /// "Next catch-up in 9 days", or "Time to catch up" once it's due.
-    static func nextCatchUp(_ due: Date, today: Date = .now, calendar: Calendar = .current) -> String {
-        let days = daysBetween(today, and: due, calendar: calendar)
-        switch days {
-        case ..<1: return "Time to catch up"
-        case 1: return "Next catch-up tomorrow"
-        case ..<14: return "Next catch-up in \(days) days"
-        case ..<60: return "Next catch-up in \(days / 7) weeks"
-        default: return "Next catch-up in \(days / 30) months"
+        let verb = switch sighting.kind {
+        case .call: "Called"
+        case .message: "Messaged"
+        case .note: "Noted"
+        case .met, .event, .unknown: "Seen"
         }
+        let line = "\(verb) \(ago(sighting.on, today: today, calendar: calendar))"
+        guard let summary = sighting.summary?.nilIfBlank else { return line }
+        return "\(line) - \(summary)"
     }
 
-    /// When a birthday on the list falls: "Today", "Tomorrow", the weekday
+    /// When a date on the list falls: "Today", "Tomorrow", the weekday
     /// within a week, else the date ("Sat 7 Nov").
     static func dayLabel(_ day: Date, today: Date = .now, calendar: Calendar = .current, locale: Locale = .current) -> String {
         let days = daysBetween(today, and: day, calendar: calendar)
@@ -233,25 +265,44 @@ enum ContactText {
         }
     }
 
-    /// "Today - turns 36", or just "Friday" when the year isn't known.
-    static func birthdayReminder(_ reminder: BirthdayReminder, today: Date = .now, calendar: Calendar = .current, locale: Locale = .current) -> String {
+    /// The label the API gives birthdays among the reminders.
+    static let birthdayLabel = "Birthday"
+
+    /// "Birthday, turns 37 - Friday", "Anniversary, 12 years - Today", or
+    /// "Birthday - Friday" when the year isn't known.
+    static func comingUp(_ reminder: ContactDateReminder, today: Date = .now, calendar: Calendar = .current, locale: Locale = .current) -> String {
         let when = dayLabel(reminder.on, today: today, calendar: calendar, locale: locale)
-        return reminder.turns.map { "\(when) - turns \($0)" } ?? when
+        guard let years = reminder.years else { return "\(reminder.label) - \(when)" }
+        return "\(reminder.label), \(age(years, isBirthday: reminder.label == birthdayLabel)) - \(when)"
     }
 
-    /// The next time a birthday comes round, today included; 29 February falls
-    /// on the 28th in other years (as the API's next_birthday).
-    static func nextBirthday(_ birthday: ContactBirthday, today: Date = .now, calendar: Calendar = .current) -> Date? {
+    /// When a timeline entry happened: "Today", "Yesterday", "Mon 12 Oct", or
+    /// with the year when it isn't this one.
+    static func entryDay(_ day: Date, today: Date = .now, calendar: Calendar = .current, locale: Locale = .current) -> String {
+        switch daysBetween(day, and: today, calendar: calendar) {
+        case 0: return "Today"
+        case 1: return "Yesterday"
+        default:
+            let sameYear = calendar.component(.year, from: day) == calendar.component(.year, from: today)
+            return format(day, template: sameYear ? "EEEdMMM" : "dMMMy", calendar: calendar, locale: locale)
+        }
+    }
+
+    /// "Yesterday", or "Mon 12 Oct - From calendar" for an event they were
+    /// surely at that nobody logged.
+    static func entryCaption(_ entry: ContactInteraction, today: Date = .now, calendar: Calendar = .current, locale: Locale = .current) -> String {
+        let day = entryDay(entry.occurredOn, today: today, calendar: calendar, locale: locale)
+        return entry.source == .calendar ? "\(day) - From calendar" : day
+    }
+
+    /// The next time a day of the year comes round, today included; 29
+    /// February falls on the 28th in other years (as the API's next_birthday).
+    static func next(month: Int, day: Int, today: Date = .now, calendar: Calendar = .current) -> Date? {
         let start = calendar.startOfDay(for: today)
         let thisYear = calendar.component(.year, from: start)
         for year in [thisYear, thisYear + 1] {
-            var day = birthday.day
-            var date = calendar.date(from: DateComponents(year: year, month: birthday.month, day: day))
-            if birthday.month == 2, day == 29, !isLeap(year) {
-                day = 28
-                date = calendar.date(from: DateComponents(year: year, month: 2, day: day))
-            }
-            if let date, date >= start { return date }
+            let fallsOn = month == 2 && day == 29 && !isLeap(year) ? 28 : day
+            if let date = calendar.date(from: DateComponents(year: year, month: month, day: fallsOn)), date >= start { return date }
         }
         return nil
     }
@@ -259,19 +310,33 @@ enum ContactText {
     /// "7 November 1990, in 12 days, turns 36"; "7 November, tomorrow" when
     /// the year isn't known.
     static func birthday(_ birthday: ContactBirthday, today: Date = .now, calendar: Calendar = .current, locale: Locale = .current) -> String {
+        occasion(month: birthday.month, day: birthday.day, year: birthday.year, isBirthday: true, today: today, calendar: calendar, locale: locale)
+    }
+
+    /// An anniversary or another date Google keeps: "12 June 2014, in 30 days, 12 years".
+    static func date(_ date: ContactDate, today: Date = .now, calendar: Calendar = .current, locale: Locale = .current) -> String {
+        occasion(month: date.month, day: date.day, year: date.year, isBirthday: false, today: today, calendar: calendar, locale: locale)
+    }
+
+    private static func occasion(month: Int, day: Int, year: Int?, isBirthday: Bool, today: Date, calendar: Calendar, locale: Locale) -> String {
         var parts: [String] = []
-        if let date = calendar.date(from: DateComponents(year: 2000, month: birthday.month, day: birthday.day)) {
+        if let date = calendar.date(from: DateComponents(year: 2000, month: month, day: day)) {
             let label = format(date, template: "dMMMM", calendar: calendar, locale: locale)
-            parts.append(birthday.year.map { "\(label) \($0)" } ?? label)
+            parts.append(year.map { "\(label) \($0)" } ?? label)
         }
-        if let next = nextBirthday(birthday, today: today, calendar: calendar) {
+        if let next = next(month: month, day: day, today: today, calendar: calendar) {
             let days = daysBetween(today, and: next, calendar: calendar)
             parts.append(days == 0 ? "today" : days == 1 ? "tomorrow" : "in \(days) days")
-            if let year = birthday.year {
-                parts.append("turns \(calendar.component(.year, from: next) - year)")
+            if let year {
+                parts.append(age(calendar.component(.year, from: next) - year, isBirthday: isBirthday))
             }
         }
         return parts.joined(separator: ", ")
+    }
+
+    /// "turns 37" for a birthday, "12 years" or "1 year" for anything else.
+    private static func age(_ years: Int, isBirthday: Bool) -> String {
+        isBirthday ? "turns \(years)" : years == 1 ? "1 year" : "\(years) years"
     }
 
     private static func isLeap(_ year: Int) -> Bool {
@@ -306,4 +371,9 @@ enum ContactTags {
 
 private extension String {
     var nilIfEmpty: String? { isEmpty ? nil : self }
+
+    var nilIfBlank: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
 }

@@ -9,7 +9,7 @@ from api.calendars.google import PEOPLE_API_URL
 from api.calendars.providers import ProviderAuthError, ProviderNotFoundError, ProviderRejectedError, ProviderScopeError, ProviderUnavailableError
 
 # Every request in a sync, including its later pages and incremental runs, must repeat these exactly.
-PERSON_FIELDS = "metadata,names,nicknames,emailAddresses,phoneNumbers,addresses,birthdays,organizations,photos,biographies,urls"
+PERSON_FIELDS = "metadata,names,nicknames,emailAddresses,phoneNumbers,addresses,birthdays,events,organizations,photos,biographies,urls"
 SOURCES = "READ_SOURCE_TYPE_CONTACT"
 PAGE_SIZE = "1000"
 # A runaway sync stops here; address books are far smaller.

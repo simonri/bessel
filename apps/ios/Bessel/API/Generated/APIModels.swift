@@ -389,12 +389,6 @@ enum API {
         var logo: String
     }
 
-    struct BirthdayReminder: Codable, Hashable {
-        var contact: ContactReference
-        var on: Date
-        var turns: Int?
-    }
-
     struct BulkCategorizeRequest: Codable, Hashable {
         var description: String
         var categoryId: UUID?
@@ -492,12 +486,6 @@ enum API {
         var hidden: Bool
     }
 
-    struct CatchUpReminder: Codable, Hashable {
-        var contact: ContactReference
-        var dueOn: Date
-        var lastSeen: ContactSighting?
-    }
-
     struct CategoryListResponse: Codable, Hashable {
         @Lossy var items: [CategorySchema]
         var pagination: Pagination
@@ -593,10 +581,70 @@ enum API {
         var sourceId: UUID
     }
 
-    struct ContactKeepUpUpdate: Encodable, Hashable {
-        var tags: [String]??
-        var keepInTouchDays: Int??
-        var caughtUpOn: Date??
+    struct ContactDate: Codable, Hashable {
+        var label: String
+        var month: Int
+        var day: Int
+        var year: Int?
+    }
+
+    struct ContactDateReminder: Codable, Hashable {
+        var contact: ContactReference
+        var label: String
+        var on: Date
+        var years: Int?
+    }
+
+    struct ContactEventDismiss: Codable, Hashable {
+        var calendarEventId: UUID
+    }
+
+    struct ContactFollowUp: Codable, Hashable {
+        var kind: String
+        var contact: ContactReference
+        var event: ContactFollowUpEvent
+    }
+
+    struct ContactFollowUpEvent: Codable, Hashable {
+        var id: UUID
+        var title: String
+        var on: Date
+    }
+
+    struct ContactInteractionCreate: Codable, Hashable {
+        var kind: ContactInteractionKind = .met
+        var note: String?
+        var occurredOn: Date?
+        var calendarEventId: UUID?
+    }
+
+    enum ContactInteractionKind: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case met
+        case call
+        case message
+        case event
+        case note
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [ContactInteractionKind] = [.met, .call, .message, .event, .note]
+    }
+
+    struct ContactInteractionSchema: Codable, Hashable {
+        var id: UUID?
+        var occurredOn: Date
+        var kind: ContactInteractionKind
+        var source: ContactInteractionSource
+        var note: String?
+        var eventTitle: String?
+    }
+
+    enum ContactInteractionSource: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case manual
+        case calendar
+        case assistant
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [ContactInteractionSource] = [.manual, .calendar, .assistant]
     }
 
     struct ContactListResponse: Codable, Hashable {
@@ -622,8 +670,7 @@ enum API {
     }
 
     struct ContactReminders: Codable, Hashable {
-        @Lossy var birthdays: [BirthdayReminder]
-        @Lossy var catchUp: [CatchUpReminder]
+        @Lossy var dates: [ContactDateReminder]
     }
 
     struct ContactSchema: Codable, Hashable {
@@ -648,16 +695,15 @@ enum API {
         @Lossy var emails: [ContactMethodSchema]
         @Lossy var addresses: [ContactMethodSchema]
         @Lossy var urls: [ContactMethodSchema]
+        @Lossy var dates: [ContactDate]
         var tags: [String]
-        var keepInTouchDays: Int?
-        var caughtUpOn: Date?
         var lastSeen: ContactSighting?
-        var catchUpOn: Date?
     }
 
     struct ContactSighting: Codable, Hashable {
         var on: Date
-        var eventTitle: String?
+        var kind: ContactInteractionKind
+        var summary: String?
     }
 
     struct ContactSourceSchema: Codable, Hashable {
@@ -666,6 +712,10 @@ enum API {
         var syncedAt: Date?
         var syncError: String?
         var canEdit: Bool
+    }
+
+    struct ContactTagsUpdate: Codable, Hashable {
+        var tags: [String]
     }
 
     struct ContactUpdate: Encodable, Hashable {
@@ -1223,6 +1273,19 @@ enum API {
 
     struct MeUpdate: Encodable, Hashable {
         var timezone: String
+    }
+
+    struct MeetingBrief: Codable, Hashable {
+        var event: ContactFollowUpEvent
+        @Lossy var people: [MeetingBriefPerson]
+    }
+
+    struct MeetingBriefPerson: Codable, Hashable {
+        var contact: ContactReference
+        var sure: Bool
+        var lastSeen: ContactSighting?
+        @Lossy var recent: [ContactInteractionSchema]
+        var upcoming: ContactDateReminder?
     }
 
     struct MonthlyFlow: Codable, Hashable {
@@ -3386,34 +3449,6 @@ extension API.BankOption {
     }
 }
 
-extension API.BirthdayReminder {
-    private enum DecodingKeys: String, CodingKey {
-        case contact
-        case on
-        case turns
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: DecodingKeys.self)
-        self.contact = try container.decode(API.ContactReference.self, forKey: .contact)
-        self.on = try container.decode(Date.self, forKey: .on)
-        self.turns = try container.decodeIfPresent(Int.self, forKey: .turns)
-    }
-
-    private enum EncodingKeys: String, CodingKey {
-        case contact
-        case on
-        case turns
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: EncodingKeys.self)
-        try container.encode(self.contact, forKey: .contact)
-        try container.encode(API.Day(self.on), forKey: .on)
-        try container.encodeIfPresent(self.turns, forKey: .turns)
-    }
-}
-
 extension API.BulkCategorizeRequest {
     private enum DecodingKeys: String, CodingKey {
         case description
@@ -3795,34 +3830,6 @@ extension API.CalendarUpdate {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.hidden, forKey: .hidden)
-    }
-}
-
-extension API.CatchUpReminder {
-    private enum DecodingKeys: String, CodingKey {
-        case contact
-        case dueOn
-        case lastSeen
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: DecodingKeys.self)
-        self.contact = try container.decode(API.ContactReference.self, forKey: .contact)
-        self.dueOn = try container.decode(Date.self, forKey: .dueOn)
-        self.lastSeen = try container.decodeIfPresent(API.ContactSighting.self, forKey: .lastSeen)
-    }
-
-    private enum EncodingKeys: String, CodingKey {
-        case contact
-        case dueOn = "due_on"
-        case lastSeen = "last_seen"
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: EncodingKeys.self)
-        try container.encode(self.contact, forKey: .contact)
-        try container.encode(API.Day(self.dueOn), forKey: .dueOn)
-        try container.encodeIfPresent(self.lastSeen, forKey: .lastSeen)
     }
 }
 
@@ -4250,18 +4257,215 @@ extension API.ContactCreate {
     }
 }
 
-extension API.ContactKeepUpUpdate {
+extension API.ContactDate {
+    private enum DecodingKeys: String, CodingKey {
+        case label
+        case month
+        case day
+        case year
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.label = try container.decode(String.self, forKey: .label)
+        self.month = try container.decode(Int.self, forKey: .month)
+        self.day = try container.decode(Int.self, forKey: .day)
+        self.year = try container.decodeIfPresent(Int.self, forKey: .year)
+    }
+
     private enum EncodingKeys: String, CodingKey {
-        case tags
-        case keepInTouchDays = "keep_in_touch_days"
-        case caughtUpOn = "caught_up_on"
+        case label
+        case month
+        case day
+        case year
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
-        if let value = self.tags { try container.encode(value, forKey: .tags) }
-        if let value = self.keepInTouchDays { try container.encode(value, forKey: .keepInTouchDays) }
-        if let value = self.caughtUpOn { try container.encode(value.map(API.Day.init), forKey: .caughtUpOn) }
+        try container.encode(self.label, forKey: .label)
+        try container.encode(self.month, forKey: .month)
+        try container.encode(self.day, forKey: .day)
+        try container.encodeIfPresent(self.year, forKey: .year)
+    }
+}
+
+extension API.ContactDateReminder {
+    private enum DecodingKeys: String, CodingKey {
+        case contact
+        case label
+        case on
+        case years
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.contact = try container.decode(API.ContactReference.self, forKey: .contact)
+        self.label = try container.decode(String.self, forKey: .label)
+        self.on = try container.decode(Date.self, forKey: .on)
+        self.years = try container.decodeIfPresent(Int.self, forKey: .years)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case contact
+        case label
+        case on
+        case years
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.contact, forKey: .contact)
+        try container.encode(self.label, forKey: .label)
+        try container.encode(API.Day(self.on), forKey: .on)
+        try container.encodeIfPresent(self.years, forKey: .years)
+    }
+}
+
+extension API.ContactEventDismiss {
+    private enum DecodingKeys: String, CodingKey {
+        case calendarEventId
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.calendarEventId = try container.decode(UUID.self, forKey: .calendarEventId)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case calendarEventId = "calendar_event_id"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.calendarEventId, forKey: .calendarEventId)
+    }
+}
+
+extension API.ContactFollowUp {
+    private enum DecodingKeys: String, CodingKey {
+        case kind
+        case contact
+        case event
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.kind = try container.decode(String.self, forKey: .kind)
+        self.contact = try container.decode(API.ContactReference.self, forKey: .contact)
+        self.event = try container.decode(API.ContactFollowUpEvent.self, forKey: .event)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case kind
+        case contact
+        case event
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.kind, forKey: .kind)
+        try container.encode(self.contact, forKey: .contact)
+        try container.encode(self.event, forKey: .event)
+    }
+}
+
+extension API.ContactFollowUpEvent {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case title
+        case on
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.title = try container.decode(String.self, forKey: .title)
+        self.on = try container.decode(Date.self, forKey: .on)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case title
+        case on
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.title, forKey: .title)
+        try container.encode(API.Day(self.on), forKey: .on)
+    }
+}
+
+extension API.ContactInteractionCreate {
+    private enum DecodingKeys: String, CodingKey {
+        case kind
+        case note
+        case occurredOn
+        case calendarEventId
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.kind = try container.decodeIfPresent(API.ContactInteractionKind.self, forKey: .kind) ?? .met
+        self.note = try container.decodeIfPresent(String.self, forKey: .note)
+        self.occurredOn = try container.decodeIfPresent(Date.self, forKey: .occurredOn)
+        self.calendarEventId = try container.decodeIfPresent(UUID.self, forKey: .calendarEventId)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case kind
+        case note
+        case occurredOn = "occurred_on"
+        case calendarEventId = "calendar_event_id"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.kind, forKey: .kind)
+        try container.encodeIfPresent(self.note, forKey: .note)
+        try container.encodeIfPresent(self.occurredOn.map(API.Day.init), forKey: .occurredOn)
+        try container.encodeIfPresent(self.calendarEventId, forKey: .calendarEventId)
+    }
+}
+
+extension API.ContactInteractionSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case occurredOn
+        case kind
+        case source
+        case note
+        case eventTitle
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decodeIfPresent(UUID.self, forKey: .id)
+        self.occurredOn = try container.decode(Date.self, forKey: .occurredOn)
+        self.kind = try container.decode(API.ContactInteractionKind.self, forKey: .kind)
+        self.source = try container.decode(API.ContactInteractionSource.self, forKey: .source)
+        self.note = try container.decodeIfPresent(String.self, forKey: .note)
+        self.eventTitle = try container.decodeIfPresent(String.self, forKey: .eventTitle)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case occurredOn = "occurred_on"
+        case kind
+        case source
+        case note
+        case eventTitle = "event_title"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.id, forKey: .id)
+        try container.encode(API.Day(self.occurredOn), forKey: .occurredOn)
+        try container.encode(self.kind, forKey: .kind)
+        try container.encode(self.source, forKey: .source)
+        try container.encodeIfPresent(self.note, forKey: .note)
+        try container.encodeIfPresent(self.eventTitle, forKey: .eventTitle)
     }
 }
 
@@ -4371,25 +4575,21 @@ extension API.ContactReference {
 
 extension API.ContactReminders {
     private enum DecodingKeys: String, CodingKey {
-        case birthdays
-        case catchUp
+        case dates
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DecodingKeys.self)
-        self._birthdays = try container.decode(Lossy<API.BirthdayReminder>.self, forKey: .birthdays)
-        self._catchUp = try container.decode(Lossy<API.CatchUpReminder>.self, forKey: .catchUp)
+        self._dates = try container.decode(Lossy<API.ContactDateReminder>.self, forKey: .dates)
     }
 
     private enum EncodingKeys: String, CodingKey {
-        case birthdays
-        case catchUp = "catch_up"
+        case dates
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
-        try container.encode(self.birthdays, forKey: .birthdays)
-        try container.encode(self.catchUp, forKey: .catchUp)
+        try container.encode(self.dates, forKey: .dates)
     }
 }
 
@@ -4416,11 +4616,9 @@ extension API.ContactSchema {
         case emails
         case addresses
         case urls
+        case dates
         case tags
-        case keepInTouchDays
-        case caughtUpOn
         case lastSeen
-        case catchUpOn
     }
 
     init(from decoder: Decoder) throws {
@@ -4446,11 +4644,9 @@ extension API.ContactSchema {
         self._emails = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .emails)
         self._addresses = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .addresses)
         self._urls = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .urls)
+        self._dates = try container.decode(Lossy<API.ContactDate>.self, forKey: .dates)
         self.tags = try container.decode([String].self, forKey: .tags)
-        self.keepInTouchDays = try container.decodeIfPresent(Int.self, forKey: .keepInTouchDays)
-        self.caughtUpOn = try container.decodeIfPresent(Date.self, forKey: .caughtUpOn)
         self.lastSeen = try container.decodeIfPresent(API.ContactSighting.self, forKey: .lastSeen)
-        self.catchUpOn = try container.decodeIfPresent(Date.self, forKey: .catchUpOn)
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -4475,11 +4671,9 @@ extension API.ContactSchema {
         case emails
         case addresses
         case urls
+        case dates
         case tags
-        case keepInTouchDays = "keep_in_touch_days"
-        case caughtUpOn = "caught_up_on"
         case lastSeen = "last_seen"
-        case catchUpOn = "catch_up_on"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -4505,35 +4699,37 @@ extension API.ContactSchema {
         try container.encode(self.emails, forKey: .emails)
         try container.encode(self.addresses, forKey: .addresses)
         try container.encode(self.urls, forKey: .urls)
+        try container.encode(self.dates, forKey: .dates)
         try container.encode(self.tags, forKey: .tags)
-        try container.encodeIfPresent(self.keepInTouchDays, forKey: .keepInTouchDays)
-        try container.encodeIfPresent(self.caughtUpOn.map(API.Day.init), forKey: .caughtUpOn)
         try container.encodeIfPresent(self.lastSeen, forKey: .lastSeen)
-        try container.encodeIfPresent(self.catchUpOn.map(API.Day.init), forKey: .catchUpOn)
     }
 }
 
 extension API.ContactSighting {
     private enum DecodingKeys: String, CodingKey {
         case on
-        case eventTitle
+        case kind
+        case summary
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DecodingKeys.self)
         self.on = try container.decode(Date.self, forKey: .on)
-        self.eventTitle = try container.decodeIfPresent(String.self, forKey: .eventTitle)
+        self.kind = try container.decode(API.ContactInteractionKind.self, forKey: .kind)
+        self.summary = try container.decodeIfPresent(String.self, forKey: .summary)
     }
 
     private enum EncodingKeys: String, CodingKey {
         case on
-        case eventTitle = "event_title"
+        case kind
+        case summary
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(API.Day(self.on), forKey: .on)
-        try container.encodeIfPresent(self.eventTitle, forKey: .eventTitle)
+        try container.encode(self.kind, forKey: .kind)
+        try container.encodeIfPresent(self.summary, forKey: .summary)
     }
 }
 
@@ -4570,6 +4766,26 @@ extension API.ContactSourceSchema {
         try container.encodeIfPresent(self.syncedAt.map(API.Instant.init), forKey: .syncedAt)
         try container.encodeIfPresent(self.syncError, forKey: .syncError)
         try container.encode(self.canEdit, forKey: .canEdit)
+    }
+}
+
+extension API.ContactTagsUpdate {
+    private enum DecodingKeys: String, CodingKey {
+        case tags
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.tags = try container.decode([String].self, forKey: .tags)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case tags
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.tags, forKey: .tags)
     }
 }
 
@@ -6799,6 +7015,66 @@ extension API.MeUpdate {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.timezone, forKey: .timezone)
+    }
+}
+
+extension API.MeetingBrief {
+    private enum DecodingKeys: String, CodingKey {
+        case event
+        case people
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.event = try container.decode(API.ContactFollowUpEvent.self, forKey: .event)
+        self._people = try container.decode(Lossy<API.MeetingBriefPerson>.self, forKey: .people)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case event
+        case people
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.event, forKey: .event)
+        try container.encode(self.people, forKey: .people)
+    }
+}
+
+extension API.MeetingBriefPerson {
+    private enum DecodingKeys: String, CodingKey {
+        case contact
+        case sure
+        case lastSeen
+        case recent
+        case upcoming
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.contact = try container.decode(API.ContactReference.self, forKey: .contact)
+        self.sure = try container.decode(Bool.self, forKey: .sure)
+        self.lastSeen = try container.decodeIfPresent(API.ContactSighting.self, forKey: .lastSeen)
+        self._recent = try container.decode(Lossy<API.ContactInteractionSchema>.self, forKey: .recent)
+        self.upcoming = try container.decodeIfPresent(API.ContactDateReminder.self, forKey: .upcoming)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case contact
+        case sure
+        case lastSeen = "last_seen"
+        case recent
+        case upcoming
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.contact, forKey: .contact)
+        try container.encode(self.sure, forKey: .sure)
+        try container.encodeIfPresent(self.lastSeen, forKey: .lastSeen)
+        try container.encode(self.recent, forKey: .recent)
+        try container.encodeIfPresent(self.upcoming, forKey: .upcoming)
     }
 }
 

@@ -32,6 +32,7 @@ import type {
   GetInvestmentAccountsResponse,
   GetLocationHistoryDayResponse,
   GetLocationHistorySummaryResponse,
+  GetMeetingBriefResponse,
   GetMontroseResponse,
   GetNetWorthHistoryResponse,
   GetPlaceResponse,
@@ -48,6 +49,8 @@ import type {
   ListCalendarEventsResponse,
   ListCategoriesResponse,
   ListCategoryRulesResponse,
+  ListContactFollowUpsResponse,
+  ListContactInteractionsResponse,
   ListContactSourcesResponse,
   ListContactsResponse,
   ListCountersResponse,
@@ -69,6 +72,7 @@ import type {
   ListTradesResponse,
   ListTransactionDocumentsResponse,
   ListTransactionsResponse,
+  LogContactInteractionResponse,
   LogRecipeCookedResponse,
   MarkNotificationReadResponse,
   PutGymTopSetResponse,
@@ -81,8 +85,8 @@ import type {
   UndoCompleteTaskResponse,
   UpdateBankAccountResponse,
   UpdateCalendarEventResponse,
-  UpdateContactKeepUpResponse,
   UpdateContactResponse,
+  UpdateContactTagsResponse,
   UpdateCounterResponse,
   UpdateDeviceResponse,
   UpdatePlaceResponse,
@@ -442,14 +446,8 @@ const contactSchemaSchemaResponseTransformer = (data: any) => {
   if (data.modified_at) {
     data.modified_at = new Date(data.modified_at);
   }
-  if (data.caught_up_on) {
-    data.caught_up_on = new Date(data.caught_up_on);
-  }
   if (data.last_seen) {
     data.last_seen = contactSightingSchemaResponseTransformer(data.last_seen);
-  }
-  if (data.catch_up_on) {
-    data.catch_up_on = new Date(data.catch_up_on);
   }
   return data;
 };
@@ -491,25 +489,14 @@ export const listContactSourcesResponseTransformer = async (
   return data;
 };
 
-const birthdayReminderSchemaResponseTransformer = (data: any) => {
+const contactDateReminderSchemaResponseTransformer = (data: any) => {
   data.on = new Date(data.on);
   return data;
 };
 
-const catchUpReminderSchemaResponseTransformer = (data: any) => {
-  data.due_on = new Date(data.due_on);
-  if (data.last_seen) {
-    data.last_seen = contactSightingSchemaResponseTransformer(data.last_seen);
-  }
-  return data;
-};
-
 const contactRemindersSchemaResponseTransformer = (data: any) => {
-  data.birthdays = data.birthdays.map((item: any) =>
-    birthdayReminderSchemaResponseTransformer(item),
-  );
-  data.catch_up = data.catch_up.map((item: any) =>
-    catchUpReminderSchemaResponseTransformer(item),
+  data.dates = data.dates.map((item: any) =>
+    contactDateReminderSchemaResponseTransformer(item),
   );
   return data;
 };
@@ -518,6 +505,58 @@ export const getContactRemindersResponseTransformer = async (
   data: any,
 ): Promise<GetContactRemindersResponse> => {
   data = contactRemindersSchemaResponseTransformer(data);
+  return data;
+};
+
+const contactFollowUpEventSchemaResponseTransformer = (data: any) => {
+  data.on = new Date(data.on);
+  return data;
+};
+
+const contactFollowUpSchemaResponseTransformer = (data: any) => {
+  data.event = contactFollowUpEventSchemaResponseTransformer(data.event);
+  return data;
+};
+
+export const listContactFollowUpsResponseTransformer = async (
+  data: any,
+): Promise<ListContactFollowUpsResponse> => {
+  data = data.map((item: any) =>
+    contactFollowUpSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const contactInteractionSchemaSchemaResponseTransformer = (data: any) => {
+  data.occurred_on = new Date(data.occurred_on);
+  return data;
+};
+
+const meetingBriefPersonSchemaResponseTransformer = (data: any) => {
+  if (data.last_seen) {
+    data.last_seen = contactSightingSchemaResponseTransformer(data.last_seen);
+  }
+  data.recent = data.recent.map((item: any) =>
+    contactInteractionSchemaSchemaResponseTransformer(item),
+  );
+  if (data.upcoming) {
+    data.upcoming = contactDateReminderSchemaResponseTransformer(data.upcoming);
+  }
+  return data;
+};
+
+const meetingBriefSchemaResponseTransformer = (data: any) => {
+  data.event = contactFollowUpEventSchemaResponseTransformer(data.event);
+  data.people = data.people.map((item: any) =>
+    meetingBriefPersonSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getMeetingBriefResponseTransformer = async (
+  data: any,
+): Promise<GetMeetingBriefResponse> => {
+  data = meetingBriefSchemaResponseTransformer(data);
   return data;
 };
 
@@ -535,10 +574,26 @@ export const updateContactResponseTransformer = async (
   return data;
 };
 
-export const updateContactKeepUpResponseTransformer = async (
+export const updateContactTagsResponseTransformer = async (
   data: any,
-): Promise<UpdateContactKeepUpResponse> => {
+): Promise<UpdateContactTagsResponse> => {
   data = contactSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const listContactInteractionsResponseTransformer = async (
+  data: any,
+): Promise<ListContactInteractionsResponse> => {
+  data = data.map((item: any) =>
+    contactInteractionSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const logContactInteractionResponseTransformer = async (
+  data: any,
+): Promise<LogContactInteractionResponse> => {
+  data = contactInteractionSchemaSchemaResponseTransformer(data);
   return data;
 };
 

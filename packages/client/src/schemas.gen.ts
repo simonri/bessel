@@ -1686,34 +1686,6 @@ export const BankOptionSchema = {
   title: "BankOption",
 } as const;
 
-export const BirthdayReminderSchema = {
-  properties: {
-    contact: {
-      $ref: "#/components/schemas/ContactReference",
-    },
-    on: {
-      type: "string",
-      format: "date",
-      title: "On",
-    },
-    turns: {
-      anyOf: [
-        {
-          type: "integer",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Turns",
-      description: "The age they turn; null when the birth year isn't known.",
-    },
-  },
-  type: "object",
-  required: ["contact", "on", "turns"],
-  title: "BirthdayReminder",
-} as const;
-
 export const Body_add_transaction_documentSchema = {
   properties: {
     file: {
@@ -2340,34 +2312,6 @@ export const CalendarUpdateSchema = {
   title: "CalendarUpdate",
 } as const;
 
-export const CatchUpReminderSchema = {
-  properties: {
-    contact: {
-      $ref: "#/components/schemas/ContactReference",
-    },
-    due_on: {
-      type: "string",
-      format: "date",
-      title: "Due On",
-      description:
-        "When it became time to be in touch; today when they've never been seen.",
-    },
-    last_seen: {
-      anyOf: [
-        {
-          $ref: "#/components/schemas/ContactSighting",
-        },
-        {
-          type: "null",
-        },
-      ],
-    },
-  },
-  type: "object",
-  required: ["contact", "due_on", "last_seen"],
-  title: "CatchUpReminder",
-} as const;
-
 export const CategoryListResponseSchema = {
   properties: {
     items: {
@@ -2979,41 +2923,151 @@ export const ContactCreateSchema = {
   title: "ContactCreate",
 } as const;
 
-export const ContactKeepUpUpdateSchema = {
+export const ContactDateSchema = {
   properties: {
-    tags: {
-      anyOf: [
-        {
-          items: {
-            type: "string",
-            maxLength: 50,
-            minLength: 1,
-          },
-          type: "array",
-          maxItems: 20,
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Tags",
-      description: "Replaces the tags; null clears them.",
+    label: {
+      type: "string",
+      title: "Label",
+      description: "As the address book names it, e.g. 'Anniversary'.",
     },
-    keep_in_touch_days: {
+    month: {
+      type: "integer",
+      maximum: 12,
+      minimum: 1,
+      title: "Month",
+    },
+    day: {
+      type: "integer",
+      maximum: 31,
+      minimum: 1,
+      title: "Day",
+    },
+    year: {
       anyOf: [
         {
           type: "integer",
-          maximum: 3650,
-          minimum: 1,
         },
         {
           type: "null",
         },
       ],
-      title: "Keep In Touch Days",
-      description: "Null stops the reminders.",
+      title: "Year",
     },
-    caught_up_on: {
+  },
+  type: "object",
+  required: ["label", "month", "day", "year"],
+  title: "ContactDate",
+} as const;
+
+export const ContactDateReminderSchema = {
+  properties: {
+    contact: {
+      $ref: "#/components/schemas/ContactReference",
+    },
+    label: {
+      type: "string",
+      title: "Label",
+      description: "'Birthday', or the address book's name for the date.",
+    },
+    on: {
+      type: "string",
+      format: "date",
+      title: "On",
+    },
+    years: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Years",
+      description:
+        "The age they turn, or how many years it's been; null when the year isn't known.",
+    },
+  },
+  type: "object",
+  required: ["contact", "label", "on", "years"],
+  title: "ContactDateReminder",
+} as const;
+
+export const ContactEventDismissSchema = {
+  properties: {
+    calendar_event_id: {
+      type: "string",
+      format: "uuid",
+      title: "Calendar Event Id",
+    },
+  },
+  type: "object",
+  required: ["calendar_event_id"],
+  title: "ContactEventDismiss",
+} as const;
+
+export const ContactFollowUpSchema = {
+  properties: {
+    kind: {
+      type: "string",
+      enum: ["note", "confirm"],
+      title: "Kind",
+      description:
+        "note: they were surely at an event that just ended, anything to note? confirm: they might have been, were they?",
+    },
+    contact: {
+      $ref: "#/components/schemas/ContactReference",
+    },
+    event: {
+      $ref: "#/components/schemas/ContactFollowUpEvent",
+    },
+  },
+  type: "object",
+  required: ["kind", "contact", "event"],
+  title: "ContactFollowUp",
+} as const;
+
+export const ContactFollowUpEventSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    title: {
+      type: "string",
+      title: "Title",
+    },
+    on: {
+      type: "string",
+      format: "date",
+      title: "On",
+    },
+  },
+  type: "object",
+  required: ["id", "title", "on"],
+  title: "ContactFollowUpEvent",
+} as const;
+
+export const ContactInteractionCreateSchema = {
+  properties: {
+    kind: {
+      $ref: "#/components/schemas/ContactInteractionKind",
+      default: "met",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 2000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+    },
+    occurred_on: {
       anyOf: [
         {
           type: "string",
@@ -3023,13 +3077,94 @@ export const ContactKeepUpUpdateSchema = {
           type: "null",
         },
       ],
-      title: "Caught Up On",
+      title: "Occurred On",
+      description:
+        "Defaults to today in the user's timezone; can't be in the future.",
+    },
+    calendar_event_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Calendar Event Id",
+      description:
+        "The calendar event it happened at; sets the day and the kind.",
     },
   },
   type: "object",
-  title: "ContactKeepUpUpdate",
-  description:
-    "Bessel's own fields on a contact, which stay in Bessel; any left out stay as they are.",
+  title: "ContactInteractionCreate",
+} as const;
+
+export const ContactInteractionKindSchema = {
+  type: "string",
+  enum: ["met", "call", "message", "event", "note"],
+  title: "ContactInteractionKind",
+} as const;
+
+export const ContactInteractionSchemaSchema = {
+  properties: {
+    id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Id",
+      description:
+        "Null for a calendar event they were surely on, which isn't stored and can't be deleted.",
+    },
+    occurred_on: {
+      type: "string",
+      format: "date",
+      title: "Occurred On",
+    },
+    kind: {
+      $ref: "#/components/schemas/ContactInteractionKind",
+    },
+    source: {
+      $ref: "#/components/schemas/ContactInteractionSource",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+    },
+    event_title: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Event Title",
+    },
+  },
+  type: "object",
+  required: ["id", "occurred_on", "kind", "source", "note", "event_title"],
+  title: "ContactInteractionSchema",
+} as const;
+
+export const ContactInteractionSourceSchema = {
+  type: "string",
+  enum: ["manual", "calendar", "assistant"],
+  title: "ContactInteractionSource",
 } as const;
 
 export const ContactListResponseSchema = {
@@ -3136,26 +3271,17 @@ export const ContactReferenceSchema = {
 
 export const ContactRemindersSchema = {
   properties: {
-    birthdays: {
+    dates: {
       items: {
-        $ref: "#/components/schemas/BirthdayReminder",
+        $ref: "#/components/schemas/ContactDateReminder",
       },
       type: "array",
-      title: "Birthdays",
-      description: "Soonest first.",
-    },
-    catch_up: {
-      items: {
-        $ref: "#/components/schemas/CatchUpReminder",
-      },
-      type: "array",
-      title: "Catch Up",
-      description:
-        "People it's time to be in touch with, longest overdue first.",
+      title: "Dates",
+      description: "Birthdays and other dates coming up, soonest first.",
     },
   },
   type: "object",
-  required: ["birthdays", "catch_up"],
+  required: ["dates"],
   title: "ContactReminders",
 } as const;
 
@@ -3358,6 +3484,15 @@ export const ContactSchemaSchema = {
       type: "array",
       title: "Urls",
     },
+    dates: {
+      items: {
+        $ref: "#/components/schemas/ContactDate",
+      },
+      type: "array",
+      title: "Dates",
+      description:
+        "Other dates the address book keeps, such as anniversaries; birthdays are under birthday.",
+    },
     tags: {
       items: {
         type: "string",
@@ -3365,32 +3500,6 @@ export const ContactSchemaSchema = {
       type: "array",
       title: "Tags",
       description: "Bessel's own, never sent to Google.",
-    },
-    keep_in_touch_days: {
-      anyOf: [
-        {
-          type: "integer",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Keep In Touch Days",
-      description:
-        "How often the user wants to be in touch, in days; null when they haven't said.",
-    },
-    caught_up_on: {
-      anyOf: [
-        {
-          type: "string",
-          format: "date",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Caught Up On",
-      description: "The last day the user marked as having been in touch.",
     },
     last_seen: {
       anyOf: [
@@ -3402,21 +3511,7 @@ export const ContactSchemaSchema = {
         },
       ],
       description:
-        "The later of caught_up_on and the last past calendar event they were on or named in, within a year.",
-    },
-    catch_up_on: {
-      anyOf: [
-        {
-          type: "string",
-          format: "date",
-        },
-        {
-          type: "null",
-        },
-      ],
-      title: "Catch Up On",
-      description:
-        "When keeping in touch says to be in touch next; null without keep_in_touch_days.",
+        "The latest of what was logged with them and the past calendar events they were surely on, within a year.",
     },
   },
   type: "object",
@@ -3442,11 +3537,9 @@ export const ContactSchemaSchema = {
     "emails",
     "addresses",
     "urls",
+    "dates",
     "tags",
-    "keep_in_touch_days",
-    "caught_up_on",
     "last_seen",
-    "catch_up_on",
   ],
   title: "ContactSchema",
 } as const;
@@ -3459,7 +3552,10 @@ export const ContactSightingSchema = {
       title: "On",
       description: "The day, in the user's timezone.",
     },
-    event_title: {
+    kind: {
+      $ref: "#/components/schemas/ContactInteractionKind",
+    },
+    summary: {
       anyOf: [
         {
           type: "string",
@@ -3468,13 +3564,12 @@ export const ContactSightingSchema = {
           type: "null",
         },
       ],
-      title: "Event Title",
-      description:
-        "The calendar event they were on or named in; null when the user marked it themselves.",
+      title: "Summary",
+      description: "The calendar event's title, or the note logged with it.",
     },
   },
   type: "object",
-  required: ["on", "event_title"],
+  required: ["on", "kind", "summary"],
   title: "ContactSighting",
 } as const;
 
@@ -3524,6 +3619,26 @@ export const ContactSourceSchemaSchema = {
   type: "object",
   required: ["id", "email", "synced_at", "sync_error", "can_edit"],
   title: "ContactSourceSchema",
+} as const;
+
+export const ContactTagsUpdateSchema = {
+  properties: {
+    tags: {
+      items: {
+        type: "string",
+        maxLength: 50,
+        minLength: 1,
+      },
+      type: "array",
+      maxItems: 20,
+      title: "Tags",
+      description: "Replaces the tags.",
+    },
+  },
+  type: "object",
+  required: ["tags"],
+  title: "ContactTagsUpdate",
+  description: "Bessel's own tags for a contact, never sent to Google.",
 } as const;
 
 export const ContactUpdateSchema = {
@@ -6866,6 +6981,70 @@ export const MeUpdateSchema = {
   type: "object",
   required: ["timezone"],
   title: "MeUpdate",
+} as const;
+
+export const MeetingBriefSchema = {
+  properties: {
+    event: {
+      $ref: "#/components/schemas/ContactFollowUpEvent",
+    },
+    people: {
+      items: {
+        $ref: "#/components/schemas/MeetingBriefPerson",
+      },
+      type: "array",
+      title: "People",
+    },
+  },
+  type: "object",
+  required: ["event", "people"],
+  title: "MeetingBrief",
+} as const;
+
+export const MeetingBriefPersonSchema = {
+  properties: {
+    contact: {
+      $ref: "#/components/schemas/ContactReference",
+    },
+    sure: {
+      type: "boolean",
+      title: "Sure",
+      description:
+        "False when they're only named by first name in the title and might be someone else.",
+    },
+    last_seen: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/ContactSighting",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    recent: {
+      items: {
+        $ref: "#/components/schemas/ContactInteractionSchema",
+      },
+      type: "array",
+      title: "Recent",
+      description: "What was logged with them lately, newest first.",
+    },
+    upcoming: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/ContactDateReminder",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "A birthday or other date in the next two weeks.",
+    },
+  },
+  type: "object",
+  required: ["contact", "sure", "last_seen", "recent", "upcoming"],
+  title: "MeetingBriefPerson",
 } as const;
 
 export const MonthlyFlowSchema = {

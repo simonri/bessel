@@ -1158,23 +1158,6 @@ export type BankOption = {
 };
 
 /**
- * BirthdayReminder
- */
-export type BirthdayReminder = {
-  contact: ContactReference;
-  /**
-   * On
-   */
-  on: Date;
-  /**
-   * Turns
-   *
-   * The age they turn; null when the birth year isn't known.
-   */
-  turns: number | null;
-};
-
-/**
  * Body_add_transaction_document
  */
 export type BodyAddTransactionDocument = {
@@ -1563,20 +1546,6 @@ export type CalendarUpdate = {
 };
 
 /**
- * CatchUpReminder
- */
-export type CatchUpReminder = {
-  contact: ContactReference;
-  /**
-   * Due On
-   *
-   * When it became time to be in touch; today when they've never been seen.
-   */
-  due_on: Date;
-  last_seen: ContactSighting | null;
-};
-
-/**
  * CategoryListResponse
  */
 export type CategoryListResponse = {
@@ -1945,28 +1914,174 @@ export type ContactCreate = {
 };
 
 /**
- * ContactKeepUpUpdate
- *
- * Bessel's own fields on a contact, which stay in Bessel; any left out stay as they are.
+ * ContactDate
  */
-export type ContactKeepUpUpdate = {
+export type ContactDate = {
   /**
-   * Tags
+   * Label
    *
-   * Replaces the tags; null clears them.
+   * As the address book names it, e.g. 'Anniversary'.
    */
-  tags?: Array<string> | null;
+  label: string;
   /**
-   * Keep In Touch Days
-   *
-   * Null stops the reminders.
+   * Month
    */
-  keep_in_touch_days?: number | null;
+  month: number;
   /**
-   * Caught Up On
+   * Day
    */
-  caught_up_on?: Date | null;
+  day: number;
+  /**
+   * Year
+   */
+  year: number | null;
 };
+
+/**
+ * ContactDateReminder
+ */
+export type ContactDateReminder = {
+  contact: ContactReference;
+  /**
+   * Label
+   *
+   * 'Birthday', or the address book's name for the date.
+   */
+  label: string;
+  /**
+   * On
+   */
+  on: Date;
+  /**
+   * Years
+   *
+   * The age they turn, or how many years it's been; null when the year isn't known.
+   */
+  years: number | null;
+};
+
+/**
+ * ContactEventDismiss
+ */
+export type ContactEventDismiss = {
+  /**
+   * Calendar Event Id
+   */
+  calendar_event_id: string;
+};
+
+/**
+ * ContactFollowUp
+ */
+export type ContactFollowUp = {
+  /**
+   * Kind
+   *
+   * note: they were surely at an event that just ended, anything to note? confirm: they might have been, were they?
+   */
+  kind: "note" | "confirm";
+  contact: ContactReference;
+  event: ContactFollowUpEvent;
+};
+
+/**
+ * ContactFollowUpEvent
+ */
+export type ContactFollowUpEvent = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  /**
+   * On
+   */
+  on: Date;
+};
+
+/**
+ * ContactInteractionCreate
+ */
+export type ContactInteractionCreate = {
+  kind?: ContactInteractionKind;
+  /**
+   * Note
+   */
+  note?: string | null;
+  /**
+   * Occurred On
+   *
+   * Defaults to today in the user's timezone; can't be in the future.
+   */
+  occurred_on?: Date | null;
+  /**
+   * Calendar Event Id
+   *
+   * The calendar event it happened at; sets the day and the kind.
+   */
+  calendar_event_id?: string | null;
+};
+
+/**
+ * ContactInteractionKind
+ */
+export const ContactInteractionKind = {
+  MET: "met",
+  CALL: "call",
+  MESSAGE: "message",
+  EVENT: "event",
+  NOTE: "note",
+} as const;
+
+/**
+ * ContactInteractionKind
+ */
+export type ContactInteractionKind =
+  (typeof ContactInteractionKind)[keyof typeof ContactInteractionKind];
+
+/**
+ * ContactInteractionSchema
+ */
+export type ContactInteractionSchema = {
+  /**
+   * Id
+   *
+   * Null for a calendar event they were surely on, which isn't stored and can't be deleted.
+   */
+  id: string | null;
+  /**
+   * Occurred On
+   */
+  occurred_on: Date;
+  kind: ContactInteractionKind;
+  source: ContactInteractionSource;
+  /**
+   * Note
+   */
+  note: string | null;
+  /**
+   * Event Title
+   */
+  event_title: string | null;
+};
+
+/**
+ * ContactInteractionSource
+ */
+export const ContactInteractionSource = {
+  MANUAL: "manual",
+  CALENDAR: "calendar",
+  ASSISTANT: "assistant",
+} as const;
+
+/**
+ * ContactInteractionSource
+ */
+export type ContactInteractionSource =
+  (typeof ContactInteractionSource)[keyof typeof ContactInteractionSource];
 
 /**
  * ContactListResponse
@@ -2038,17 +2153,11 @@ export type ContactReference = {
  */
 export type ContactReminders = {
   /**
-   * Birthdays
+   * Dates
    *
-   * Soonest first.
+   * Birthdays and other dates coming up, soonest first.
    */
-  birthdays: Array<BirthdayReminder>;
-  /**
-   * Catch Up
-   *
-   * People it's time to be in touch with, longest overdue first.
-   */
-  catch_up: Array<CatchUpReminder>;
+  dates: Array<ContactDateReminder>;
 };
 
 /**
@@ -2151,33 +2260,21 @@ export type ContactSchema = {
    */
   urls: Array<ContactMethodSchema>;
   /**
+   * Dates
+   *
+   * Other dates the address book keeps, such as anniversaries; birthdays are under birthday.
+   */
+  dates: Array<ContactDate>;
+  /**
    * Tags
    *
    * Bessel's own, never sent to Google.
    */
   tags: Array<string>;
   /**
-   * Keep In Touch Days
-   *
-   * How often the user wants to be in touch, in days; null when they haven't said.
-   */
-  keep_in_touch_days: number | null;
-  /**
-   * Caught Up On
-   *
-   * The last day the user marked as having been in touch.
-   */
-  caught_up_on: Date | null;
-  /**
-   * The later of caught_up_on and the last past calendar event they were on or named in, within a year.
+   * The latest of what was logged with them and the past calendar events they were surely on, within a year.
    */
   last_seen: ContactSighting | null;
-  /**
-   * Catch Up On
-   *
-   * When keeping in touch says to be in touch next; null without keep_in_touch_days.
-   */
-  catch_up_on: Date | null;
 };
 
 /**
@@ -2190,12 +2287,13 @@ export type ContactSighting = {
    * The day, in the user's timezone.
    */
   on: Date;
+  kind: ContactInteractionKind;
   /**
-   * Event Title
+   * Summary
    *
-   * The calendar event they were on or named in; null when the user marked it themselves.
+   * The calendar event's title, or the note logged with it.
    */
-  event_title: string | null;
+  summary: string | null;
 };
 
 /**
@@ -2228,6 +2326,20 @@ export type ContactSourceSchema = {
    * Google lets Bessel change these contacts; otherwise it can only read them.
    */
   can_edit: boolean;
+};
+
+/**
+ * ContactTagsUpdate
+ *
+ * Bessel's own tags for a contact, never sent to Google.
+ */
+export type ContactTagsUpdate = {
+  /**
+   * Tags
+   *
+   * Replaces the tags.
+   */
+  tags: Array<string>;
 };
 
 /**
@@ -4273,6 +4385,41 @@ export type MeUpdate = {
    * IANA timezone name, e.g. 'Europe/Stockholm'.
    */
   timezone: string;
+};
+
+/**
+ * MeetingBrief
+ */
+export type MeetingBrief = {
+  event: ContactFollowUpEvent;
+  /**
+   * People
+   */
+  people: Array<MeetingBriefPerson>;
+};
+
+/**
+ * MeetingBriefPerson
+ */
+export type MeetingBriefPerson = {
+  contact: ContactReference;
+  /**
+   * Sure
+   *
+   * False when they're only named by first name in the title and might be someone else.
+   */
+  sure: boolean;
+  last_seen: ContactSighting | null;
+  /**
+   * Recent
+   *
+   * What was logged with them lately, newest first.
+   */
+  recent: Array<ContactInteractionSchema>;
+  /**
+   * A birthday or other date in the next two weeks.
+   */
+  upcoming: ContactDateReminder | null;
 };
 
 /**
@@ -8952,7 +9099,7 @@ export type GetContactRemindersData = {
     /**
      * Days
      *
-     * How many days ahead to look for birthdays, today included.
+     * How many days ahead to look, today included.
      */
     days?: number;
   };
@@ -8978,6 +9125,59 @@ export type GetContactRemindersResponses = {
 
 export type GetContactRemindersResponse =
   GetContactRemindersResponses[keyof GetContactRemindersResponses];
+
+export type ListContactFollowUpsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/contacts/follow-ups";
+};
+
+export type ListContactFollowUpsResponses = {
+  /**
+   * Response List Contact Follow Ups
+   *
+   * Successful Response
+   */
+  200: Array<ContactFollowUp>;
+};
+
+export type ListContactFollowUpsResponse =
+  ListContactFollowUpsResponses[keyof ListContactFollowUpsResponses];
+
+export type GetMeetingBriefData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Calendar Event Id
+     *
+     * The calendar event to brief.
+     */
+    calendar_event_id: string;
+  };
+  url: "/v1/contacts/brief";
+};
+
+export type GetMeetingBriefErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetMeetingBriefError =
+  GetMeetingBriefErrors[keyof GetMeetingBriefErrors];
+
+export type GetMeetingBriefResponses = {
+  /**
+   * Successful Response
+   */
+  200: MeetingBrief;
+};
+
+export type GetMeetingBriefResponse =
+  GetMeetingBriefResponses[keyof GetMeetingBriefResponses];
 
 export type DeleteContactData = {
   body?: never;
@@ -9103,8 +9303,8 @@ export type AuthorizeContactEditingResponses = {
 export type AuthorizeContactEditingResponse =
   AuthorizeContactEditingResponses[keyof AuthorizeContactEditingResponses];
 
-export type UpdateContactKeepUpData = {
-  body: ContactKeepUpUpdate;
+export type UpdateContactTagsData = {
+  body: ContactTagsUpdate;
   path: {
     /**
      * Contact Id
@@ -9112,28 +9312,162 @@ export type UpdateContactKeepUpData = {
     contact_id: string;
   };
   query?: never;
-  url: "/v1/contacts/{contact_id}/keep-up";
+  url: "/v1/contacts/{contact_id}/tags";
 };
 
-export type UpdateContactKeepUpErrors = {
+export type UpdateContactTagsErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type UpdateContactKeepUpError =
-  UpdateContactKeepUpErrors[keyof UpdateContactKeepUpErrors];
+export type UpdateContactTagsError =
+  UpdateContactTagsErrors[keyof UpdateContactTagsErrors];
 
-export type UpdateContactKeepUpResponses = {
+export type UpdateContactTagsResponses = {
   /**
    * Successful Response
    */
   200: ContactSchema;
 };
 
-export type UpdateContactKeepUpResponse =
-  UpdateContactKeepUpResponses[keyof UpdateContactKeepUpResponses];
+export type UpdateContactTagsResponse =
+  UpdateContactTagsResponses[keyof UpdateContactTagsResponses];
+
+export type ListContactInteractionsData = {
+  body?: never;
+  path: {
+    /**
+     * Contact Id
+     */
+    contact_id: string;
+  };
+  query?: never;
+  url: "/v1/contacts/{contact_id}/interactions";
+};
+
+export type ListContactInteractionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListContactInteractionsError =
+  ListContactInteractionsErrors[keyof ListContactInteractionsErrors];
+
+export type ListContactInteractionsResponses = {
+  /**
+   * Response List Contact Interactions
+   *
+   * Successful Response
+   */
+  200: Array<ContactInteractionSchema>;
+};
+
+export type ListContactInteractionsResponse =
+  ListContactInteractionsResponses[keyof ListContactInteractionsResponses];
+
+export type LogContactInteractionData = {
+  body: ContactInteractionCreate;
+  path: {
+    /**
+     * Contact Id
+     */
+    contact_id: string;
+  };
+  query?: never;
+  url: "/v1/contacts/{contact_id}/interactions";
+};
+
+export type LogContactInteractionErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type LogContactInteractionError =
+  LogContactInteractionErrors[keyof LogContactInteractionErrors];
+
+export type LogContactInteractionResponses = {
+  /**
+   * Successful Response
+   */
+  201: ContactInteractionSchema;
+};
+
+export type LogContactInteractionResponse =
+  LogContactInteractionResponses[keyof LogContactInteractionResponses];
+
+export type DeleteContactInteractionData = {
+  body?: never;
+  path: {
+    /**
+     * Contact Id
+     */
+    contact_id: string;
+    /**
+     * Interaction Id
+     */
+    interaction_id: string;
+  };
+  query?: never;
+  url: "/v1/contacts/{contact_id}/interactions/{interaction_id}";
+};
+
+export type DeleteContactInteractionErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteContactInteractionError =
+  DeleteContactInteractionErrors[keyof DeleteContactInteractionErrors];
+
+export type DeleteContactInteractionResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteContactInteractionResponse =
+  DeleteContactInteractionResponses[keyof DeleteContactInteractionResponses];
+
+export type DismissContactAtEventData = {
+  body: ContactEventDismiss;
+  path: {
+    /**
+     * Contact Id
+     */
+    contact_id: string;
+  };
+  query?: never;
+  url: "/v1/contacts/{contact_id}/dismissals";
+};
+
+export type DismissContactAtEventErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DismissContactAtEventError =
+  DismissContactAtEventErrors[keyof DismissContactAtEventErrors];
+
+export type DismissContactAtEventResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DismissContactAtEventResponse =
+  DismissContactAtEventResponses[keyof DismissContactAtEventResponses];
 
 export type ListBankConnectionsData = {
   body?: never;

@@ -2068,7 +2068,7 @@
           "contacts"
         ],
         "summary": "Get Contact Reminders",
-        "description": "Upcoming birthdays, and the people it's time to be in touch with.",
+        "description": "Birthdays and other dates coming up in the address book.",
         "operationId": "get_contact_reminders",
         "security": [
           {
@@ -2084,11 +2084,11 @@
               "type": "integer",
               "maximum": 366,
               "minimum": 1,
-              "description": "How many days ahead to look for birthdays, today included.",
+              "description": "How many days ahead to look, today included.",
               "default": 14,
               "title": "Days"
             },
-            "description": "How many days ahead to look for birthdays, today included."
+            "description": "How many days ahead to look, today included."
           }
         ],
         "responses": {
@@ -2098,6 +2098,88 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ContactReminders"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/contacts/follow-ups": {
+      "get": {
+        "tags": [
+          "contacts"
+        ],
+        "summary": "List Contact Follow Ups",
+        "description": "Calendar events that ended lately with people who were there (\"anything to note?\") or might have been (\"were they?\").",
+        "operationId": "list_contact_follow_ups",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContactFollowUp"
+                  },
+                  "type": "array",
+                  "title": "Response List Contact Follow Ups"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/contacts/brief": {
+      "get": {
+        "tags": [
+          "contacts"
+        ],
+        "summary": "Get Meeting Brief",
+        "description": "Who of the user's contacts is at an event, with when they were last seen and what was logged with them lately.",
+        "operationId": "get_meeting_brief",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "calendar_event_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The calendar event to brief.",
+              "title": "Calendar Event Id"
+            },
+            "description": "The calendar event to brief."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeetingBrief"
                 }
               }
             }
@@ -2309,14 +2391,14 @@
         }
       }
     },
-    "/v1/contacts/{contact_id}/keep-up": {
-      "patch": {
+    "/v1/contacts/{contact_id}/tags": {
+      "put": {
         "tags": [
           "contacts"
         ],
-        "summary": "Update Contact Keep Up",
-        "description": "Changes Bessel's own fields on a contact (tags, keeping in touch, the last catch-up), which never reach Google.",
-        "operationId": "update_contact_keep_up",
+        "summary": "Update Contact Tags",
+        "description": "Replaces Bessel's own tags on a contact, which never reach Google.",
+        "operationId": "update_contact_tags",
         "security": [
           {
             "HTTPBearer": []
@@ -2339,7 +2421,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ContactKeepUpUpdate"
+                "$ref": "#/components/schemas/ContactTagsUpdate"
               }
             }
           }
@@ -2354,6 +2436,219 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/contacts/{contact_id}/interactions": {
+      "get": {
+        "tags": [
+          "contacts"
+        ],
+        "summary": "List Contact Interactions",
+        "description": "What was logged with someone, and the calendar events they were surely at, newest first.",
+        "operationId": "list_contact_interactions",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contact Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ContactInteractionSchema"
+                  },
+                  "title": "Response List Contact Interactions"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "contacts"
+        ],
+        "summary": "Log Contact Interaction",
+        "description": "Adds to someone's log, kept in Bessel only. Logging a calendar event they were at again updates its note.",
+        "operationId": "log_contact_interaction",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contact Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactInteractionCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactInteractionSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/contacts/{contact_id}/interactions/{interaction_id}": {
+      "delete": {
+        "tags": [
+          "contacts"
+        ],
+        "summary": "Delete Contact Interaction",
+        "operationId": "delete_contact_interaction",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contact Id"
+            }
+          },
+          {
+            "name": "interaction_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Interaction Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/contacts/{contact_id}/dismissals": {
+      "post": {
+        "tags": [
+          "contacts"
+        ],
+        "summary": "Dismiss Contact At Event",
+        "description": "The contact wasn't at the calendar event, so it isn't suggested again.",
+        "operationId": "dismiss_contact_at_event",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contact Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactEventDismiss"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -10349,37 +10644,6 @@
         ],
         "title": "BankOption"
       },
-      "BirthdayReminder": {
-        "properties": {
-          "contact": {
-            "$ref": "#/components/schemas/ContactReference"
-          },
-          "on": {
-            "type": "string",
-            "format": "date",
-            "title": "On"
-          },
-          "turns": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Turns",
-            "description": "The age they turn; null when the birth year isn't known."
-          }
-        },
-        "type": "object",
-        "required": [
-          "contact",
-          "on",
-          "turns"
-        ],
-        "title": "BirthdayReminder"
-      },
       "Body_add_transaction_document": {
         "properties": {
           "file": {
@@ -11033,36 +11297,6 @@
         ],
         "title": "CalendarUpdate"
       },
-      "CatchUpReminder": {
-        "properties": {
-          "contact": {
-            "$ref": "#/components/schemas/ContactReference"
-          },
-          "due_on": {
-            "type": "string",
-            "format": "date",
-            "title": "Due On",
-            "description": "When it became time to be in touch; today when they've never been seen."
-          },
-          "last_seen": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ContactSighting"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "contact",
-          "due_on",
-          "last_seen"
-        ],
-        "title": "CatchUpReminder"
-      },
       "CategoryListResponse": {
         "properties": {
           "items": {
@@ -11684,41 +11918,167 @@
         ],
         "title": "ContactCreate"
       },
-      "ContactKeepUpUpdate": {
+      "ContactDate": {
         "properties": {
-          "tags": {
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "As the address book names it, e.g. 'Anniversary'."
+          },
+          "month": {
+            "type": "integer",
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Month"
+          },
+          "day": {
+            "type": "integer",
+            "maximum": 31.0,
+            "minimum": 1.0,
+            "title": "Day"
+          },
+          "year": {
             "anyOf": [
               {
-                "items": {
-                  "type": "string",
-                  "maxLength": 50,
-                  "minLength": 1
-                },
-                "type": "array",
-                "maxItems": 20
+                "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Tags",
-            "description": "Replaces the tags; null clears them."
+            "title": "Year"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "month",
+          "day",
+          "year"
+        ],
+        "title": "ContactDate"
+      },
+      "ContactDateReminder": {
+        "properties": {
+          "contact": {
+            "$ref": "#/components/schemas/ContactReference"
           },
-          "keep_in_touch_days": {
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "description": "'Birthday', or the address book's name for the date."
+          },
+          "on": {
+            "type": "string",
+            "format": "date",
+            "title": "On"
+          },
+          "years": {
             "anyOf": [
               {
-                "type": "integer",
-                "maximum": 3650.0,
-                "minimum": 1.0
+                "type": "integer"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Keep In Touch Days",
-            "description": "Null stops the reminders."
+            "title": "Years",
+            "description": "The age they turn, or how many years it's been; null when the year isn't known."
+          }
+        },
+        "type": "object",
+        "required": [
+          "contact",
+          "label",
+          "on",
+          "years"
+        ],
+        "title": "ContactDateReminder"
+      },
+      "ContactEventDismiss": {
+        "properties": {
+          "calendar_event_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Calendar Event Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "calendar_event_id"
+        ],
+        "title": "ContactEventDismiss"
+      },
+      "ContactFollowUp": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "note",
+              "confirm"
+            ],
+            "title": "Kind",
+            "description": "note: they were surely at an event that just ended, anything to note? confirm: they might have been, were they?"
           },
-          "caught_up_on": {
+          "contact": {
+            "$ref": "#/components/schemas/ContactReference"
+          },
+          "event": {
+            "$ref": "#/components/schemas/ContactFollowUpEvent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "contact",
+          "event"
+        ],
+        "title": "ContactFollowUp"
+      },
+      "ContactFollowUpEvent": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "on": {
+            "type": "string",
+            "format": "date",
+            "title": "On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "on"
+        ],
+        "title": "ContactFollowUpEvent"
+      },
+      "ContactInteractionCreate": {
+        "properties": {
+          "kind": {
+            "$ref": "#/components/schemas/ContactInteractionKind",
+            "default": "met"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "occurred_on": {
             "anyOf": [
               {
                 "type": "string",
@@ -11728,12 +12088,105 @@
                 "type": "null"
               }
             ],
-            "title": "Caught Up On"
+            "title": "Occurred On",
+            "description": "Defaults to today in the user's timezone; can't be in the future."
+          },
+          "calendar_event_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calendar Event Id",
+            "description": "The calendar event it happened at; sets the day and the kind."
           }
         },
         "type": "object",
-        "title": "ContactKeepUpUpdate",
-        "description": "Bessel's own fields on a contact, which stay in Bessel; any left out stay as they are."
+        "title": "ContactInteractionCreate"
+      },
+      "ContactInteractionKind": {
+        "type": "string",
+        "enum": [
+          "met",
+          "call",
+          "message",
+          "event",
+          "note"
+        ],
+        "title": "ContactInteractionKind"
+      },
+      "ContactInteractionSchema": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id",
+            "description": "Null for a calendar event they were surely on, which isn't stored and can't be deleted."
+          },
+          "occurred_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Occurred On"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ContactInteractionKind"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ContactInteractionSource"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "event_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "occurred_on",
+          "kind",
+          "source",
+          "note",
+          "event_title"
+        ],
+        "title": "ContactInteractionSchema"
+      },
+      "ContactInteractionSource": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "calendar",
+          "assistant"
+        ],
+        "title": "ContactInteractionSource"
       },
       "ContactListResponse": {
         "properties": {
@@ -11847,27 +12300,18 @@
       },
       "ContactReminders": {
         "properties": {
-          "birthdays": {
+          "dates": {
             "items": {
-              "$ref": "#/components/schemas/BirthdayReminder"
+              "$ref": "#/components/schemas/ContactDateReminder"
             },
             "type": "array",
-            "title": "Birthdays",
-            "description": "Soonest first."
-          },
-          "catch_up": {
-            "items": {
-              "$ref": "#/components/schemas/CatchUpReminder"
-            },
-            "type": "array",
-            "title": "Catch Up",
-            "description": "People it's time to be in touch with, longest overdue first."
+            "title": "Dates",
+            "description": "Birthdays and other dates coming up, soonest first."
           }
         },
         "type": "object",
         "required": [
-          "birthdays",
-          "catch_up"
+          "dates"
         ],
         "title": "ContactReminders"
       },
@@ -12070,6 +12514,14 @@
             "type": "array",
             "title": "Urls"
           },
+          "dates": {
+            "items": {
+              "$ref": "#/components/schemas/ContactDate"
+            },
+            "type": "array",
+            "title": "Dates",
+            "description": "Other dates the address book keeps, such as anniversaries; birthdays are under birthday."
+          },
           "tags": {
             "items": {
               "type": "string"
@@ -12077,31 +12529,6 @@
             "type": "array",
             "title": "Tags",
             "description": "Bessel's own, never sent to Google."
-          },
-          "keep_in_touch_days": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Keep In Touch Days",
-            "description": "How often the user wants to be in touch, in days; null when they haven't said."
-          },
-          "caught_up_on": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Caught Up On",
-            "description": "The last day the user marked as having been in touch."
           },
           "last_seen": {
             "anyOf": [
@@ -12112,20 +12539,7 @@
                 "type": "null"
               }
             ],
-            "description": "The later of caught_up_on and the last past calendar event they were on or named in, within a year."
-          },
-          "catch_up_on": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Catch Up On",
-            "description": "When keeping in touch says to be in touch next; null without keep_in_touch_days."
+            "description": "The latest of what was logged with them and the past calendar events they were surely on, within a year."
           }
         },
         "type": "object",
@@ -12151,11 +12565,9 @@
           "emails",
           "addresses",
           "urls",
+          "dates",
           "tags",
-          "keep_in_touch_days",
-          "caught_up_on",
-          "last_seen",
-          "catch_up_on"
+          "last_seen"
         ],
         "title": "ContactSchema"
       },
@@ -12167,7 +12579,10 @@
             "title": "On",
             "description": "The day, in the user's timezone."
           },
-          "event_title": {
+          "kind": {
+            "$ref": "#/components/schemas/ContactInteractionKind"
+          },
+          "summary": {
             "anyOf": [
               {
                 "type": "string"
@@ -12176,14 +12591,15 @@
                 "type": "null"
               }
             ],
-            "title": "Event Title",
-            "description": "The calendar event they were on or named in; null when the user marked it themselves."
+            "title": "Summary",
+            "description": "The calendar event's title, or the note logged with it."
           }
         },
         "type": "object",
         "required": [
           "on",
-          "event_title"
+          "kind",
+          "summary"
         ],
         "title": "ContactSighting"
       },
@@ -12238,6 +12654,27 @@
           "can_edit"
         ],
         "title": "ContactSourceSchema"
+      },
+      "ContactTagsUpdate": {
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string",
+              "maxLength": 50,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Tags",
+            "description": "Replaces the tags."
+          }
+        },
+        "type": "object",
+        "required": [
+          "tags"
+        ],
+        "title": "ContactTagsUpdate",
+        "description": "Bessel's own tags for a contact, never sent to Google."
       },
       "ContactUpdate": {
         "properties": {
@@ -15606,6 +16043,76 @@
           "timezone"
         ],
         "title": "MeUpdate"
+      },
+      "MeetingBrief": {
+        "properties": {
+          "event": {
+            "$ref": "#/components/schemas/ContactFollowUpEvent"
+          },
+          "people": {
+            "items": {
+              "$ref": "#/components/schemas/MeetingBriefPerson"
+            },
+            "type": "array",
+            "title": "People"
+          }
+        },
+        "type": "object",
+        "required": [
+          "event",
+          "people"
+        ],
+        "title": "MeetingBrief"
+      },
+      "MeetingBriefPerson": {
+        "properties": {
+          "contact": {
+            "$ref": "#/components/schemas/ContactReference"
+          },
+          "sure": {
+            "type": "boolean",
+            "title": "Sure",
+            "description": "False when they're only named by first name in the title and might be someone else."
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactSighting"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/ContactInteractionSchema"
+            },
+            "type": "array",
+            "title": "Recent",
+            "description": "What was logged with them lately, newest first."
+          },
+          "upcoming": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactDateReminder"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "A birthday or other date in the next two weeks."
+          }
+        },
+        "type": "object",
+        "required": [
+          "contact",
+          "sure",
+          "last_seen",
+          "recent",
+          "upcoming"
+        ],
+        "title": "MeetingBriefPerson"
       },
       "MonthlyFlow": {
         "properties": {

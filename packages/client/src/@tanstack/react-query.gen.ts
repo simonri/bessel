@@ -41,6 +41,7 @@ import {
   deleteCalendarEvent,
   deleteCategoryRule,
   deleteContact,
+  deleteContactInteraction,
   deleteCounter,
   deleteDevice,
   deleteGymExercise,
@@ -56,6 +57,7 @@ import {
   disconnectBankConnection,
   disconnectCalendarAccount,
   disconnectMontrose,
+  dismissContactAtEvent,
   documentPage,
   documentThumbnail,
   downloadDocument,
@@ -78,6 +80,7 @@ import {
   getLocationHistoryDay,
   getLocationHistorySummary,
   getMe,
+  getMeetingBrief,
   getMonthlyFlow,
   getMontrose,
   getNetWorthHistory,
@@ -105,6 +108,8 @@ import {
   listCalendarEvents,
   listCategories,
   listCategoryRules,
+  listContactFollowUps,
+  listContactInteractions,
   listContacts,
   listContactSources,
   listCounters,
@@ -126,6 +131,7 @@ import {
   listTrades,
   listTransactionDocuments,
   listTransactions,
+  logContactInteraction,
   logRecipeCooked,
   markAllNotificationsRead,
   markNotificationRead,
@@ -160,7 +166,7 @@ import {
   updateCalendar,
   updateCalendarEvent,
   updateContact,
-  updateContactKeepUp,
+  updateContactTags,
   updateCounter,
   updateDevice,
   updateMe,
@@ -266,6 +272,9 @@ import type {
   DeleteCategoryRuleResponse,
   DeleteContactData,
   DeleteContactError,
+  DeleteContactInteractionData,
+  DeleteContactInteractionError,
+  DeleteContactInteractionResponse,
   DeleteContactResponse,
   DeleteCounterData,
   DeleteCounterError,
@@ -310,6 +319,9 @@ import type {
   DisconnectCalendarAccountResponse,
   DisconnectMontroseData,
   DisconnectMontroseResponse,
+  DismissContactAtEventData,
+  DismissContactAtEventError,
+  DismissContactAtEventResponse,
   DocumentPageData,
   DocumentPageError,
   DocumentThumbnailData,
@@ -365,6 +377,9 @@ import type {
   GetLocationHistorySummaryData,
   GetLocationHistorySummaryResponse,
   GetMeData,
+  GetMeetingBriefData,
+  GetMeetingBriefError,
+  GetMeetingBriefResponse,
   GetMeResponse,
   GetMonthlyFlowData,
   GetMonthlyFlowError,
@@ -438,6 +453,11 @@ import type {
   ListCategoriesResponse,
   ListCategoryRulesData,
   ListCategoryRulesResponse,
+  ListContactFollowUpsData,
+  ListContactFollowUpsResponse,
+  ListContactInteractionsData,
+  ListContactInteractionsError,
+  ListContactInteractionsResponse,
   ListContactsData,
   ListContactsError,
   ListContactSourcesData,
@@ -494,6 +514,9 @@ import type {
   ListTransactionsData,
   ListTransactionsError,
   ListTransactionsResponse,
+  LogContactInteractionData,
+  LogContactInteractionError,
+  LogContactInteractionResponse,
   LogRecipeCookedData,
   LogRecipeCookedError,
   LogRecipeCookedResponse,
@@ -583,10 +606,10 @@ import type {
   UpdateCalendarResponse,
   UpdateContactData,
   UpdateContactError,
-  UpdateContactKeepUpData,
-  UpdateContactKeepUpError,
-  UpdateContactKeepUpResponse,
   UpdateContactResponse,
+  UpdateContactTagsData,
+  UpdateContactTagsError,
+  UpdateContactTagsResponse,
   UpdateCounterData,
   UpdateCounterError,
   UpdateCounterResponse,
@@ -2047,7 +2070,7 @@ export const getContactRemindersQueryKey = (
 /**
  * Get Contact Reminders
  *
- * Upcoming birthdays, and the people it's time to be in touch with.
+ * Birthdays and other dates coming up in the address book.
  */
 export const getContactRemindersOptions = (
   options?: Options<GetContactRemindersData>,
@@ -2068,6 +2091,64 @@ export const getContactRemindersOptions = (
       return data;
     },
     queryKey: getContactRemindersQueryKey(options),
+  });
+
+export const listContactFollowUpsQueryKey = (
+  options?: Options<ListContactFollowUpsData>,
+) => createQueryKey("listContactFollowUps", options);
+
+/**
+ * List Contact Follow Ups
+ *
+ * Calendar events that ended lately with people who were there ("anything to note?") or might have been ("were they?").
+ */
+export const listContactFollowUpsOptions = (
+  options?: Options<ListContactFollowUpsData>,
+) =>
+  queryOptions<
+    ListContactFollowUpsResponse,
+    DefaultError,
+    ListContactFollowUpsResponse,
+    ReturnType<typeof listContactFollowUpsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listContactFollowUps({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listContactFollowUpsQueryKey(options),
+  });
+
+export const getMeetingBriefQueryKey = (
+  options: Options<GetMeetingBriefData>,
+) => createQueryKey("getMeetingBrief", options);
+
+/**
+ * Get Meeting Brief
+ *
+ * Who of the user's contacts is at an event, with when they were last seen and what was logged with them lately.
+ */
+export const getMeetingBriefOptions = (options: Options<GetMeetingBriefData>) =>
+  queryOptions<
+    GetMeetingBriefResponse,
+    GetMeetingBriefError,
+    GetMeetingBriefResponse,
+    ReturnType<typeof getMeetingBriefQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMeetingBrief({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMeetingBriefQueryKey(options),
   });
 
 /**
@@ -2183,24 +2264,139 @@ export const authorizeContactEditingMutation = (
 };
 
 /**
- * Update Contact Keep Up
+ * Update Contact Tags
  *
- * Changes Bessel's own fields on a contact (tags, keeping in touch, the last catch-up), which never reach Google.
+ * Replaces Bessel's own tags on a contact, which never reach Google.
  */
-export const updateContactKeepUpMutation = (
-  options?: Partial<Options<UpdateContactKeepUpData>>,
+export const updateContactTagsMutation = (
+  options?: Partial<Options<UpdateContactTagsData>>,
 ): UseMutationOptions<
-  UpdateContactKeepUpResponse,
-  UpdateContactKeepUpError,
-  Options<UpdateContactKeepUpData>
+  UpdateContactTagsResponse,
+  UpdateContactTagsError,
+  Options<UpdateContactTagsData>
 > => {
   const mutationOptions: UseMutationOptions<
-    UpdateContactKeepUpResponse,
-    UpdateContactKeepUpError,
-    Options<UpdateContactKeepUpData>
+    UpdateContactTagsResponse,
+    UpdateContactTagsError,
+    Options<UpdateContactTagsData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await updateContactKeepUp({
+      const { data } = await updateContactTags({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listContactInteractionsQueryKey = (
+  options: Options<ListContactInteractionsData>,
+) => createQueryKey("listContactInteractions", options);
+
+/**
+ * List Contact Interactions
+ *
+ * What was logged with someone, and the calendar events they were surely at, newest first.
+ */
+export const listContactInteractionsOptions = (
+  options: Options<ListContactInteractionsData>,
+) =>
+  queryOptions<
+    ListContactInteractionsResponse,
+    ListContactInteractionsError,
+    ListContactInteractionsResponse,
+    ReturnType<typeof listContactInteractionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listContactInteractions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listContactInteractionsQueryKey(options),
+  });
+
+/**
+ * Log Contact Interaction
+ *
+ * Adds to someone's log, kept in Bessel only. Logging a calendar event they were at again updates its note.
+ */
+export const logContactInteractionMutation = (
+  options?: Partial<Options<LogContactInteractionData>>,
+): UseMutationOptions<
+  LogContactInteractionResponse,
+  LogContactInteractionError,
+  Options<LogContactInteractionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    LogContactInteractionResponse,
+    LogContactInteractionError,
+    Options<LogContactInteractionData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await logContactInteraction({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Contact Interaction
+ */
+export const deleteContactInteractionMutation = (
+  options?: Partial<Options<DeleteContactInteractionData>>,
+): UseMutationOptions<
+  DeleteContactInteractionResponse,
+  DeleteContactInteractionError,
+  Options<DeleteContactInteractionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteContactInteractionResponse,
+    DeleteContactInteractionError,
+    Options<DeleteContactInteractionData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteContactInteraction({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Dismiss Contact At Event
+ *
+ * The contact wasn't at the calendar event, so it isn't suggested again.
+ */
+export const dismissContactAtEventMutation = (
+  options?: Partial<Options<DismissContactAtEventData>>,
+): UseMutationOptions<
+  DismissContactAtEventResponse,
+  DismissContactAtEventError,
+  Options<DismissContactAtEventData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DismissContactAtEventResponse,
+    DismissContactAtEventError,
+    Options<DismissContactAtEventData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await dismissContactAtEvent({
         ...options,
         ...fnOptions,
         throwOnError: true,

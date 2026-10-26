@@ -31,3 +31,6 @@ Real requests the Bessel MCP server should handle well. Run them against a test 
 | 25 | Will it rain in Västerås this afternoon? | `get_weather(place="Västerås", hours=…)` | Hour by hour for the afternoon in local time, credits Yr |
 | 26 | Is Saturday good for a long run? | `get_weather(days=…)`, `get_calendar_events` | Saturday's temperature, rain and wind, fitted around what's in the calendar |
 | 27 | Double the dal recipe and note that it freezes well | `search_recipes`, `get_recipe`, one `update_recipe` with `ingredient_groups` and `sections` | Every amount doubled, nothing else rewritten; only the changed fields sent |
+| 28 | Had lunch with Anna, she's moving to Berlin in May | `find_contacts(search="Anna")`, one `log_interaction` with a short note | Asks which Anna when there are several; logs today as met, the note in the user's words; nothing changed in Google |
+| 29 | Prep me for my 2pm meeting | `get_calendar_events(day="today")`, `get_meeting_brief` | Who is coming, when the user last saw each, what was noted lately, birthdays this week; says when a person is only a first-name guess |
+| 30 | Any birthdays or anniversaries this week? | `get_contact_reminders(days=7)` | Each with the day and age or years when known |

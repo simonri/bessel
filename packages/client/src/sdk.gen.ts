@@ -41,6 +41,7 @@ import {
   getInvestmentAccountsResponseTransformer,
   getLocationHistoryDayResponseTransformer,
   getLocationHistorySummaryResponseTransformer,
+  getMeetingBriefResponseTransformer,
   getMontroseResponseTransformer,
   getNetWorthHistoryResponseTransformer,
   getPlaceResponseTransformer,
@@ -57,6 +58,8 @@ import {
   listCalendarEventsResponseTransformer,
   listCategoriesResponseTransformer,
   listCategoryRulesResponseTransformer,
+  listContactFollowUpsResponseTransformer,
+  listContactInteractionsResponseTransformer,
   listContactSourcesResponseTransformer,
   listContactsResponseTransformer,
   listCountersResponseTransformer,
@@ -78,6 +81,7 @@ import {
   listTradesResponseTransformer,
   listTransactionDocumentsResponseTransformer,
   listTransactionsResponseTransformer,
+  logContactInteractionResponseTransformer,
   logRecipeCookedResponseTransformer,
   markNotificationReadResponseTransformer,
   putGymTopSetResponseTransformer,
@@ -90,8 +94,8 @@ import {
   undoCompleteTaskResponseTransformer,
   updateBankAccountResponseTransformer,
   updateCalendarEventResponseTransformer,
-  updateContactKeepUpResponseTransformer,
   updateContactResponseTransformer,
+  updateContactTagsResponseTransformer,
   updateCounterResponseTransformer,
   updateDeviceResponseTransformer,
   updatePlaceResponseTransformer,
@@ -195,6 +199,9 @@ import type {
   DeleteCategoryRuleResponses,
   DeleteContactData,
   DeleteContactErrors,
+  DeleteContactInteractionData,
+  DeleteContactInteractionErrors,
+  DeleteContactInteractionResponses,
   DeleteContactResponses,
   DeleteCounterData,
   DeleteCounterErrors,
@@ -239,6 +246,9 @@ import type {
   DisconnectCalendarAccountResponses,
   DisconnectMontroseData,
   DisconnectMontroseResponses,
+  DismissContactAtEventData,
+  DismissContactAtEventErrors,
+  DismissContactAtEventResponses,
   DocumentPageData,
   DocumentPageErrors,
   DocumentPageResponses,
@@ -297,6 +307,9 @@ import type {
   GetLocationHistorySummaryData,
   GetLocationHistorySummaryResponses,
   GetMeData,
+  GetMeetingBriefData,
+  GetMeetingBriefErrors,
+  GetMeetingBriefResponses,
   GetMeResponses,
   GetMonthlyFlowData,
   GetMonthlyFlowErrors,
@@ -372,6 +385,11 @@ import type {
   ListCategoriesResponses,
   ListCategoryRulesData,
   ListCategoryRulesResponses,
+  ListContactFollowUpsData,
+  ListContactFollowUpsResponses,
+  ListContactInteractionsData,
+  ListContactInteractionsErrors,
+  ListContactInteractionsResponses,
   ListContactsData,
   ListContactsErrors,
   ListContactSourcesData,
@@ -428,6 +446,9 @@ import type {
   ListTransactionsData,
   ListTransactionsErrors,
   ListTransactionsResponses,
+  LogContactInteractionData,
+  LogContactInteractionErrors,
+  LogContactInteractionResponses,
   LogRecipeCookedData,
   LogRecipeCookedErrors,
   LogRecipeCookedResponses,
@@ -522,10 +543,10 @@ import type {
   UpdateCalendarResponses,
   UpdateContactData,
   UpdateContactErrors,
-  UpdateContactKeepUpData,
-  UpdateContactKeepUpErrors,
-  UpdateContactKeepUpResponses,
   UpdateContactResponses,
+  UpdateContactTagsData,
+  UpdateContactTagsErrors,
+  UpdateContactTagsResponses,
   UpdateCounterData,
   UpdateCounterErrors,
   UpdateCounterResponses,
@@ -1483,7 +1504,7 @@ export const syncContacts = <ThrowOnError extends boolean = false>(
 /**
  * Get Contact Reminders
  *
- * Upcoming birthdays, and the people it's time to be in touch with.
+ * Birthdays and other dates coming up in the address book.
  */
 export const getContactReminders = <ThrowOnError extends boolean = false>(
   options?: Options<GetContactRemindersData, ThrowOnError>,
@@ -1500,6 +1521,48 @@ export const getContactReminders = <ThrowOnError extends boolean = false>(
     responseTransformer: getContactRemindersResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/contacts/reminders",
+    ...options,
+  });
+
+/**
+ * List Contact Follow Ups
+ *
+ * Calendar events that ended lately with people who were there ("anything to note?") or might have been ("were they?").
+ */
+export const listContactFollowUps = <ThrowOnError extends boolean = false>(
+  options?: Options<ListContactFollowUpsData, ThrowOnError>,
+): RequestResult<ListContactFollowUpsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    ListContactFollowUpsResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listContactFollowUpsResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/follow-ups",
+    ...options,
+  });
+
+/**
+ * Get Meeting Brief
+ *
+ * Who of the user's contacts is at an event, with when they were last seen and what was logged with them lately.
+ */
+export const getMeetingBrief = <ThrowOnError extends boolean = false>(
+  options: Options<GetMeetingBriefData, ThrowOnError>,
+): RequestResult<
+  GetMeetingBriefResponses,
+  GetMeetingBriefErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    GetMeetingBriefResponses,
+    GetMeetingBriefErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getMeetingBriefResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/brief",
     ...options,
   });
 
@@ -1584,25 +1647,121 @@ export const authorizeContactEditing = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Update Contact Keep Up
+ * Update Contact Tags
  *
- * Changes Bessel's own fields on a contact (tags, keeping in touch, the last catch-up), which never reach Google.
+ * Replaces Bessel's own tags on a contact, which never reach Google.
  */
-export const updateContactKeepUp = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateContactKeepUpData, ThrowOnError>,
+export const updateContactTags = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateContactTagsData, ThrowOnError>,
 ): RequestResult<
-  UpdateContactKeepUpResponses,
-  UpdateContactKeepUpErrors,
+  UpdateContactTagsResponses,
+  UpdateContactTagsErrors,
   ThrowOnError
 > =>
-  (options.client ?? client).patch<
-    UpdateContactKeepUpResponses,
-    UpdateContactKeepUpErrors,
+  (options.client ?? client).put<
+    UpdateContactTagsResponses,
+    UpdateContactTagsErrors,
     ThrowOnError
   >({
-    responseTransformer: updateContactKeepUpResponseTransformer,
+    responseTransformer: updateContactTagsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/contacts/{contact_id}/keep-up",
+    url: "/v1/contacts/{contact_id}/tags",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Contact Interactions
+ *
+ * What was logged with someone, and the calendar events they were surely at, newest first.
+ */
+export const listContactInteractions = <ThrowOnError extends boolean = false>(
+  options: Options<ListContactInteractionsData, ThrowOnError>,
+): RequestResult<
+  ListContactInteractionsResponses,
+  ListContactInteractionsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    ListContactInteractionsResponses,
+    ListContactInteractionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listContactInteractionsResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/{contact_id}/interactions",
+    ...options,
+  });
+
+/**
+ * Log Contact Interaction
+ *
+ * Adds to someone's log, kept in Bessel only. Logging a calendar event they were at again updates its note.
+ */
+export const logContactInteraction = <ThrowOnError extends boolean = false>(
+  options: Options<LogContactInteractionData, ThrowOnError>,
+): RequestResult<
+  LogContactInteractionResponses,
+  LogContactInteractionErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    LogContactInteractionResponses,
+    LogContactInteractionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: logContactInteractionResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/{contact_id}/interactions",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Contact Interaction
+ */
+export const deleteContactInteraction = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteContactInteractionData, ThrowOnError>,
+): RequestResult<
+  DeleteContactInteractionResponses,
+  DeleteContactInteractionErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteContactInteractionResponses,
+    DeleteContactInteractionErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/{contact_id}/interactions/{interaction_id}",
+    ...options,
+  });
+
+/**
+ * Dismiss Contact At Event
+ *
+ * The contact wasn't at the calendar event, so it isn't suggested again.
+ */
+export const dismissContactAtEvent = <ThrowOnError extends boolean = false>(
+  options: Options<DismissContactAtEventData, ThrowOnError>,
+): RequestResult<
+  DismissContactAtEventResponses,
+  DismissContactAtEventErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    DismissContactAtEventResponses,
+    DismissContactAtEventErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/{contact_id}/dismissals",
     ...options,
     headers: {
       "Content-Type": "application/json",

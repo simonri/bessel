@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from sqlalchemy import TIMESTAMP, Date, Enum, ForeignKey, Integer, SmallInteger, String, Text, UniqueConstraint, Uuid, text
+from sqlalchemy import TIMESTAMP, Date, Enum, ForeignKey, Index, Integer, SmallInteger, String, Text, UniqueConstraint, Uuid, text
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -59,8 +59,6 @@ class Contact(RecordModel):
 
   # Bessel's own layer: never sent to Google, and left alone by syncs.
   tags: Mapped[list[str]] = mapped_column(ARRAY(String(50)), nullable=False, default=list, server_default=text("'{}'"))
-  keep_in_touch_days: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
-  caught_up_on: Mapped[date | None] = mapped_column(Date, nullable=True)
 
   methods: Mapped[list["ContactMethod"]] = relationship(
     back_populates="contact",
@@ -92,3 +90,47 @@ class ContactMethod(RecordModel):
   position: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
 
   contact: Mapped[Contact] = relationship(back_populates="methods", lazy="raise")
+
+
+class ContactInteractionKind(StrEnum):
+  met = "met"
+  call = "call"
+  message = "message"
+  event = "event"
+  note = "note"
+
+
+class ContactInteractionSource(StrEnum):
+  manual = "manual"
+  calendar = "calendar"
+  assistant = "assistant"
+
+
+class ContactInteraction(RecordModel):
+  """Something that happened with a contact, as the user (or Claude for them) logged it. Bessel's own data:
+  never sent to Google, and deleted with the contact."""
+
+  __tablename__ = "contact_interactions"
+
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
+  contact_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
+  occurred_on: Mapped[date] = mapped_column(Date, nullable=False)
+  kind: Mapped[ContactInteractionKind] = mapped_column(Enum(ContactInteractionKind, name="contact_interaction_kind"), nullable=False)
+  source: Mapped[ContactInteractionSource] = mapped_column(Enum(ContactInteractionSource, name="contact_interaction_source"), nullable=False)
+  note: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # The calendar event it came from ("<calendar id>:<external id>"), kept after the event itself is gone.
+  event_key: Mapped[str | None] = mapped_column(String(1100), nullable=True)
+  event_title: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+
+  __table_args__ = (Index("contact_interactions_contact_id_occurred_on_idx", "contact_id", "occurred_on"),)
+
+
+class ContactEventDismissal(RecordModel):
+  """The user said this contact wasn't at this calendar event, so it isn't suggested again."""
+
+  __tablename__ = "contact_event_dismissals"
+
+  contact_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
+  event_key: Mapped[str] = mapped_column(String(1100), nullable=False)
+
+  __table_args__ = (UniqueConstraint("contact_id", "event_key", name="contact_event_dismissals_contact_id_event_key_key"),)

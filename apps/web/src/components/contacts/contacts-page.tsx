@@ -6,6 +6,7 @@ import type {
 import { formatDistanceToNow } from "date-fns";
 import {
   Cake,
+  CalendarHeart,
   ExternalLink,
   Globe,
   Mail,
@@ -24,22 +25,20 @@ import { IconButton } from "@/components/ui-kit";
 import { useLocalDay } from "@/lib/local-day";
 import { cn } from "@/lib/utils";
 import { ContactEditor } from "./contact-editor";
-import { KeepUpPanel } from "./contact-keep-up";
+import { LogPanel } from "./contact-log";
 import {
   describeBirthday,
   groupByLetter,
   initials,
-  isCatchUpDue,
   mapsUrl,
   matchesContact,
   telUrl,
 } from "./contact-meta";
 import { Section } from "./contact-section";
-import { useCatchUpTask } from "./use-catch-up-task";
 import { useContacts } from "./use-contacts";
 
-/** The list filter: everyone, people it's time to catch up with, or one tag. */
-type Filter = { kind: "all" } | { kind: "due" } | { kind: "tag"; tag: string };
+/** The list filter: everyone, or one tag. */
+type Filter = { kind: "all" } | { kind: "tag"; tag: string };
 
 function hue(name: string): number {
   let h = 0;
@@ -116,13 +115,13 @@ function ContactDetail({
   source,
   onEdit,
   onAllowEditing,
-  keepUp,
+  log,
 }: {
   contact: ContactSchema;
   source?: ContactSourceSchema;
   onEdit: () => void;
   onAllowEditing: () => void;
-  keepUp: React.ReactNode;
+  log: React.ReactNode;
 }) {
   const subtitle = [contact.job_title, contact.organization]
     .filter(Boolean)
@@ -191,6 +190,19 @@ function ContactDetail({
             <p className="text-11 text-white/40">{birthday.next}</p>
           </Section>
         )}
+        {contact.dates.map((d) => {
+          const when = describeBirthday(d, new Date(), "years");
+          return (
+            <Section
+              key={`${d.label}-${d.month}-${d.day}`}
+              icon={CalendarHeart}
+              title={d.label}
+            >
+              <p className="text-13 text-white/85">{when.date}</p>
+              <p className="text-11 text-white/40">{when.next}</p>
+            </Section>
+          );
+        })}
         {contact.urls.length > 0 && (
           <Section icon={Globe} title="Links">
             <MethodRows
@@ -217,7 +229,7 @@ function ContactDetail({
           )}
       </div>
 
-      {keepUp}
+      {log}
 
       <footer className="flex flex-col items-center gap-2 text-11 text-white/35">
         {source?.can_edit ? (
@@ -272,10 +284,9 @@ export function ContactsPage() {
     createContact,
     deleteContact,
     allowEditing,
-    keepUp,
+    setTags,
   } = useContacts();
   const today = useLocalDay();
-  const catchUpTask = useCatchUpTask();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<Filter>({ kind: "all" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -289,11 +300,9 @@ export function ContactsPage() {
       ),
     [contacts],
   );
-  const dueCount = contacts.filter((c) => isCatchUpDue(c, today)).length;
-  // A filter whose chip is gone (the last tag removed, everyone caught up) shows everyone.
+  // A filter whose tag is gone from everyone shows everyone.
   const active: Filter =
-    (filter.kind === "tag" && !knownTags.includes(filter.tag)) ||
-    (filter.kind === "due" && dueCount === 0)
+    filter.kind === "tag" && !knownTags.includes(filter.tag)
       ? { kind: "all" }
       : filter;
   const filtered = useMemo(
@@ -301,11 +310,9 @@ export function ContactsPage() {
       contacts.filter(
         (c) =>
           matchesContact(c, search) &&
-          (active.kind === "all" ||
-            (active.kind === "due" && isCatchUpDue(c, today)) ||
-            (active.kind === "tag" && c.tags.includes(active.tag))),
+          (active.kind === "all" || c.tags.includes(active.tag)),
       ),
-    [contacts, search, active, today],
+    [contacts, search, active],
   );
   const groups = useMemo(() => groupByLetter(filtered), [filtered]);
   const selected = contacts.find((c) => c.id === selectedId) ?? null;
@@ -368,21 +375,13 @@ export function ContactsPage() {
                 : "")}
         </p>
 
-        {(knownTags.length > 0 || dueCount > 0) && (
+        {knownTags.length > 0 && (
           <fieldset
             aria-label="Filter contacts"
             className="flex shrink-0 flex-wrap gap-1 px-2.5 pb-2"
           >
             {[
               { filter: { kind: "all" } as Filter, label: "All" },
-              ...(dueCount
-                ? [
-                    {
-                      filter: { kind: "due" } as Filter,
-                      label: `Catch up (${dueCount})`,
-                    },
-                  ]
-                : []),
               ...knownTags.map((tag) => ({
                 filter: { kind: "tag", tag } as Filter,
                 label: tag,
@@ -441,12 +440,6 @@ export function ContactsPage() {
                       </span>
                     )}
                   </span>
-                  {isCatchUpDue(c, today) && (
-                    <span
-                      title="Time to catch up"
-                      className="size-1.5 shrink-0 rounded-full bg-primary-400"
-                    />
-                  )}
                 </button>
               ))}
             </div>
@@ -493,14 +486,13 @@ export function ContactsPage() {
             source={sourceOf(selected.source_id)}
             onEdit={() => setMode("edit")}
             onAllowEditing={() => allowEditing(selected.source_id)}
-            keepUp={
-              <KeepUpPanel
+            log={
+              <LogPanel
+                key={selected.id}
                 contact={selected}
                 today={today}
                 knownTags={knownTags}
-                onChange={(body) => keepUp(selected.id, body)}
-                taskMade={catchUpTask.hasTask(selected.display_name)}
-                onMakeTask={() => catchUpTask.makeTask(selected.display_name)}
+                onTags={(tags) => setTags(selected.id, tags)}
               />
             }
           />

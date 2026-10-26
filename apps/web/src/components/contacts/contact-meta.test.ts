@@ -2,11 +2,10 @@ import { describe, expect, it } from "vitest";
 import {
   daysAgo,
   describeBirthday,
-  describeCatchUp,
+  describeDate,
   describeLastSeen,
   groupByLetter,
   initials,
-  isCatchUpDue,
   matchesContact,
   sectionLetter,
   telUrl,
@@ -135,32 +134,42 @@ describe("keeping in touch", () => {
     ]);
   });
 
-  it("names the event they were seen at, or that the user caught up themselves", () => {
+  it("says how they were last seen, with the event or the note", () => {
     expect(
-      describeLastSeen({ on: day("2027-02-16"), event_title: "Lunch" }, today),
+      describeLastSeen(
+        { on: day("2027-02-16"), kind: "event", summary: "Lunch" },
+        today,
+      ),
     ).toBe("Seen 3 weeks ago - Lunch");
     expect(
-      describeLastSeen({ on: day("2027-03-08"), event_title: null }, today),
-    ).toBe("Caught up yesterday");
+      describeLastSeen(
+        { on: day("2027-03-08"), kind: "call", summary: "Moving to Berlin" },
+        today,
+      ),
+    ).toBe("Called yesterday - Moving to Berlin");
+    expect(
+      describeLastSeen(
+        { on: day("2027-03-09"), kind: "message", summary: null },
+        today,
+      ),
+    ).toBe("Messaged today");
     expect(describeLastSeen(null, today)).toBe("Not seen in the past year");
   });
 
-  it("counts down to the next catch-up and says when it's time", () => {
-    expect(describeCatchUp(day("2027-03-19"), today)).toBe(
-      "Next catch-up in 10 days",
-    );
-    expect(describeCatchUp(day("2027-03-10"), today)).toBe(
-      "Next catch-up tomorrow",
-    );
-    expect(describeCatchUp(day("2027-03-09"), today)).toBe("Time to catch up");
-    expect(describeCatchUp(day("2027-01-01"), today)).toBe("Time to catch up");
+  it("says the age for a birthday and the years for anything else", () => {
+    expect(describeDate("Birthday", 37)).toBe("Birthday, turns 37");
+    expect(describeDate("Anniversary", 12)).toBe("Anniversary, 12 years");
+    expect(describeDate("Namnsdag", null)).toBe("Namnsdag");
   });
 
-  it("is due on the day and after, never before or without keeping in touch", () => {
-    expect(isCatchUpDue({ catch_up_on: day("2027-03-09") }, today)).toBe(true);
-    expect(isCatchUpDue({ catch_up_on: day("2027-03-01") }, today)).toBe(true);
-    expect(isCatchUpDue({ catch_up_on: day("2027-03-10") }, today)).toBe(false);
-    expect(isCatchUpDue({ catch_up_on: null }, today)).toBe(false);
+  it("counts an anniversary in years rather than as an age", () => {
+    expect(
+      describeBirthday(
+        { month: 3, day: 12, year: 2015 },
+        new Date(2027, 2, 9),
+        "years",
+      ),
+    ).toEqual({ date: "12 March 2015", next: "In 3 days - 12 years" });
   });
 
   it("names a coming day by weekday within the week, then by date", () => {

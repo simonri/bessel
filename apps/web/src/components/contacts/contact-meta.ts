@@ -1,5 +1,6 @@
 import type {
   ContactBirthday,
+  ContactInteractionKind,
   ContactSchema,
   ContactSighting,
 } from "@bessel/client";
@@ -74,6 +75,7 @@ export function matchesContact(
 export function describeBirthday(
   birthday: ContactBirthday,
   today: Date,
+  counting: "age" | "years" = "age",
 ): { date: string; next: string } {
   const label = format(
     new Date(2000, birthday.month - 1, birthday.day),
@@ -93,7 +95,12 @@ export function describeBirthday(
   const when =
     days === 0 ? "Today" : days === 1 ? "Tomorrow" : `In ${days} days`;
   const age = birthday.year ? upcoming.getFullYear() - birthday.year : null;
-  return { date, next: age ? `${when} - turns ${age}` : when };
+  if (!age) return { date, next: when };
+  return {
+    date,
+    next:
+      counting === "age" ? `${when} - turns ${age}` : `${when} - ${age} years`,
+  };
 }
 
 export function mapsUrl(address: string): string {
@@ -104,15 +111,6 @@ export function mapsUrl(address: string): string {
 export function telUrl(number: string): string {
   return `tel:${number.replace(/\(0\)/g, "").replace(/[^\d+]/g, "")}`;
 }
-
-export const KEEP_IN_TOUCH = [
-  { days: 7, label: "Every week" },
-  { days: 14, label: "Every 2 weeks" },
-  { days: 30, label: "Every month" },
-  { days: 91, label: "Every 3 months" },
-  { days: 182, label: "Every 6 months" },
-  { days: 365, label: "Every year" },
-] as const;
 
 /** An API date (a day, read as UTC midnight) as "yyyy-mm-dd". */
 export function apiDay(date: Date): string {
@@ -132,31 +130,30 @@ export function daysAgo(day: string, today: string): string {
   return `${Math.round(days / 30.4)} months ago`;
 }
 
-/** "Seen 3 weeks ago - Lunch with Anna", "Caught up yesterday", or that they haven't been seen. */
+const SEEN_VERB: Record<ContactInteractionKind, string> = {
+  met: "Seen",
+  event: "Seen",
+  call: "Called",
+  message: "Messaged",
+  note: "Noted",
+};
+
+/** "Seen 3 weeks ago - Lunch with Anna", "Called yesterday - Moving to Berlin", or that they haven't been seen. */
 export function describeLastSeen(
   seen: ContactSighting | null | undefined,
   today: string,
 ): string {
   if (!seen) return "Not seen in the past year";
-  const when = daysAgo(apiDay(seen.on), today);
-  return seen.event_title
-    ? `Seen ${when} - ${seen.event_title}`
-    : `Caught up ${when}`;
+  const when = `${SEEN_VERB[seen.kind]} ${daysAgo(apiDay(seen.on), today)}`;
+  return seen.summary ? `${when} - ${seen.summary}` : when;
 }
 
-/** When keeping in touch says to be in touch next. */
-export function describeCatchUp(catchUpOn: Date, today: string): string {
-  const days = daysBetween(today, apiDay(catchUpOn));
-  if (days <= 0) return "Time to catch up";
-  if (days === 1) return "Next catch-up tomorrow";
-  return `Next catch-up in ${days} days`;
-}
-
-export function isCatchUpDue(
-  contact: Pick<ContactSchema, "catch_up_on">,
-  today: string,
-): boolean {
-  return !!contact.catch_up_on && apiDay(contact.catch_up_on) <= today;
+/** "Birthday, turns 37", "Anniversary, 12 years", or just the label when the year isn't known. */
+export function describeDate(label: string, years: number | null): string {
+  if (!years) return label;
+  return label === "Birthday"
+    ? `${label}, turns ${years}`
+    : `${label}, ${years} years`;
 }
 
 /** When a coming day falls: "Today", "Tomorrow", "Saturday" within the week, else "14 March". */

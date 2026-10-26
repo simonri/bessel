@@ -1,18 +1,22 @@
 import SwiftUI
 import UIKit
 
-/// One person: call, message or email them in a tap, everything Google has on
-/// them, and Bessel's own notes on keeping in touch. Google's fields are
-/// edited in the Contacts app, which syncs them back.
+/// One person: call, message or email them in a tap, a log of when you were
+/// in touch, and everything Google has on them. Google's fields are edited in
+/// the Contacts app, which syncs them back.
 struct ContactDetailView: View {
     let store: ContactsStore
     let contactID: UUID
 
     @Environment(\.openURL) private var openURL
-    @Environment(ToastCenter.self) private var toasts
     @State private var addingTag = false
     @State private var newTag = ""
     @FocusState private var tagFieldFocused: Bool
+    @State private var note = ""
+    @State private var kind: ContactInteractionKind = .met
+    @State private var isLogging = false
+    @State private var logged = 0
+    @State private var historyError: String?
 
     var body: some View {
         Group {
@@ -27,58 +31,81 @@ struct ContactDetailView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Theme.background)
         .navigationBarTitleDisplayMode(.inline)
-        .task { await store.reload(contactID) }
+        .task { await reload() }
+    }
+
+    private func reload() async {
+        let store = store
+        let id = contactID
+        async let history = store.loadInteractions(id)
+        await store.reload(id)
+        historyError = await history
     }
 
     private func content(_ contact: ContactItem) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                header(contact)
-                actions(contact)
-                keepingInTouch(contact)
-                if !contact.phones.isEmpty {
-                    section("Phone") {
-                        methodRows(contact.phones, systemImage: "phone", url: ContactText.callURL)
-                    }
+        List {
+            Section {
+                VStack(spacing: 20) {
+                    header(contact)
+                    actions(contact)
                 }
-                if !contact.emails.isEmpty {
-                    section("Email") {
-                        methodRows(contact.emails, systemImage: "envelope", url: ContactText.emailURL)
-                    }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+            }
+            logSection(contact)
+            historySection(contact)
+            section("Tags") {
+                tags(contact)
+                    .cardRow()
+            }
+            if !contact.phones.isEmpty {
+                section("Phone") {
+                    methodRows(contact.phones, systemImage: "phone", url: ContactText.callURL)
                 }
-                if !contact.addresses.isEmpty {
-                    section("Address") {
-                        methodRows(contact.addresses, systemImage: "map", url: ContactText.mapsURL)
-                    }
+            }
+            if !contact.emails.isEmpty {
+                section("Email") {
+                    methodRows(contact.emails, systemImage: "envelope", url: ContactText.emailURL)
                 }
-                if let birthday = contact.birthday {
-                    section("Birthday") {
-                        Label(ContactText.birthday(birthday), systemImage: "gift")
-                            .foregroundStyle(Theme.foreground)
-                            .card()
-                    }
+            }
+            if !contact.addresses.isEmpty {
+                section("Address") {
+                    methodRows(contact.addresses, systemImage: "map", url: ContactText.mapsURL)
                 }
-                if !contact.urls.isEmpty {
-                    section("Links") {
-                        methodRows(contact.urls, systemImage: "link", url: ContactText.linkURL)
+            }
+            if contact.birthday != nil || !contact.dates.isEmpty {
+                section(contact.dates.isEmpty ? "Birthday" : "Dates") {
+                    if let birthday = contact.birthday {
+                        dateRow(label: contact.dates.isEmpty ? nil : "Birthday", text: ContactText.birthday(birthday), systemImage: "gift")
                     }
-                }
-                if let notes = contact.notes, !notes.isEmpty {
-                    section("Notes") {
-                        Text(notes)
-                            .foregroundStyle(Theme.foreground)
-                            .textSelection(.enabled)
-                            .card()
+                    ForEach(Array(contact.dates.enumerated()), id: \.offset) { _, date in
+                        dateRow(label: ContactText.methodLabel(date.label), text: ContactText.date(date), systemImage: "calendar")
                     }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 32)
+            if !contact.urls.isEmpty {
+                section("Links") {
+                    methodRows(contact.urls, systemImage: "link", url: ContactText.linkURL)
+                }
+            }
+            if let notes = contact.notes, !notes.isEmpty {
+                section("Notes") {
+                    Text(notes)
+                        .foregroundStyle(Theme.foreground)
+                        .textSelection(.enabled)
+                        .cardRow()
+                }
+            }
         }
+        .listStyle(.insetGrouped)
+        .listSectionSpacing(18)
+        .scrollContentBackground(.hidden)
         .scrollDismissesKeyboard(.immediately)
         .contentMargins(.bottom, 80, for: .scrollContent)
         .solidTopEdge()
-        .refreshable { await store.reload(contactID) }
+        .refreshable { await reload() }
+        .haptic(.success, trigger: logged)
     }
 
     // MARK: - Header
@@ -135,64 +162,92 @@ struct ContactDetailView: View {
         .disabled(url == nil)
     }
 
-    // MARK: - Keeping in touch
+    // MARK: - The log
 
-    /// Bessel's own layer, which never reaches Google.
-    private func keepingInTouch(_ contact: ContactItem) -> some View {
-        let caughtUpToday = contact.wasCaughtUp(on: .now)
-        return section("Keeping in touch") {
-            VStack(alignment: .leading, spacing: 14) {
-                Label(ContactText.lastSeen(contact.lastSeen), systemImage: "eye")
-                    .foregroundStyle(Theme.foreground)
-                Button {
-                    Task { await store.markCaughtUp(contact, toasts: toasts) }
-                } label: {
-                    Label("Caught up today", systemImage: caughtUpToday ? "checkmark" : "hand.wave")
-                        .font(.body.weight(.semibold))
-                        .frame(maxWidth: .infinity)
+    /// When you were last in touch, and a line to log what happened today.
+    private func logSection(_ contact: ContactItem) -> some View {
+        section("Log") {
+            Label(ContactText.lastSeen(contact.lastSeen), systemImage: "eye")
+                .foregroundStyle(Theme.foreground)
+                .cardRow()
+            TextField("What happened?", text: $note, axis: .vertical)
+                .lineLimit(1...4)
+                .cardRow()
+            Picker("Kind", selection: $kind) {
+                ForEach(ContactInteractionKind.loggable, id: \.self) { kind in
+                    Text(kind.label).tag(kind)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Theme.primary)
-                .controlSize(.large)
-                .disabled(caughtUpToday)
-                Divider()
-                HStack {
-                    Label("Keep in touch", systemImage: "arrow.triangle.2.circlepath")
-                        .foregroundStyle(Theme.foreground)
-                    Spacer()
-                    keepInTouchPicker(contact)
-                }
-                if contact.keepInTouchDays != nil, let due = contact.catchUpOn {
-                    Text(ContactText.nextCatchUp(due))
-                        .font(.subheadline)
-                        .foregroundStyle(ContactText.daysBetween(.now, and: due) < 1 ? Theme.primary : Theme.mutedForeground)
-                }
-                Divider()
-                tags(contact)
             }
-            .card()
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .cardRow()
+            Button {
+                log(contact)
+            } label: {
+                Label("Log", systemImage: "plus")
+                    .font(.body.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Theme.primary)
+            .controlSize(.large)
+            .disabled(isLogging || (kind == .note && note.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty))
+            .cardRow()
         }
-        .haptic(.success, trigger: caughtUpToday) { _, isCaughtUp in isCaughtUp }
     }
 
-    private func keepInTouchPicker(_ contact: ContactItem) -> some View {
-        Picker("Keep in touch", selection: Binding(
-            get: { contact.keepInTouchDays },
-            set: { days in Task { await store.setKeepInTouch(contact, days: days) } }
-        )) {
-            Text(KeepInTouch.label(nil)).tag(Int?.none)
-            ForEach(KeepInTouch.presets, id: \.days) { preset in
-                Text(preset.label).tag(Int?.some(preset.days))
+    private func log(_ contact: ContactItem) {
+        let typed = note
+        let picked = kind
+        isLogging = true
+        Task {
+            if await store.log(contact, kind: picked, note: typed) {
+                note = ""
+                logged += 1
             }
-            // A cadence set on the desktop that isn't one of these.
-            if let days = contact.keepInTouchDays, !KeepInTouch.isPreset(days) {
-                Text(KeepInTouch.label(days)).tag(Int?.some(days))
-            }
+            isLogging = false
         }
-        .pickerStyle(.menu)
-        .labelsHidden()
-        .tint(Theme.mutedForeground)
     }
+
+    /// The log and the calendar events they were surely at, newest first.
+    /// Logged entries swipe away; calendar ones come back with the event.
+    private func historySection(_ contact: ContactItem) -> some View {
+        let entries = store.interactions[contactID]
+        return Section {
+            if let entries {
+                if entries.isEmpty {
+                    Text("Nothing logged yet")
+                        .foregroundStyle(Theme.mutedForeground)
+                        .cardRow()
+                }
+                ForEach(entries, id: \.listKey) { entry in
+                    InteractionRow(entry: entry)
+                        .cardRow()
+                        .swipeActions(edge: .trailing) {
+                            if entry.id != nil {
+                                Button(role: .destructive) {
+                                    Task { await store.delete(entry, of: contact) }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                        }
+                }
+            } else if let historyError {
+                Text(historyError)
+                    .foregroundStyle(Theme.mutedForeground)
+                    .cardRow()
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .cardRow()
+            }
+        } header: {
+            SectionHeading(title: "History", count: entries.map(\.count))
+        }
+    }
+
+    // MARK: - Tags
 
     private func tags(_ contact: ContactItem) -> some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -244,50 +299,104 @@ struct ContactDetailView: View {
     // MARK: - Google's fields
 
     private func section(_ title: String, @ViewBuilder content: () -> some View) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            SectionHeading(title: title)
-                .padding(.horizontal, 4)
+        Section {
             content()
+        } header: {
+            SectionHeading(title: title)
         }
     }
 
     /// Numbers, emails, addresses or links: each opens where it should on a
     /// tap, and can be copied with a long press.
     private func methodRows(_ methods: [ContactMethod], systemImage: String, url: @escaping (String) -> URL?) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ForEach(Array(methods.enumerated()), id: \.offset) { index, method in
-                if index > 0 { Divider() }
-                Button {
-                    if let target = url(method.value) { openURL(target) }
-                } label: {
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            if let label = ContactText.methodLabel(method.label) {
-                                Text(label)
-                                    .font(.caption)
-                                    .foregroundStyle(Theme.mutedForeground)
-                            }
-                            Text(method.display)
-                                .foregroundStyle(Theme.primary)
-                                .multilineTextAlignment(.leading)
+        ForEach(Array(methods.enumerated()), id: \.offset) { _, method in
+            Button {
+                if let target = url(method.value) { openURL(target) }
+            } label: {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        if let label = ContactText.methodLabel(method.label) {
+                            Text(label)
+                                .font(.caption)
+                                .foregroundStyle(Theme.mutedForeground)
                         }
-                        Spacer(minLength: 0)
-                        Image(systemName: systemImage)
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(Theme.faintForeground)
+                        Text(method.display)
+                            .foregroundStyle(Theme.primary)
+                            .multilineTextAlignment(.leading)
                     }
-                    .contentShape(Rectangle())
+                    Spacer(minLength: 0)
+                    Image(systemName: systemImage)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(Theme.faintForeground)
                 }
-                .buttonStyle(.plain)
-                .contextMenu {
-                    Button {
-                        UIPasteboard.general.string = method.value
-                    } label: {
-                        Label("Copy", systemImage: "doc.on.doc")
-                    }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .contextMenu {
+                Button {
+                    UIPasteboard.general.string = method.value
+                } label: {
+                    Label("Copy", systemImage: "doc.on.doc")
                 }
             }
+            .cardRow()
         }
-        .card()
+    }
+
+    /// A birthday or another date, with its label when there's more than one.
+    private func dateRow(label: String?, text: String, systemImage: String) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                if let label {
+                    Text(label)
+                        .font(.caption)
+                        .foregroundStyle(Theme.mutedForeground)
+                }
+                Text(text)
+                    .foregroundStyle(Theme.foreground)
+            }
+            Spacer(minLength: 0)
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(Theme.faintForeground)
+        }
+        .cardRow()
+    }
+}
+
+/// One entry in a contact's history: what kind it was, the event or note, and when.
+private struct InteractionRow: View {
+    let entry: ContactInteraction
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: entry.kind.systemImage)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(Theme.mutedForeground)
+                .frame(width: 24)
+                .padding(.top, 2)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.headline)
+                    .foregroundStyle(Theme.foreground)
+                if let detail = entry.detail {
+                    Text(detail)
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.mutedForeground)
+                }
+                Text(ContactText.entryCaption(entry))
+                    .font(.caption)
+                    .foregroundStyle(Theme.faintForeground)
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private extension View {
+    /// A row on the page's cards, as in the contacts list.
+    func cardRow() -> some View {
+        listRowBackground(Theme.card)
+            .listRowSeparatorTint(Theme.border)
     }
 }

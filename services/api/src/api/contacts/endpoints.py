@@ -7,20 +7,37 @@ from api.calendars.google import CONTACTS_WRITE_SCOPE
 from api.calendars.service import calendar_service
 from api.common.pagination import PaginationParamsQuery
 from api.contacts.editing import contact_editor
-from api.contacts.keeping import contact_schema, contact_schemas, reminders, update_keep_up
+from api.contacts.keeping import (
+  contact_schema,
+  contact_schemas,
+  delete_interaction,
+  dismiss_event,
+  follow_ups,
+  log_interaction,
+  meeting_brief,
+  reminders,
+  timeline,
+  update_tags,
+)
 from api.contacts.repository import ContactRepository, ContactSourceRepository
 from api.contacts.schemas import (
   ContactAuthorizeResponse,
   ContactCreate,
-  ContactKeepUpUpdate,
+  ContactEventDismiss,
+  ContactFollowUp,
+  ContactInteractionCreate,
+  ContactInteractionSchema,
   ContactListResponse,
   ContactReminders,
   ContactSchema,
   ContactSourceSchema,
+  ContactTagsUpdate,
   ContactUpdate,
+  MeetingBrief,
 )
 from api.contacts.service import request_sync
 from api.exceptions import ResourceNotFound
+from api.models.contact import ContactInteractionSource
 from api.postgres import DBSession
 from api.redis import Redis, get_redis
 from api.users.dependencies import CurrentDBUser
@@ -65,10 +82,24 @@ async def sync_contacts(session: DBSession, current_user: CurrentDBUser) -> None
 async def get_contact_reminders(
   session: DBSession,
   current_user: CurrentDBUser,
-  days: int = Query(default=14, ge=1, le=366, description="How many days ahead to look for birthdays, today included."),
+  days: int = Query(default=14, ge=1, le=366, description="How many days ahead to look, today included."),
 ) -> ContactReminders:
-  """Upcoming birthdays, and the people it's time to be in touch with."""
+  """Birthdays and other dates coming up in the address book."""
   return await reminders(session, current_user, days=days)
+
+
+@router.get("/follow-ups", summary="List Contact Follow Ups", response_model=list[ContactFollowUp])
+async def list_contact_follow_ups(session: DBSession, current_user: CurrentDBUser) -> list[ContactFollowUp]:
+  """Calendar events that ended lately with people who were there ("anything to note?") or might have been ("were they?")."""
+  return await follow_ups(session, current_user)
+
+
+@router.get("/brief", summary="Get Meeting Brief", response_model=MeetingBrief)
+async def get_meeting_brief(
+  session: DBSession, current_user: CurrentDBUser, calendar_event_id: Annotated[UUID, Query(description="The calendar event to brief.")]
+) -> MeetingBrief:
+  """Who of the user's contacts is at an event, with when they were last seen and what was logged with them lately."""
+  return await meeting_brief(session, current_user, calendar_event_id)
 
 
 @router.get("/{contact_id}", summary="Get Contact", response_model=ContactSchema)
@@ -105,10 +136,35 @@ async def update_contact(
   return await contact_schema(session, current_user, contact)
 
 
-@router.patch("/{contact_id}/keep-up", summary="Update Contact Keep Up", response_model=ContactSchema)
-async def update_contact_keep_up(session: DBSession, current_user: CurrentDBUser, contact_id: UUID, body: ContactKeepUpUpdate) -> ContactSchema:
-  """Changes Bessel's own fields on a contact (tags, keeping in touch, the last catch-up), which never reach Google."""
-  return await update_keep_up(session, current_user, contact_id, body.model_dump(exclude_unset=True))
+@router.put("/{contact_id}/tags", summary="Update Contact Tags", response_model=ContactSchema)
+async def update_contact_tags(session: DBSession, current_user: CurrentDBUser, contact_id: UUID, body: ContactTagsUpdate) -> ContactSchema:
+  """Replaces Bessel's own tags on a contact, which never reach Google."""
+  return await update_tags(session, current_user, contact_id, body.tags)
+
+
+@router.get("/{contact_id}/interactions", summary="List Contact Interactions", response_model=list[ContactInteractionSchema])
+async def list_contact_interactions(session: DBSession, current_user: CurrentDBUser, contact_id: UUID) -> list[ContactInteractionSchema]:
+  """What was logged with someone, and the calendar events they were surely at, newest first."""
+  return await timeline(session, current_user, contact_id)
+
+
+@router.post("/{contact_id}/interactions", summary="Log Contact Interaction", response_model=ContactInteractionSchema, status_code=201)
+async def log_contact_interaction(
+  session: DBSession, current_user: CurrentDBUser, contact_id: UUID, body: ContactInteractionCreate
+) -> ContactInteractionSchema:
+  """Adds to someone's log, kept in Bessel only. Logging a calendar event they were at again updates its note."""
+  return await log_interaction(session, current_user, contact_id, body.model_dump(exclude_unset=True), source=ContactInteractionSource.manual)
+
+
+@router.delete("/{contact_id}/interactions/{interaction_id}", summary="Delete Contact Interaction", status_code=204)
+async def delete_contact_interaction(session: DBSession, current_user: CurrentDBUser, contact_id: UUID, interaction_id: UUID) -> None:
+  await delete_interaction(session, current_user, contact_id, interaction_id)
+
+
+@router.post("/{contact_id}/dismissals", summary="Dismiss Contact At Event", status_code=204)
+async def dismiss_contact_at_event(session: DBSession, current_user: CurrentDBUser, contact_id: UUID, body: ContactEventDismiss) -> None:
+  """The contact wasn't at the calendar event, so it isn't suggested again."""
+  await dismiss_event(session, current_user, contact_id, body.calendar_event_id)
 
 
 @router.delete("/{contact_id}", summary="Delete Contact", status_code=204)

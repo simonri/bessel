@@ -151,7 +151,13 @@ AUDITED: set[str] = {
   "DELETE /v1/contacts/{contact_id}",
   "POST /v1/contacts/sources/{source_id}/authorize",
   "GET /v1/contacts/reminders",
-  "PATCH /v1/contacts/{contact_id}/keep-up",
+  "PUT /v1/contacts/{contact_id}/tags",
+  "GET /v1/contacts/follow-ups",
+  "GET /v1/contacts/brief",
+  "GET /v1/contacts/{contact_id}/interactions",
+  "POST /v1/contacts/{contact_id}/interactions",
+  "DELETE /v1/contacts/{contact_id}/interactions/{interaction_id}",
+  "POST /v1/contacts/{contact_id}/dismissals",
   "GET /v1/recipes/{recipe_id}/cooks",
   "PUT /v1/recipes/{recipe_id}/cooks/{cooked_on}",
   "DELETE /v1/recipes/{recipe_id}/cooks/{cooked_on}",
@@ -359,7 +365,6 @@ class TestContacts:
       display_name="A's friend",
       birthday_month=1,
       birthday_day=1,
-      keep_in_touch_days=1,
       methods=[ContactMethod(kind=ContactMethodKind.phone, value="+46701234567")],
     )
     await save_fixture(contact)
@@ -372,11 +377,27 @@ class TestContacts:
     assert (await other_client.get("/v1/contacts/sources")).json() == []
     assert (await other_client.post("/v1/contacts/sync")).status_code == 202
     assert queued == []
-    assert (await other_client.get("/v1/contacts/reminders", params={"days": 366})).json() == {"birthdays": [], "catch_up": []}
-    assert (await other_client.patch(f"/v1/contacts/{contact.id}/keep-up", json={"tags": ["pwned"]})).status_code == 404
+    assert (await other_client.get("/v1/contacts/reminders", params={"days": 366})).json() == {"dates": []}
+    assert (await other_client.put(f"/v1/contacts/{contact.id}/tags", json={"tags": ["pwned"]})).status_code == 404
+    entry = (await client.post(f"/v1/contacts/{contact.id}/interactions", json={"note": "A's secret"})).json()
+    assert (await other_client.get(f"/v1/contacts/{contact.id}/interactions")).status_code == 404
+    assert (await other_client.post(f"/v1/contacts/{contact.id}/interactions", json={"note": "planted"})).status_code == 404
+    assert (await other_client.delete(f"/v1/contacts/{contact.id}/interactions/{entry['id']}")).status_code == 404
+    calendar = Calendar(account_id=account.id, external_id="a-cal", name="A", color="#000000")
+    await save_fixture(calendar)
+    event = CalendarEvent(
+      calendar_id=calendar.id, external_id="e1", title="A's friend lunch", all_day=True, start_date=date.today() - timedelta(days=1), end_date=date.today()
+    )
+    await save_fixture(event)
+    assert (await other_client.get("/v1/contacts/follow-ups")).json() == []
+    assert (await other_client.get("/v1/contacts/brief", params={"calendar_event_id": str(event.id)})).status_code == 404
+    assert (await other_client.post(f"/v1/contacts/{contact.id}/dismissals", json={"calendar_event_id": str(event.id)})).status_code == 404
 
     assert [(c["display_name"], c["tags"]) for c in (await client.get("/v1/contacts")).json()["items"]] == [("A's friend", [])]
-    assert [b["contact"]["display_name"] for b in (await client.get("/v1/contacts/reminders", params={"days": 366})).json()["birthdays"]] == ["A's friend"]
+    assert [d["contact"]["display_name"] for d in (await client.get("/v1/contacts/reminders", params={"days": 366})).json()["dates"]] == ["A's friend"]
+    timeline = (await client.get(f"/v1/contacts/{contact.id}/interactions")).json()
+    assert [(e["note"], e["source"]) for e in timeline] == [("A's secret", "manual"), (None, "calendar")]
+    assert [f["event"]["title"] for f in (await client.get("/v1/contacts/follow-ups")).json()] == ["A's friend lunch"]
 
   @pytest.mark.asyncio
   async def test_other_user_cannot_change_add_to_or_delete_contacts(

@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Annotated
 from uuid import UUID
 
@@ -5,12 +6,15 @@ from mcp.server.mcpserver import Context
 from pydantic import Field
 
 from api.common.schemas import Schema
-from api.contacts.keeping import contact_schema, reminders
+from api.contacts.keeping import contact_schema, meeting_brief, reminders, timeline
+from api.contacts.keeping import log_interaction as log_contact_interaction
 from api.contacts.repository import ContactRepository
-from api.contacts.schemas import ContactReminders, ContactSchema
+from api.contacts.schemas import ContactInteractionSchema, ContactReminders, ContactSchema, MeetingBrief
 from api.mcp.context import user_session
-from api.mcp.tools.common import ToolSpec, read
-from api.models.contact import ContactMethodKind
+from api.mcp.tools.common import ToolSpec, read, write
+from api.models.contact import ContactInteractionKind, ContactInteractionSource, ContactMethodKind
+
+RECENT_ENTRIES = 10
 
 
 class ContactSummary(Schema):
@@ -54,27 +58,57 @@ async def find_contacts(
   return Contacts(total_count=total_count, contacts=contacts)
 
 
-async def get_contact(ctx: Context, contact_id: UUID) -> ContactSchema:
-  """One person with every way to reach them, their addresses, birthday and the address book's notes, plus
-  Bessel's own tags, when the user last saw them and when they meant to be in touch next."""
+class ContactWithLog(Schema):
+  contact: ContactSchema
+  recent: list[ContactInteractionSchema] = Field(description="What was logged with them and calendar events they were at, newest first.")
+
+
+async def get_contact(ctx: Context, contact_id: UUID) -> ContactWithLog:
+  """One person with every way to reach them, their addresses, birthday and other dates, the address book's notes,
+  Bessel's own tags, when the user last saw them, and the latest of what's logged with them."""
   async with user_session(ctx) as (session, user):
     contact = await ContactRepository.from_session(session).get_owned_or_404(contact_id, user.id, not_found_message="Contact not found.")
-    return await contact_schema(session, user, contact)
+    detail = await contact_schema(session, user, contact)
+    recent = (await timeline(session, user, contact_id))[:RECENT_ENTRIES]
+    return ContactWithLog(contact=detail, recent=recent)
 
 
 async def get_contact_reminders(
   ctx: Context,
-  days: Annotated[int, Field(ge=1, le=366, description="How many days ahead to look for birthdays, today included.")] = 14,
+  days: Annotated[int, Field(ge=1, le=366, description="How many days ahead to look, today included.")] = 14,
 ) -> ContactReminders:
-  """Upcoming birthdays in the user's address book, and the people they wanted to keep in touch with whom it's
-  time to contact again. Good for a morning briefing or planning the week."""
+  """Birthdays, anniversaries and other dates coming up in the user's address book. Good for a morning briefing."""
   async with user_session(ctx) as (session, user):
     return await reminders(session, user, days=days)
 
 
-# Read-only: the address book is shared with the phone, and nothing over MCP changes or deletes it.
+async def get_meeting_brief(ctx: Context, calendar_event_id: UUID) -> MeetingBrief:
+  """Who of the user's contacts is at a calendar event (from get_calendar_events), with when they last saw each
+  and what was logged with them lately. Use it to prepare for a meeting."""
+  async with user_session(ctx) as (session, user):
+    return await meeting_brief(session, user, calendar_event_id)
+
+
+async def log_interaction(
+  ctx: Context,
+  contact_id: UUID,
+  note: Annotated[str | None, Field(max_length=2000, description="What happened or what they said, in a sentence or two.")] = None,
+  kind: ContactInteractionKind = ContactInteractionKind.met,
+  occurred_on: Annotated[date | None, Field(description="Defaults to today; can't be in the future.")] = None,
+) -> ContactInteractionSchema:
+  """Log something that happened with a contact ("had lunch with Anna, she's moving to Berlin") in the user's own log in
+  Bessel. It never changes the address book itself. Use kind 'note' for something learned about them without meeting."""
+  async with user_session(ctx) as (session, user):
+    body = {"note": note, "kind": kind, "occurred_on": occurred_on}
+    return await log_contact_interaction(session, user, contact_id, body, source=ContactInteractionSource.assistant)
+
+
+# The address book itself is shared with the phone and only read here; the one write adds to Bessel's own log.
+# Nothing over MCP deletes.
 TOOLS: list[ToolSpec] = [
   read(find_contacts, "Find contacts"),
   read(get_contact, "Get contact"),
   read(get_contact_reminders, "Get contact reminders"),
+  read(get_meeting_brief, "Get meeting brief"),
+  write(log_interaction, "Log contact interaction"),
 ]

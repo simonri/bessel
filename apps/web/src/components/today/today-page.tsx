@@ -14,12 +14,12 @@ import { ArrowRight, Play } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import type { TimedCalendarEvent } from "@/components/calendar/calendar-types";
 import { toCalendarEvent } from "@/components/calendar/use-calendar-data";
+import { describeDate, upcomingDay } from "@/components/contacts/contact-meta";
 import {
-  apiDay,
-  daysAgo,
-  upcomingDay,
-} from "@/components/contacts/contact-meta";
-import { useCatchUpTask } from "@/components/contacts/use-catch-up-task";
+  FollowUpList,
+  useHasFollowUps,
+} from "@/components/contacts/follow-ups";
+import { MeetingBrief } from "@/components/contacts/meeting-brief";
 import { useOpenPage } from "@/components/open-page-context";
 import type { PageKey } from "@/components/pages";
 import { localNightBounds } from "@/components/sleep/sleep-summary";
@@ -118,6 +118,7 @@ function NextUp({ now }: { now: Date }) {
                 ? ` - ${next.event.details.location}`
                 : ""}
             </p>
+            <MeetingBrief eventId={next.event.id} />
           </div>
           <span className="shrink-0 text-13 font-medium tabular-nums text-primary-300">
             {next.ongoing
@@ -271,54 +272,40 @@ function ScreenTimeBlock({ now }: { now: Date }) {
   );
 }
 
-/** Birthdays this week and people it's time to catch up with; hidden when there are none. */
+/** Follow-ups from the calendar and birthdays or other dates this week; hidden when there are none. */
 export function PeopleBlock() {
   const today = useLocalDay();
   const { data } = useQuery(
     getContactRemindersOptions({ client, query: { days: 7 } }),
   );
-  const { makeTask, hasTask } = useCatchUpTask();
-  if (!data || (!data.birthdays.length && !data.catch_up.length)) return null;
+  const hasFollowUps = useHasFollowUps();
+  if (!hasFollowUps && !data?.dates.length) return null;
   return (
     <Block title="People" page="contacts" linkLabel="Contacts">
-      <ul className="flex flex-col gap-1.5">
-        {data.birthdays.map((b) => (
-          <li
-            key={`birthday-${b.contact.id}`}
-            className="flex items-center justify-between gap-3 text-13"
-          >
-            <span className="min-w-0 truncate text-white/85">
-              {b.contact.display_name}
-              {b.turns ? ` turns ${b.turns}` : " has a birthday"}
-            </span>
-            <span className="shrink-0 text-12 text-primary-300">
-              {upcomingDay(b.on, today)}
-            </span>
-          </li>
-        ))}
-        {data.catch_up.map((c) => (
-          <li
-            key={`catch-up-${c.contact.id}`}
-            className="flex items-center justify-between gap-3 text-13"
-          >
-            <span className="min-w-0 truncate text-white/85">
-              Catch up with {c.contact.display_name}
-              <span className="text-white/40">
-                {" - "}
-                {c.last_seen
-                  ? `last seen ${daysAgo(apiDay(c.last_seen.on), today)}`
-                  : "not seen in the past year"}
-              </span>
-            </span>
-            <SoftButton
-              disabled={hasTask(c.contact.display_name)}
-              onClick={() => makeTask(c.contact.display_name)}
-            >
-              {hasTask(c.contact.display_name) ? "Task added" : "Make a task"}
-            </SoftButton>
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-col gap-3">
+        <FollowUpList />
+        {!!data?.dates.length && (
+          <ul aria-label="Coming up" className="flex flex-col gap-1.5">
+            {data.dates.map((d) => (
+              <li
+                key={`${d.contact.id}-${d.label}`}
+                className="flex items-center justify-between gap-3 text-13"
+              >
+                <span className="min-w-0 truncate text-white/85">
+                  {d.contact.display_name}
+                  <span className="text-white/40">
+                    {" - "}
+                    {describeDate(d.label, d.years)}
+                  </span>
+                </span>
+                <span className="shrink-0 text-12 text-primary-300">
+                  {upcomingDay(d.on, today)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </Block>
   );
 }
