@@ -1,18 +1,21 @@
 import type { TaskSchema } from "@bessel/client";
+import { cn } from "@/lib/utils";
 import { TaskRow } from "./task-row";
 import { groupTasksByWhen, type WhenGroup } from "./today-groups";
+import { WHEN_STYLE } from "./when-icon";
 
 function GroupHeader({ group }: { group: WhenGroup }) {
+  const style = WHEN_STYLE[group.key];
   return (
-    <div className="flex items-center gap-1.5 px-2.5 pb-1 type-section text-white/45">
-      {group.key === "doing" && (
-        <span
-          aria-hidden
-          className="size-1.5 animate-pulse rounded-full bg-primary-400"
-        />
+    <div
+      className={cn(
+        "mb-1 flex h-8 items-center gap-2 rounded-lg px-2.5",
+        style.band,
       )}
-      {group.label}
-      <span className="font-medium tabular-nums text-white/30">
+    >
+      <span className={cn("flex shrink-0", style.color)}>{style.icon}</span>
+      <span className="text-13 font-medium text-white/85">{group.label}</span>
+      <span className="text-12 tabular-nums text-white/40">
         {group.tasks.length}
       </span>
     </div>
