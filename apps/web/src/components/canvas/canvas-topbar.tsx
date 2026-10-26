@@ -10,7 +10,7 @@ import { TimeSinceDropdown } from "@/components/canvas/time-since-dropdown";
 import { LogsDialog } from "@/components/logs-dialog";
 import { NAV_ID } from "@/components/mobile-nav-drawer";
 import { PortsDialog } from "@/components/ports-dialog";
-import { SettingsModal } from "@/components/settings-modal";
+import { useOpenSettings } from "@/components/settings-dialog";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
 import { BesselMark } from "./bessel-mark";
@@ -30,7 +30,7 @@ export const CanvasTopBar = memo(function CanvasTopBar({
   /** On small screens, the sidebar's open state and toggle for the menu button. */
   nav?: { open: boolean; toggle: () => void };
 }) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const openSettings = useOpenSettings();
   const [logsOpen, setLogsOpen] = useState(false);
   const [portsOpen, setPortsOpen] = useState(false);
   const [version, setVersion] = useState<string | null>(null);
@@ -140,7 +140,7 @@ export const CanvasTopBar = memo(function CanvasTopBar({
           <TopbarTooltip label="Settings">
             <button
               type="button"
-              onClick={() => setSettingsOpen(true)}
+              onClick={() => openSettings()}
               aria-label="Settings"
               className={TOPBAR_ICON_BUTTON}
             >
@@ -168,10 +168,6 @@ export const CanvasTopBar = memo(function CanvasTopBar({
         </div>
       </div>
 
-      <SettingsModal
-        open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-      />
       {window.electron && (
         <LogsDialog open={logsOpen} onClose={() => setLogsOpen(false)} />
       )}

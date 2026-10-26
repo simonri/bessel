@@ -20,6 +20,7 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -38,6 +39,35 @@ export const SYNC_POLL_MS = 4_000;
 const SYNC_POLL_WINDOW_MS = 90_000;
 /** Set before leaving for a bank's approval, so the accounts page can pick up where it left off. */
 export const CONNECTING_BANK_KEY = "bessel:connecting-bank";
+
+/** Set by another part of the app (Settings) that wants the add-account dialog open on Accounts. */
+export const ADD_ACCOUNT_KEY = "bessel:add-account";
+const ADD_ACCOUNT_EVENT = "bessel:add-account";
+
+/** Asks Accounts to open its add dialog: now if it's showing, else when it next opens. */
+export function requestAddAccount() {
+  try {
+    sessionStorage.setItem(ADD_ACCOUNT_KEY, "1");
+  } catch {}
+  window.dispatchEvent(new Event(ADD_ACCOUNT_EVENT));
+}
+
+/** Calls `onRequest` once for each pending or new request to add an account. */
+export function useAddAccountRequests(onRequest: () => void) {
+  useEffect(() => {
+    const take = () => {
+      let pending = false;
+      try {
+        pending = sessionStorage.getItem(ADD_ACCOUNT_KEY) !== null;
+        sessionStorage.removeItem(ADD_ACCOUNT_KEY);
+      } catch {}
+      if (pending) onRequest();
+    };
+    take();
+    window.addEventListener(ADD_ACCOUNT_EVENT, take);
+    return () => window.removeEventListener(ADD_ACCOUNT_EVENT, take);
+  }, [onRequest]);
+}
 
 export type PickSource =
   | { kind: "bank"; bankName: string }

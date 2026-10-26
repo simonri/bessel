@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { ConfirmDeleteDialog } from "@/components/confirm-delete-dialog";
+import { ConnectInSettings } from "@/components/connect-in-settings";
 import { IconButton } from "@/components/ui-kit";
 import { useLocalDay } from "@/lib/local-day";
 import { cn } from "@/lib/utils";
@@ -505,9 +506,10 @@ export function ContactsPage() {
                   No address book connected
                 </p>
                 <p className="max-w-xs text-12 text-white/45">
-                  Connect your Google account under Calendar and its contacts
-                  show up here, kept in sync.
+                  Connect a Google account and its contacts show up here, kept
+                  in sync both ways.
                 </p>
+                <ConnectInSettings label="Connect Google" />
               </>
             ) : (
               <p className="text-12 text-white/45">

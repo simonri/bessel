@@ -10,13 +10,14 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Activity,
-  LogOut,
   PiggyBank,
+  Settings2,
   TrendingDown,
   TrendingUp,
   Wallet,
 } from "lucide-react";
-import { type FormEvent, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { ConnectInSettings } from "@/components/connect-in-settings";
 import { pastel } from "@/components/hyperliquid/coin-badge";
 import { PnlChart } from "@/components/hyperliquid/pnl-chart";
 import {
@@ -27,13 +28,8 @@ import {
 import { Segmented } from "@/components/hyperliquid/segmented";
 import { SpotList } from "@/components/hyperliquid/spot-list";
 import { StatCard } from "@/components/hyperliquid/stat-card";
-import {
-  IconButton,
-  PageHeader,
-  PrimaryButton,
-  SectionLabel,
-  TextInput,
-} from "@/components/ui-kit";
+import { useOpenSettings } from "@/components/settings-dialog";
+import { IconButton, PageHeader, SectionLabel } from "@/components/ui-kit";
 import { useSettings } from "@/hooks/use-settings";
 import {
   currentValue,
@@ -42,7 +38,6 @@ import {
   fetchSpotBalances,
   fetchSubAccounts,
   type Portfolio,
-  parseAddress,
   portfolioKey,
   RANGES,
   type Range,
@@ -80,47 +75,18 @@ function portfolioQuery(address: string) {
 }
 
 function HyperliquidPage() {
-  const { settings, update } = useSettings();
+  const { settings } = useSettings();
   const address = settings.hyperliquidAddress;
 
-  if (!address) {
-    return (
-      <ConnectForm
-        onConnect={(value) => update({ hyperliquidAddress: value })}
-      />
-    );
-  }
-  return (
-    <HyperliquidAccount
-      key={address}
-      master={address}
-      onDisconnect={() => update({ hyperliquidAddress: null })}
-    />
-  );
+  if (!address) return <NotConnected />;
+  return <HyperliquidAccount key={address} master={address} />;
 }
 
-function ConnectForm({ onConnect }: { onConnect: (address: string) => void }) {
-  const [input, setInput] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  const submit = (e: FormEvent) => {
-    e.preventDefault();
-    const address = parseAddress(input);
-    if (!address) {
-      setError(
-        "That isn't a wallet address. It looks like 0x followed by 40 characters.",
-      );
-      return;
-    }
-    onConnect(address);
-  };
-
+/** Shown until an address is added in Settings → Integrations. */
+function NotConnected() {
   return (
     <div className="flex min-h-[60%] items-center justify-center py-10">
-      <form
-        onSubmit={submit}
-        className="flex w-full max-w-md flex-col items-center gap-4 rounded-3xl bg-white/[0.03] px-6 py-8 text-center ring-1 ring-white/[0.06]"
-      >
+      <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-3xl bg-white/[0.03] px-6 py-8 text-center ring-1 ring-white/[0.06]">
         <span
           className="flex size-11 items-center justify-center rounded-full"
           style={{ backgroundColor: pastel(165, 0.16), color: pastel(165) }}
@@ -132,40 +98,18 @@ function ConnectForm({ onConnect }: { onConnect: (address: string) => void }) {
             Connect your Hyperliquid account
           </h2>
           <p className="text-12 leading-relaxed text-white/45">
-            Paste your wallet address or a Hypurrscan link. It's read-only:
-            Hyperliquid account data is public, and the address is only saved in
-            this browser.
+            Add your wallet address in Settings. It's read-only: Hyperliquid
+            account data is public.
           </p>
         </div>
-        <div className="flex w-full gap-2">
-          <TextInput
-            autoFocus
-            aria-label="Wallet address"
-            placeholder="0x… or hypurrscan.io/address/0x…"
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              setError(null);
-            }}
-            className="font-mono text-12"
-          />
-          <PrimaryButton type="submit" disabled={!input.trim()}>
-            Connect
-          </PrimaryButton>
-        </div>
-        {error && <p className="text-12 text-rose-300">{error}</p>}
-      </form>
+        <ConnectInSettings label="Add an address" />
+      </div>
     </div>
   );
 }
 
-function HyperliquidAccount({
-  master,
-  onDisconnect,
-}: {
-  master: string;
-  onDisconnect: () => void;
-}) {
+function HyperliquidAccount({ master }: { master: string }) {
+  const openSettings = useOpenSettings();
   const [selected, setSelected] = useState(master);
   const [range, setRange] = useState<Range>("month");
   const [scope, setScope] = useState<Scope>("total");
@@ -232,8 +176,12 @@ function HyperliquidAccount({
             onSelect={setSelected}
             accountValue={(a) => currentValue(portfolioOf(a))}
           />
-          <IconButton title="Disconnect" onClick={onDisconnect} size="default">
-            <LogOut />
+          <IconButton
+            title="Manage in Settings"
+            onClick={() => openSettings("integrations")}
+            size="default"
+          >
+            <Settings2 />
           </IconButton>
         </div>
       </PageHeader>

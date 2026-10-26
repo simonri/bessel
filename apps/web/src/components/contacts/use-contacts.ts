@@ -38,12 +38,9 @@ async function allContacts(): Promise<ContactSchema[]> {
   }
 }
 
-/** The whole address book (it's small), where it comes from, and ways to change it. */
-export function useContacts() {
-  const queryClient = useQueryClient();
-  const listKey = listContactsQueryKey({ client });
+/** The Google address books contacts come from, and a way to let Bessel edit one. */
+export function useContactSources() {
   const [awaitingPermissionUntil, setAwaitingPermissionUntil] = useState(0);
-  const contacts = useQuery({ queryKey: listKey, queryFn: allContacts });
   const sources = useQuery({
     queryKey: listContactSourcesQueryKey({ client }),
     queryFn: async () =>
@@ -51,6 +48,38 @@ export function useContacts() {
     refetchInterval: () =>
       Date.now() < awaitingPermissionUntil ? PERMISSION_POLL_MS : false,
   });
+  const authorize = useMutation(authorizeContactEditingMutation({ client }));
+  return {
+    sources: sources.data ?? [],
+    /** Opens Google's page for allowing edits, then watches for the permission to arrive. */
+    allowEditing: (sourceId: string) => {
+      // Browsers only allow a popup opened synchronously from the click.
+      const popup = window.electron ? null : window.open("", "_blank");
+      authorize.mutate(
+        { client, path: { source_id: sourceId } },
+        {
+          onSuccess: ({ url }) => {
+            setAwaitingPermissionUntil(Date.now() + PERMISSION_POLL_FOR_MS);
+            if (window.electron) void window.electron.shell.openExternal(url);
+            else if (popup) popup.location.href = url;
+            else window.location.assign(url);
+          },
+          onError: () => {
+            popup?.close();
+            toast.error("Google isn't available right now");
+          },
+        },
+      );
+    },
+  };
+}
+
+/** The whole address book (it's small), where it comes from, and ways to change it. */
+export function useContacts() {
+  const queryClient = useQueryClient();
+  const listKey = listContactsQueryKey({ client });
+  const contacts = useQuery({ queryKey: listKey, queryFn: allContacts });
+  const { sources, allowEditing } = useContactSources();
   const settle = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const sync = useMutation({
@@ -114,12 +143,11 @@ export function useContacts() {
     onSuccess: replace,
     onError: () => toast.error("Couldn't save the tags"),
   });
-  const authorize = useMutation(authorizeContactEditingMutation({ client }));
 
   return {
     contacts: contacts.data ?? [],
     isLoading: contacts.isPending,
-    sources: sources.data ?? [],
+    sources,
     syncNow: () => sync.mutate({ client }),
     syncing: sync.isPending || (sync.isSuccess && contacts.isFetching),
     saving: update.isPending || create.isPending,
@@ -132,25 +160,6 @@ export function useContacts() {
     /** Bessel's own tags, which never go to Google. */
     setTags: (id: string, list: string[]) =>
       tags.mutate({ client, path: { contact_id: id }, body: { tags: list } }),
-    /** Opens Google's page for allowing edits, then watches for the permission to arrive. */
-    allowEditing: (sourceId: string) => {
-      // Browsers only allow a popup opened synchronously from the click.
-      const popup = window.electron ? null : window.open("", "_blank");
-      authorize.mutate(
-        { client, path: { source_id: sourceId } },
-        {
-          onSuccess: ({ url }) => {
-            setAwaitingPermissionUntil(Date.now() + PERMISSION_POLL_FOR_MS);
-            if (window.electron) void window.electron.shell.openExternal(url);
-            else if (popup) popup.location.href = url;
-            else window.location.assign(url);
-          },
-          onError: () => {
-            popup?.close();
-            toast.error("Google isn't available right now");
-          },
-        },
-      );
-    },
+    allowEditing,
   };
 }

@@ -11,23 +11,31 @@ import {
   Laptop,
   LayoutDashboard,
   Palette,
+  Plug,
   Settings,
   X,
 } from "lucide-react";
-import { useState } from "react";
 import { AboutPage } from "@/components/settings-about-page";
 import { AppearancePage } from "@/components/settings-appearance-page";
 import { DashboardPage } from "@/components/settings-dashboard-page";
 import { DevicesPage } from "@/components/settings-devices-page";
+import { IntegrationsPage } from "@/components/settings-integrations-page";
 import { MonitorPage } from "@/components/settings-monitor-page";
 import { cn } from "@/lib/utils";
 
 const isDesktop = typeof window !== "undefined" && !!window.electron;
 
-type SidebarPage = "appearance" | "dashboard" | "devices" | "monitor" | "about";
+export type SettingsPage =
+  | "appearance"
+  | "dashboard"
+  | "integrations"
+  | "devices"
+  | "monitor"
+  | "about";
 
-const PAGE_DESCRIPTIONS: Record<SidebarPage, string> = {
+const PAGE_DESCRIPTIONS: Record<SettingsPage, string> = {
   appearance: "Customize the look and feel of your dashboard.",
+  integrations: "Everything Bessel gets data from, in one place.",
   dashboard: "Configure the top bar and widget display settings.",
   devices: "Manage the devices linked to your account.",
   monitor: "Manage the background activity tracker service.",
@@ -35,12 +43,13 @@ const PAGE_DESCRIPTIONS: Record<SidebarPage, string> = {
 };
 
 const NAV_ITEMS: {
-  key: SidebarPage;
+  key: SettingsPage;
   label: string;
   icon: React.ElementType;
 }[] = [
   { key: "appearance", label: "Appearance", icon: Palette },
   { key: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { key: "integrations", label: "Integrations", icon: Plug },
   ...(isDesktop
     ? [
         { key: "devices" as const, label: "Devices", icon: Laptop },
@@ -52,12 +61,16 @@ const NAV_ITEMS: {
 
 export function SettingsModal({
   open,
+  page,
+  onPageChange,
   onClose,
 }: {
   open: boolean;
+  page: SettingsPage;
+  onPageChange: (page: SettingsPage) => void;
   onClose: () => void;
 }) {
-  const [page, setPage] = useState<SidebarPage>("appearance");
+  const setPage = onPageChange;
   const activeItem = NAV_ITEMS.find((n) => n.key === page);
   const ActiveIcon = activeItem?.icon ?? Settings;
 
@@ -65,7 +78,7 @@ export function SettingsModal({
     <GlassDialog open={open} onOpenChange={(o) => !o && onClose()}>
       <GlassDialogContent
         showCloseButton={false}
-        className="flex h-[520px] w-full max-w-[680px] p-0"
+        className="flex h-[560px] w-full max-w-[760px] p-0"
       >
         <GlassDialogTitle className="sr-only">Settings</GlassDialogTitle>
         <GlassDialogDescription className="sr-only">
@@ -134,6 +147,7 @@ export function SettingsModal({
           <div className="min-w-0 flex-1 overflow-y-auto px-6 py-5">
             {page === "appearance" && <AppearancePage />}
             {page === "dashboard" && <DashboardPage />}
+            {page === "integrations" && <IntegrationsPage />}
             {page === "devices" && <DevicesPage />}
             {page === "monitor" && <MonitorPage />}
             {page === "about" && <AboutPage />}

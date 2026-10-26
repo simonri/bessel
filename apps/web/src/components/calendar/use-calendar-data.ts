@@ -178,13 +178,8 @@ export function toCalendarEvent(e: CalendarEventSchema): CalendarEvent | null {
 }
 
 /** Accounts, calendars and the events overlapping [start, end). */
-export function useCalendarData(range: {
-  start: Date;
-  end: Date;
-}): CalendarData {
-  const queryClient = useQueryClient();
-
-  const { data: accountsData } = useQuery({
+function useAccountsQuery() {
+  return useQuery({
     ...listCalendarAccountsOptions({ client }),
     refetchInterval: (query) => {
       const pending =
@@ -197,6 +192,24 @@ export function useCalendarData(range: {
     },
     refetchOnWindowFocus: true,
   });
+}
+
+/** The connected calendar accounts, polled while one is still on its first sync. */
+export function useCalendarAccounts(): {
+  accounts: CalendarAccount[];
+  isLoading: boolean;
+} {
+  const { data, isPending } = useAccountsQuery();
+  return { accounts: toAccounts(data).accounts, isLoading: isPending };
+}
+
+export function useCalendarData(range: {
+  start: Date;
+  end: Date;
+}): CalendarData {
+  const queryClient = useQueryClient();
+
+  const { data: accountsData } = useAccountsQuery();
 
   const startTs = Math.floor(range.start.getTime() / 1000);
   const endTs = Math.floor(range.end.getTime() / 1000);

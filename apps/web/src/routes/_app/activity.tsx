@@ -32,11 +32,13 @@ import {
 import { AppBreakdown } from "@/components/activity/app-breakdown";
 import { DayRhythm } from "@/components/activity/day-rhythm";
 import { WeekStrip } from "@/components/activity/week-strip";
+import { ConnectInSettings } from "@/components/connect-in-settings";
 import { DayNav } from "@/components/timeline/day-nav";
 import { DayRibbon } from "@/components/timeline/day-ribbon";
 import { PageHeader } from "@/components/ui-kit";
 import { useSettings } from "@/hooks/use-settings";
 import { client } from "@/lib/client";
+import { isDesktop } from "@/lib/environment";
 import { localDayBounds } from "./-activity-utils";
 import { YearGrid, yearGridRange } from "./-year-grid";
 
@@ -210,9 +212,12 @@ function ActivityPage() {
             Your screen time lives here 💻
           </p>
           <p className="max-w-sm text-12 leading-relaxed text-white/50">
-            Turn on the activity monitor in Settings → Services on your
-            computer, and Bessel will show where your hours go.
+            Turn on the activity monitor in the Bessel desktop app, and Bessel
+            will show where your hours go.
           </p>
+          {isDesktop && (
+            <ConnectInSettings label="Set up the monitor" page="monitor" />
+          )}
         </div>
       ) : (
         <>

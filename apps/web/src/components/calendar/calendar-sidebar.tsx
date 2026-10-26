@@ -18,9 +18,10 @@ import {
   Check,
   ChevronRight,
   MoreHorizontal,
-  Plus,
+  Plug,
 } from "lucide-react";
 import { useState } from "react";
+import { useOpenSettings } from "@/components/settings-dialog";
 import { IconButton } from "@/components/ui-kit";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";
@@ -30,7 +31,6 @@ import type {
   CalendarViewMode,
 } from "./calendar-types";
 import { notificationsSupported, REMINDER_MINUTES } from "./event-reminders";
-import { ICloudConnectDialog } from "./icloud-connect-dialog";
 import { MiniMonth } from "./mini-month";
 import type { CalendarActions } from "./use-calendar-data";
 
@@ -82,7 +82,7 @@ export function CalendarSidebar({
   actions: CalendarActions;
   onSelectDate: (date: Date) => void;
 }) {
-  const [icloudOpen, setICloudOpen] = useState(false);
+  const openSettings = useOpenSettings();
   const [collapsed, toggleCollapsed] = useCollapsedAccounts();
 
   return (
@@ -97,7 +97,8 @@ export function CalendarSidebar({
       <div className="mt-5 space-y-4">
         {accounts.length === 0 && (
           <p className="px-2 text-11 leading-relaxed text-white/35">
-            Connect a Google or iCloud account to see your calendars here.
+            Your calendars show up here once a Google or iCloud account is
+            connected.
           </p>
         )}
         {accounts.map((account) => (
@@ -107,8 +108,7 @@ export function CalendarSidebar({
               expanded={!collapsed.has(account.id)}
               onToggle={() => toggleCollapsed(account.id)}
               onSync={() => actions.syncAccount(account.id)}
-              onReconnect={actions.connectGoogle}
-              onDisconnect={() => actions.disconnectAccount(account.id)}
+              onManage={() => openSettings("integrations")}
             />
             {calendars
               .filter(
@@ -127,33 +127,16 @@ export function CalendarSidebar({
         ))}
       </div>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className="mt-3 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-left text-12 text-white/45 outline-none transition-colors duration-150 hover:bg-white/[0.05] hover:text-white/75 focus-visible:ring-1 focus-visible:ring-white/25"
-          >
-            <Plus className="size-3.5" />
-            Add calendar account
-          </button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          <DropdownMenuItem onSelect={actions.connectGoogle}>
-            Google Calendar
-          </DropdownMenuItem>
-          <DropdownMenuItem onSelect={() => setICloudOpen(true)}>
-            iCloud Calendar
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <button
+        type="button"
+        onClick={() => openSettings("integrations")}
+        className="mt-3 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-left text-12 text-white/45 outline-none transition-colors duration-150 hover:bg-white/[0.05] hover:text-white/75 focus-visible:ring-1 focus-visible:ring-white/25"
+      >
+        <Plug className="size-3.5" />
+        {accounts.length ? "Manage accounts" : "Connect an account"}
+      </button>
 
       <ReminderToggle />
-
-      <ICloudConnectDialog
-        open={icloudOpen}
-        onOpenChange={setICloudOpen}
-        onConnect={actions.connectICloud}
-      />
     </aside>
   );
 }
@@ -212,15 +195,14 @@ function AccountHeader({
   expanded,
   onToggle,
   onSync,
-  onReconnect,
-  onDisconnect,
+  onManage,
 }: {
   account: CalendarAccount;
   expanded: boolean;
   onToggle: () => void;
   onSync: () => void;
-  onReconnect: () => void;
-  onDisconnect: () => void;
+  /** Reconnecting and disconnecting live with the other integrations in Settings. */
+  onManage: () => void;
 }) {
   const status = account.syncError
     ? account.syncError
@@ -286,17 +268,11 @@ function AccountHeader({
           <DropdownMenuItem onSelect={onSync}>Sync now</DropdownMenuItem>
           {account.provider === "google" && !account.canReadPeople && (
             <p className="max-w-56 px-2.5 pb-1.5 text-11 text-white/40">
-              Reconnect to show guests' names and photos.
+              Reconnect in Settings to show guests' names and photos.
             </p>
           )}
-          {account.provider === "google" && (
-            // Also how newly added permissions get granted.
-            <DropdownMenuItem onSelect={onReconnect}>
-              Reconnect
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem variant="destructive" onSelect={onDisconnect}>
-            Disconnect
+          <DropdownMenuItem onSelect={onManage}>
+            Manage in Settings
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

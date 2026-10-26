@@ -12,6 +12,7 @@ import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import { NewSessionPage } from "@/components/new-session-page";
 import { OpenPageContext } from "@/components/open-page-context";
 import { isPageKey, PAGE_REGISTRY, type PageKey } from "@/components/pages";
+import { SettingsDialogProvider } from "@/components/settings-dialog";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { WINDOW_FRAME, WindowTitleBar } from "@/components/window-chrome";
@@ -195,78 +196,80 @@ export function AppShell() {
 
   return (
     <OpenPageContext.Provider value={selectPage}>
-      <ShowCanvasContext.Provider value={showCanvas}>
-        <div className="fixed inset-0">
-          <Wallpaper />
-          {isDesktop && <ClaudeSessionsBridge />}
-          {isDesktop && <AgentUsageReporter />}
+      <SettingsDialogProvider>
+        <ShowCanvasContext.Provider value={showCanvas}>
+          <div className="fixed inset-0">
+            <Wallpaper />
+            {isDesktop && <ClaudeSessionsBridge />}
+            {isDesktop && <AgentUsageReporter />}
 
-          <div className="relative flex h-full flex-col">
-            <CanvasTopBar nav={topBarNav} />
-            <div className="relative flex min-h-0 flex-1">
-              {!isMobile ? (
-                <AppSidebar
-                  activePage={newSession ? null : activePage}
-                  onSelectPage={selectPage}
-                  onNewSession={openNewSession}
-                />
-              ) : (
-                <MobileNavDrawer open={navOpen} onClose={closeNav}>
+            <div className="relative flex h-full flex-col">
+              <CanvasTopBar nav={topBarNav} />
+              <div className="relative flex min-h-0 flex-1">
+                {!isMobile ? (
                   <AppSidebar
-                    overlay
                     activePage={newSession ? null : activePage}
-                    onSelectPage={selectFromNav}
-                    onNewSession={newSessionFromNav}
+                    onSelectPage={selectPage}
+                    onNewSession={openNewSession}
                   />
-                </MobileNavDrawer>
-              )}
-              <main className="relative min-w-0 flex-1">
-                <div
-                  className="h-full"
-                  style={{
-                    display:
-                      activePage === "canvas" && !newSession
-                        ? undefined
-                        : "none",
-                  }}
-                >
-                  <CanvasPage />
-                </div>
-                {newSession ? (
-                  <PageFrame icon={SquarePlus} title="New session">
-                    <NewSessionPage
-                      key={newSession.projectId ?? ""}
-                      projectId={newSession.projectId}
-                      onCancel={closeNewSession}
-                      onCreated={showCanvas}
-                    />
-                  </PageFrame>
                 ) : (
-                  activePage !== "canvas" && (
-                    <ContentPage key={activePage} page={activePage} />
-                  )
+                  <MobileNavDrawer open={navOpen} onClose={closeNav}>
+                    <AppSidebar
+                      overlay
+                      activePage={newSession ? null : activePage}
+                      onSelectPage={selectFromNav}
+                      onNewSession={newSessionFromNav}
+                    />
+                  </MobileNavDrawer>
                 )}
-              </main>
+                <main className="relative min-w-0 flex-1">
+                  <div
+                    className="h-full"
+                    style={{
+                      display:
+                        activePage === "canvas" && !newSession
+                          ? undefined
+                          : "none",
+                    }}
+                  >
+                    <CanvasPage />
+                  </div>
+                  {newSession ? (
+                    <PageFrame icon={SquarePlus} title="New session">
+                      <NewSessionPage
+                        key={newSession.projectId ?? ""}
+                        projectId={newSession.projectId}
+                        onCancel={closeNewSession}
+                        onCreated={showCanvas}
+                      />
+                    </PageFrame>
+                  ) : (
+                    activePage !== "canvas" && (
+                      <ContentPage key={activePage} page={activePage} />
+                    )
+                  )}
+                </main>
+              </div>
             </div>
-          </div>
 
-          <CommandPalette
-            open={paletteOpen}
-            onClose={closePalette}
-            onNavigate={selectPage}
-            onOpenTask={setOpenTaskId}
-            onShowShortcuts={showShortcuts}
-          />
-          <ShortcutsDialog
-            open={shortcutsOpen}
-            onOpenChange={setShortcutsOpen}
-          />
-          <TaskDetailDialogController
-            taskId={openTaskId}
-            onOpenChange={(open) => !open && setOpenTaskId(null)}
-          />
-        </div>
-      </ShowCanvasContext.Provider>
+            <CommandPalette
+              open={paletteOpen}
+              onClose={closePalette}
+              onNavigate={selectPage}
+              onOpenTask={setOpenTaskId}
+              onShowShortcuts={showShortcuts}
+            />
+            <ShortcutsDialog
+              open={shortcutsOpen}
+              onOpenChange={setShortcutsOpen}
+            />
+            <TaskDetailDialogController
+              taskId={openTaskId}
+              onOpenChange={(open) => !open && setOpenTaskId(null)}
+            />
+          </div>
+        </ShowCanvasContext.Provider>
+      </SettingsDialogProvider>
     </OpenPageContext.Provider>
   );
 }

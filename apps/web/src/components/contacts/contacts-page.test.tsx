@@ -23,6 +23,11 @@ const api = vi.hoisted(() => ({
   entries: {} as Record<string, unknown[]>,
   log: vi.fn(),
   removeEntry: vi.fn(),
+  openSettings: vi.fn(),
+}));
+
+vi.mock("@/components/settings-dialog", () => ({
+  useOpenSettings: () => api.openSettings,
 }));
 
 vi.mock("@bessel/client", async (importOriginal) => ({
@@ -216,6 +221,8 @@ describe("ContactsPage", () => {
     mount();
 
     expect(await screen.findByText("No address book connected")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Connect Google" }));
+    expect(api.openSettings).toHaveBeenCalledWith("integrations");
   });
 
   it("edits a contact, sending only what changed, and shows what Google stored", async () => {

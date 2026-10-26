@@ -23,6 +23,7 @@ import {
   type PickSource,
   SYNC_POLL_MS,
   useAccountActions,
+  useAddAccountRequests,
 } from "@/components/accounts/account-actions";
 import { AccountPanel } from "@/components/accounts/account-panel";
 import {
@@ -59,6 +60,11 @@ function Accounts() {
     () => setAdding({ step: "pick", source: "avanza" }),
     [],
   );
+  const chooseNew = useCallback(() => {
+    setOpenId(null);
+    setAdding({ step: "choose" });
+  }, []);
+  useAddAccountRequests(chooseNew);
   const pick = useCallback((source: PickSource) => {
     setOpenId(null);
     setAdding(
