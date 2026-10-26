@@ -254,16 +254,6 @@ struct TasksView: View {
 
     @ViewBuilder
     private var doneContent: some View {
-        let thisWeek = store.progress.thisWeek
-        Section {
-            Text(thisWeek > 0
-                ? "You finished \(thisWeek) \(thisWeek == 1 ? "thing" : "things") in the last 7 days ✨"
-                : "Nothing finished in the last 7 days. You've got this.")
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(thisWeek > 0 ? Theme.primary : Theme.mutedForeground)
-                .listRowBackground(thisWeek > 0 ? Theme.primarySoft : Theme.card)
-        }
-
         if !store.visibleDone.isEmpty {
             Section {
                 ForEach(store.visibleDone) { task in
@@ -297,6 +287,13 @@ struct TasksView: View {
                     .listRowBackground(Color.clear)
                     .task { await store.loadMoreDone() }
                 }
+            }
+        } else {
+            Section {
+                Text("Finished tasks land here.")
+                    .font(.subheadline)
+                    .foregroundStyle(Theme.mutedForeground)
+                    .listRowBackground(Theme.card)
             }
         }
     }

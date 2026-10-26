@@ -48,11 +48,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
-import { DoneSummary } from "@/components/tasks/done-summary";
-import {
-  ProgressRing,
-  useTaskProgress,
-} from "@/components/tasks/progress-ring";
 import { QuickAddTask } from "@/components/tasks/quick-add";
 import { RoutinesStrip } from "@/components/tasks/routines-strip";
 import { SendToClaudeDialog } from "@/components/tasks/send-to-claude";
@@ -114,8 +109,6 @@ function FirstTaskHint() {
     </div>
   );
 }
-
-const NO_TASKS: TaskSchema[] = [];
 
 // ---------------------------------------------------------------------------
 // Main Page
@@ -555,8 +548,6 @@ function Tasks() {
     (t) => (t.status ?? "todo") === "todo" && isRepeatingTask(t),
   );
 
-  const progress = useTaskProgress(showsOpenTasks ? allTasks : NO_TASKS);
-
   const boardTasks =
     viewTab === "board"
       ? {
@@ -691,9 +682,6 @@ function Tasks() {
                 )}
               </div>
             )}
-            {showsOpenTasks && (
-              <ProgressRing done={progress.doneToday} total={progress.total} />
-            )}
             {canSelect && (
               <button
                 type="button"
@@ -789,9 +777,6 @@ function Tasks() {
           ) : (
             /* Done / All list view */
             <div className="min-h-0 flex-1 overflow-y-auto pb-3">
-              {viewTab === "done" && (
-                <DoneSummary count={progress.doneThisWeek} />
-              )}
               <div className="mt-2 flex flex-col gap-0.5">
                 {allTasks.map((task) => (
                   <TaskRow

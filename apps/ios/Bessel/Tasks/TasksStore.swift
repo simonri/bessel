@@ -127,18 +127,6 @@ final class TasksStore {
         return .later
     }
 
-    /// Done today vs. everything that was in play for today.
-    var progress: (done: Int, total: Int, thisWeek: Int) {
-        let now = Date.now
-        let doneToday = done.filter { $0.completedAt.map(Calendar.current.isDateInToday) ?? false }.count
-        let thisWeek = done.filter { ($0.completedAt.map { now.timeIntervalSince($0) } ?? .infinity) < 7 * 86_400 }.count
-        let inPlay = open.filter { task in
-            !task.isRecurring && (task.status == .inProgress || task.status == .inReview
-                || (task.dueDate.map { TaskItem.daysUntil($0, now: now) <= 0 } ?? false))
-        }.count
-        return (doneToday, doneToday + inPlay, thisWeek)
-    }
-
     // MARK: - Loading
 
     func loadIfStale() async {
@@ -233,7 +221,7 @@ final class TasksStore {
                     place(next)
                 }
             }
-            toasts.show(completionMessage) { [weak self] in
+            toasts.show("Done") { [weak self] in
                 Task { await self?.undoComplete(response) }
             }
         } catch {
@@ -354,12 +342,6 @@ final class TasksStore {
         guard let project, !projects.contains(project) else { return }
         projects.append(project)
         projects.sort { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
-    }
-
-    private var completionMessage: String {
-        let remaining = progress.total - progress.done
-        if progress.total > 0, remaining == 0 { return "All done for today ✨" }
-        return ["Nice one ✓", "Done ✓", "One less thing ✓"].randomElement()!
     }
 
     private func report(_ error: Error) {

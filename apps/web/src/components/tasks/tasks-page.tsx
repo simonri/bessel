@@ -5,7 +5,6 @@ import { lazy, Suspense } from "react";
 import { PageHeader, StatTile } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { isRepeatingTask } from "@/lib/task-format";
-import { useTaskProgress } from "./progress-ring";
 import { groupTasksByWhen } from "./today-groups";
 
 // The full task feature (views, filters, quick add, board drag and drop) is
@@ -21,18 +20,16 @@ export interface TaskCounts {
   inReview: number;
   overdue: number;
   dueToday: number;
-  doneToday: number;
 }
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-/** "2 due today, 1 from earlier - 3 done today", or something kinder when clear. */
+/** "1 in progress, 2 due today, 1 from earlier", or that nothing is due. */
 export function tasksSentence({
   doing,
   inReview,
   overdue,
   dueToday,
-  doneToday,
 }: TaskCounts): string {
   const ahead = [
     doing > 0 ? `${doing} in progress` : null,
@@ -40,10 +37,7 @@ export function tasksSentence({
     dueToday > 0 ? `${dueToday} due today` : null,
     overdue > 0 ? `${overdue} from earlier` : null,
   ].filter(Boolean);
-  const done = doneToday > 0 ? `${plural(doneToday, "task")} done today` : null;
-  if (ahead.length === 0)
-    return done ? `Nothing left for today - ${done}.` : "Nothing due today.";
-  return `${ahead.join(", ")}${done ? ` - ${done}` : ""}.`;
+  return ahead.length ? `${ahead.join(", ")}.` : "Nothing due today.";
 }
 
 function useOpenTasks() {
@@ -66,7 +60,6 @@ function useOpenTasks() {
 
 export function TasksPage() {
   const { tasks, total } = useOpenTasks();
-  const progress = useTaskProgress(tasks);
   const groups = groupTasksByWhen(tasks);
   const count = (key: string) =>
     groups.find((g) => g.key === key)?.tasks.length ?? 0;
@@ -75,7 +68,6 @@ export function TasksPage() {
     inReview: count("review"),
     overdue: count("overdue"),
     dueToday: count("today"),
-    doneToday: progress.doneToday,
   };
   const routines = tasks.filter(isRepeatingTask).length;
 
@@ -119,11 +111,6 @@ export function TasksPage() {
             hint={counts.doing > 0 ? `${counts.doing} in progress` : undefined}
           />
           <StatTile label="From earlier" value={counts.overdue} />
-          <StatTile
-            label="Done today"
-            value={progress.doneToday}
-            hint={`${progress.doneThisWeek} this week`}
-          />
         </aside>
       </div>
     </div>

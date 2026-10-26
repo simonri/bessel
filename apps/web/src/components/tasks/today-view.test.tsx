@@ -3,8 +3,6 @@ import type { TaskSchema } from "@bessel/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DoneSummary } from "./done-summary";
-import { ProgressRing } from "./progress-ring";
 import { RoutinesStrip } from "./routines-strip";
 import { TodayView } from "./today-view";
 
@@ -82,27 +80,5 @@ describe("RoutinesStrip", () => {
       />,
     );
     expect(container.textContent).toBe("");
-  });
-});
-
-describe("ProgressRing", () => {
-  it("shows done of total, and celebrates when finished", () => {
-    const { rerender } = render(<ProgressRing done={2} total={5} />);
-    expect(screen.getByLabelText("2 of 5 done today").textContent).toContain(
-      "2/5",
-    );
-    rerender(<ProgressRing done={5} total={5} />);
-    expect(screen.getByText("All done ✨")).toBeTruthy();
-    rerender(<ProgressRing done={0} total={0} />);
-    expect(screen.queryByRole("img")).toBeNull();
-  });
-});
-
-describe("DoneSummary", () => {
-  it("counts this week's wins", () => {
-    const { rerender } = render(<DoneSummary count={1} />);
-    expect(screen.getByText("You finished 1 thing this week ✨")).toBeTruthy();
-    rerender(<DoneSummary count={0} />);
-    expect(screen.getByText(/Nothing finished this week yet/)).toBeTruthy();
   });
 });

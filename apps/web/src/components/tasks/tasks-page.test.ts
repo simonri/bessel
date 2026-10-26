@@ -1,27 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { tasksSentence } from "./tasks-page";
 
-const none = { doing: 0, inReview: 0, overdue: 0, dueToday: 0, doneToday: 0 };
+const none = { doing: 0, inReview: 0, overdue: 0, dueToday: 0 };
 
 describe("tasksSentence", () => {
-  it("says what's ahead, then what's done", () => {
+  it("says what's ahead", () => {
     expect(
-      tasksSentence({
-        doing: 1,
-        inReview: 2,
-        overdue: 1,
-        dueToday: 2,
-        doneToday: 3,
-      }),
-    ).toBe(
-      "1 in progress, 2 to review, 2 due today, 1 from earlier - 3 tasks done today.",
-    );
+      tasksSentence({ doing: 1, inReview: 2, overdue: 1, dueToday: 2 }),
+    ).toBe("1 in progress, 2 to review, 2 due today, 1 from earlier.");
   });
 
-  it("is kind when today is clear", () => {
-    expect(tasksSentence({ ...none, doneToday: 1 })).toBe(
-      "Nothing left for today - 1 task done today.",
-    );
+  it("says so when nothing is due", () => {
     expect(tasksSentence(none)).toBe("Nothing due today.");
   });
 });
