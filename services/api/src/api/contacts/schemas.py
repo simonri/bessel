@@ -1,8 +1,8 @@
-from datetime import datetime
-from typing import Any
+from datetime import date, datetime
+from typing import Annotated, Any
 from uuid import UUID
 
-from pydantic import UUID4, Field, model_validator
+from pydantic import UUID4, Field, StringConstraints, field_validator, model_validator
 
 from api.common.pagination import ListResource
 from api.common.schemas import IDSchema, Schema, TimestampedSchema
@@ -12,6 +12,11 @@ from api.models.contact import Contact, ContactMethodKind
 class ContactMethodSchema(Schema):
   label: str | None = Field(description="As the address book names it, e.g. 'Mobile' or 'Work'.")
   value: str
+
+
+class ContactSighting(Schema):
+  on: date = Field(description="The day, in the user's timezone.")
+  event_title: str | None = Field(description="The calendar event they were on or named in; null when the user marked it themselves.")
 
 
 class ContactBirthday(Schema):
@@ -39,6 +44,13 @@ class ContactSchema(TimestampedSchema):
   emails: list[ContactMethodSchema]
   addresses: list[ContactMethodSchema]
   urls: list[ContactMethodSchema]
+  tags: list[str] = Field(description="Bessel's own, never sent to Google.")
+  keep_in_touch_days: int | None = Field(description="How often the user wants to be in touch, in days; null when they haven't said.")
+  caught_up_on: date | None = Field(description="The last day the user marked as having been in touch.")
+  last_seen: ContactSighting | None = Field(
+    default=None, description="The later of caught_up_on and the last past calendar event they were on or named in, within a year."
+  )
+  catch_up_on: date | None = Field(default=None, description="When keeping in touch says to be in touch next; null without keep_in_touch_days.")
 
   @model_validator(mode="before")
   @classmethod
@@ -69,6 +81,9 @@ class ContactSchema(TimestampedSchema):
       "emails": of(ContactMethodKind.email),
       "addresses": of(ContactMethodKind.address),
       "urls": of(ContactMethodKind.url),
+      "tags": data.tags,
+      "keep_in_touch_days": data.keep_in_touch_days,
+      "caught_up_on": data.caught_up_on,
     }
 
 
@@ -116,3 +131,45 @@ class ContactCreate(ContactUpdate):
 
 class ContactAuthorizeResponse(Schema):
   url: str = Field(description="Google's page for allowing Bessel to edit this account's contacts.")
+
+
+Tag = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=50)]
+
+
+class ContactKeepUpUpdate(Schema):
+  """Bessel's own fields on a contact, which stay in Bessel; any left out stay as they are."""
+
+  tags: list[Tag] | None = Field(default=None, max_length=20, description="Replaces the tags; null clears them.")
+  keep_in_touch_days: int | None = Field(default=None, ge=1, le=3650, description="Null stops the reminders.")
+  caught_up_on: date | None = None
+
+  @field_validator("tags")
+  @classmethod
+  def _distinct(cls, tags: list[str] | None) -> list[str]:
+    seen: dict[str, str] = {}
+    for tag in tags or []:
+      seen.setdefault(tag.casefold(), tag)
+    return list(seen.values())
+
+
+class ContactReference(Schema):
+  id: UUID
+  display_name: str
+  photo_url: str | None
+
+
+class BirthdayReminder(Schema):
+  contact: ContactReference
+  on: date
+  turns: int | None = Field(description="The age they turn; null when the birth year isn't known.")
+
+
+class CatchUpReminder(Schema):
+  contact: ContactReference
+  due_on: date = Field(description="When it became time to be in touch; today when they've never been seen.")
+  last_seen: ContactSighting | None
+
+
+class ContactReminders(Schema):
+  birthdays: list[BirthdayReminder] = Field(description="Soonest first.")
+  catch_up: list[CatchUpReminder] = Field(description="People it's time to be in touch with, longest overdue first.")

@@ -35,6 +35,7 @@ import {
   getAgentUsageStatusResponseTransformer,
   getAvanzaResponseTransformer,
   getBankAccountResponseTransformer,
+  getContactRemindersResponseTransformer,
   getContactResponseTransformer,
   getHealthSummaryResponseTransformer,
   getInvestmentAccountsResponseTransformer,
@@ -89,6 +90,7 @@ import {
   undoCompleteTaskResponseTransformer,
   updateBankAccountResponseTransformer,
   updateCalendarEventResponseTransformer,
+  updateContactKeepUpResponseTransformer,
   updateContactResponseTransformer,
   updateCounterResponseTransformer,
   updateDeviceResponseTransformer,
@@ -263,6 +265,9 @@ import type {
   GetBankAccountResponses,
   GetContactData,
   GetContactErrors,
+  GetContactRemindersData,
+  GetContactRemindersErrors,
+  GetContactRemindersResponses,
   GetContactResponses,
   GetCryptoPriceData,
   GetCryptoPriceErrors,
@@ -517,6 +522,9 @@ import type {
   UpdateCalendarResponses,
   UpdateContactData,
   UpdateContactErrors,
+  UpdateContactKeepUpData,
+  UpdateContactKeepUpErrors,
+  UpdateContactKeepUpResponses,
   UpdateContactResponses,
   UpdateCounterData,
   UpdateCounterErrors,
@@ -1473,6 +1481,29 @@ export const syncContacts = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Get Contact Reminders
+ *
+ * Upcoming birthdays, and the people it's time to be in touch with.
+ */
+export const getContactReminders = <ThrowOnError extends boolean = false>(
+  options?: Options<GetContactRemindersData, ThrowOnError>,
+): RequestResult<
+  GetContactRemindersResponses,
+  GetContactRemindersErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    GetContactRemindersResponses,
+    GetContactRemindersErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getContactRemindersResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/reminders",
+    ...options,
+  });
+
+/**
  * Delete Contact
  *
  * Deletes the person from Google, and so from the phone's synced contacts.
@@ -1550,6 +1581,33 @@ export const authorizeContactEditing = <ThrowOnError extends boolean = false>(
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/contacts/sources/{source_id}/authorize",
     ...options,
+  });
+
+/**
+ * Update Contact Keep Up
+ *
+ * Changes Bessel's own fields on a contact (tags, keeping in touch, the last catch-up), which never reach Google.
+ */
+export const updateContactKeepUp = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateContactKeepUpData, ThrowOnError>,
+): RequestResult<
+  UpdateContactKeepUpResponses,
+  UpdateContactKeepUpErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    UpdateContactKeepUpResponses,
+    UpdateContactKeepUpErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateContactKeepUpResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/{contact_id}/keep-up",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

@@ -8,6 +8,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import { addDays, format } from "date-fns";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
@@ -18,6 +19,8 @@ const api = vi.hoisted(() => ({
   create: vi.fn(),
   remove: vi.fn(),
   authorize: vi.fn(),
+  keepUp: vi.fn(),
+  createTask: vi.fn(),
 }));
 
 vi.mock("@bessel/client", async (importOriginal) => ({
@@ -34,6 +37,8 @@ vi.mock("@bessel/client", async (importOriginal) => ({
   createContactMutation: () => ({ mutationFn: api.create }),
   deleteContactMutation: () => ({ mutationFn: api.remove }),
   authorizeContactEditingMutation: () => ({ mutationFn: api.authorize }),
+  updateContactKeepUpMutation: () => ({ mutationFn: api.keepUp }),
+  createTaskMutation: () => ({ mutationFn: api.createTask }),
 }));
 
 const { ContactsPage } = await import("./contacts-page");
@@ -59,6 +64,11 @@ const contact = (
   emails: [],
   addresses: [],
   urls: [],
+  tags: [],
+  keep_in_touch_days: null,
+  caught_up_on: null,
+  last_seen: null,
+  catch_up_on: null,
   created_at: new Date(),
   modified_at: null,
   ...extra,
@@ -79,6 +89,8 @@ beforeEach(() => {
     api.create,
     api.remove,
     api.authorize,
+    api.keepUp,
+    api.createTask,
   ])
     fn.mockReset();
   api.sync.mockResolvedValue(undefined);
@@ -272,5 +284,126 @@ describe("ContactsPage", () => {
       path: { contact_id: "c2" },
     });
     await waitFor(() => expect(screen.queryByText("Bo Ek")).toBeNull());
+  });
+
+  describe("keeping in touch", () => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    const utcDay = (iso: string) => new Date(`${iso}T00:00:00Z`);
+    const keptUp = (changes: Record<string, unknown>) =>
+      api.keepUp.mockImplementation(async ({ body }) => ({
+        ...(api.contacts[0] as object),
+        ...body,
+        ...changes,
+      }));
+
+    it("marks a catch-up today and shows when the next one is", async () => {
+      api.contacts[0] = contact("c1", "Anna Berg", {
+        keep_in_touch_days: 30,
+        catch_up_on: utcDay(today),
+      });
+      keptUp({
+        last_seen: { on: utcDay(today), event_title: null },
+        catch_up_on: addDays(utcDay(today), 30),
+      });
+      mount();
+      fireEvent.click(await screen.findByText("Anna Berg"));
+      expect(screen.getByText("Time to catch up")).toBeTruthy();
+
+      fireEvent.click(screen.getByRole("button", { name: "Caught up today" }));
+
+      await waitFor(() => expect(api.keepUp).toHaveBeenCalledTimes(1));
+      expect(api.keepUp.mock.calls[0][0]).toMatchObject({
+        path: { contact_id: "c1" },
+      });
+      expect(api.keepUp.mock.calls[0][0].body).toEqual({
+        caught_up_on: utcDay(today),
+      });
+      expect(await screen.findByText("Next catch-up in 30 days")).toBeTruthy();
+      expect(
+        screen.getByText("Caught up today", { selector: "p" }),
+      ).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: "Caught up today" }),
+      ).toHaveProperty("disabled", true);
+    });
+
+    it("sets how often to keep in touch, and Off stops it", async () => {
+      keptUp({});
+      mount();
+      fireEvent.click(await screen.findByText("Anna Berg"));
+
+      fireEvent.change(screen.getByLabelText("Keep in touch"), {
+        target: { value: "91" },
+      });
+      await waitFor(() => expect(api.keepUp).toHaveBeenCalledTimes(1));
+      fireEvent.change(screen.getByLabelText("Keep in touch"), {
+        target: { value: "" },
+      });
+      await waitFor(() => expect(api.keepUp).toHaveBeenCalledTimes(2));
+
+      expect(api.keepUp.mock.calls.map((c) => c[0].body)).toEqual([
+        { keep_in_touch_days: 91 },
+        { keep_in_touch_days: null },
+      ]);
+    });
+
+    it("adds and removes tags, and filters the list by one", async () => {
+      api.contacts[1] = contact("c2", "Bo Ek", { tags: ["Lund"] });
+      keptUp({});
+      mount();
+      fireEvent.click(await screen.findByText("Anna Berg"));
+
+      const input = screen.getByLabelText("Add tag");
+      fireEvent.change(input, { target: { value: " Climbing " } });
+      fireEvent.keyDown(input, { key: "Enter" });
+      await waitFor(() => expect(api.keepUp).toHaveBeenCalledTimes(1));
+      expect(api.keepUp.mock.calls[0][0].body).toEqual({ tags: ["Climbing"] });
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Remove Climbing" }),
+      );
+      await waitFor(() => expect(api.keepUp).toHaveBeenCalledTimes(2));
+      expect(api.keepUp.mock.calls[1][0].body).toEqual({ tags: [] });
+
+      const filters = screen.getByRole("group", { name: "Filter contacts" });
+      fireEvent.click(within(filters).getByRole("button", { name: "Lund" }));
+      const list = screen.getByRole("complementary");
+      expect(within(list).queryByText("Anna Berg")).toBeNull();
+      expect(within(list).getByText("Bo Ek")).toBeTruthy();
+
+      api.keepUp.mockImplementation(async ({ body }) => ({
+        ...(api.contacts[1] as object),
+        ...body,
+      }));
+      fireEvent.click(within(list).getByText("Bo Ek"));
+      fireEvent.click(screen.getByRole("button", { name: "Remove Lund" }));
+      expect(await within(list).findByText("Anna Berg")).toBeTruthy();
+    });
+
+    it("lists who to catch up with and turns one into a task", async () => {
+      api.contacts[1] = contact("c2", "Bo Ek", {
+        keep_in_touch_days: 7,
+        catch_up_on: utcDay("2020-01-01"),
+      });
+      api.createTask.mockResolvedValue({ title: "Get in touch with Bo Ek" });
+      mount();
+      await screen.findByText("Anna Berg");
+
+      const filters = screen.getByRole("group", { name: "Filter contacts" });
+      fireEvent.click(
+        within(filters).getByRole("button", { name: "Catch up (1)" }),
+      );
+      const list = screen.getByRole("complementary");
+      expect(within(list).queryByText("Anna Berg")).toBeNull();
+      fireEvent.click(within(list).getByText("Bo Ek"));
+      fireEvent.click(screen.getByRole("button", { name: "Make a task" }));
+      fireEvent.click(screen.getByRole("button", { name: "Task added" }));
+
+      await waitFor(() => expect(api.createTask).toHaveBeenCalledTimes(1));
+      expect(api.createTask.mock.calls[0][0].body).toMatchObject({
+        title: "Get in touch with Bo Ek",
+        due_date: utcDay(today),
+        status: "todo",
+      });
+    });
   });
 });

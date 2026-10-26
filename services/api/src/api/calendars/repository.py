@@ -317,6 +317,26 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
     )
     return await self.get_all(statement)
 
+  async def list_attended(self, user_id: UUID, since: datetime, before: datetime) -> Sequence[CalendarEvent]:
+    """Events on visible calendars that started in [since, before) and that the user didn't decline, newest first."""
+    starts = func.coalesce(CalendarEvent.start_at, func.cast(CalendarEvent.start_date, CalendarEvent.start_at.type))
+    statement = (
+      self.get_base_statement()
+      .join(Calendar, CalendarEvent.calendar_id == Calendar.id)
+      .join(CalendarAccount, Calendar.account_id == CalendarAccount.id)
+      .where(
+        CalendarAccount.user_id == user_id,
+        Calendar.hidden.is_(False),
+        or_(CalendarEvent.my_response.is_(None), CalendarEvent.my_response != "declined"),
+        or_(
+          and_(CalendarEvent.all_day.is_(False), CalendarEvent.start_at >= since, CalendarEvent.start_at < before),
+          and_(CalendarEvent.all_day.is_(True), CalendarEvent.start_date >= since.date(), CalendarEvent.start_date < before.date()),
+        ),
+      )
+      .order_by(starts.desc(), CalendarEvent.id)
+    )
+    return await self.get_all(statement)
+
   async def emails_for_account(self, account: CalendarAccount) -> set[str]:
     """Every guest and organizer address on the account's synced events, lowercased."""
     on_account = select(Calendar.id).where(Calendar.account_id == account.id).scalar_subquery()

@@ -58,10 +58,14 @@ class ContactRepository(RepositoryBase[Contact], RepositoryIDMixin[Contact, UUID
           Contact.display_name.icontains(query, autoescape=True),
           Contact.nickname.icontains(query, autoescape=True),
           Contact.organization.icontains(query, autoescape=True),
+          func.array_to_string(Contact.tags, " ").icontains(query, autoescape=True),
           exists().where(ContactMethod.contact_id == Contact.id, ContactMethod.value.icontains(query, autoescape=True)),
         )
       )
     return statement.order_by(func.lower(Contact.display_name), Contact.id)
+
+  async def list_for_user(self, user_id: UUID) -> Sequence[Contact]:
+    return await self.get_all(self.get_filtered_statement(user_id))
 
   async def apply(self, source: ContactSource, people: Sequence[ParsedPerson], *, full: bool) -> int:
     """Saves what Google sent, by its id for each person, so Bessel's own notes

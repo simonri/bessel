@@ -1,5 +1,6 @@
 import {
   getActivitySummaryOptions,
+  getContactRemindersOptions,
   getDailySleepOptions,
   listActivitySourcesOptions,
   listCalendarEventsOptions,
@@ -13,6 +14,12 @@ import { ArrowRight, Play } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import type { TimedCalendarEvent } from "@/components/calendar/calendar-types";
 import { toCalendarEvent } from "@/components/calendar/use-calendar-data";
+import {
+  apiDay,
+  daysAgo,
+  upcomingDay,
+} from "@/components/contacts/contact-meta";
+import { useCatchUpTask } from "@/components/contacts/use-catch-up-task";
 import { useOpenPage } from "@/components/open-page-context";
 import type { PageKey } from "@/components/pages";
 import { localNightBounds } from "@/components/sleep/sleep-summary";
@@ -21,6 +28,7 @@ import { TaskRow } from "@/components/tasks/task-row";
 import { PageHeader, SoftButton } from "@/components/ui-kit";
 import { useTaskStatusActions } from "@/hooks/use-task-status-actions";
 import { client } from "@/lib/client";
+import { useLocalDay } from "@/lib/local-day";
 import {
   countdown,
   nextEvent,
@@ -263,6 +271,58 @@ function ScreenTimeBlock({ now }: { now: Date }) {
   );
 }
 
+/** Birthdays this week and people it's time to catch up with; hidden when there are none. */
+export function PeopleBlock() {
+  const today = useLocalDay();
+  const { data } = useQuery(
+    getContactRemindersOptions({ client, query: { days: 7 } }),
+  );
+  const { makeTask, hasTask } = useCatchUpTask();
+  if (!data || (!data.birthdays.length && !data.catch_up.length)) return null;
+  return (
+    <Block title="People" page="contacts" linkLabel="Contacts">
+      <ul className="flex flex-col gap-1.5">
+        {data.birthdays.map((b) => (
+          <li
+            key={`birthday-${b.contact.id}`}
+            className="flex items-center justify-between gap-3 text-13"
+          >
+            <span className="min-w-0 truncate text-white/85">
+              {b.contact.display_name}
+              {b.turns ? ` turns ${b.turns}` : " has a birthday"}
+            </span>
+            <span className="shrink-0 text-12 text-primary-300">
+              {upcomingDay(b.on, today)}
+            </span>
+          </li>
+        ))}
+        {data.catch_up.map((c) => (
+          <li
+            key={`catch-up-${c.contact.id}`}
+            className="flex items-center justify-between gap-3 text-13"
+          >
+            <span className="min-w-0 truncate text-white/85">
+              Catch up with {c.contact.display_name}
+              <span className="text-white/40">
+                {" - "}
+                {c.last_seen
+                  ? `last seen ${daysAgo(apiDay(c.last_seen.on), today)}`
+                  : "not seen in the past year"}
+              </span>
+            </span>
+            <SoftButton
+              disabled={hasTask(c.contact.display_name)}
+              onClick={() => makeTask(c.contact.display_name)}
+            >
+              {hasTask(c.contact.display_name) ? "Task added" : "Make a task"}
+            </SoftButton>
+          </li>
+        ))}
+      </ul>
+    </Block>
+  );
+}
+
 /** What's happening now and next, with each part one click from its page. */
 export function TodayPage() {
   const now = useMinuteClock();
@@ -271,6 +331,7 @@ export function TodayPage() {
       <PageHeader title="Today" summary={format(now, "EEEE d MMMM")} />
       <NextUp now={now} />
       <TasksBlock now={now} />
+      <PeopleBlock />
       <div className="grid gap-4 sm:grid-cols-2">
         <SleepBlock now={now} />
         <ScreenTimeBlock now={now} />

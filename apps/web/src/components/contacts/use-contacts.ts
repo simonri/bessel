@@ -1,14 +1,17 @@
 import {
   authorizeContactEditingMutation,
+  type ContactKeepUpUpdate,
   type ContactSchema,
   type ContactUpdate,
   createContactMutation,
   deleteContactMutation,
+  getContactRemindersQueryKey,
   listContactSources,
   listContactSourcesQueryKey,
   listContacts,
   listContactsQueryKey,
   syncContactsMutation,
+  updateContactKeepUpMutation,
   updateContactMutation,
 } from "@bessel/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -108,6 +111,16 @@ export function useContacts() {
       ),
     onError: failed("delete that contact"),
   });
+  const keepUp = useMutation({
+    ...updateContactKeepUpMutation({ client }),
+    onSuccess: (contact) => {
+      replace(contact);
+      void queryClient.invalidateQueries({
+        queryKey: getContactRemindersQueryKey({ client }),
+      });
+    },
+    onError: () => toast.error("Couldn't save that"),
+  });
   const authorize = useMutation(authorizeContactEditingMutation({ client }));
 
   return {
@@ -123,6 +136,9 @@ export function useContacts() {
       create.mutateAsync({ client, body: { ...body, source_id: sourceId } }),
     deleteContact: (id: string) =>
       remove.mutateAsync({ client, path: { contact_id: id } }),
+    /** Bessel's own fields (tags, keeping in touch), which never go to Google. */
+    keepUp: (id: string, body: ContactKeepUpUpdate) =>
+      keepUp.mutate({ client, path: { contact_id: id }, body }),
     /** Opens Google's page for allowing edits, then watches for the permission to arrive. */
     allowEditing: (sourceId: string) => {
       // Browsers only allow a popup opened synchronously from the click.

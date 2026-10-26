@@ -1,11 +1,16 @@
 import { describe, expect, it } from "vitest";
 import {
+  daysAgo,
   describeBirthday,
+  describeCatchUp,
+  describeLastSeen,
   groupByLetter,
   initials,
+  isCatchUpDue,
   matchesContact,
   sectionLetter,
   telUrl,
+  upcomingDay,
 } from "./contact-meta";
 
 const person = (overrides: Record<string, unknown> = {}) => ({
@@ -14,6 +19,7 @@ const person = (overrides: Record<string, unknown> = {}) => ({
   organization: null,
   phones: [{ label: "Mobile", value: "+46 70 123 45 67" }],
   emails: [{ label: null, value: "anna@example.com" }],
+  tags: [] as string[],
   ...overrides,
 });
 
@@ -51,6 +57,7 @@ describe("matchesContact", () => {
     expect(matchesContact(person({ nickname: "Nana" }), "nana")).toBe(true);
     expect(matchesContact(person({ organization: "Acme" }), "ACME")).toBe(true);
     expect(matchesContact(person(), "anna@")).toBe(true);
+    expect(matchesContact(person({ tags: ["Climbing"] }), "climb")).toBe(true);
     expect(matchesContact(person(), "bo")).toBe(false);
   });
 
@@ -93,5 +100,70 @@ describe("telUrl", () => {
   it("keeps only what a phone dials, dropping a (0) after the country code", () => {
     expect(telUrl("+46 (0)70-123 45 67")).toBe("tel:+46701234567");
     expect(telUrl("070-123 45 67")).toBe("tel:0701234567");
+  });
+});
+
+// API dates arrive as UTC midnight of the day.
+const day = (iso: string) => new Date(`${iso}T00:00:00Z`);
+
+describe("keeping in touch", () => {
+  const today = "2027-03-09";
+
+  it("says how long ago in days, then weeks, then months", () => {
+    expect(
+      [
+        "2027-03-09",
+        "2027-03-08",
+        "2027-02-24",
+        "2027-02-23",
+        "2027-01-10",
+        "2027-01-08",
+        "2026-11-09",
+      ].map((d) => daysAgo(d, today)),
+    ).toEqual([
+      "today",
+      "yesterday",
+      "13 days ago",
+      "2 weeks ago",
+      "8 weeks ago",
+      "2 months ago",
+      "4 months ago",
+    ]);
+  });
+
+  it("names the event they were seen at, or that the user caught up themselves", () => {
+    expect(
+      describeLastSeen({ on: day("2027-02-16"), event_title: "Lunch" }, today),
+    ).toBe("Seen 3 weeks ago - Lunch");
+    expect(
+      describeLastSeen({ on: day("2027-03-08"), event_title: null }, today),
+    ).toBe("Caught up yesterday");
+    expect(describeLastSeen(null, today)).toBe("Not seen in the past year");
+  });
+
+  it("counts down to the next catch-up and says when it's time", () => {
+    expect(describeCatchUp(day("2027-03-19"), today)).toBe(
+      "Next catch-up in 10 days",
+    );
+    expect(describeCatchUp(day("2027-03-10"), today)).toBe(
+      "Next catch-up tomorrow",
+    );
+    expect(describeCatchUp(day("2027-03-09"), today)).toBe("Time to catch up");
+    expect(describeCatchUp(day("2027-01-01"), today)).toBe("Time to catch up");
+  });
+
+  it("is due on the day and after, never before or without keeping in touch", () => {
+    expect(isCatchUpDue({ catch_up_on: day("2027-03-09") }, today)).toBe(true);
+    expect(isCatchUpDue({ catch_up_on: day("2027-03-01") }, today)).toBe(true);
+    expect(isCatchUpDue({ catch_up_on: day("2027-03-10") }, today)).toBe(false);
+    expect(isCatchUpDue({ catch_up_on: null }, today)).toBe(false);
+  });
+
+  it("names a coming day by weekday within the week, then by date", () => {
+    expect(
+      ["2027-03-09", "2027-03-10", "2027-03-15", "2027-03-16"].map((d) =>
+        upcomingDay(day(d), today),
+      ),
+    ).toEqual(["Today", "Tomorrow", "Monday", "16 March"]);
   });
 });

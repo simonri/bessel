@@ -26,6 +26,7 @@ import type {
   GetAgentUsageStatusResponse,
   GetAvanzaResponse,
   GetBankAccountResponse,
+  GetContactRemindersResponse,
   GetContactResponse,
   GetHealthSummaryResponse,
   GetInvestmentAccountsResponse,
@@ -80,6 +81,7 @@ import type {
   UndoCompleteTaskResponse,
   UpdateBankAccountResponse,
   UpdateCalendarEventResponse,
+  UpdateContactKeepUpResponse,
   UpdateContactResponse,
   UpdateCounterResponse,
   UpdateDeviceResponse,
@@ -430,10 +432,24 @@ export const respondToCalendarEventResponseTransformer = async (
   return data;
 };
 
+const contactSightingSchemaResponseTransformer = (data: any) => {
+  data.on = new Date(data.on);
+  return data;
+};
+
 const contactSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
   if (data.modified_at) {
     data.modified_at = new Date(data.modified_at);
+  }
+  if (data.caught_up_on) {
+    data.caught_up_on = new Date(data.caught_up_on);
+  }
+  if (data.last_seen) {
+    data.last_seen = contactSightingSchemaResponseTransformer(data.last_seen);
+  }
+  if (data.catch_up_on) {
+    data.catch_up_on = new Date(data.catch_up_on);
   }
   return data;
 };
@@ -475,6 +491,36 @@ export const listContactSourcesResponseTransformer = async (
   return data;
 };
 
+const birthdayReminderSchemaResponseTransformer = (data: any) => {
+  data.on = new Date(data.on);
+  return data;
+};
+
+const catchUpReminderSchemaResponseTransformer = (data: any) => {
+  data.due_on = new Date(data.due_on);
+  if (data.last_seen) {
+    data.last_seen = contactSightingSchemaResponseTransformer(data.last_seen);
+  }
+  return data;
+};
+
+const contactRemindersSchemaResponseTransformer = (data: any) => {
+  data.birthdays = data.birthdays.map((item: any) =>
+    birthdayReminderSchemaResponseTransformer(item),
+  );
+  data.catch_up = data.catch_up.map((item: any) =>
+    catchUpReminderSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getContactRemindersResponseTransformer = async (
+  data: any,
+): Promise<GetContactRemindersResponse> => {
+  data = contactRemindersSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getContactResponseTransformer = async (
   data: any,
 ): Promise<GetContactResponse> => {
@@ -485,6 +531,13 @@ export const getContactResponseTransformer = async (
 export const updateContactResponseTransformer = async (
   data: any,
 ): Promise<UpdateContactResponse> => {
+  data = contactSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateContactKeepUpResponseTransformer = async (
+  data: any,
+): Promise<UpdateContactKeepUpResponse> => {
   data = contactSchemaSchemaResponseTransformer(data);
   return data;
 };

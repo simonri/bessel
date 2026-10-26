@@ -2062,6 +2062,59 @@
         ]
       }
     },
+    "/v1/contacts/reminders": {
+      "get": {
+        "tags": [
+          "contacts"
+        ],
+        "summary": "Get Contact Reminders",
+        "description": "Upcoming birthdays, and the people it's time to be in touch with.",
+        "operationId": "get_contact_reminders",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 366,
+              "minimum": 1,
+              "description": "How many days ahead to look for birthdays, today included.",
+              "default": 14,
+              "title": "Days"
+            },
+            "description": "How many days ahead to look for birthdays, today included."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactReminders"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/contacts/{contact_id}": {
       "get": {
         "tags": [
@@ -2239,6 +2292,65 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ContactAuthorizeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/contacts/{contact_id}/keep-up": {
+      "patch": {
+        "tags": [
+          "contacts"
+        ],
+        "summary": "Update Contact Keep Up",
+        "description": "Changes Bessel's own fields on a contact (tags, keeping in touch, the last catch-up), which never reach Google.",
+        "operationId": "update_contact_keep_up",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contact Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactKeepUpUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactSchema"
                 }
               }
             }
@@ -10237,6 +10349,37 @@
         ],
         "title": "BankOption"
       },
+      "BirthdayReminder": {
+        "properties": {
+          "contact": {
+            "$ref": "#/components/schemas/ContactReference"
+          },
+          "on": {
+            "type": "string",
+            "format": "date",
+            "title": "On"
+          },
+          "turns": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turns",
+            "description": "The age they turn; null when the birth year isn't known."
+          }
+        },
+        "type": "object",
+        "required": [
+          "contact",
+          "on",
+          "turns"
+        ],
+        "title": "BirthdayReminder"
+      },
       "Body_add_transaction_document": {
         "properties": {
           "file": {
@@ -10890,6 +11033,36 @@
         ],
         "title": "CalendarUpdate"
       },
+      "CatchUpReminder": {
+        "properties": {
+          "contact": {
+            "$ref": "#/components/schemas/ContactReference"
+          },
+          "due_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Due On",
+            "description": "When it became time to be in touch; today when they've never been seen."
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactSighting"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "contact",
+          "due_on",
+          "last_seen"
+        ],
+        "title": "CatchUpReminder"
+      },
       "CategoryListResponse": {
         "properties": {
           "items": {
@@ -11475,6 +11648,57 @@
         ],
         "title": "ContactCreate"
       },
+      "ContactKeepUpUpdate": {
+        "properties": {
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "maxLength": 50,
+                  "minLength": 1
+                },
+                "type": "array",
+                "maxItems": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "Replaces the tags; null clears them."
+          },
+          "keep_in_touch_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 3650.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keep In Touch Days",
+            "description": "Null stops the reminders."
+          },
+          "caught_up_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caught Up On"
+          }
+        },
+        "type": "object",
+        "title": "ContactKeepUpUpdate",
+        "description": "Bessel's own fields on a contact, which stay in Bessel; any left out stay as they are."
+      },
       "ContactListResponse": {
         "properties": {
           "items": {
@@ -11547,6 +11771,63 @@
           "value"
         ],
         "title": "ContactMethodSchema"
+      },
+      "ContactReference": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "photo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Photo Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "display_name",
+          "photo_url"
+        ],
+        "title": "ContactReference"
+      },
+      "ContactReminders": {
+        "properties": {
+          "birthdays": {
+            "items": {
+              "$ref": "#/components/schemas/BirthdayReminder"
+            },
+            "type": "array",
+            "title": "Birthdays",
+            "description": "Soonest first."
+          },
+          "catch_up": {
+            "items": {
+              "$ref": "#/components/schemas/CatchUpReminder"
+            },
+            "type": "array",
+            "title": "Catch Up",
+            "description": "People it's time to be in touch with, longest overdue first."
+          }
+        },
+        "type": "object",
+        "required": [
+          "birthdays",
+          "catch_up"
+        ],
+        "title": "ContactReminders"
       },
       "ContactSchema": {
         "properties": {
@@ -11711,6 +11992,63 @@
             },
             "type": "array",
             "title": "Urls"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "Bessel's own, never sent to Google."
+          },
+          "keep_in_touch_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keep In Touch Days",
+            "description": "How often the user wants to be in touch, in days; null when they haven't said."
+          },
+          "caught_up_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Caught Up On",
+            "description": "The last day the user marked as having been in touch."
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ContactSighting"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The later of caught_up_on and the last past calendar event they were on or named in, within a year."
+          },
+          "catch_up_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catch Up On",
+            "description": "When keeping in touch says to be in touch next; null without keep_in_touch_days."
           }
         },
         "type": "object",
@@ -11732,9 +12070,42 @@
           "phones",
           "emails",
           "addresses",
-          "urls"
+          "urls",
+          "tags",
+          "keep_in_touch_days",
+          "caught_up_on",
+          "last_seen",
+          "catch_up_on"
         ],
         "title": "ContactSchema"
+      },
+      "ContactSighting": {
+        "properties": {
+          "on": {
+            "type": "string",
+            "format": "date",
+            "title": "On",
+            "description": "The day, in the user's timezone."
+          },
+          "event_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Event Title",
+            "description": "The calendar event they were on or named in; null when the user marked it themselves."
+          }
+        },
+        "type": "object",
+        "required": [
+          "on",
+          "event_title"
+        ],
+        "title": "ContactSighting"
       },
       "ContactSourceSchema": {
         "properties": {

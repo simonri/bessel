@@ -179,6 +179,7 @@ ISOLATION_TESTED = {
   "get_task_overview",
   "find_contacts",
   "get_contact",
+  "get_contact_reminders",
   "find_tasks",
   "find_completed_tasks",
   "get_task",

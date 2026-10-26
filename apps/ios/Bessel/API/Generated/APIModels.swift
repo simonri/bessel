@@ -389,6 +389,12 @@ enum API {
         var logo: String
     }
 
+    struct BirthdayReminder: Codable, Hashable {
+        var contact: ContactReference
+        var on: Date
+        var turns: Int?
+    }
+
     struct BulkCategorizeRequest: Codable, Hashable {
         var description: String
         var categoryId: UUID?
@@ -486,6 +492,12 @@ enum API {
         var hidden: Bool
     }
 
+    struct CatchUpReminder: Codable, Hashable {
+        var contact: ContactReference
+        var dueOn: Date
+        var lastSeen: ContactSighting?
+    }
+
     struct CategoryListResponse: Codable, Hashable {
         @Lossy var items: [CategorySchema]
         var pagination: Pagination
@@ -578,6 +590,12 @@ enum API {
         var sourceId: UUID
     }
 
+    struct ContactKeepUpUpdate: Encodable, Hashable {
+        var tags: [String]??
+        var keepInTouchDays: Int??
+        var caughtUpOn: Date??
+    }
+
     struct ContactListResponse: Codable, Hashable {
         @Lossy var items: [ContactSchema]
         var pagination: Pagination
@@ -591,6 +609,17 @@ enum API {
     struct ContactMethodSchema: Codable, Hashable {
         var label: String?
         var value: String
+    }
+
+    struct ContactReference: Codable, Hashable {
+        var id: UUID
+        var displayName: String
+        var photoUrl: String?
+    }
+
+    struct ContactReminders: Codable, Hashable {
+        @Lossy var birthdays: [BirthdayReminder]
+        @Lossy var catchUp: [CatchUpReminder]
     }
 
     struct ContactSchema: Codable, Hashable {
@@ -612,6 +641,16 @@ enum API {
         @Lossy var emails: [ContactMethodSchema]
         @Lossy var addresses: [ContactMethodSchema]
         @Lossy var urls: [ContactMethodSchema]
+        var tags: [String]
+        var keepInTouchDays: Int?
+        var caughtUpOn: Date?
+        var lastSeen: ContactSighting?
+        var catchUpOn: Date?
+    }
+
+    struct ContactSighting: Codable, Hashable {
+        var on: Date
+        var eventTitle: String?
     }
 
     struct ContactSourceSchema: Codable, Hashable {
@@ -3337,6 +3376,34 @@ extension API.BankOption {
     }
 }
 
+extension API.BirthdayReminder {
+    private enum DecodingKeys: String, CodingKey {
+        case contact
+        case on
+        case turns
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.contact = try container.decode(API.ContactReference.self, forKey: .contact)
+        self.on = try container.decode(Date.self, forKey: .on)
+        self.turns = try container.decodeIfPresent(Int.self, forKey: .turns)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case contact
+        case on
+        case turns
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.contact, forKey: .contact)
+        try container.encode(API.Day(self.on), forKey: .on)
+        try container.encodeIfPresent(self.turns, forKey: .turns)
+    }
+}
+
 extension API.BulkCategorizeRequest {
     private enum DecodingKeys: String, CodingKey {
         case description
@@ -3718,6 +3785,34 @@ extension API.CalendarUpdate {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.hidden, forKey: .hidden)
+    }
+}
+
+extension API.CatchUpReminder {
+    private enum DecodingKeys: String, CodingKey {
+        case contact
+        case dueOn
+        case lastSeen
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.contact = try container.decode(API.ContactReference.self, forKey: .contact)
+        self.dueOn = try container.decode(Date.self, forKey: .dueOn)
+        self.lastSeen = try container.decodeIfPresent(API.ContactSighting.self, forKey: .lastSeen)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case contact
+        case dueOn = "due_on"
+        case lastSeen = "last_seen"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.contact, forKey: .contact)
+        try container.encode(API.Day(self.dueOn), forKey: .dueOn)
+        try container.encodeIfPresent(self.lastSeen, forKey: .lastSeen)
     }
 }
 
@@ -4133,6 +4228,21 @@ extension API.ContactCreate {
     }
 }
 
+extension API.ContactKeepUpUpdate {
+    private enum EncodingKeys: String, CodingKey {
+        case tags
+        case keepInTouchDays = "keep_in_touch_days"
+        case caughtUpOn = "caught_up_on"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.tags { try container.encode(value, forKey: .tags) }
+        if let value = self.keepInTouchDays { try container.encode(value, forKey: .keepInTouchDays) }
+        if let value = self.caughtUpOn { try container.encode(value.map(API.Day.init), forKey: .caughtUpOn) }
+    }
+}
+
 extension API.ContactListResponse {
     private enum DecodingKeys: String, CodingKey {
         case items
@@ -4205,6 +4315,58 @@ extension API.ContactMethodSchema {
     }
 }
 
+extension API.ContactReference {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case displayName
+        case photoUrl
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.displayName = try container.decode(String.self, forKey: .displayName)
+        self.photoUrl = try container.decodeIfPresent(String.self, forKey: .photoUrl)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case displayName = "display_name"
+        case photoUrl = "photo_url"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.displayName, forKey: .displayName)
+        try container.encodeIfPresent(self.photoUrl, forKey: .photoUrl)
+    }
+}
+
+extension API.ContactReminders {
+    private enum DecodingKeys: String, CodingKey {
+        case birthdays
+        case catchUp
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._birthdays = try container.decode(Lossy<API.BirthdayReminder>.self, forKey: .birthdays)
+        self._catchUp = try container.decode(Lossy<API.CatchUpReminder>.self, forKey: .catchUp)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case birthdays
+        case catchUp = "catch_up"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.birthdays, forKey: .birthdays)
+        try container.encode(self.catchUp, forKey: .catchUp)
+    }
+}
+
 extension API.ContactSchema {
     private enum DecodingKeys: String, CodingKey {
         case createdAt
@@ -4225,6 +4387,11 @@ extension API.ContactSchema {
         case emails
         case addresses
         case urls
+        case tags
+        case keepInTouchDays
+        case caughtUpOn
+        case lastSeen
+        case catchUpOn
     }
 
     init(from decoder: Decoder) throws {
@@ -4247,6 +4414,11 @@ extension API.ContactSchema {
         self._emails = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .emails)
         self._addresses = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .addresses)
         self._urls = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .urls)
+        self.tags = try container.decode([String].self, forKey: .tags)
+        self.keepInTouchDays = try container.decodeIfPresent(Int.self, forKey: .keepInTouchDays)
+        self.caughtUpOn = try container.decodeIfPresent(Date.self, forKey: .caughtUpOn)
+        self.lastSeen = try container.decodeIfPresent(API.ContactSighting.self, forKey: .lastSeen)
+        self.catchUpOn = try container.decodeIfPresent(Date.self, forKey: .catchUpOn)
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -4268,6 +4440,11 @@ extension API.ContactSchema {
         case emails
         case addresses
         case urls
+        case tags
+        case keepInTouchDays = "keep_in_touch_days"
+        case caughtUpOn = "caught_up_on"
+        case lastSeen = "last_seen"
+        case catchUpOn = "catch_up_on"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -4290,6 +4467,35 @@ extension API.ContactSchema {
         try container.encode(self.emails, forKey: .emails)
         try container.encode(self.addresses, forKey: .addresses)
         try container.encode(self.urls, forKey: .urls)
+        try container.encode(self.tags, forKey: .tags)
+        try container.encodeIfPresent(self.keepInTouchDays, forKey: .keepInTouchDays)
+        try container.encodeIfPresent(self.caughtUpOn.map(API.Day.init), forKey: .caughtUpOn)
+        try container.encodeIfPresent(self.lastSeen, forKey: .lastSeen)
+        try container.encodeIfPresent(self.catchUpOn.map(API.Day.init), forKey: .catchUpOn)
+    }
+}
+
+extension API.ContactSighting {
+    private enum DecodingKeys: String, CodingKey {
+        case on
+        case eventTitle
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.on = try container.decode(Date.self, forKey: .on)
+        self.eventTitle = try container.decodeIfPresent(String.self, forKey: .eventTitle)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case on
+        case eventTitle = "event_title"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(API.Day(self.on), forKey: .on)
+        try container.encodeIfPresent(self.eventTitle, forKey: .eventTitle)
     }
 }
 

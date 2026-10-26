@@ -66,6 +66,7 @@ import {
   getAvanza,
   getBankAccount,
   getContact,
+  getContactReminders,
   getCryptoPrice,
   getDailyActivity,
   getDailySleep,
@@ -159,6 +160,7 @@ import {
   updateCalendar,
   updateCalendarEvent,
   updateContact,
+  updateContactKeepUp,
   updateCounter,
   updateDevice,
   updateMe,
@@ -331,6 +333,9 @@ import type {
   GetBankAccountResponse,
   GetContactData,
   GetContactError,
+  GetContactRemindersData,
+  GetContactRemindersError,
+  GetContactRemindersResponse,
   GetContactResponse,
   GetCryptoPriceData,
   GetCryptoPriceError,
@@ -578,6 +583,9 @@ import type {
   UpdateCalendarResponse,
   UpdateContactData,
   UpdateContactError,
+  UpdateContactKeepUpData,
+  UpdateContactKeepUpError,
+  UpdateContactKeepUpResponse,
   UpdateContactResponse,
   UpdateCounterData,
   UpdateCounterError,
@@ -2032,6 +2040,36 @@ export const syncContactsMutation = (
   return mutationOptions;
 };
 
+export const getContactRemindersQueryKey = (
+  options?: Options<GetContactRemindersData>,
+) => createQueryKey("getContactReminders", options);
+
+/**
+ * Get Contact Reminders
+ *
+ * Upcoming birthdays, and the people it's time to be in touch with.
+ */
+export const getContactRemindersOptions = (
+  options?: Options<GetContactRemindersData>,
+) =>
+  queryOptions<
+    GetContactRemindersResponse,
+    GetContactRemindersError,
+    GetContactRemindersResponse,
+    ReturnType<typeof getContactRemindersQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getContactReminders({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getContactRemindersQueryKey(options),
+  });
+
 /**
  * Delete Contact
  *
@@ -2134,6 +2172,35 @@ export const authorizeContactEditingMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await authorizeContactEditing({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Contact Keep Up
+ *
+ * Changes Bessel's own fields on a contact (tags, keeping in touch, the last catch-up), which never reach Google.
+ */
+export const updateContactKeepUpMutation = (
+  options?: Partial<Options<UpdateContactKeepUpData>>,
+): UseMutationOptions<
+  UpdateContactKeepUpResponse,
+  UpdateContactKeepUpError,
+  Options<UpdateContactKeepUpData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateContactKeepUpResponse,
+    UpdateContactKeepUpError,
+    Options<UpdateContactKeepUpData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateContactKeepUp({
         ...options,
         ...fnOptions,
         throwOnError: true,

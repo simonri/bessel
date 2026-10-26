@@ -1,10 +1,10 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from sqlalchemy import TIMESTAMP, Enum, ForeignKey, Integer, SmallInteger, String, Text, UniqueConstraint, Uuid
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import TIMESTAMP, Date, Enum, ForeignKey, Integer, SmallInteger, String, Text, UniqueConstraint, Uuid, text
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from api.models.base import RecordModel
@@ -56,6 +56,11 @@ class Contact(RecordModel):
   birthday_year: Mapped[int | None] = mapped_column(Integer, nullable=True)
   photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
   notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+  # Bessel's own layer: never sent to Google, and left alone by syncs.
+  tags: Mapped[list[str]] = mapped_column(ARRAY(String(50)), nullable=False, default=list, server_default=text("'{}'"))
+  keep_in_touch_days: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+  caught_up_on: Mapped[date | None] = mapped_column(Date, nullable=True)
 
   methods: Mapped[list["ContactMethod"]] = relationship(
     back_populates="contact",

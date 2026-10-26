@@ -1158,6 +1158,23 @@ export type BankOption = {
 };
 
 /**
+ * BirthdayReminder
+ */
+export type BirthdayReminder = {
+  contact: ContactReference;
+  /**
+   * On
+   */
+  on: Date;
+  /**
+   * Turns
+   *
+   * The age they turn; null when the birth year isn't known.
+   */
+  turns: number | null;
+};
+
+/**
  * Body_add_transaction_document
  */
 export type BodyAddTransactionDocument = {
@@ -1546,6 +1563,20 @@ export type CalendarUpdate = {
 };
 
 /**
+ * CatchUpReminder
+ */
+export type CatchUpReminder = {
+  contact: ContactReference;
+  /**
+   * Due On
+   *
+   * When it became time to be in touch; today when they've never been seen.
+   */
+  due_on: Date;
+  last_seen: ContactSighting | null;
+};
+
+/**
  * CategoryListResponse
  */
 export type CategoryListResponse = {
@@ -1902,6 +1933,30 @@ export type ContactCreate = {
 };
 
 /**
+ * ContactKeepUpUpdate
+ *
+ * Bessel's own fields on a contact, which stay in Bessel; any left out stay as they are.
+ */
+export type ContactKeepUpUpdate = {
+  /**
+   * Tags
+   *
+   * Replaces the tags; null clears them.
+   */
+  tags?: Array<string> | null;
+  /**
+   * Keep In Touch Days
+   *
+   * Null stops the reminders.
+   */
+  keep_in_touch_days?: number | null;
+  /**
+   * Caught Up On
+   */
+  caught_up_on?: Date | null;
+};
+
+/**
  * ContactListResponse
  */
 export type ContactListResponse = {
@@ -1940,6 +1995,42 @@ export type ContactMethodSchema = {
    * Value
    */
   value: string;
+};
+
+/**
+ * ContactReference
+ */
+export type ContactReference = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Display Name
+   */
+  display_name: string;
+  /**
+   * Photo Url
+   */
+  photo_url: string | null;
+};
+
+/**
+ * ContactReminders
+ */
+export type ContactReminders = {
+  /**
+   * Birthdays
+   *
+   * Soonest first.
+   */
+  birthdays: Array<BirthdayReminder>;
+  /**
+   * Catch Up
+   *
+   * People it's time to be in touch with, longest overdue first.
+   */
+  catch_up: Array<CatchUpReminder>;
 };
 
 /**
@@ -2025,6 +2116,52 @@ export type ContactSchema = {
    * Urls
    */
   urls: Array<ContactMethodSchema>;
+  /**
+   * Tags
+   *
+   * Bessel's own, never sent to Google.
+   */
+  tags: Array<string>;
+  /**
+   * Keep In Touch Days
+   *
+   * How often the user wants to be in touch, in days; null when they haven't said.
+   */
+  keep_in_touch_days: number | null;
+  /**
+   * Caught Up On
+   *
+   * The last day the user marked as having been in touch.
+   */
+  caught_up_on: Date | null;
+  /**
+   * The later of caught_up_on and the last past calendar event they were on or named in, within a year.
+   */
+  last_seen: ContactSighting | null;
+  /**
+   * Catch Up On
+   *
+   * When keeping in touch says to be in touch next; null without keep_in_touch_days.
+   */
+  catch_up_on: Date | null;
+};
+
+/**
+ * ContactSighting
+ */
+export type ContactSighting = {
+  /**
+   * On
+   *
+   * The day, in the user's timezone.
+   */
+  on: Date;
+  /**
+   * Event Title
+   *
+   * The calendar event they were on or named in; null when the user marked it themselves.
+   */
+  event_title: string | null;
 };
 
 /**
@@ -8762,6 +8899,40 @@ export type SyncContactsResponses = {
   202: unknown;
 };
 
+export type GetContactRemindersData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Days
+     *
+     * How many days ahead to look for birthdays, today included.
+     */
+    days?: number;
+  };
+  url: "/v1/contacts/reminders";
+};
+
+export type GetContactRemindersErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetContactRemindersError =
+  GetContactRemindersErrors[keyof GetContactRemindersErrors];
+
+export type GetContactRemindersResponses = {
+  /**
+   * Successful Response
+   */
+  200: ContactReminders;
+};
+
+export type GetContactRemindersResponse =
+  GetContactRemindersResponses[keyof GetContactRemindersResponses];
+
 export type DeleteContactData = {
   body?: never;
   path: {
@@ -8885,6 +9056,38 @@ export type AuthorizeContactEditingResponses = {
 
 export type AuthorizeContactEditingResponse =
   AuthorizeContactEditingResponses[keyof AuthorizeContactEditingResponses];
+
+export type UpdateContactKeepUpData = {
+  body: ContactKeepUpUpdate;
+  path: {
+    /**
+     * Contact Id
+     */
+    contact_id: string;
+  };
+  query?: never;
+  url: "/v1/contacts/{contact_id}/keep-up";
+};
+
+export type UpdateContactKeepUpErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateContactKeepUpError =
+  UpdateContactKeepUpErrors[keyof UpdateContactKeepUpErrors];
+
+export type UpdateContactKeepUpResponses = {
+  /**
+   * Successful Response
+   */
+  200: ContactSchema;
+};
+
+export type UpdateContactKeepUpResponse =
+  UpdateContactKeepUpResponses[keyof UpdateContactKeepUpResponses];
 
 export type ListBankConnectionsData = {
   body?: never;

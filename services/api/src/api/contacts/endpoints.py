@@ -7,8 +7,18 @@ from api.calendars.google import CONTACTS_WRITE_SCOPE
 from api.calendars.service import calendar_service
 from api.common.pagination import PaginationParamsQuery
 from api.contacts.editing import contact_editor
+from api.contacts.keeping import contact_schema, contact_schemas, reminders, update_keep_up
 from api.contacts.repository import ContactRepository, ContactSourceRepository
-from api.contacts.schemas import ContactAuthorizeResponse, ContactCreate, ContactListResponse, ContactSchema, ContactSourceSchema, ContactUpdate
+from api.contacts.schemas import (
+  ContactAuthorizeResponse,
+  ContactCreate,
+  ContactKeepUpUpdate,
+  ContactListResponse,
+  ContactReminders,
+  ContactSchema,
+  ContactSourceSchema,
+  ContactUpdate,
+)
 from api.contacts.service import request_sync
 from api.exceptions import ResourceNotFound
 from api.postgres import DBSession
@@ -27,7 +37,7 @@ async def list_contacts(
 ) -> ContactListResponse:
   repo = ContactRepository.from_session(session)
   items, total_count = await repo.paginate(repo.get_filtered_statement(current_user.id, search=search), limit=pagination.limit, page=pagination.page)
-  return ContactListResponse.from_paginated_results([ContactSchema.model_validate(c) for c in items], total_count, pagination)
+  return ContactListResponse.from_paginated_results(await contact_schemas(session, current_user, items), total_count, pagination)
 
 
 @router.get("/sources", summary="List Contact Sources", response_model=list[ContactSourceSchema])
@@ -51,10 +61,20 @@ async def sync_contacts(session: DBSession, current_user: CurrentDBUser) -> None
     request_sync(source.id)
 
 
+@router.get("/reminders", summary="Get Contact Reminders", response_model=ContactReminders)
+async def get_contact_reminders(
+  session: DBSession,
+  current_user: CurrentDBUser,
+  days: int = Query(default=14, ge=1, le=366, description="How many days ahead to look for birthdays, today included."),
+) -> ContactReminders:
+  """Upcoming birthdays, and the people it's time to be in touch with."""
+  return await reminders(session, current_user, days=days)
+
+
 @router.get("/{contact_id}", summary="Get Contact", response_model=ContactSchema)
 async def get_contact(session: DBSession, current_user: CurrentDBUser, contact_id: UUID) -> ContactSchema:
   contact = await ContactRepository.from_session(session).get_owned_or_404(contact_id, current_user.id, not_found_message="Contact not found.")
-  return ContactSchema.model_validate(contact)
+  return await contact_schema(session, current_user, contact)
 
 
 @router.post("/sources/{source_id}/authorize", summary="Allow Contact Editing", response_model=ContactAuthorizeResponse)
@@ -73,7 +93,7 @@ async def create_contact(session: DBSession, current_user: CurrentDBUser, body: 
   """Adds the person to the Google address book, from where it reaches the phone."""
   changes = body.model_dump(exclude_unset=True, exclude={"source_id"})
   contact = await contact_editor.create(session, redis, current_user.id, body.source_id, changes)
-  return ContactSchema.model_validate(contact)
+  return await contact_schema(session, current_user, contact)
 
 
 @router.patch("/{contact_id}", summary="Update Contact", response_model=ContactSchema)
@@ -82,7 +102,13 @@ async def update_contact(
 ) -> ContactSchema:
   """Changes the fields sent (null clears one) in Google; numbers and emails sent replace the list."""
   contact = await contact_editor.update(session, redis, current_user.id, contact_id, body.model_dump(exclude_unset=True))
-  return ContactSchema.model_validate(contact)
+  return await contact_schema(session, current_user, contact)
+
+
+@router.patch("/{contact_id}/keep-up", summary="Update Contact Keep Up", response_model=ContactSchema)
+async def update_contact_keep_up(session: DBSession, current_user: CurrentDBUser, contact_id: UUID, body: ContactKeepUpUpdate) -> ContactSchema:
+  """Changes Bessel's own fields on a contact (tags, keeping in touch, the last catch-up), which never reach Google."""
+  return await update_keep_up(session, current_user, contact_id, body.model_dump(exclude_unset=True))
 
 
 @router.delete("/{contact_id}", summary="Delete Contact", status_code=204)

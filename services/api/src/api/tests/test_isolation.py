@@ -150,6 +150,8 @@ AUDITED: set[str] = {
   "PATCH /v1/contacts/{contact_id}",
   "DELETE /v1/contacts/{contact_id}",
   "POST /v1/contacts/sources/{source_id}/authorize",
+  "GET /v1/contacts/reminders",
+  "PATCH /v1/contacts/{contact_id}/keep-up",
   "GET /v1/recipes/{recipe_id}/cooks",
   "PUT /v1/recipes/{recipe_id}/cooks/{cooked_on}",
   "DELETE /v1/recipes/{recipe_id}/cooks/{cooked_on}",
@@ -355,6 +357,9 @@ class TestContacts:
       resource_name="people/c1",
       person={},
       display_name="A's friend",
+      birthday_month=1,
+      birthday_day=1,
+      keep_in_touch_days=1,
       methods=[ContactMethod(kind=ContactMethodKind.phone, value="+46701234567")],
     )
     await save_fixture(contact)
@@ -367,8 +372,11 @@ class TestContacts:
     assert (await other_client.get("/v1/contacts/sources")).json() == []
     assert (await other_client.post("/v1/contacts/sync")).status_code == 202
     assert queued == []
+    assert (await other_client.get("/v1/contacts/reminders", params={"days": 366})).json() == {"birthdays": [], "catch_up": []}
+    assert (await other_client.patch(f"/v1/contacts/{contact.id}/keep-up", json={"tags": ["pwned"]})).status_code == 404
 
-    assert [c["display_name"] for c in (await client.get("/v1/contacts")).json()["items"]] == ["A's friend"]
+    assert [(c["display_name"], c["tags"]) for c in (await client.get("/v1/contacts")).json()["items"]] == [("A's friend", [])]
+    assert [b["contact"]["display_name"] for b in (await client.get("/v1/contacts/reminders", params={"days": 366})).json()["birthdays"]] == ["A's friend"]
 
   @pytest.mark.asyncio
   async def test_other_user_cannot_change_add_to_or_delete_contacts(
