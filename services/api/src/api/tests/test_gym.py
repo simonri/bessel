@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -73,6 +74,16 @@ class TestExercises:
 
     # New exercises count from today, ahead of ones last trained days ago.
     assert names == ["Pull ups", "Bench press", "Squat"]
+
+  @pytest.mark.asyncio
+  async def test_trained_today_comes_before_added_today(self, client: AsyncClient) -> None:
+    await _exercise(client, "Leg press")
+    squat = await _exercise(client, "Squat")
+    # The day new exercises are counted from.
+    await _set(client, squat, datetime.now(UTC).date().isoformat(), 80)
+    await _exercise(client, "Plank")
+
+    assert [e["name"] for e in await _list(client)] == ["Squat", "Plank", "Leg press"]
 
 
 class TestMuscles:

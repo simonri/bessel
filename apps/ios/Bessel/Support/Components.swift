@@ -144,6 +144,9 @@ struct Composer<Accessories: View>: View {
         .padding(.horizontal, 18)
         .padding(.top, 18)
         .padding(.bottom, 14)
+        // Glossy, but with enough card under the glass that the list behind
+        // doesn't show through the text being typed.
+        .background(Theme.card.opacity(0.88), in: RoundedRectangle(cornerRadius: 30, style: .continuous))
         .liquidGlass(in: RoundedRectangle(cornerRadius: 30, style: .continuous))
         .onAppear { isFocused.wrappedValue = true }
     }
@@ -155,6 +158,9 @@ struct Composer<Accessories: View>: View {
 struct ChipRow<Content: View>: View {
     var spacing: CGFloat = 8
     var inset: CGFloat = 0
+    /// Runs this far past the page's side margins, out to the screen edge, so a
+    /// chip that doesn't fit peeks in and says "there's more, scroll".
+    var bleed: CGFloat = 0
     @ViewBuilder let content: () -> Content
 
     @State private var height: CGFloat?
@@ -169,6 +175,7 @@ struct ChipRow<Content: View>: View {
         // every scroll view inside it; a chip row must not pick them up.
         .contentMargins(.all, 0, for: .scrollContent)
         .frame(height: height)
+        .padding(.horizontal, -bleed)
         .background(alignment: .topLeading) {
             row
                 .fixedSize()
@@ -189,7 +196,7 @@ struct ChipRow<Content: View>: View {
         HStack(spacing: spacing) {
             content()
         }
-        .padding(.horizontal, inset)
+        .padding(.horizontal, inset + bleed)
     }
 }
 
@@ -242,6 +249,17 @@ struct SectionHeading: View {
 
 extension View {
     /// Pins search and filters above a scroll view, so they stay put while
+    /// A clear band under the status bar and toolbar buttons on pages without a
+    /// title there, so text scrolling up doesn't run into them.
+    @ViewBuilder
+    func solidTopEdge() -> some View {
+        if #available(iOS 26.0, *) {
+            scrollEdgeEffectStyle(.hard, for: .top)
+        } else {
+            self
+        }
+    }
+
     /// the content scrolls underneath.
     /// A plain stack rather than a top safe-area inset, which iOS sizes
     /// wrongly here and lets the chips overlap.

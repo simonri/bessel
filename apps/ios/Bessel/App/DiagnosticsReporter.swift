@@ -4,21 +4,23 @@ import os
 
 /// Sends the crash and hang reports iOS collects for the app (MetricKit, at
 /// most once a day) to the server, where they're logged next to its own logs.
-final class DiagnosticsReporter: NSObject, MXMetricManagerSubscriber {
-    private let client: APIClient
+///
+/// One for the life of the app, registered at launch and never removed:
+/// MetricKit removes subscribers on a queue of its own, so removing one while
+/// it's being freed crashes.
+final class DiagnosticsReporter: NSObject, MXMetricManagerSubscriber, @unchecked Sendable {
+    static let shared = DiagnosticsReporter()
+
     private static let maxPayloads = 10
     private static let maxPayloadBytes = 64 * 1024
     private static let log = Logger(subsystem: "app.bessel", category: "diagnostics")
 
-    @MainActor
-    init(client: APIClient) {
-        self.client = client
+    private override init() {
         super.init()
-        MXMetricManager.shared.add(self)
     }
 
-    deinit {
-        MXMetricManager.shared.remove(self)
+    func start() {
+        MXMetricManager.shared.add(self)
     }
 
     func didReceive(_ payloads: [MXDiagnosticPayload]) {
@@ -27,9 +29,12 @@ final class DiagnosticsReporter: NSObject, MXMetricManagerSubscriber {
             .filter { $0.count <= Self.maxPayloadBytes }
             .prefix(Self.maxPayloads)
         guard !reports.isEmpty, let body = Self.body(Array(reports)) else { return }
-        Task { @MainActor [client] in
+        Task { @MainActor in
+            let auth = AuthSession.shared
+            // Reports wait for the next delivery while nobody is signed in.
+            guard auth.state == .signedIn else { return }
             do {
-                try await client.postNoContent("/v1/client-diagnostics", json: body)
+                try await APIClient(auth: auth).postNoContent("/v1/client-diagnostics", json: body)
             } catch {
                 Self.log.error("Couldn't upload diagnostics: \(error.userMessage, privacy: .public)")
             }

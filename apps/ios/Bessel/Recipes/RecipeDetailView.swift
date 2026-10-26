@@ -66,6 +66,8 @@ struct RecipeDetailView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 32)
         }
+        .contentMargins(.bottom, 80, for: .scrollContent)
+        .solidTopEdge()
     }
 
     // MARK: - Header
@@ -213,7 +215,7 @@ struct RecipeDetailView: View {
                 Button {
                     cooking = true
                 } label: {
-                    Label("Cook", systemImage: "frying.pan")
+                    Label("Start cooking", systemImage: "play.fill")
                 }
             }
         }
@@ -226,7 +228,7 @@ struct RecipeDetailView: View {
                     Button {
                         Task { await store.logCooked(recipe, toasts: toasts) }
                     } label: {
-                        Label("Cooked today", systemImage: "frying.pan")
+                        Label("I cooked this", systemImage: "frying.pan")
                     }
                 }
                 Button { showingHistory = true } label: {

@@ -149,8 +149,9 @@ struct GymPage<Header: View>: View {
     }
 
     private func addExercise() {
-        // A new exercise shows even if the current filter wouldn't include it.
+        // A new exercise shows even if the current filter or search wouldn't include it.
         muscleFilter = nil
+        search = ""
         guard let exercise = store.addExercise(named: draft, muscles: draftMuscles) else { return }
         draft = ""
         draftMuscles = []
@@ -161,7 +162,7 @@ struct GymPage<Header: View>: View {
 
     /// One muscle group at a time, only those some exercise works.
     private var muscleFilters: some View {
-        ChipRow(spacing: 6) {
+        ChipRow(spacing: 6, bleed: 16) {
             FilterPill(title: "All", isSelected: muscleFilter == nil) {
                 withAnimation(.snappy) { muscleFilter = nil }
             }
@@ -405,7 +406,7 @@ struct LogTopSetSheet: View {
                 .font(.headline)
                 .foregroundStyle(Theme.foreground)
                 .padding(.leading, 4)
-            ChipRow(spacing: 6) {
+            ChipRow(spacing: 6, bleed: 20) {
                 ForEach(GymMuscle.allCases) { muscle in
                     MuscleChip(muscle: muscle, isOn: exercise.muscles.contains(muscle)) {
                         store.toggle(muscle, for: exercise)

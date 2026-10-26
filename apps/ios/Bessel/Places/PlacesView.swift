@@ -147,6 +147,7 @@ struct PlacesView: View {
             .listStyle(.insetGrouped)
             .scrollContentBackground(.hidden)
             .contentMargins(.top, 0, for: .scrollContent)
+            .contentMargins(.bottom, 80, for: .scrollContent)
             .refreshable { await store.load() }
         }
     }

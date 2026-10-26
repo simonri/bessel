@@ -190,7 +190,18 @@ final class GymStore {
         for change in outbox.changes {
             change.apply(to: &list)
         }
-        exercises = list.sorted { ($0.lastActive, $0.createdAt) > ($1.lastActive, $1.createdAt) }
+        exercises = list.sorted(by: Self.latestFirst)
+    }
+
+    /// The day it was last trained (or added), latest first; on the same day,
+    /// ones trained come before ones only added, then the newest.
+    nonisolated static func latestFirst(_ a: GymExercise, _ b: GymExercise) -> Bool {
+        let calendar = Calendar.current
+        let dayA = calendar.startOfDay(for: a.lastActive)
+        let dayB = calendar.startOfDay(for: b.lastActive)
+        if dayA != dayB { return dayA > dayB }
+        if (a.lastSet != nil) != (b.lastSet != nil) { return a.lastSet != nil }
+        return a.createdAt > b.createdAt
     }
 
     private static func tidy(_ name: String) -> String {

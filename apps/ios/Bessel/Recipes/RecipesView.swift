@@ -53,7 +53,7 @@ struct RecipesView: View {
                                             Button {
                                                 Task { await store.logCooked(recipe, toasts: toasts) }
                                             } label: {
-                                                Label("Cooked today", systemImage: "frying.pan")
+                                                Label("I cooked this", systemImage: "frying.pan")
                                             }
                                         }
                                         Button(role: .destructive) {
@@ -204,7 +204,7 @@ struct RecipesView: View {
     }
 
     private var filters: some View {
-        ChipRow {
+        ChipRow(bleed: 16) {
             FilterPill(title: "All", isSelected: typeFilter == nil) {
                 withAnimation(.snappy) { typeFilter = nil }
             }

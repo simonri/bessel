@@ -77,6 +77,7 @@ struct ContactDetailView: View {
         }
         .scrollDismissesKeyboard(.immediately)
         .contentMargins(.bottom, 80, for: .scrollContent)
+        .solidTopEdge()
         .refreshable { await store.reload(contactID) }
     }
 

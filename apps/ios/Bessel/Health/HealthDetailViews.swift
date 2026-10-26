@@ -83,7 +83,7 @@ private struct NightsCard: View {
                     VStack(spacing: 6) {
                         ZStack(alignment: .bottom) {
                             Capsule()
-                                .fill(SleepStage.asleepREM.color.opacity(0.18))
+                                .fill(Theme.fill)
                             Capsule()
                                 .fill(SleepStage.asleepREM.color.opacity(isLast ? 1 : 0.6))
                                 .frame(height: max(8, height * min(night.asleep / 3600, maxHours) / maxHours))
@@ -129,7 +129,7 @@ struct MoveDetailView: View {
 
                 if let week = store.summary?.week, !week.isEmpty {
                     VStack(alignment: .leading, spacing: 14) {
-                        Text("This week")
+                        Text("Last 7 days")
                             .font(.headline)
                             .foregroundStyle(Theme.foreground)
                         MoveWeekBars(week: week, height: 96)
@@ -278,6 +278,8 @@ private struct DetailPage<Content: View>: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 32)
         }
+        .contentMargins(.bottom, 80, for: .scrollContent)
+        .solidTopEdge()
         .background(Theme.background)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)

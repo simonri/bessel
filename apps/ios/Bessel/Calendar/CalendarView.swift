@@ -38,6 +38,13 @@ struct CalendarView: View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 12) {
                 header
+                if store.hasLoaded && store.accounts.isEmpty {
+                    Label("Connect Google Calendar or iCloud on the desktop app to see your events here.", systemImage: "calendar.badge.plus")
+                        .font(.subheadline)
+                        .foregroundStyle(Theme.mutedForeground)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .card(padding: 14)
+                }
                 GeometryReader { geometry in
                     weekGrid(cellHeight: geometry.size.height / 4)
                 }
@@ -57,7 +64,8 @@ struct CalendarView: View {
                         .accessibilityLabel("Contacts")
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showingCalendars = true } label: { Image(systemName: "calendar") }
+                    // Picks which calendars show, so a filter rather than the tab's own icon.
+                    Button { showingCalendars = true } label: { Image(systemName: "line.3.horizontal.decrease") }
                         .accessibilityLabel("Calendars")
                 }
                 ProfileToolbarItem(auth: auth)
@@ -118,7 +126,23 @@ struct CalendarView: View {
             }
             navButton("chevron.left", label: "Previous week") { Task { await store.step(weeks: -1) } }
             navButton("chevron.right", label: "Next week") { Task { await store.step(weeks: 1) } }
+            if store.canCreate {
+                Button(action: newEvent) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 34, height: 34)
+                        .background(Theme.primary, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("New event")
+            }
         }
+    }
+
+    /// Today when this week is shown, otherwise the first day on screen.
+    private func newEvent() {
+        create(on: store.isShowingToday ? .now : store.firstDay)
     }
 
     private func navButton(_ systemImage: String, label: String, action: @escaping () -> Void) -> some View {

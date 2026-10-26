@@ -8,6 +8,7 @@ struct BesselApp: App {
 
     init() {
         HealthBackgroundSync.register()
+        DiagnosticsReporter.shared.start()
         // Page titles a touch smaller than the system's 34pt large title.
         UINavigationBar.appearance().largeTitleTextAttributes = [
             .font: UIFont.systemFont(ofSize: 28, weight: .bold),

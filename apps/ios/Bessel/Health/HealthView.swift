@@ -127,6 +127,7 @@ struct HealthView: View {
                 .padding(.bottom, 24)
                 .animation(.snappy, value: store.summary)
             }
+            .contentMargins(.bottom, 80, for: .scrollContent)
             .refreshable {
                 await store.syncNow()
                 await timeline.load()
@@ -432,7 +433,7 @@ private struct WeekCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(alignment: .firstTextBaseline) {
-                Text("This week")
+                Text("Last 7 days")
                     .font(.headline)
                     .foregroundStyle(Theme.foreground)
                 Spacer()
@@ -483,8 +484,9 @@ struct MoveWeekBars: View {
                 VStack(spacing: 6) {
                     // A slim rounded track, filled up to the day's movement.
                     ZStack(alignment: .bottom) {
+                        // A neutral track, so an empty day reads as empty, not full.
                         Capsule()
-                            .fill(Theme.pastelWash(HealthRing.move.hue, strength: 1.4))
+                            .fill(Theme.fill)
                         Capsule()
                             .fill(Theme.pastelSolid(HealthRing.move.hue).opacity(isLast ? 1 : 0.6))
                             .frame(height: max(barWidth, height * CGFloat(day.moveScore ?? 0) / 100))

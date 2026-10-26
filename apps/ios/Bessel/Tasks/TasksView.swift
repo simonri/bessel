@@ -257,8 +257,8 @@ struct TasksView: View {
         let thisWeek = store.progress.thisWeek
         Section {
             Text(thisWeek > 0
-                ? "You finished \(thisWeek) \(thisWeek == 1 ? "thing" : "things") this week ✨"
-                : "Nothing finished this week yet. You've got this.")
+                ? "You finished \(thisWeek) \(thisWeek == 1 ? "thing" : "things") in the last 7 days ✨"
+                : "Nothing finished in the last 7 days. You've got this.")
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(thisWeek > 0 ? Theme.primary : Theme.mutedForeground)
                 .listRowBackground(thisWeek > 0 ? Theme.primarySoft : Theme.card)

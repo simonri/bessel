@@ -40,7 +40,8 @@ class GymService:
     def last_trained(summary: GymExerciseSummary) -> date:
       return summary.last_set.performed_on if summary.last_set else summary.created_at.date()
 
-    return sorted(summaries, key=lambda s: (last_trained(s), s.created_at), reverse=True)
+    # On the same day, exercises trained come before ones only added.
+    return sorted(summaries, key=lambda s: (last_trained(s), s.last_set is not None, s.created_at), reverse=True)
 
   async def get_exercise(self, repo: GymExerciseRepository, exercise_id: UUID, user_id: UUID) -> GymExercise:
     return await repo.get_owned_or_404(exercise_id, user_id, not_found_message="Exercise not found")

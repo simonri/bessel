@@ -23,7 +23,7 @@ struct CookHistorySheet: View {
                             await reload()
                         }
                     } label: {
-                        Label(Calendar.current.isDateInToday(pickedDay) ? "Log today" : "Log this day", systemImage: "frying.pan")
+                        Label(Calendar.current.isDateInToday(pickedDay) ? "I cooked this today" : "I cooked this that day", systemImage: "frying.pan")
                     }
                     .disabled(days?.contains { Calendar.current.isDate($0, inSameDayAs: pickedDay) } ?? false)
                 } header: {

@@ -50,6 +50,15 @@ final class GymChangeTests: XCTestCase {
         XCTAssertTrue(list.isEmpty)
     }
 
+    func testTrainedTodayComesBeforeAddedToday() {
+        let today = DateParsing.dateOnly.string(from: .now)
+        let trained = GymExercise(id: UUID(), name: "Squat", muscles: [], createdAt: .now.addingTimeInterval(-86_400 * 30), lastSet: GymSet(day: today, weightKg: 80), bestSet: nil, recentSets: [])
+        let added = GymExercise(id: UUID(), name: "Leg press", muscles: [], createdAt: .now, lastSet: nil, bestSet: nil, recentSets: [])
+        let old = GymExercise(id: UUID(), name: "Dips", muscles: [], createdAt: .distantPast, lastSet: GymSet(day: "2026-01-01", weightKg: 0), bestSet: nil, recentSets: [])
+
+        XCTAssertEqual([old, added, trained].sorted(by: GymStore.latestFirst).map(\.name), ["Squat", "Leg press", "Dips"])
+    }
+
     func testReadsCommaDecimals() {
         XCTAssertEqual(GymFormat.parse("62,5"), 62.5)
         XCTAssertEqual(GymFormat.parse(" 60 "), 60)

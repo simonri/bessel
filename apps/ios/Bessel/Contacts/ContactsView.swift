@@ -129,7 +129,7 @@ struct ContactsView: View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(Theme.mutedForeground)
-            TextField("Search names, companies, tags or numbers", text: $search)
+            TextField("Search", text: $search)
                 .submitLabel(.search)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)

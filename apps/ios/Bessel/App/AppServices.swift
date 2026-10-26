@@ -9,7 +9,6 @@ final class AppServices {
     let cache: ResponseCache
     /// The signed-in account, which scopes what's kept on disk.
     let account: String
-    private let diagnostics: DiagnosticsReporter
 
     init(auth: AuthSession) {
         let account = auth.accountID ?? "default"
@@ -17,7 +16,6 @@ final class AppServices {
         client = APIClient(auth: auth)
         outbox = DeleteOutbox(client: client, account: account)
         cache = ResponseCache(account: account)
-        diagnostics = DiagnosticsReporter(client: client)
     }
 
     /// How old a screen's data may get before showing it again fetches it anew.
