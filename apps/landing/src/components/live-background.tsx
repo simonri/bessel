@@ -35,8 +35,6 @@ const ORBS = [
   },
 ];
 
-const WAVE_LINES = 26;
-
 export function LiveBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -78,51 +76,6 @@ export function LiveBackground() {
       ctx.globalCompositeOperation = "source-over";
     };
 
-    const drawWaves = (t: number) => {
-      const bandTop = height * 0.3;
-      const bandHeight = height * 0.52;
-      const step = Math.max(6, width / 220);
-
-      ctx.globalCompositeOperation = "screen";
-
-      for (let i = 0; i < WAVE_LINES; i++) {
-        const p = i / (WAVE_LINES - 1);
-        const yBase = bandTop + p * bandHeight;
-        // Strongest through the middle of the band, silent at its edges
-        const presence = Math.sin(Math.PI * p) ** 2;
-        // A few warm lines threaded through an otherwise silver field
-        const warm = i % 5 === 2;
-        const alpha = presence * (warm ? 0.34 : 0.17);
-        if (alpha < 0.01) continue;
-        ctx.lineWidth = warm ? 1.4 : 1;
-
-        const gradient = ctx.createLinearGradient(0, 0, width, 0);
-        const color = warm ? "249, 146, 60" : "168, 178, 198";
-        gradient.addColorStop(0, `rgba(${color}, 0)`);
-        gradient.addColorStop(0.5, `rgba(${color}, ${alpha})`);
-        gradient.addColorStop(1, `rgba(${color}, 0)`);
-        ctx.strokeStyle = gradient;
-
-        ctx.beginPath();
-        for (let x = 0; x <= width + step; x += step) {
-          const u = x / width;
-          // Damped envelope: waves swell mid-screen and settle at the edges
-          const envelope =
-            Math.sin(Math.PI * Math.min(Math.max(u, 0), 1)) ** 1.5;
-          const y =
-            yBase +
-            envelope *
-              (Math.sin(u * 6.3 + t * 0.42 + i * 0.34) * 26 +
-                Math.sin(u * 11.7 - t * 0.27 + i * 0.19) * 13 +
-                Math.sin(u * 2.4 + t * 0.11 + i * 0.52) * 34);
-          if (x === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-      }
-      ctx.globalCompositeOperation = "source-over";
-    };
-
     const drawVignette = () => {
       const gradient = ctx.createRadialGradient(
         width / 2,
@@ -142,7 +95,6 @@ export function LiveBackground() {
       ctx.fillStyle = BASE;
       ctx.fillRect(0, 0, width, height);
       drawOrbs(t);
-      drawWaves(t);
       drawVignette();
     };
 

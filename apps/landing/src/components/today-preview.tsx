@@ -29,7 +29,7 @@ const TASKS = [
 export function TodayPreview({ className }: { className?: string }) {
   return (
     <div className={className}>
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#101116]/90 shadow-[0_24px_80px_-24px_rgba(0,0,0,0.6)]">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-surface shadow-[0_24px_80px_-24px_rgba(0,0,0,0.6)]">
         <div className="flex items-center gap-1.5 border-b border-white/[0.06] px-4 py-2.5">
           <span className="size-2.5 rounded-full bg-white/15" />
           <span className="size-2.5 rounded-full bg-white/15" />

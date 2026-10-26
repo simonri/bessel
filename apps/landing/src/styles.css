@@ -17,6 +17,9 @@
   --color-accent: oklch(0.7 0.18 40);
   --color-accent-soft: oklch(0.84 0.13 40);
   --color-border: oklch(1 0 0 / 11%);
+  /* Solid card fills: nothing behind a card shows through it */
+  --color-surface: #14151a;
+  --color-surface-warm: #1a1410;
 
   /* Ink & cream: the hero image's own palette, used for text sitting on it */
   --color-ink: #2b2720;

@@ -233,7 +233,7 @@ function Hero() {
         </div>
       </div>
 
-      <div className="relative mx-auto -mt-40 max-w-4xl px-5 sm:-mt-52 sm:px-6 md:-mt-64">
+      <div className="relative mx-auto -mt-[138px] max-w-5xl px-5 sm:-mt-52 sm:px-6 md:-mt-[254px]">
         <CompareChat className="rise" />
       </div>
     </section>
@@ -279,7 +279,7 @@ function HowItWorks() {
         }
         subtitle="Bessel brings in what you already use and keeps it up to date. When you ask Claude something, it can look."
       />
-      <div className="reveal mt-14">
+      <div className="reveal mt-12 sm:mt-14">
         <ContextFlow />
       </div>
     </section>
@@ -290,7 +290,7 @@ const QUESTIONS = [
   {
     question: "Why am I sleeping worse?",
     answer:
-      "Mostly late workouts. On days you trained after 19:00 you slept about 35 minutes less, because you fell asleep later.",
+      "Mostly late workouts. On days you trained after 19:00 you fell asleep later and slept 35 minutes less.",
     from: "Sleep and workouts",
   },
   {
@@ -309,17 +309,17 @@ const QUESTIONS = [
 
 function Questions() {
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 pt-32 sm:pt-44">
+    <section className="mx-auto w-full max-w-5xl px-6 pt-32 sm:pt-44">
       <SectionHeading
         eyebrow="What you can ask"
         title="Better answers about your own life"
         subtitle="Not generic advice, but answers built on what actually happened in your calendar, your accounts and your nights."
       />
-      <div className="mt-12 grid gap-3 md:grid-cols-3">
+      <div className="mt-12 grid gap-4 sm:mt-14 md:grid-cols-3">
         {QUESTIONS.map((q) => (
           <figure
             key={q.question}
-            className="reveal flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6"
+            className="reveal flex flex-col rounded-2xl border border-white/[0.07] bg-surface p-6"
           >
             <blockquote className="font-serif text-lg leading-snug">
               &ldquo;{q.question}&rdquo;
@@ -327,7 +327,7 @@ function Questions() {
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
               {q.answer}
             </p>
-            <figcaption className="mt-auto pt-5 text-xs text-faint-foreground">
+            <figcaption className="mt-auto pt-4 text-xs text-faint-foreground">
               From your {q.from.toLowerCase()}
             </figcaption>
           </figure>
@@ -348,7 +348,7 @@ const PROMISES = [
     icon: <ShieldCheck className="size-4.5" />,
     title: "Claude can't delete anything",
     description:
-      "It can read, and add tasks, events and notes when you ask. Removing things is always up to you.",
+      "It can read, and add tasks, events and notes when you ask. Removing things is up to you.",
   },
   {
     icon: <FileCode className="size-4.5" />,
@@ -362,7 +362,7 @@ function Privacy() {
   return (
     <section
       id="privacy"
-      className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-32 sm:pt-44"
+      className="mx-auto w-full max-w-5xl scroll-mt-20 px-6 pt-32 sm:pt-44"
     >
       <SectionHeading
         eyebrow="Privacy"
@@ -374,13 +374,13 @@ function Privacy() {
         }
         subtitle="Bessel only knows what you connect, and Claude only looks when you ask it something."
       />
-      <div className="mt-12 grid gap-8 sm:grid-cols-3 sm:gap-6">
+      <div className="mt-12 grid gap-8 sm:mt-14 sm:grid-cols-3 sm:gap-6">
         {PROMISES.map((promise) => (
           <div
             key={promise.title}
             className="reveal flex flex-col items-center text-center"
           >
-            <span className="flex size-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-accent">
+            <span className="flex size-10 items-center justify-center rounded-full border border-white/[0.08] bg-surface text-accent">
               {promise.icon}
             </span>
             <h3 className="mt-4 text-[15px] font-medium">{promise.title}</h3>
@@ -409,14 +409,14 @@ function TheApp() {
   return (
     <section
       id="download"
-      className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-32 sm:pt-44"
+      className="mx-auto w-full max-w-5xl scroll-mt-20 px-6 pt-32 sm:pt-44"
     >
       <SectionHeading
         eyebrow="The app"
         title="And a place to see it yourself"
         subtitle="Your day at a glance on your computer or in the browser. An iPhone app is on the way."
       />
-      <TodayPreview className="reveal mx-auto mt-12 max-w-2xl" />
+      <TodayPreview className="reveal mx-auto mt-12 max-w-2xl sm:mt-14" />
       <div className="reveal mt-10 flex flex-wrap items-center justify-center gap-2">
         {PLATFORMS.map((p) => (
           <a
@@ -454,14 +454,14 @@ function TheApp() {
 function Closing() {
   const platform = usePlatform() ?? "mac";
   return (
-    <section className="relative isolate mt-32 w-full overflow-hidden sm:mt-44">
+    <section className="relative isolate mt-24 w-full overflow-hidden">
       <img
         src={heroSky}
         alt=""
         aria-hidden
         className="absolute inset-0 h-full w-full object-cover object-[center_30%] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_30%,#000_75%,transparent_100%)]"
       />
-      <div className="relative flex min-h-[520px] flex-col items-center justify-center px-6 pt-32 pb-24 text-center [text-shadow:0_2px_20px_rgba(255,255,255,0.45)] sm:min-h-[620px]">
+      <div className="relative flex min-h-[480px] flex-col items-center justify-center px-6 text-center [text-shadow:0_2px_20px_rgba(255,255,255,0.45)] sm:min-h-[532px]">
         <h2 className="reveal max-w-2xl text-balance font-serif text-4xl font-medium tracking-tight text-ink sm:text-6xl">
           Give your AI the <span className="font-normal italic">context</span>.
         </h2>

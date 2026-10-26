@@ -14,16 +14,16 @@ function Panel({
 }) {
   return (
     <figure
-      className={`relative flex flex-col overflow-hidden rounded-2xl border backdrop-blur-md ${
+      className={`relative flex flex-col overflow-hidden rounded-2xl border ${
         highlighted
-          ? "border-accent/30 bg-[#14110f]/90 shadow-[0_30px_90px_-30px_rgba(249,115,22,0.35)]"
-          : "border-white/[0.08] bg-[#101116]/85"
+          ? "border-accent/30 bg-surface-warm shadow-[0_30px_90px_-30px_rgba(249,115,22,0.35)]"
+          : "border-white/[0.08] bg-surface"
       }`}
     >
-      <figcaption className="flex items-center gap-2 border-b border-white/[0.06] px-5 py-3 text-xs font-medium text-muted-foreground">
+      <figcaption className="flex items-center gap-2 border-b border-white/[0.06] px-6 py-3 text-xs font-medium text-muted-foreground">
         {label}
       </figcaption>
-      <div className="flex flex-1 flex-col gap-4 p-5">
+      <div className="flex flex-1 flex-col gap-4 p-6">
         <p className="ml-auto max-w-[95%] rounded-2xl rounded-br-md bg-white/[0.08] px-4 py-2.5 text-sm text-foreground">
           {QUESTION}
         </p>

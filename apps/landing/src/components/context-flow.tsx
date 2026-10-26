@@ -65,7 +65,7 @@ export function ContextFlow() {
         {SOURCES.map((source) => (
           <li
             key={source.name}
-            className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-2.5"
+            className="flex items-center gap-3 rounded-xl border border-white/[0.07] bg-surface px-3 py-2.5"
           >
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-accent [&_svg]:size-4">
               {source.icon}
@@ -84,7 +84,7 @@ export function ContextFlow() {
       <Node
         name="Bessel"
         caption="Keeps it all up to date"
-        className="border-accent/30 bg-accent/[0.08] shadow-[0_0_60px_-10px_rgba(249,115,22,0.45)]"
+        className="border-accent/30 bg-surface-warm shadow-[0_0_60px_-10px_rgba(249,115,22,0.45)]"
       >
         <BesselMark className="size-9 text-accent" />
       </Node>
@@ -92,7 +92,7 @@ export function ContextFlow() {
       <Node
         name="Claude"
         caption="Reads it when you ask"
-        className="border-white/[0.1] bg-white/[0.04]"
+        className="border-white/[0.1] bg-surface"
       >
         <MessageSquare className="size-8 text-foreground/80" />
       </Node>
