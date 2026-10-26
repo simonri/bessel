@@ -40,61 +40,75 @@ describe("migration from the pre-rebrand key name", () => {
   it("falls back to metron:settings when bessel:settings is absent", () => {
     window.localStorage.setItem(
       "metron:settings",
-      JSON.stringify({ theme: "green" }),
+      JSON.stringify({ cryptoPairs: "ETHUSDT" }),
     );
 
     const { result } = setup();
 
-    expect(result.current.settings.theme).toBe("green");
+    expect(result.current.settings.cryptoPairs).toBe("ETHUSDT");
   });
 
   it("prefers bessel:settings when both keys are present", () => {
     window.localStorage.setItem(
       "metron:settings",
-      JSON.stringify({ theme: "green" }),
+      JSON.stringify({ cryptoPairs: "ETHUSDT" }),
     );
     window.localStorage.setItem(
       "bessel:settings",
-      JSON.stringify({ theme: "orange" }),
+      JSON.stringify({ cryptoPairs: "SOLUSDT" }),
     );
 
     const { result } = setup();
 
-    expect(result.current.settings.theme).toBe("orange");
+    expect(result.current.settings.cryptoPairs).toBe("SOLUSDT");
   });
 
   it("update() persists under the current key going forward", () => {
     window.localStorage.setItem(
       "metron:settings",
-      JSON.stringify({ theme: "green" }),
+      JSON.stringify({ cryptoPairs: "ETHUSDT" }),
     );
 
     const { result } = setup();
-    act(() => result.current.update({ theme: "orange" }));
+    act(() => result.current.update({ cryptoPairs: "SOLUSDT" }));
 
     const raw = window.localStorage.getItem("bessel:settings");
-    expect(JSON.parse(raw!).theme).toBe("orange");
+    expect(JSON.parse(raw!).cryptoPairs).toBe("SOLUSDT");
   });
+});
 
-  it("moves a saved moving wallpaper to the still image", () => {
+describe("the one look", () => {
+  it("is the peach accent on stone, whatever was saved before", () => {
     window.localStorage.setItem(
       "bessel:settings",
-      JSON.stringify({ wallpaper: "video" }),
+      JSON.stringify({
+        theme: "sky",
+        wallpaper: "image",
+        cryptoPairs: "ETHUSDT",
+      }),
     );
 
     const { result } = setup();
 
-    expect(result.current.settings.wallpaper).toBe("image");
+    expect(result.current.settings.theme).toBe("orange");
+    expect(result.current.settings.wallpaper).toBe("stone");
+    expect(result.current.settings.cryptoPairs).toBe("ETHUSDT");
+    expect(document.documentElement.dataset.theme).toBe("orange");
   });
 
-  it("keeps a saved colour wallpaper", () => {
-    window.localStorage.setItem(
-      "bessel:settings",
-      JSON.stringify({ wallpaper: "stone" }),
-    );
-
+  it("is what a new user gets", () => {
     const { result } = setup();
 
+    expect(result.current.settings.theme).toBe("orange");
+    expect(result.current.settings.wallpaper).toBe("stone");
+  });
+
+  it("can't be changed by an update", () => {
+    const { result } = setup();
+
+    act(() => result.current.update({ theme: "lilac", wallpaper: "zinc" }));
+
+    expect(result.current.settings.theme).toBe("orange");
     expect(result.current.settings.wallpaper).toBe("stone");
   });
 });

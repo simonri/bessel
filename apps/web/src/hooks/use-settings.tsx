@@ -20,10 +20,6 @@ export type WallpaperKey = "image" | WallpaperColorKey;
 export const THEME_KEYS = ["orange", "green", "rose", "lilac", "sky"] as const;
 export type ThemeKey = (typeof THEME_KEYS)[number];
 
-function isThemeKey(value: unknown): value is ThemeKey {
-  return (THEME_KEYS as readonly unknown[]).includes(value);
-}
-
 // Exact oklch values — kept as literal strings (not CSS variables) since the
 // background color is a per-wallpaper choice, independent of the accent
 // theme's own [data-theme] palette.
@@ -33,13 +29,6 @@ export const WALLPAPER_COLORS: Record<WallpaperColorKey, string> = {
   stone: "oklch(14.7% 0.004 49.25)",
   umber: "oklch(14.7% 0.004 49.3)",
 };
-
-function isWallpaperKey(value: unknown): value is WallpaperKey {
-  return (
-    value === "image" ||
-    (typeof value === "string" && value in WALLPAPER_COLORS)
-  );
-}
 
 export function isWallpaperColor(key: WallpaperKey): key is WallpaperColorKey {
   return key in WALLPAPER_COLORS;
@@ -65,11 +54,21 @@ interface Settings {
 
 const STORAGE_KEY = "bessel:settings";
 const LEGACY_KEY = "metron:settings";
+
+/**
+ * Bessel has one look for now: the peach accent on a stone background. The
+ * theme and wallpaper settings stay so more looks can come back; until then
+ * nothing saved can change these.
+ */
+const LOOK = { theme: "orange", wallpaper: "stone" } as const satisfies Pick<
+  Settings,
+  "theme" | "wallpaper"
+>;
+
 const DEFAULT_SETTINGS: Settings = {
   cryptoPairs: "BTCUSDT",
   activityMappings: [],
-  wallpaper: "image",
-  theme: "orange",
+  ...LOOK,
   gridGap: 4,
   obsidianVaultPath: null,
   obsidianRecentVaults: [],
@@ -79,13 +78,7 @@ const DEFAULT_SETTINGS: Settings = {
 };
 
 function withDefaults(stored: Partial<Settings>): Settings {
-  const settings = { ...DEFAULT_SETTINGS, ...stored };
-  // A theme that was removed (or a hand-edited value) would leave no accent.
-  if (!isThemeKey(settings.theme)) settings.theme = DEFAULT_SETTINGS.theme;
-  // Moving wallpapers are gone; anyone who had one gets the still image.
-  if (!isWallpaperKey(settings.wallpaper))
-    settings.wallpaper = DEFAULT_SETTINGS.wallpaper;
-  return settings;
+  return { ...DEFAULT_SETTINGS, ...stored, ...LOOK };
 }
 
 function loadSettings(): Settings {
@@ -126,7 +119,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, [settings]);
 
   const update = useCallback((patch: Partial<Settings>) => {
-    setSettings((prev) => ({ ...prev, ...patch }));
+    setSettings((prev) => ({ ...prev, ...patch, ...LOOK }));
   }, []);
 
   // Memoized so parent re-renders (auth/query state in AppLayout) don't mint a

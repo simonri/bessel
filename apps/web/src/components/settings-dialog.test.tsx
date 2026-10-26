@@ -61,7 +61,7 @@ describe("SettingsDialogProvider", () => {
 
     fireEvent.click(screen.getByText("settings"));
     expect(screen.getByRole("dialog").textContent).toContain(
-      "showing appearance",
+      "showing dashboard",
     );
 
     fireEvent.click(screen.getByText("close"));

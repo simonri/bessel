@@ -26,7 +26,7 @@ export function useCloseSettings(): SettingsDialog["close"] {
 /** Hosts the one Settings dialog, so any page can open it at the right place. */
 export function SettingsDialogProvider({ children }: { children: ReactNode }) {
   const [isOpen, setOpen] = useState(false);
-  const [page, setPage] = useState<SettingsPage>("appearance");
+  const [page, setPage] = useState<SettingsPage>("dashboard");
   const [tab, setTab] = useState<IntegrationsTab>("connected");
 
   const dialog: SettingsDialog = {

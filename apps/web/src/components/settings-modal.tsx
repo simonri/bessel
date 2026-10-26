@@ -10,14 +10,12 @@ import {
   Info,
   Laptop,
   LayoutDashboard,
-  Palette,
   Plug,
   Search,
   X,
 } from "lucide-react";
 import { useState } from "react";
 import { AboutPage } from "@/components/settings-about-page";
-import { AppearancePage } from "@/components/settings-appearance-page";
 import { DashboardPage } from "@/components/settings-dashboard-page";
 import { DevicesPage } from "@/components/settings-devices-page";
 import {
@@ -31,7 +29,6 @@ import { cn } from "@/lib/utils";
 const isDesktop = typeof window !== "undefined" && !!window.electron;
 
 export type SettingsPage =
-  | "appearance"
   | "dashboard"
   | "integrations"
   | "devices"
@@ -51,13 +48,6 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
   {
     label: "Preferences",
     items: [
-      {
-        key: "appearance",
-        label: "Appearance",
-        description: "Customize the look and feel of your dashboard.",
-        icon: Palette,
-        keywords: "theme wallpaper colour color font",
-      },
       {
         key: "dashboard",
         label: "Dashboard",
@@ -244,7 +234,6 @@ export function SettingsModal({
               <>
                 <SettingsPageHeader title={active.label} />
                 <div className="mt-5">
-                  {page === "appearance" && <AppearancePage />}
                   {page === "dashboard" && <DashboardPage />}
                   {page === "devices" && <DevicesPage />}
                   {page === "monitor" && <MonitorPage />}
