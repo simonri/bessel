@@ -43,6 +43,7 @@ import { IconButton, SoftButton } from "@/components/ui-kit";
 import { ACCOUNT_SUBTYPES } from "@/lib/account-constants";
 import { accountTypeLabel, problemCopy } from "@/lib/account-labels";
 import { errorDetail } from "@/lib/api-error";
+import { desktopAvanza } from "@/lib/avanza-sync";
 import { client } from "@/lib/client";
 import { Amount } from "@/lib/privacy";
 
@@ -474,7 +475,10 @@ function Connection({ account }: { account: AccountOverview }) {
   });
   const disconnectAvanza = useMutation({
     ...disconnectAvanzaMutation({ client }),
-    onSuccess: afterDisconnect,
+    onSuccess: () => {
+      void desktopAvanza()?.forget();
+      afterDisconnect();
+    },
     onError: (error) => toast.error(errorDetail(error, "Couldn't disconnect")),
   });
   const disconnectMontrose = useMutation({
@@ -516,7 +520,8 @@ function Connection({ account }: { account: AccountOverview }) {
       <>
         <p className="text-13 text-white/80">Connected to Avanza</p>
         <p className="mt-0.5 type-caption text-white/45">
-          Bessel signs in to read your accounts, trades and holdings.
+          The desktop app signs in from your computer and sends Bessel your
+          accounts, trades and holdings.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <SoftButton onClick={() => run("sync", account)} disabled={busy}>

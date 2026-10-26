@@ -3,6 +3,7 @@ import { SquarePlus } from "lucide-react";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { AgentUsageReporter } from "@/components/agent-usage-reporter";
 import { AppSidebar } from "@/components/app-sidebar";
+import { AvanzaReporter } from "@/components/avanza/avanza-reporter";
 import { CanvasPage } from "@/components/canvas/canvas-page";
 import { CanvasTopBar } from "@/components/canvas/canvas-topbar";
 import { CommandPalette } from "@/components/canvas/command-palette";
@@ -202,6 +203,7 @@ export function AppShell() {
             <Wallpaper />
             {isDesktop && <ClaudeSessionsBridge />}
             {isDesktop && <AgentUsageReporter />}
+            {isDesktop && <AvanzaReporter />}
 
             <div className="relative flex h-full flex-col">
               <CanvasTopBar nav={topBarNav} />

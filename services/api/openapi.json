@@ -941,7 +941,7 @@
           "avanza"
         ],
         "summary": "Disconnect Avanza",
-        "description": "Deletes the stored login. Imported transactions, trades and positions stay.",
+        "description": "Forgets the connection and its account links; no Avanza login is stored. Imported transactions, trades and positions stay.",
         "operationId": "disconnect_avanza",
         "responses": {
           "204": {
@@ -955,26 +955,26 @@
         ]
       }
     },
-    "/v1/avanza/connect": {
+    "/v1/avanza/import": {
       "post": {
         "tags": [
           "avanza"
         ],
-        "summary": "Connect Avanza",
-        "description": "Checks the login with Avanza and stores it encrypted; also how new credentials are saved.",
-        "operationId": "connect_avanza",
+        "summary": "Import Avanza Data",
+        "description": "Imports Avanza's responses as the desktop app read them; connects Avanza on the first import.",
+        "operationId": "import_avanza",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AvanzaConnectRequest"
+                "$ref": "#/components/schemas/AvanzaImportRequest"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -983,6 +983,45 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/avanza/sync-failed": {
+      "post": {
+        "tags": [
+          "avanza"
+        ],
+        "summary": "Report Avanza Sync Failure",
+        "operationId": "report_avanza_sync_failed",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AvanzaSyncFailure"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -1058,30 +1097,6 @@
             }
           }
         }
-      }
-    },
-    "/v1/avanza/sync": {
-      "post": {
-        "tags": [
-          "avanza"
-        ],
-        "summary": "Sync Avanza",
-        "operationId": "sync_avanza",
-        "responses": {
-          "202": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
       }
     },
     "/v1/montrose": {
@@ -9911,36 +9926,6 @@
         ],
         "title": "AvanzaAccountUpdate"
       },
-      "AvanzaConnectRequest": {
-        "properties": {
-          "username": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Username"
-          },
-          "password": {
-            "type": "string",
-            "maxLength": 255,
-            "minLength": 1,
-            "title": "Password"
-          },
-          "totp_secret": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 16,
-            "title": "Totp Secret",
-            "description": "The secret Avanza shows when adding 'another app' for two-factor login."
-          }
-        },
-        "type": "object",
-        "required": [
-          "username",
-          "password",
-          "totp_secret"
-        ],
-        "title": "AvanzaConnectRequest"
-      },
       "AvanzaConnectionSchema": {
         "properties": {
           "id": {
@@ -9955,7 +9940,7 @@
           "credentials_rejected": {
             "type": "boolean",
             "title": "Credentials Rejected",
-            "description": "Avanza rejected the login; syncing stops until new credentials are saved."
+            "description": "Avanza rejected the desktop app's login; the user needs to sign in again there."
           },
           "last_synced_at": {
             "anyOf": [
@@ -9986,6 +9971,19 @@
             },
             "type": "array",
             "title": "Accounts"
+          },
+          "sync_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sync From",
+            "description": "The first day the next import's transactions must cover; null when no account is linked."
           }
         },
         "type": "object",
@@ -9995,9 +9993,72 @@
           "credentials_rejected",
           "last_synced_at",
           "sync_error",
-          "accounts"
+          "accounts",
+          "sync_from"
         ],
         "title": "AvanzaConnectionSchema"
+      },
+      "AvanzaImportRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Username",
+            "description": "The Avanza username the desktop app signed in with."
+          },
+          "overview": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Overview",
+            "description": "Avanza's raw categorizedAccounts response."
+          },
+          "positions": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Positions",
+            "description": "Avanza's raw positions response; null when no account is linked."
+          },
+          "transactions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Transactions",
+            "description": "Avanza's raw transaction list responses; pages may overlap."
+          },
+          "fetched_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fetched From",
+            "description": "The first day the transaction responses cover; null when none were fetched."
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "overview",
+          "positions",
+          "transactions",
+          "fetched_from"
+        ],
+        "title": "AvanzaImportRequest"
       },
       "AvanzaStatusResponse": {
         "properties": {
@@ -10023,6 +10084,24 @@
           "connection"
         ],
         "title": "AvanzaStatusResponse"
+      },
+      "AvanzaSyncFailure": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "rejected",
+              "unreachable"
+            ],
+            "title": "Reason",
+            "description": "Avanza rejected the login, or couldn't be reached."
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "AvanzaSyncFailure"
       },
       "BalancePoint": {
         "properties": {

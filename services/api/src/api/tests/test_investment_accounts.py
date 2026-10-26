@@ -90,7 +90,7 @@ class TestInvestmentAccounts:
     await save_fixture(fund)
     await _snapshot(save_fixture, af, fund, 100000, 90000)
     await _snapshot(save_fixture, kf, fund, 300000, 250000)
-    avanza = AvanzaConnection(user_id=user.id, username="simon", encrypted_credentials="unused")
+    avanza = AvanzaConnection(user_id=user.id, username="simon")
     await save_fixture(avanza)
     for external_id, account in (("1", af), ("2", kf)):
       await save_fixture(AvanzaAccount(connection_id=avanza.id, external_id=external_id, name=account.name, account_type="X", bank_account_id=account.id))

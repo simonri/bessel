@@ -2,7 +2,6 @@ import type { AccountOverview, AvanzaConnectionSchema } from "@bessel/client";
 import {
   authorizeBankConnectionMutation,
   authorizeMontroseMutation,
-  connectAvanzaMutation,
   getAccountsOverviewQueryKey,
   getAvanzaQueryKey,
   getMontroseQueryKey,
@@ -10,7 +9,6 @@ import {
   listBankConnectionsOptions,
   listBankConnectionsQueryKey,
   listTransactionsQueryKey,
-  syncAvanzaMutation,
   syncBankConnectionMutation,
   syncMontroseMutation,
 } from "@bessel/client";
@@ -32,6 +30,11 @@ import {
 import { ImportDialog, type ImportPreset } from "@/components/import-dialog";
 import type { FixAction } from "@/lib/account-labels";
 import { errorDetail } from "@/lib/api-error";
+import {
+  avanzaErrorMessage,
+  connectAvanzaFromDesktop,
+  syncAvanzaFromDesktop,
+} from "@/lib/avanza-sync";
 import { client } from "@/lib/client";
 
 // A sync runs in the background; keep refreshing for a while so its result shows.
@@ -173,16 +176,20 @@ export function AccountActionsProvider({
     },
     onError: (error) => toast.error(errorDetail(error, "Couldn't update")),
   });
+  // Avanza signs in from this computer, so the update is done when this resolves.
   const syncAvanza = useMutation({
-    ...syncAvanzaMutation({ client }),
+    mutationFn: syncAvanzaFromDesktop,
     onSuccess: () => {
-      toast.success("Updating - this takes a minute");
+      toast.success("Avanza is up to date");
       refresh();
     },
-    onError: (error) => toast.error(errorDetail(error, "Couldn't update")),
+    onError: (error) => {
+      toast.error(avanzaErrorMessage(error, "Couldn't update Avanza"));
+      refresh();
+    },
   });
   const connectAvanzaLogin = useMutation({
-    ...connectAvanzaMutation({ client }),
+    mutationFn: connectAvanzaFromDesktop,
     onSuccess: refresh,
   });
 
@@ -207,7 +214,7 @@ export function AccountActionsProvider({
           return;
         case "sync": {
           if (source.kind === "avanza") {
-            syncAvanza.mutate({ client });
+            syncAvanza.mutate();
             return;
           }
           if (source.kind === "montrose") {
@@ -257,16 +264,9 @@ export function AccountActionsProvider({
   const submitAvanzaLogin = async (login: AvanzaLogin) => {
     let connection: AvanzaConnectionSchema;
     try {
-      connection = await connectAvanzaLogin.mutateAsync({
-        client,
-        body: {
-          username: login.username,
-          password: login.password,
-          totp_secret: login.totpSecret,
-        },
-      });
+      connection = await connectAvanzaLogin.mutateAsync(login);
     } catch (error) {
-      throw new Error(errorDetail(error, "Couldn't connect Avanza."));
+      throw new Error(avanzaErrorMessage(error, "Couldn't connect Avanza."));
     }
     if (!connection.accounts.some((a) => a.bank_account_id)) {
       onAvanzaConnected();

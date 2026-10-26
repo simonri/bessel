@@ -21,7 +21,6 @@ import {
   completeGoogleConnect,
   completeMontrose,
   completeTask,
-  connectAvanza,
   connectIcloud,
   createBankAccount,
   createCalendarEvent,
@@ -93,6 +92,7 @@ import {
   getTransactionSummary,
   getWeatherForecast,
   healthz,
+  importAvanza,
   importKlarnaTransactions,
   importLocationHistory,
   importTransactions,
@@ -142,6 +142,7 @@ import {
   renameTransaction,
   reopenTask,
   reorderTasks,
+  reportAvanzaSyncFailed,
   respondToCalendarEvent,
   revokeIngestToken,
   searchEverything,
@@ -150,7 +151,6 @@ import {
   spendingByCategory,
   structureRecipeText,
   syncAgentUsage,
-  syncAvanza,
   syncBankConnection,
   syncCalendarAccount,
   syncContacts,
@@ -212,9 +212,6 @@ import type {
   CompleteTaskData,
   CompleteTaskError,
   CompleteTaskResponse,
-  ConnectAvanzaData,
-  ConnectAvanzaError,
-  ConnectAvanzaResponse,
   ConnectIcloudData,
   ConnectIcloudError,
   ConnectIcloudResponse,
@@ -411,6 +408,9 @@ import type {
   GetWeatherForecastError,
   GetWeatherForecastResponse,
   HealthzData,
+  ImportAvanzaData,
+  ImportAvanzaError,
+  ImportAvanzaResponse,
   ImportKlarnaTransactionsData,
   ImportKlarnaTransactionsError,
   ImportKlarnaTransactionsResponse,
@@ -542,6 +542,9 @@ import type {
   ReorderTasksData,
   ReorderTasksError,
   ReorderTasksResponse,
+  ReportAvanzaSyncFailedData,
+  ReportAvanzaSyncFailedError,
+  ReportAvanzaSyncFailedResponse,
   RespondToCalendarEventData,
   RespondToCalendarEventError,
   RespondToCalendarEventResponse,
@@ -566,7 +569,6 @@ import type {
   SyncAgentUsageData,
   SyncAgentUsageError,
   SyncAgentUsageResponse,
-  SyncAvanzaData,
   SyncBankConnectionData,
   SyncBankConnectionError,
   SyncCalendarAccountData,
@@ -1282,7 +1284,7 @@ export const updateBankAccountMutation = (
 /**
  * Disconnect Avanza
  *
- * Deletes the stored login. Imported transactions, trades and positions stay.
+ * Forgets the connection and its account links; no Avanza login is stored. Imported transactions, trades and positions stay.
  */
 export const disconnectAvanzaMutation = (
   options?: Partial<Options<DisconnectAvanzaData>>,
@@ -1334,24 +1336,51 @@ export const getAvanzaOptions = (options?: Options<GetAvanzaData>) =>
   });
 
 /**
- * Connect Avanza
+ * Import Avanza Data
  *
- * Checks the login with Avanza and stores it encrypted; also how new credentials are saved.
+ * Imports Avanza's responses as the desktop app read them; connects Avanza on the first import.
  */
-export const connectAvanzaMutation = (
-  options?: Partial<Options<ConnectAvanzaData>>,
+export const importAvanzaMutation = (
+  options?: Partial<Options<ImportAvanzaData>>,
 ): UseMutationOptions<
-  ConnectAvanzaResponse,
-  ConnectAvanzaError,
-  Options<ConnectAvanzaData>
+  ImportAvanzaResponse,
+  ImportAvanzaError,
+  Options<ImportAvanzaData>
 > => {
   const mutationOptions: UseMutationOptions<
-    ConnectAvanzaResponse,
-    ConnectAvanzaError,
-    Options<ConnectAvanzaData>
+    ImportAvanzaResponse,
+    ImportAvanzaError,
+    Options<ImportAvanzaData>
   > = {
     mutationFn: async (fnOptions) => {
-      const { data } = await connectAvanza({
+      const { data } = await importAvanza({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Report Avanza Sync Failure
+ */
+export const reportAvanzaSyncFailedMutation = (
+  options?: Partial<Options<ReportAvanzaSyncFailedData>>,
+): UseMutationOptions<
+  ReportAvanzaSyncFailedResponse,
+  ReportAvanzaSyncFailedError,
+  Options<ReportAvanzaSyncFailedData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReportAvanzaSyncFailedResponse,
+    ReportAvanzaSyncFailedError,
+    Options<ReportAvanzaSyncFailedData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await reportAvanzaSyncFailed({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -1379,29 +1408,6 @@ export const linkAvanzaAccountMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await linkAvanzaAccount({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Sync Avanza
- */
-export const syncAvanzaMutation = (
-  options?: Partial<Options<SyncAvanzaData>>,
-): UseMutationOptions<unknown, DefaultError, Options<SyncAvanzaData>> => {
-  const mutationOptions: UseMutationOptions<
-    unknown,
-    DefaultError,
-    Options<SyncAvanzaData>
-  > = {
-    mutationFn: async (fnOptions) => {
-      const { data } = await syncAvanza({
         ...options,
         ...fnOptions,
         throwOnError: true,

@@ -9,6 +9,7 @@ from uuid import UUID
 from dateutil.relativedelta import relativedelta
 
 from api.avanza.repository import AvanzaConnectionRepository, HoldingSnapshotRepository
+from api.avanza.service import REJECTED as AVANZA_REJECTED
 from api.bank_accounts.repository import BankAccountRepository
 from api.bank_accounts.schemas import (
   AccountOverview,
@@ -66,7 +67,7 @@ def _in_words(issue: AccountProblem, label: str, *, bessel_balance: int, currenc
     case "sign_in" if label == "Montrose":
       return "Montrose needs a new BankID login to keep syncing."
     case "sign_in":
-      return "Avanza didn't accept the login. Save new credentials to resume syncing."
+      return AVANZA_REJECTED
     case "balance_mismatch" if label == "Klarna pay later":
       return f"Doesn't match what Klarna says is owed, {_money(-(issue.source_balance or 0), currency)}. Import again."
     case "balance_mismatch":

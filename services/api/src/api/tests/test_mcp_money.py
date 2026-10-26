@@ -238,7 +238,7 @@ class TestInvestments:
       currency="SEK",
     )
     await save_fixture(snapshot)
-    avanza = AvanzaConnection(user_id=user.id, username="simon", encrypted_credentials="unused")
+    avanza = AvanzaConnection(user_id=user.id, username="simon")
     await save_fixture(avanza)
     await save_fixture(AvanzaAccount(connection_id=avanza.id, external_id="1", name="KF", account_type="KF", bank_account_id=kf.id))
 

@@ -1034,34 +1034,6 @@ export const AvanzaAccountUpdateSchema = {
   title: "AvanzaAccountUpdate",
 } as const;
 
-export const AvanzaConnectRequestSchema = {
-  properties: {
-    username: {
-      type: "string",
-      maxLength: 255,
-      minLength: 1,
-      title: "Username",
-    },
-    password: {
-      type: "string",
-      maxLength: 255,
-      minLength: 1,
-      title: "Password",
-    },
-    totp_secret: {
-      type: "string",
-      maxLength: 128,
-      minLength: 16,
-      title: "Totp Secret",
-      description:
-        "The secret Avanza shows when adding 'another app' for two-factor login.",
-    },
-  },
-  type: "object",
-  required: ["username", "password", "totp_secret"],
-  title: "AvanzaConnectRequest",
-} as const;
-
 export const AvanzaConnectionSchemaSchema = {
   properties: {
     id: {
@@ -1077,7 +1049,7 @@ export const AvanzaConnectionSchemaSchema = {
       type: "boolean",
       title: "Credentials Rejected",
       description:
-        "Avanza rejected the login; syncing stops until new credentials are saved.",
+        "Avanza rejected the desktop app's login; the user needs to sign in again there.",
     },
     last_synced_at: {
       anyOf: [
@@ -1109,6 +1081,20 @@ export const AvanzaConnectionSchemaSchema = {
       type: "array",
       title: "Accounts",
     },
+    sync_from: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Sync From",
+      description:
+        "The first day the next import's transactions must cover; null when no account is linked.",
+    },
   },
   type: "object",
   required: [
@@ -1118,8 +1104,75 @@ export const AvanzaConnectionSchemaSchema = {
     "last_synced_at",
     "sync_error",
     "accounts",
+    "sync_from",
   ],
   title: "AvanzaConnectionSchema",
+} as const;
+
+export const AvanzaImportRequestSchema = {
+  properties: {
+    username: {
+      type: "string",
+      maxLength: 255,
+      minLength: 1,
+      title: "Username",
+      description: "The Avanza username the desktop app signed in with.",
+    },
+    overview: {
+      additionalProperties: true,
+      type: "object",
+      title: "Overview",
+      description: "Avanza's raw categorizedAccounts response.",
+    },
+    positions: {
+      anyOf: [
+        {
+          additionalProperties: true,
+          type: "object",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Positions",
+      description:
+        "Avanza's raw positions response; null when no account is linked.",
+    },
+    transactions: {
+      items: {
+        additionalProperties: true,
+        type: "object",
+      },
+      type: "array",
+      maxItems: 500,
+      title: "Transactions",
+      description:
+        "Avanza's raw transaction list responses; pages may overlap.",
+    },
+    fetched_from: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Fetched From",
+      description:
+        "The first day the transaction responses cover; null when none were fetched.",
+    },
+  },
+  type: "object",
+  required: [
+    "username",
+    "overview",
+    "positions",
+    "transactions",
+    "fetched_from",
+  ],
+  title: "AvanzaImportRequest",
 } as const;
 
 export const AvanzaStatusResponseSchema = {
@@ -1143,6 +1196,20 @@ export const AvanzaStatusResponseSchema = {
   type: "object",
   required: ["available", "connection"],
   title: "AvanzaStatusResponse",
+} as const;
+
+export const AvanzaSyncFailureSchema = {
+  properties: {
+    reason: {
+      type: "string",
+      enum: ["rejected", "unreachable"],
+      title: "Reason",
+      description: "Avanza rejected the login, or couldn't be reached.",
+    },
+  },
+  type: "object",
+  required: ["reason"],
+  title: "AvanzaSyncFailure",
 } as const;
 
 export const BalancePointSchema = {

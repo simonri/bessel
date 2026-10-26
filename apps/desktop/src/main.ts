@@ -22,6 +22,7 @@ import {
   registerAgentUsageHandlers,
   removeLegacyCollector,
 } from "./agent-usage.js";
+import { registerAvanzaHandlers } from "./avanza.js";
 import {
   confirmCloseWithClaudeSessions,
   registerClaudeSessionHandlers,
@@ -41,6 +42,7 @@ import {
 } from "./ipc.js";
 import { KLARNA_PARTITION, signInToKlarna } from "./klarna.js";
 import { registerPortsHandlers } from "./ports.js";
+import { isRealEncryptionAvailable } from "./secure-storage.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
   getSpotifyPositionMs,
@@ -165,6 +167,8 @@ if (app.isPackaged && SENTRY_DSN) {
     release: app.getVersion(),
     environment: "production",
     tracesSampleRate: 0,
+    // No trace headers on requests to other services (Avanza, Anthropic, ...).
+    tracePropagationTargets: [],
     integrations: (integrations) =>
       integrations.filter(
         (i) =>
@@ -488,17 +492,6 @@ let authCachePath = "";
 let authCacheReady: Promise<void> = Promise.resolve();
 // Writes run one at a time, so an older cache can't land after a newer one.
 let authCacheWrites: Promise<void> = Promise.resolve();
-
-async function isRealEncryptionAvailable(): Promise<boolean> {
-  if (!(await safeStorage.isAsyncEncryptionAvailable())) return false;
-  // getSelectedStorageBackend() only exists on Linux (it reports which keyring
-  // was picked — kwallet, gnome-libsecret, or "basic_text", which is plaintext
-  // obfuscation rather than real encryption). Calling it on mac/Windows throws
-  // a TypeError, since isAsyncEncryptionAvailable() already guarantees a real OS
-  // keychain/DPAPI backend there.
-  if (process.platform !== "linux") return true;
-  return safeStorage.getSelectedStorageBackend() !== "basic_text";
-}
 
 async function loadAuthCache(): Promise<void> {
   if (!authCachePath || !(await isRealEncryptionAvailable())) return;
@@ -1582,6 +1575,7 @@ app.whenReady().then(() => {
   registerPortsHandlers();
   registerVaultHandlers(appendLog);
   registerAgentUsageHandlers();
+  registerAvanzaHandlers();
   void removeLegacyCollector(appendLog);
 
   ipcHandle("klarna:signIn", () =>

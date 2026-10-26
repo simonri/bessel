@@ -62,7 +62,7 @@ class TestStaleSyncs:
     await _bank(save_fixture, user, "Revolut", NOW - timedelta(days=30), linked=None)
     # Left out of the latest approval, so it isn't read anyway; Accounts already says so.
     await _bank(save_fixture, user, "Lunar", NOW - timedelta(days=30), linked=checking, shared=False)
-    avanza = AvanzaConnection(user_id=user.id, username="simon", encrypted_credentials=encrypt("{}"), last_synced_at=NOW - timedelta(days=3))
+    avanza = AvanzaConnection(user_id=user.id, username="simon", last_synced_at=NOW - timedelta(days=3))
     await save_fixture(avanza)
     other = await _bank_account(save_fixture, user)
     await save_fixture(AvanzaAccount(connection_id=avanza.id, external_id="1", name="ISK", account_type="INVESTERINGSSPARKONTO", bank_account_id=other.id))

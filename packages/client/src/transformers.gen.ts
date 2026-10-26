@@ -6,7 +6,6 @@ import type {
   CompleteGoogleConnectResponse,
   CompleteMontroseResponse,
   CompleteTaskResponse,
-  ConnectAvanzaResponse,
   ConnectIcloudResponse,
   CreateBankAccountResponse,
   CreateCalendarEventResponse,
@@ -39,6 +38,7 @@ import type {
   GetRecipeResponse,
   GetTaskResponse,
   GetWeatherForecastResponse,
+  ImportAvanzaResponse,
   ImportLocationHistoryResponse,
   LinkAvanzaAccountResponse,
   LinkBankConnectionAccountResponse,
@@ -262,6 +262,9 @@ const avanzaConnectionSchemaSchemaResponseTransformer = (data: any) => {
   data.accounts = data.accounts.map((item: any) =>
     avanzaAccountSchemaSchemaResponseTransformer(item),
   );
+  if (data.sync_from) {
+    data.sync_from = new Date(data.sync_from);
+  }
   return data;
 };
 
@@ -281,9 +284,9 @@ export const getAvanzaResponseTransformer = async (
   return data;
 };
 
-export const connectAvanzaResponseTransformer = async (
+export const importAvanzaResponseTransformer = async (
   data: any,
-): Promise<ConnectAvanzaResponse> => {
+): Promise<ImportAvanzaResponse> => {
   data = avanzaConnectionSchemaSchemaResponseTransformer(data);
   return data;
 };

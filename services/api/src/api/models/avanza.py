@@ -8,21 +8,17 @@ from api.models.base import RecordModel
 
 
 class AvanzaConnection(RecordModel):
-  """The user's Avanza login, used to read accounts, positions and transactions."""
+  """The user's Avanza connection. The desktop app signs in to Avanza and uploads what it reads; no login is kept here."""
 
   __tablename__ = "avanza_connections"
 
   user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, unique=True)
   username: Mapped[str] = mapped_column(String(255), nullable=False)
-  # Fernet-encrypted JSON with the password and TOTP secret. They can place
-  # trades, so they never leave the server and only read routes are called.
-  encrypted_credentials: Mapped[str] = mapped_column(Text, nullable=False)
-  # Set when Avanza rejects the login; syncs stop until the user saves new
-  # credentials, so a bad password isn't retried into a lockout.
+  # Set when the desktop app reports Avanza rejected its login; cleared by the next import.
   credentials_rejected_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
   last_synced_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
   sync_error: Mapped[str | None] = mapped_column(Text, nullable=True)
-  # Set when the user was told syncing stopped; cleared by the next sync that works.
+  # Set when the user was told syncing stopped; cleared by the next import.
   stale_notified_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
 
   accounts: Mapped[list["AvanzaAccount"]] = relationship(

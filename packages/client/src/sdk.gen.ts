@@ -15,7 +15,6 @@ import {
   completeGoogleConnectResponseTransformer,
   completeMontroseResponseTransformer,
   completeTaskResponseTransformer,
-  connectAvanzaResponseTransformer,
   connectIcloudResponseTransformer,
   createBankAccountResponseTransformer,
   createCalendarEventResponseTransformer,
@@ -48,6 +47,7 @@ import {
   getRecipeResponseTransformer,
   getTaskResponseTransformer,
   getWeatherForecastResponseTransformer,
+  importAvanzaResponseTransformer,
   importLocationHistoryResponseTransformer,
   linkAvanzaAccountResponseTransformer,
   linkBankConnectionAccountResponseTransformer,
@@ -140,9 +140,6 @@ import type {
   CompleteTaskData,
   CompleteTaskErrors,
   CompleteTaskResponses,
-  ConnectAvanzaData,
-  ConnectAvanzaErrors,
-  ConnectAvanzaResponses,
   ConnectIcloudData,
   ConnectIcloudErrors,
   ConnectIcloudResponses,
@@ -344,6 +341,9 @@ import type {
   GetWeatherForecastResponses,
   HealthzData,
   HealthzResponses,
+  ImportAvanzaData,
+  ImportAvanzaErrors,
+  ImportAvanzaResponses,
   ImportKlarnaTransactionsData,
   ImportKlarnaTransactionsErrors,
   ImportKlarnaTransactionsResponses,
@@ -475,6 +475,9 @@ import type {
   ReorderTasksData,
   ReorderTasksErrors,
   ReorderTasksResponses,
+  ReportAvanzaSyncFailedData,
+  ReportAvanzaSyncFailedErrors,
+  ReportAvanzaSyncFailedResponses,
   RespondToCalendarEventData,
   RespondToCalendarEventErrors,
   RespondToCalendarEventResponses,
@@ -499,8 +502,6 @@ import type {
   SyncAgentUsageData,
   SyncAgentUsageErrors,
   SyncAgentUsageResponses,
-  SyncAvanzaData,
-  SyncAvanzaResponses,
   SyncBankConnectionData,
   SyncBankConnectionErrors,
   SyncBankConnectionResponses,
@@ -963,7 +964,7 @@ export const updateBankAccount = <ThrowOnError extends boolean = false>(
 /**
  * Disconnect Avanza
  *
- * Deletes the stored login. Imported transactions, trades and positions stay.
+ * Forgets the connection and its account links; no Avanza login is stored. Imported transactions, trades and positions stay.
  */
 export const disconnectAvanza = <ThrowOnError extends boolean = false>(
   options?: Options<DisconnectAvanzaData, ThrowOnError>,
@@ -992,21 +993,45 @@ export const getAvanza = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Connect Avanza
+ * Import Avanza Data
  *
- * Checks the login with Avanza and stores it encrypted; also how new credentials are saved.
+ * Imports Avanza's responses as the desktop app read them; connects Avanza on the first import.
  */
-export const connectAvanza = <ThrowOnError extends boolean = false>(
-  options: Options<ConnectAvanzaData, ThrowOnError>,
-): RequestResult<ConnectAvanzaResponses, ConnectAvanzaErrors, ThrowOnError> =>
+export const importAvanza = <ThrowOnError extends boolean = false>(
+  options: Options<ImportAvanzaData, ThrowOnError>,
+): RequestResult<ImportAvanzaResponses, ImportAvanzaErrors, ThrowOnError> =>
   (options.client ?? client).post<
-    ConnectAvanzaResponses,
-    ConnectAvanzaErrors,
+    ImportAvanzaResponses,
+    ImportAvanzaErrors,
     ThrowOnError
   >({
-    responseTransformer: connectAvanzaResponseTransformer,
+    responseTransformer: importAvanzaResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/avanza/connect",
+    url: "/v1/avanza/import",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Report Avanza Sync Failure
+ */
+export const reportAvanzaSyncFailed = <ThrowOnError extends boolean = false>(
+  options: Options<ReportAvanzaSyncFailedData, ThrowOnError>,
+): RequestResult<
+  ReportAvanzaSyncFailedResponses,
+  ReportAvanzaSyncFailedErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ReportAvanzaSyncFailedResponses,
+    ReportAvanzaSyncFailedErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/avanza/sync-failed",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -1037,18 +1062,6 @@ export const linkAvanzaAccount = <ThrowOnError extends boolean = false>(
       "Content-Type": "application/json",
       ...options.headers,
     },
-  });
-
-/**
- * Sync Avanza
- */
-export const syncAvanza = <ThrowOnError extends boolean = false>(
-  options?: Options<SyncAvanzaData, ThrowOnError>,
-): RequestResult<SyncAvanzaResponses, unknown, ThrowOnError> =>
-  (options?.client ?? client).post<SyncAvanzaResponses, unknown, ThrowOnError>({
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/avanza/sync",
-    ...options,
   });
 
 /**

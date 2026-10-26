@@ -179,7 +179,7 @@ class TestSources:
         connection_id=connection.id, identification_hash="h", uid="u", currency="SEK", bank_account_id=skandia.id, bank_balance=52361, balance_drift=-500
       )
     )
-    avanza = AvanzaConnection(user_id=user.id, username="simon", encrypted_credentials=encrypt("{}"), last_synced_at=now - timedelta(days=3))
+    avanza = AvanzaConnection(user_id=user.id, username="simon", last_synced_at=now - timedelta(days=3))
     await save_fixture(avanza)
     await save_fixture(
       AvanzaAccount(connection_id=avanza.id, external_id="1", name="AF", account_type="AKTIEFONDKONTO", bank_account_id=avanza_af.id, cash_balance=8635)
@@ -301,9 +301,7 @@ class TestSources:
   @pytest.mark.asyncio
   async def test_a_rejected_avanza_login_asks_to_sign_in_again(self, client: AsyncClient, save_fixture: SaveFixture, user: User, accounts: _Accounts) -> None:
     isk = await accounts.account("ISK", subtype="isk")
-    avanza = AvanzaConnection(
-      user_id=user.id, username="simon", encrypted_credentials=encrypt("{}"), last_synced_at=utc_now(), credentials_rejected_at=utc_now(), sync_error="x"
-    )
+    avanza = AvanzaConnection(user_id=user.id, username="simon", last_synced_at=utc_now(), credentials_rejected_at=utc_now(), sync_error="x")
     await save_fixture(avanza)
     await save_fixture(AvanzaAccount(connection_id=avanza.id, external_id="1", name="ISK", account_type="ISK", bank_account_id=isk.id))
 

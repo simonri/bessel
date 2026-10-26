@@ -267,12 +267,6 @@ enum API {
         var bankAccountId: UUID?
     }
 
-    struct AvanzaConnectRequest: Codable, Hashable {
-        var username: String
-        var password: String
-        var totpSecret: String
-    }
-
     struct AvanzaConnectionSchema: Codable, Hashable {
         var id: UUID
         var username: String
@@ -280,11 +274,24 @@ enum API {
         var lastSyncedAt: Date?
         var syncError: String?
         @Lossy var accounts: [AvanzaAccountSchema]
+        var syncFrom: Date?
+    }
+
+    struct AvanzaImportRequest: Codable, Hashable {
+        var username: String
+        var overview: [String: JSONValue]
+        var positions: [String: JSONValue]?
+        var transactions: [[String: JSONValue]]
+        var fetchedFrom: Date?
     }
 
     struct AvanzaStatusResponse: Codable, Hashable {
         var available: Bool
         var connection: AvanzaConnectionSchema?
+    }
+
+    struct AvanzaSyncFailure: Codable, Hashable {
+        var reason: String
     }
 
     struct BalancePoint: Codable, Hashable {
@@ -2965,34 +2972,6 @@ extension API.AvanzaAccountUpdate {
     }
 }
 
-extension API.AvanzaConnectRequest {
-    private enum DecodingKeys: String, CodingKey {
-        case username
-        case password
-        case totpSecret
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: DecodingKeys.self)
-        self.username = try container.decode(String.self, forKey: .username)
-        self.password = try container.decode(String.self, forKey: .password)
-        self.totpSecret = try container.decode(String.self, forKey: .totpSecret)
-    }
-
-    private enum EncodingKeys: String, CodingKey {
-        case username
-        case password
-        case totpSecret = "totp_secret"
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: EncodingKeys.self)
-        try container.encode(self.username, forKey: .username)
-        try container.encode(self.password, forKey: .password)
-        try container.encode(self.totpSecret, forKey: .totpSecret)
-    }
-}
-
 extension API.AvanzaConnectionSchema {
     private enum DecodingKeys: String, CodingKey {
         case id
@@ -3001,6 +2980,7 @@ extension API.AvanzaConnectionSchema {
         case lastSyncedAt
         case syncError
         case accounts
+        case syncFrom
     }
 
     init(from decoder: Decoder) throws {
@@ -3011,6 +2991,7 @@ extension API.AvanzaConnectionSchema {
         self.lastSyncedAt = try container.decodeIfPresent(Date.self, forKey: .lastSyncedAt)
         self.syncError = try container.decodeIfPresent(String.self, forKey: .syncError)
         self._accounts = try container.decode(Lossy<API.AvanzaAccountSchema>.self, forKey: .accounts)
+        self.syncFrom = try container.decodeIfPresent(Date.self, forKey: .syncFrom)
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -3020,6 +3001,7 @@ extension API.AvanzaConnectionSchema {
         case lastSyncedAt = "last_synced_at"
         case syncError = "sync_error"
         case accounts
+        case syncFrom = "sync_from"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -3030,6 +3012,43 @@ extension API.AvanzaConnectionSchema {
         try container.encodeIfPresent(self.lastSyncedAt.map(API.Instant.init), forKey: .lastSyncedAt)
         try container.encodeIfPresent(self.syncError, forKey: .syncError)
         try container.encode(self.accounts, forKey: .accounts)
+        try container.encodeIfPresent(self.syncFrom.map(API.Day.init), forKey: .syncFrom)
+    }
+}
+
+extension API.AvanzaImportRequest {
+    private enum DecodingKeys: String, CodingKey {
+        case username
+        case overview
+        case positions
+        case transactions
+        case fetchedFrom
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.username = try container.decode(String.self, forKey: .username)
+        self.overview = try container.decode([String: API.JSONValue].self, forKey: .overview)
+        self.positions = try container.decodeIfPresent([String: API.JSONValue].self, forKey: .positions)
+        self.transactions = try container.decode([[String: API.JSONValue]].self, forKey: .transactions)
+        self.fetchedFrom = try container.decodeIfPresent(Date.self, forKey: .fetchedFrom)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case username
+        case overview
+        case positions
+        case transactions
+        case fetchedFrom = "fetched_from"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.username, forKey: .username)
+        try container.encode(self.overview, forKey: .overview)
+        try container.encodeIfPresent(self.positions, forKey: .positions)
+        try container.encode(self.transactions, forKey: .transactions)
+        try container.encodeIfPresent(self.fetchedFrom.map(API.Day.init), forKey: .fetchedFrom)
     }
 }
 
@@ -3054,6 +3073,26 @@ extension API.AvanzaStatusResponse {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.available, forKey: .available)
         try container.encodeIfPresent(self.connection, forKey: .connection)
+    }
+}
+
+extension API.AvanzaSyncFailure {
+    private enum DecodingKeys: String, CodingKey {
+        case reason
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.reason = try container.decode(String.self, forKey: .reason)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case reason
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.reason, forKey: .reason)
     }
 }
 

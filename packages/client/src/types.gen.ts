@@ -714,26 +714,6 @@ export type AvanzaAccountUpdate = {
 };
 
 /**
- * AvanzaConnectRequest
- */
-export type AvanzaConnectRequest = {
-  /**
-   * Username
-   */
-  username: string;
-  /**
-   * Password
-   */
-  password: string;
-  /**
-   * Totp Secret
-   *
-   * The secret Avanza shows when adding 'another app' for two-factor login.
-   */
-  totp_secret: string;
-};
-
-/**
  * AvanzaConnectionSchema
  */
 export type AvanzaConnectionSchema = {
@@ -748,7 +728,7 @@ export type AvanzaConnectionSchema = {
   /**
    * Credentials Rejected
    *
-   * Avanza rejected the login; syncing stops until new credentials are saved.
+   * Avanza rejected the desktop app's login; the user needs to sign in again there.
    */
   credentials_rejected: boolean;
   /**
@@ -763,6 +743,54 @@ export type AvanzaConnectionSchema = {
    * Accounts
    */
   accounts: Array<AvanzaAccountSchema>;
+  /**
+   * Sync From
+   *
+   * The first day the next import's transactions must cover; null when no account is linked.
+   */
+  sync_from: Date | null;
+};
+
+/**
+ * AvanzaImportRequest
+ */
+export type AvanzaImportRequest = {
+  /**
+   * Username
+   *
+   * The Avanza username the desktop app signed in with.
+   */
+  username: string;
+  /**
+   * Overview
+   *
+   * Avanza's raw categorizedAccounts response.
+   */
+  overview: {
+    [key: string]: unknown;
+  };
+  /**
+   * Positions
+   *
+   * Avanza's raw positions response; null when no account is linked.
+   */
+  positions: {
+    [key: string]: unknown;
+  } | null;
+  /**
+   * Transactions
+   *
+   * Avanza's raw transaction list responses; pages may overlap.
+   */
+  transactions: Array<{
+    [key: string]: unknown;
+  }>;
+  /**
+   * Fetched From
+   *
+   * The first day the transaction responses cover; null when none were fetched.
+   */
+  fetched_from: Date | null;
 };
 
 /**
@@ -776,6 +804,18 @@ export type AvanzaStatusResponse = {
    */
   available: boolean;
   connection: AvanzaConnectionSchema | null;
+};
+
+/**
+ * AvanzaSyncFailure
+ */
+export type AvanzaSyncFailure = {
+  /**
+   * Reason
+   *
+   * Avanza rejected the login, or couldn't be reached.
+   */
+  reason: "rejected" | "unreachable";
 };
 
 /**
@@ -8427,31 +8467,58 @@ export type GetAvanzaResponses = {
 
 export type GetAvanzaResponse = GetAvanzaResponses[keyof GetAvanzaResponses];
 
-export type ConnectAvanzaData = {
-  body: AvanzaConnectRequest;
+export type ImportAvanzaData = {
+  body: AvanzaImportRequest;
   path?: never;
   query?: never;
-  url: "/v1/avanza/connect";
+  url: "/v1/avanza/import";
 };
 
-export type ConnectAvanzaErrors = {
+export type ImportAvanzaErrors = {
   /**
    * Validation Error
    */
   422: HttpValidationError;
 };
 
-export type ConnectAvanzaError = ConnectAvanzaErrors[keyof ConnectAvanzaErrors];
+export type ImportAvanzaError = ImportAvanzaErrors[keyof ImportAvanzaErrors];
 
-export type ConnectAvanzaResponses = {
+export type ImportAvanzaResponses = {
   /**
    * Successful Response
    */
-  201: AvanzaConnectionSchema;
+  200: AvanzaConnectionSchema;
 };
 
-export type ConnectAvanzaResponse =
-  ConnectAvanzaResponses[keyof ConnectAvanzaResponses];
+export type ImportAvanzaResponse =
+  ImportAvanzaResponses[keyof ImportAvanzaResponses];
+
+export type ReportAvanzaSyncFailedData = {
+  body: AvanzaSyncFailure;
+  path?: never;
+  query?: never;
+  url: "/v1/avanza/sync-failed";
+};
+
+export type ReportAvanzaSyncFailedErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ReportAvanzaSyncFailedError =
+  ReportAvanzaSyncFailedErrors[keyof ReportAvanzaSyncFailedErrors];
+
+export type ReportAvanzaSyncFailedResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ReportAvanzaSyncFailedResponse =
+  ReportAvanzaSyncFailedResponses[keyof ReportAvanzaSyncFailedResponses];
 
 export type LinkAvanzaAccountData = {
   body: AvanzaAccountUpdate;
@@ -8484,20 +8551,6 @@ export type LinkAvanzaAccountResponses = {
 
 export type LinkAvanzaAccountResponse =
   LinkAvanzaAccountResponses[keyof LinkAvanzaAccountResponses];
-
-export type SyncAvanzaData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: "/v1/avanza/sync";
-};
-
-export type SyncAvanzaResponses = {
-  /**
-   * Successful Response
-   */
-  202: unknown;
-};
 
 export type DisconnectMontroseData = {
   body?: never;

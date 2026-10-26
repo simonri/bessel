@@ -49,6 +49,7 @@ import { BankLogo } from "@/components/bank-logo";
 import { FILE_BANKS } from "@/components/import-dialog";
 import { PrimaryButton, SoftButton } from "@/components/ui-kit";
 import { errorDetail } from "@/lib/api-error";
+import { avanzaErrorMessage, syncAvanzaFromDesktop } from "@/lib/avanza-sync";
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
 
@@ -332,7 +333,7 @@ function Safety({
         title={`Connect ${provider.name}`}
         description={
           avanza
-            ? "Bessel signs in to Avanza with your login to read your accounts."
+            ? "The desktop app signs in to Avanza from this computer and sends Bessel your accounts."
             : montrose
               ? "You log in with BankID at Montrose and approve that Bessel reads your accounts."
               : `You approve it at ${provider.name}. It takes about a minute.`
@@ -342,8 +343,8 @@ function Safety({
         {avanza ? (
           <>
             <Assurance icon={<Lock />}>
-              Your login is stored encrypted and only used to read your
-              accounts, trades and holdings.
+              Your login stays in this computer's keychain. Bessel's servers
+              never see it.
             </Assurance>
             <Assurance icon={<ShieldCheck />}>
               Bessel never places orders or moves money.
@@ -711,6 +712,15 @@ function Pick({
       toast.success(
         `${chosen.length} account${chosen.length === 1 ? "" : "s"} added - importing now`,
       );
+      if (state.source === "avanza" && chosen.length) {
+        syncAvanzaFromDesktop()
+          .then(invalidate)
+          .catch((error) =>
+            toast.error(
+              avanzaErrorMessage(error, "Couldn't import from Avanza"),
+            ),
+          );
+      }
       onClose();
     } catch (error) {
       toast.error(errorDetail(error, "Couldn't add the accounts"));

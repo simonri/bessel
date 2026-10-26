@@ -1,6 +1,11 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { AgentUsageSnapshot } from "./agent-usage.js";
 import type {
+  AvanzaLogin,
+  AvanzaResult,
+  AvanzaSnapshot,
+} from "./avanza-core.js";
+import type {
   ClaudeConversation,
   ClaudeSessionsSnapshot,
   ClaudeSessionView,
@@ -188,6 +193,19 @@ const bridge = {
   klarna: {
     signIn: (): Promise<{ authorization: string; cookie: string } | null> =>
       ipcRenderer.invoke("klarna:signIn"),
+  },
+  avanza: {
+    status: (): Promise<{ username: string | null }> =>
+      ipcRenderer.invoke("avanza:status"),
+    saveLogin: (
+      login: AvanzaLogin,
+    ): Promise<AvanzaResult<{ username: string; overview: unknown }>> =>
+      ipcRenderer.invoke("avanza:saveLogin", login),
+    fetch: (options: {
+      from: string | null;
+    }): Promise<AvanzaResult<AvanzaSnapshot>> =>
+      ipcRenderer.invoke("avanza:fetch", options),
+    forget: (): Promise<void> => ipcRenderer.invoke("avanza:forget"),
   },
   spotify: {
     getStatus: (): Promise<SpotifyStatus> =>

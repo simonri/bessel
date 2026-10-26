@@ -53,7 +53,8 @@ AUDITED: set[str] = {
   # Avanza's are in test_avanza.py::TestIsolation.
   "GET /v1/avanza",
   "PATCH /v1/avanza/accounts/{account_id}",
-  "POST /v1/avanza/sync",
+  "POST /v1/avanza/import",
+  "POST /v1/avanza/sync-failed",
   "DELETE /v1/avanza",
   # Montrose's are in test_montrose.py::TestIsolation.
   "GET /v1/montrose",
@@ -214,7 +215,6 @@ EXEMPT: dict[str, str] = {
   "POST /v1/client-diagnostics": "Logs the caller's own crash reports; reads and stores nothing",
   "POST /v1/calendars/google/authorize": "Starts the caller's own connection flow",
   "POST /v1/bank-connections/authorize": "Starts the caller's own connection flow",
-  "POST /v1/avanza/connect": "Creates or updates the caller's own connection only",
   "POST /v1/montrose/authorize": "Starts the caller's own connection flow",
   "POST /v1/calendars/icloud": "Creates an account for the caller only",
 }

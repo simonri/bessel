@@ -1,18 +1,14 @@
 import hashlib
 import json
-from collections.abc import Callable
-from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from decimal import Decimal
+from typing import Any, Literal
 from uuid import UUID
 
-import httpx
 import structlog
 
-from api.avanza import client as avanza_client
 from api.avanza import parsing
-from api.avanza.client import AvanzaAuthError, AvanzaClient, AvanzaError
 from api.avanza.repository import (
   AvanzaAccountRepository,
   AvanzaConnectionRepository,
@@ -20,7 +16,6 @@ from api.avanza.repository import (
   ImportedTradeRepository,
   SecurityCatalogRepository,
 )
-from api.common.encryption import decrypt, encrypt
 from api.common.utils import utc_now
 from api.logging import Logger
 from api.models.avanza import AvanzaAccount, AvanzaConnection
@@ -31,37 +26,30 @@ from api.postgres import AsyncSession
 from api.settings import settings
 from api.transactions.parsers.base import ParsedTransaction
 from api.transactions.service import transaction_service
-from api.worker import enqueue_job
 
 log: Logger = structlog.get_logger()
 
-type SessionMaker = Callable[[], AbstractAsyncContextManager[AsyncSession]]
-
-SYNC_ACTOR = "sync_avanza_connection"
-# Every sync is a full login, so "Sync now" waits this long after the last one.
-SYNC_COOLDOWN = timedelta(minutes=10)
-# Every sync reads this far back again, for rows that settle late.
+# Every import reads this far back again, for rows that settle late.
 OVERLAP = timedelta(days=14)
 # Avanza's first transaction can't be older than this; the first import starts here.
 EARLIEST = date(2000, 1, 1)
-# The most transactions asked for at once; a window that fills it is split in two.
-PAGE_LIMIT = 1000
 HASH_PREFIX = "av:"
-REJECTED = "Avanza didn't accept the login. Save new credentials to resume syncing."
-UNREACHABLE = "Couldn't reach Avanza. Bessel tries again at the next sync."
+REJECTED = "Avanza didn't accept the login. Sign in again in the Bessel desktop app."
+UNREACHABLE = "Couldn't reach Avanza. The desktop app tries again later."
+
+type SyncFailure = Literal["rejected", "unreachable"]
 
 
 class AvanzaConflictError(Exception):
   """The Bessel account already takes another Avanza account's transactions."""
 
 
+class AvanzaDataError(Exception):
+  """The uploaded Avanza responses don't have the shape Bessel reads."""
+
+
 def available_to(user_id: UUID) -> bool:
   return user_id in settings.AVANZA_USER_IDS
-
-
-def _credentials(connection: AvanzaConnection) -> tuple[str, str, str]:
-  secret = json.loads(decrypt(connection.encrypted_credentials))
-  return connection.username, secret["password"], secret["totpSecret"]
 
 
 def _minor(amount: Decimal) -> int:
@@ -86,41 +74,60 @@ class LinkedAccount:
 @dataclass(frozen=True, slots=True)
 class Fetched:
   accounts: list[parsing.Account]
-  positions: list[parsing.Position]
+  positions: list[parsing.Position] | None
   movements: list[parsing.Movement]
 
 
-async def _all_movements(client: AvanzaClient, date_from: date, date_to: date) -> list[parsing.Movement]:
-  """Every transaction in the window; Avanza caps a response, so a full one is split until none are."""
-  body = await client.transactions(date_from=date_from, date_to=date_to, max_elements=PAGE_LIMIT)
-  rows = parsing.movements(body)
-  if len(rows) < PAGE_LIMIT:
-    return rows
-  if date_from >= date_to:
-    raise AvanzaError(f"More than {PAGE_LIMIT} transactions on {date_from}.")
-  middle = date_from + (date_to - date_from) / 2
-  return await _all_movements(client, date_from, middle) + await _all_movements(client, middle + timedelta(days=1), date_to)
+def parse(overview: dict[str, Any], positions: dict[str, Any] | None, transactions: list[dict[str, Any]]) -> Fetched:
+  """Avanza's raw responses as plain values; overlapping transaction pages count each row once."""
+  try:
+    unique = {m.external_id: m for body in transactions for m in parsing.movements(body)}
+    return Fetched(
+      accounts=parsing.accounts(overview),
+      positions=parsing.positions(positions) if positions is not None else None,
+      movements=list(unique.values()),
+    )
+  except (KeyError, ValueError, TypeError, AttributeError) as e:
+    raise AvanzaDataError(type(e).__name__) from e
 
 
 class AvanzaService:
-  async def connect(self, connections: AvanzaConnectionRepository, user_id: UUID, *, username: str, password: str, totp_secret: str) -> AvanzaConnection:
-    """Checks the login with Avanza, then stores it encrypted along with the accounts it can see."""
-    totp_secret = totp_secret.replace(" ", "").upper()
-    async with avanza_client.http_client() as http:
-      client = AvanzaClient(http)
-      await client.login(username, password, totp_secret)
-      found = parsing.accounts(await client.overview())
+  async def import_data(
+    self, connections: AvanzaConnectionRepository, user_id: UUID, *, username: str, fetched: Fetched, fetched_from: date | None
+  ) -> AvanzaConnection:
+    """Imports what the desktop app read from Avanza into every linked account the upload reaches back far enough for.
 
+    An account whose history starts before `fetched_from` (linked after the app asked where to start) waits for the next
+    upload, which reads far enough back for it."""
+    now = utc_now()
     connection = await connections.get_for_user(user_id)
     if connection is None:
-      connection = AvanzaConnection(user_id=user_id, username=username, encrypted_credentials="", accounts=[])
-      await connections.create(connection)
+      connection = await connections.create(AvanzaConnection(user_id=user_id, username=username, accounts=[]))
     connection.username = username
-    connection.encrypted_credentials = encrypt(json.dumps({"password": password, "totpSecret": totp_secret}))
-    connection.credentials_rejected_at, connection.sync_error = None, None
-    self._merge_accounts(connection, found)
+    self._merge_accounts(connection, fetched.accounts)
     await connections.session.flush()
+
+    by_external_id = {account.external_id: account for account in connection.accounts}
+    created, imported, waiting = 0, 0, 0
+    for account in self.linked(connection):
+      if fetched_from is None or fetched.positions is None or account.date_from < fetched_from:
+        waiting += 1
+        continue
+      created += await self.import_account(connections.session, user_id, account, fetched, today=now.date())
+      by_external_id[account.external_id].last_synced_at = now
+      imported += 1
+    connection.last_synced_at = now
+    connection.sync_error, connection.credentials_rejected_at, connection.stale_notified_at = None, None, None
+    await connections.session.flush()
+    log.info("avanza_imported", connection_id=str(connection.id), accounts=imported, waiting=waiting, created=created)
     return connection
+
+  def report_failure(self, connection: AvanzaConnection, reason: SyncFailure) -> None:
+    """Records why the desktop app couldn't read Avanza; a rejected login asks the user to sign in again."""
+    if reason == "rejected":
+      connection.sync_error, connection.credentials_rejected_at = REJECTED, utc_now()
+    else:
+      connection.sync_error = UNREACHABLE
 
   def _merge_accounts(self, connection: AvanzaConnection, found: list[parsing.Account]) -> None:
     known = {account.external_id: account for account in connection.accounts}
@@ -133,14 +140,8 @@ class AvanzaService:
       else:
         existing.name, existing.account_type, existing.cash_balance = account.name, account.account_type, _minor(account.cash)
 
-  def request_sync(self, connection_id: UUID) -> None:
-    enqueue_job(SYNC_ACTOR, str(connection_id))
-
-  def can_sync_now(self, connection: AvanzaConnection, *, now: datetime) -> bool:
-    return connection.last_synced_at is None or now - connection.last_synced_at >= SYNC_COOLDOWN
-
   async def link_account(self, session: AsyncSession, account: AvanzaAccount, bank_account: BankAccount | None) -> None:
-    """Points the Avanza account at a Bessel account; the next sync imports its whole history."""
+    """Points the Avanza account at a Bessel account; the next import reads its whole history."""
     if (bank_account.id if bank_account else None) == account.bank_account_id:
       return
     if bank_account is not None and await AvanzaAccountRepository.from_session(session).is_linked_elsewhere(bank_account.id, account):
@@ -158,15 +159,6 @@ class AvanzaService:
       for account in connection.accounts
       if account.bank_account_id is not None
     ]
-
-  async def fetch(self, username: str, password: str, totp_secret: str, *, date_from: date, today: date) -> Fetched:
-    async with avanza_client.http_client() as http:
-      client = AvanzaClient(http)
-      await client.login(username, password, totp_secret)
-      found = parsing.accounts(await client.overview())
-      held = parsing.positions(await client.positions())
-      moved = await _all_movements(client, date_from, today)
-    return Fetched(accounts=found, positions=held, movements=moved)
 
   async def import_account(self, session: AsyncSession, user_id: UUID, account: LinkedAccount, fetched: Fetched, *, today: date) -> int:
     """Cash movements into the account's transactions, buys and sells into trades, and today's positions."""
@@ -221,7 +213,7 @@ class AvanzaService:
     await ImportedTradeRepository.from_session(session).insert_ignoring_duplicates(trades)
 
     snapshot = []
-    for p in fetched.positions:
+    for p in fetched.positions or []:
       if p.account_id != account.external_id or p.quantity == 0:
         continue
       security = await securities.get_or_create_by_isin(
@@ -242,49 +234,9 @@ class AvanzaService:
     await HoldingSnapshotRepository.from_session(session).replace_day(account.bank_account_id, today, snapshot)
     return created
 
-  async def sync(self, session_maker: SessionMaker, connection_id: UUID) -> None:
-    """Imports every linked account; a rejected login stops syncing until new credentials are saved."""
-    async with session_maker() as session:
-      connection = await AvanzaConnectionRepository.from_session(session).get_with_accounts(connection_id)
-      if connection is None or connection.credentials_rejected_at is not None:
-        return
-      user_id, credentials, linked = connection.user_id, _credentials(connection), self.linked(connection)
-
-    started = utc_now()
-    today = started.date()
-    try:
-      fetched = await self.fetch(*credentials, date_from=min((a.date_from for a in linked), default=today), today=today)
-    except AvanzaAuthError:
-      await self._record(session_maker, connection_id, error=REJECTED, rejected_at=started)
-      return
-    except (AvanzaError, httpx.HTTPError, KeyError, ValueError) as e:
-      # Only the error's class: Avanza's errors can carry account details.
-      log.warning("avanza_sync_failed", connection_id=str(connection_id), error=type(e).__name__)
-      await self._record(session_maker, connection_id, error=UNREACHABLE)
-      return
-
-    async with session_maker() as session:
-      connection = await AvanzaConnectionRepository.from_session(session).get_with_accounts(connection_id)
-      if connection is None:
-        return
-      self._merge_accounts(connection, fetched.accounts)
-      by_external_id = {account.external_id: account for account in connection.accounts}
-      created = 0
-      for account in linked:
-        created += await self.import_account(session, user_id, account, fetched, today=today)
-        stored = by_external_id.get(account.external_id)
-        if stored is not None:
-          stored.last_synced_at = started
-      connection.last_synced_at, connection.sync_error, connection.stale_notified_at = started, None, None
-    log.info("avanza_synced", connection_id=str(connection_id), created=created)
-
-  async def _record(self, session_maker: SessionMaker, connection_id: UUID, *, error: str, rejected_at: datetime | None = None) -> None:
-    async with session_maker() as session:
-      connection = await AvanzaConnectionRepository.from_session(session).get_by_id(connection_id)
-      if connection is not None:
-        connection.sync_error = error
-        if rejected_at is not None:
-          connection.credentials_rejected_at = rejected_at
+  def sync_from(self, connection: AvanzaConnection) -> date | None:
+    """The first day the next upload needs, for the linked account furthest behind."""
+    return min((account.date_from for account in self.linked(connection)), default=None)
 
 
 avanza_service = AvanzaService()

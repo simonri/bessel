@@ -1,22 +1,15 @@
 from uuid import UUID
 
-import httpx
-import structlog
 from fastapi import APIRouter
 
-from api.avanza.client import AvanzaAuthError, AvanzaError
 from api.avanza.repository import AvanzaAccountRepository, AvanzaConnectionRepository
-from api.avanza.schemas import AvanzaAccountUpdate, AvanzaConnectionSchema, AvanzaConnectRequest, AvanzaStatusResponse
-from api.avanza.service import AvanzaConflictError, available_to, avanza_service
+from api.avanza.schemas import AvanzaAccountUpdate, AvanzaConnectionSchema, AvanzaImportRequest, AvanzaStatusResponse, AvanzaSyncFailure
+from api.avanza.service import AvanzaConflictError, AvanzaDataError, available_to, avanza_service, parse
 from api.bank_accounts.repository import BankAccountRepository
-from api.common.utils import utc_now
-from api.exceptions import ConflictError, ForbiddenError, ResourceNotFound, ServiceUnavailableError, TooManyRequestsError, ValidationError
-from api.logging import Logger
+from api.exceptions import ConflictError, ForbiddenError, ResourceNotFound, ValidationError
 from api.models.avanza import AvanzaConnection
 from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
-
-log: Logger = structlog.get_logger()
 
 router = APIRouter(prefix="/avanza", tags=["avanza"])
 
@@ -35,6 +28,7 @@ def _schema(connection: AvanzaConnection) -> AvanzaConnectionSchema:
       "last_synced_at": connection.last_synced_at,
       "sync_error": connection.sync_error,
       "accounts": connection.accounts,
+      "sync_from": avanza_service.sync_from(connection),
     }
   )
 
@@ -52,23 +46,29 @@ async def get_avanza(session: DBSession, current_user: CurrentDBUser) -> AvanzaS
   return AvanzaStatusResponse(available=available_to(current_user.id), connection=_schema(connection) if connection else None)
 
 
-@router.post("/connect", summary="Connect Avanza", response_model=AvanzaConnectionSchema, status_code=201)
-async def connect_avanza(body: AvanzaConnectRequest, session: DBSession, current_user: CurrentDBUser) -> AvanzaConnectionSchema:
-  """Checks the login with Avanza and stores it encrypted; also how new credentials are saved."""
+@router.post("/import", summary="Import Avanza Data", response_model=AvanzaConnectionSchema)
+async def import_avanza(body: AvanzaImportRequest, session: DBSession, current_user: CurrentDBUser) -> AvanzaConnectionSchema:
+  """Imports Avanza's responses as the desktop app read them; connects Avanza on the first import."""
   _require_available(current_user.id)
-  connections = AvanzaConnectionRepository.from_session(session)
   try:
-    connection = await avanza_service.connect(
-      connections, current_user.id, username=body.username.strip(), password=body.password, totp_secret=body.totp_secret
-    )
-  except AvanzaAuthError as e:
-    raise ValidationError(str(e)) from e
-  except (AvanzaError, httpx.HTTPError, KeyError, ValueError) as e:
-    log.warning("avanza_connect_failed", error=type(e).__name__)
-    raise ServiceUnavailableError("Couldn't reach Avanza. Try again in a moment.", status_code=502) from e
-  if any(account.bank_account_id for account in connection.accounts):
-    avanza_service.request_sync(connection.id)
-  return _schema(await _owned(connections, current_user.id))
+    fetched = parse(body.overview, body.positions, body.transactions)
+  except AvanzaDataError as e:
+    raise ValidationError("Avanza's data wasn't in the expected shape.", status_code=422) from e
+  connection = await avanza_service.import_data(
+    AvanzaConnectionRepository.from_session(session),
+    current_user.id,
+    username=body.username.strip(),
+    fetched=fetched,
+    fetched_from=body.fetched_from,
+  )
+  return _schema(connection)
+
+
+@router.post("/sync-failed", summary="Report Avanza Sync Failure", status_code=204)
+async def report_avanza_sync_failed(body: AvanzaSyncFailure, session: DBSession, current_user: CurrentDBUser) -> None:
+  connection = await _owned(AvanzaConnectionRepository.from_session(session), current_user.id)
+  avanza_service.report_failure(connection, body.reason)
+  await session.flush()
 
 
 @router.patch("/accounts/{account_id}", summary="Link Avanza Account", response_model=AvanzaConnectionSchema)
@@ -84,26 +84,13 @@ async def link_avanza_account(account_id: UUID, body: AvanzaAccountUpdate, sessi
   except AvanzaConflictError as e:
     raise ConflictError(str(e)) from e
   await session.flush()
-  if bank_account is not None:
-    avanza_service.request_sync(account.connection_id)
-  connections = AvanzaConnectionRepository.from_session(session)
-  connection = await _owned(connections, current_user.id)
+  connection = await _owned(AvanzaConnectionRepository.from_session(session), current_user.id)
   await session.refresh(connection, ["accounts"])
   return _schema(connection)
 
 
-@router.post("/sync", summary="Sync Avanza", status_code=202)
-async def sync_avanza(session: DBSession, current_user: CurrentDBUser) -> None:
-  connection = await _owned(AvanzaConnectionRepository.from_session(session), current_user.id)
-  if connection.credentials_rejected_at is not None:
-    raise ValidationError("Save new Avanza credentials first.")
-  if not avanza_service.can_sync_now(connection, now=utc_now()):
-    raise TooManyRequestsError("Avanza synced a few minutes ago. Each sync is a full login, so try again shortly.")
-  avanza_service.request_sync(connection.id)
-
-
 @router.delete("", summary="Disconnect Avanza", status_code=204)
 async def disconnect_avanza(session: DBSession, current_user: CurrentDBUser) -> None:
-  """Deletes the stored login. Imported transactions, trades and positions stay."""
+  """Forgets the connection and its account links; no Avanza login is stored. Imported transactions, trades and positions stay."""
   connections = AvanzaConnectionRepository.from_session(session)
   await connections.delete(await _owned(connections, current_user.id))

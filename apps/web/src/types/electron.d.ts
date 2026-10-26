@@ -38,6 +38,36 @@ interface ElectronSpotifyStatus {
   positionMs?: number;
 }
 
+export interface AvanzaLogin {
+  username: string;
+  password: string;
+  totpSecret: string;
+}
+
+/**
+ * "rejected": Avanza turned down the login (new details are needed);
+ * "unreachable": try again later; "not_signed_in": no login on this computer.
+ */
+export type AvanzaFailure = {
+  ok: false;
+  reason: "rejected" | "unreachable" | "not_signed_in";
+  message: string;
+};
+
+export type AvanzaResult<T> = ({ ok: true } & T) | AvanzaFailure;
+
+/** Avanza's raw JSON, as its web API returned it. */
+export interface AvanzaSnapshot {
+  username: string;
+  overview: unknown;
+  /** Null when `from` was null. */
+  positions: unknown | null;
+  /** The `transactions` rows of every page, from `fetchedFrom` to today. */
+  transactions: unknown[];
+  /** YYYY-MM-DD, or null when only the overview was read. */
+  fetchedFrom: string | null;
+}
+
 declare global {
   interface Window {
     electron?: {
@@ -220,6 +250,20 @@ declare global {
       klarna?: {
         /** Opens Klarna's sign-in; resolves with the token its page uses, or null if closed. */
         signIn: () => Promise<{ authorization: string; cookie: string } | null>;
+      };
+      /** Absent in desktop builds before 0.1.58. The login never leaves this computer. */
+      avanza?: {
+        status: () => Promise<{ username: string | null }>;
+        /** Logs in and reads the overview; the login is kept only if that worked.
+         *  Rejects when the computer has no keychain to keep it in. */
+        saveLogin: (
+          login: AvanzaLogin,
+        ) => Promise<AvanzaResult<{ username: string; overview: unknown }>>;
+        /** `from` (YYYY-MM-DD) adds positions and transactions from that day to today. */
+        fetch: (options: {
+          from: string | null;
+        }) => Promise<AvanzaResult<AvanzaSnapshot>>;
+        forget: () => Promise<void>;
       };
       spotify: {
         getStatus: () => Promise<ElectronSpotifyStatus>;
