@@ -95,7 +95,6 @@ export function SettingsToggleRow({
   return (
     <SettingsRow label={label} description={description}>
       <Switch
-        size="sm"
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled}
