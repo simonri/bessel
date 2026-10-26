@@ -4,7 +4,9 @@ Native SwiftUI app (iOS 17+), light and dark. Signs in with the same Auth0 +
 Google OAuth the web/desktop apps use. Tabs: Tasks, Calendar (a 3-day view of
 the calendars connected on the desktop, with full editing), Health (Apple Health
 sleep and workouts), Recipes and Places; your profile opens from the avatar in
-each tab's navigation bar. The Golf cart screen is off the tab bar for now.
+each tab's navigation bar. Contacts (the Google address book, with birthdays
+and who to catch up with) opens from the people button on the Calendar tab.
+The Golf cart screen is off the tab bar for now.
 
 ### Simulator against a local API
 

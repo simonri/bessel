@@ -24,10 +24,14 @@ struct CalendarView: View {
     @State private var editorTarget: EventEditorTarget?
     @State private var dayList: Date?
     @State private var showingCalendars = false
+    @State private var contacts: ContactsStore
+    @State private var showingContacts = false
+
     init(auth: AuthSession, services: AppServices, isActive: Bool) {
         self.auth = auth
         self.isActive = isActive
         _store = State(initialValue: CalendarStore(services: services))
+        _contacts = State(initialValue: ContactsStore(services: services))
     }
 
     var body: some View {
@@ -49,10 +53,19 @@ struct CalendarView: View {
             .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
+                    Button { showingContacts = true } label: { Image(systemName: "person.2") }
+                        .accessibilityLabel("Contacts")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Button { showingCalendars = true } label: { Image(systemName: "calendar") }
                         .accessibilityLabel("Calendars")
                 }
                 ProfileToolbarItem(auth: auth)
+            }
+            // A page of its own rather than a tab: a sixth tab would land
+            // under More, which wraps it in a second navigation bar.
+            .navigationDestination(isPresented: $showingContacts) {
+                ContactsView(store: contacts, isActive: isActive)
             }
             .sheet(item: $detailEvent) { event in
                 EventDetailSheet(store: store, eventID: event.id) { editing in
