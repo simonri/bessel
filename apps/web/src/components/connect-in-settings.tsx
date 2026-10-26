@@ -16,7 +16,7 @@ export function ConnectInSettings({
     <SoftButton
       size="default"
       className="mt-2"
-      onClick={() => openSettings(page)}
+      onClick={() => openSettings(page, "add")}
     >
       <Plug />
       {label}

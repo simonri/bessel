@@ -4,6 +4,30 @@ import type { ReactNode } from "react";
 import { PanelRow, PrimaryButton } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 
+/** A settings page's title, with the page's own controls on the right. */
+export function SettingsPageHeader({
+  title,
+  beside,
+  children,
+}: {
+  title: ReactNode;
+  /** Sits right after the title, e.g. tabs. */
+  beside?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <header className="flex min-h-9 flex-wrap items-center justify-between gap-x-4 gap-y-3">
+      <div className="flex items-center gap-4">
+        <h2 className="type-title text-white/90">{title}</h2>
+        {beside}
+      </div>
+      {children && (
+        <div className="flex flex-wrap items-center gap-2">{children}</div>
+      )}
+    </header>
+  );
+}
+
 export function SettingsToggleRow({
   label,
   description,

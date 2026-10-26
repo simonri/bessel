@@ -129,7 +129,9 @@ export function CalendarSidebar({
 
       <button
         type="button"
-        onClick={() => openSettings("integrations")}
+        onClick={() =>
+          openSettings("integrations", accounts.length ? "connected" : "add")
+        }
         className="mt-3 flex h-7 w-full items-center gap-2.5 rounded-md px-2 text-left text-12 text-white/45 outline-none transition-colors duration-150 hover:bg-white/[0.05] hover:text-white/75 focus-visible:ring-1 focus-visible:ring-white/25"
       >
         <Plug className="size-3.5" />

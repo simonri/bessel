@@ -222,7 +222,7 @@ describe("ContactsPage", () => {
 
     expect(await screen.findByText("No address book connected")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: "Connect Google" }));
-    expect(api.openSettings).toHaveBeenCalledWith("integrations");
+    expect(api.openSettings).toHaveBeenCalledWith("integrations", "add");
   });
 
   it("edits a contact, sending only what changed, and shows what Google stored", async () => {

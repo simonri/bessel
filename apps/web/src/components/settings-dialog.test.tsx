@@ -6,15 +6,17 @@ vi.mock("@/components/settings-modal", () => ({
   SettingsModal: ({
     open,
     page,
+    integrationsTab,
     onClose,
   }: {
     open: boolean;
     page: string;
+    integrationsTab: string;
     onClose: () => void;
   }) =>
     open ? (
       <div role="dialog">
-        showing {page}
+        showing {page} on {integrationsTab}
         <button type="button" onClick={onClose}>
           close
         </button>
@@ -35,6 +37,9 @@ function Opener() {
       </button>
       <button type="button" onClick={() => open("integrations")}>
         integrations
+      </button>
+      <button type="button" onClick={() => open("integrations", "add")}>
+        connect
       </button>
       <button type="button" onClick={close}>
         leave
@@ -83,5 +88,24 @@ describe("SettingsDialogProvider", () => {
     fireEvent.click(screen.getByText("leave"));
 
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("opens Integrations on the tab asked for, and on what's connected otherwise", () => {
+    render(
+      <SettingsDialogProvider>
+        <Opener />
+      </SettingsDialogProvider>,
+    );
+
+    fireEvent.click(screen.getByText("connect"));
+    expect(screen.getByRole("dialog").textContent).toContain(
+      "showing integrations on add",
+    );
+
+    fireEvent.click(screen.getByText("leave"));
+    fireEvent.click(screen.getByText("integrations"));
+    expect(screen.getByRole("dialog").textContent).toContain(
+      "showing integrations on connected",
+    );
   });
 });

@@ -105,18 +105,25 @@ const account = (
   ...extra,
 });
 
-function mount() {
+function mount(tab?: "connected" | "add") {
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <IntegrationsPage />
+      <IntegrationsPage tab={tab} />
     </QueryClientProvider>,
   );
 }
 
 function rowOf(text: string): HTMLElement {
-  const row = screen.getByText(text).closest("div.flex.items-center");
+  const row = screen.getByText(text).closest("tr");
   if (!row) throw new Error(`no row for ${text}`);
   return row as HTMLElement;
+}
+
+function rowNames(): string[] {
+  return screen
+    .getAllByRole("row")
+    .slice(1)
+    .map((row) => row.querySelector("p")?.textContent ?? "");
 }
 
 /** Opens an account's "…" menu and picks an item from it. */
@@ -195,20 +202,17 @@ describe("IntegrationsPage", () => {
     ];
     mount();
 
-    expect(
-      within(rowOf("me@gmail.com")).getByText(
-        "Calendar and contacts, from Google",
-      ),
-    ).toBeTruthy();
-    expect(
-      within(rowOf("work@gmail.com")).getByText("Calendar, from Google"),
-    ).toBeTruthy();
-    expect(
-      within(rowOf("work@gmail.com")).getByText("Google said no"),
-    ).toBeTruthy();
-    expect(
-      within(rowOf("me@icloud.com")).getByText("Calendar, from iCloud"),
-    ).toBeTruthy();
+    const gmail = within(rowOf("me@gmail.com"));
+    expect(gmail.getByText("Google")).toBeTruthy();
+    expect(gmail.getByText("Calendar and contacts")).toBeTruthy();
+    expect(gmail.getByText(/^Synced/)).toBeTruthy();
+    const work = within(rowOf("work@gmail.com"));
+    expect(work.getByText("Calendar")).toBeTruthy();
+    expect(work.getByText("Google said no")).toBeTruthy();
+    expect(work.queryByText(/^Synced/)).toBeNull();
+    const icloud = within(rowOf("me@icloud.com"));
+    expect(icloud.getByText("iCloud")).toBeTruthy();
+    expect(icloud.getByText("Calendar")).toBeTruthy();
   });
 
   it("syncs an account from its menu", () => {
@@ -249,13 +253,10 @@ describe("IntegrationsPage", () => {
   });
 
   it("adds money accounts on Accounts, with its add dialog asked for", async () => {
-    mount();
+    mount("add");
 
-    const money = (
-      await screen.findByText(/Banks, Avanza, Montrose and Klarna/)
-    ).closest("section") as HTMLElement;
     fireEvent.click(
-      within(money).getByRole("button", { name: "Bank or broker" }),
+      within(rowOf("Bank or broker")).getByRole("button", { name: "Add" }),
     );
 
     expect(state.close).toHaveBeenCalled();
@@ -292,7 +293,10 @@ describe("IntegrationsPage", () => {
   });
 
   it("saves a Hyperliquid address and refuses something that isn't one", () => {
-    mount();
+    mount("add");
+    fireEvent.click(
+      within(rowOf("Hyperliquid")).getByRole("button", { name: "Add" }),
+    );
     const input = screen.getByLabelText("Hyperliquid wallet address");
 
     fireEvent.change(input, { target: { value: "hello" } });
@@ -310,12 +314,112 @@ describe("IntegrationsPage", () => {
     state.settings.hyperliquidAddress = `0x${"cd".repeat(20)}`;
     mount();
 
-    fireEvent.click(
-      within(rowOf("Hyperliquid")).getByRole("button", { name: "Remove" }),
-    );
+    choose("Hyperliquid", "Remove");
 
     await waitFor(() =>
       expect(state.update).toHaveBeenCalledWith({ hyperliquidAddress: null }),
     );
+  });
+
+  it("lists what's connected on one tab and what can be added on the other", () => {
+    state.accounts = [account("g", "google", "me@gmail.com")];
+    state.settings.hyperliquidAddress = `0x${"cd".repeat(20)}`;
+    mount("connected");
+    expect(rowNames()).toEqual(["me@gmail.com", "Hyperliquid"]);
+    cleanup();
+
+    mount("add");
+    const names = rowNames();
+    expect(names).toContain("Google");
+    expect(names).toContain("Bank or broker");
+    expect(names).not.toContain("me@gmail.com");
+    expect(names).not.toContain("Hyperliquid");
+  });
+
+  it("switches tabs from the header", () => {
+    mount();
+    expect(screen.getByText("Nothing connected yet.")).toBeTruthy();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "See what you can add" }),
+    );
+
+    expect(rowNames()).toContain("Google");
+    expect(
+      screen
+        .getByRole("tab", { name: "Add more" })
+        .getAttribute("aria-selected"),
+    ).toBe("true");
+  });
+
+  it("narrows the rows to what the search matches", () => {
+    state.accounts = [
+      account("g", "google", "me@gmail.com"),
+      account("i", "icloud", "me@icloud.com"),
+    ];
+    mount();
+
+    fireEvent.change(screen.getByLabelText("Search integrations"), {
+      target: { value: "icloud" },
+    });
+    expect(rowNames()).toEqual(["me@icloud.com"]);
+
+    fireEvent.change(screen.getByLabelText("Search integrations"), {
+      target: { value: "nothing like this" },
+    });
+    expect(rowNames()).toEqual([]);
+    expect(screen.getByText(/No integrations match/)).toBeTruthy();
+  });
+
+  it("adds from the header menu the same way as the rows", () => {
+    mount();
+    const pick = (name: string) => {
+      fireEvent.pointerDown(screen.getByRole("button", { name: /^Add/ }), {
+        button: 0,
+        ctrlKey: false,
+      });
+      fireEvent.click(
+        within(screen.getByRole("menu")).getByRole("menuitem", { name }),
+      );
+    };
+
+    pick("Google");
+    expect(state.actions.connectGoogle).toHaveBeenCalledTimes(1);
+
+    pick("iCloud");
+    expect(screen.getByText("Connect iCloud Calendar")).toBeTruthy();
+    fireEvent.keyDown(document.activeElement ?? document.body, {
+      key: "Escape",
+    });
+
+    pick("Bank or broker");
+    expect(state.openPage).toHaveBeenCalledWith("accounts");
+    expect(state.requestAddAccount).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows why Avanza and Montrose stopped instead of a check", async () => {
+    state.avanza = {
+      available: true,
+      connection: {
+        credentials_rejected: true,
+        last_synced_at: new Date(),
+        sync_error: null,
+      },
+    };
+    state.montrose = {
+      logo: "",
+      connection: {
+        rejected: true,
+        last_synced_at: new Date(),
+        sync_error: null,
+      },
+    };
+    mount();
+
+    expect(
+      await screen.findByText(/Avanza turned down the login/),
+    ).toBeTruthy();
+    expect(screen.getByText(/Montrose needs you to log in again/)).toBeTruthy();
+    expect(within(rowOf("Avanza")).queryByText(/^Synced/)).toBeNull();
   });
 });
