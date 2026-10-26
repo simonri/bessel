@@ -1,22 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  CalendarDays,
-  ChefHat,
   Download as DownloadIcon,
-  ListChecks,
+  Eye,
+  FileCode,
   Menu,
-  MessageSquare,
-  Moon,
-  SquareTerminal,
-  Sun,
-  Users,
-  Wallet,
+  ShieldCheck,
   X,
 } from "lucide-react";
 import type { CSSProperties, ReactNode } from "react";
 import { useState } from "react";
 import heroSky from "@/assets/hero-sky.webp";
-import { AppMockup } from "@/components/app-mockup";
+import { CompareChat } from "@/components/compare-chat";
+import { ContextFlow } from "@/components/context-flow";
 import {
   AppleLogo,
   GitHubLogo,
@@ -24,7 +19,8 @@ import {
   WindowsLogo,
 } from "@/components/icons";
 import { LiveBackground } from "@/components/live-background";
-import { BesselMark, Wordmark } from "@/components/logo";
+import { Wordmark } from "@/components/logo";
+import { TodayPreview } from "@/components/today-preview";
 import { type Platform, usePlatform } from "@/hooks/use-platform";
 
 const PLATFORM_ICON: Record<Platform, ReactNode> = {
@@ -81,10 +77,11 @@ function LandingPage() {
       <div className="relative">
         <Nav />
         <Hero />
-        <Thesis />
-        <Features />
-        <Download />
-        <FinalCta />
+        <HowItWorks />
+        <Questions />
+        <Privacy />
+        <TheApp />
+        <Closing />
         <Footer />
       </div>
     </div>
@@ -92,8 +89,8 @@ function LandingPage() {
 }
 
 const NAV_LINKS = [
-  { href: "#why", label: "Why" },
-  { href: "#features", label: "What's in it" },
+  { href: "#how-it-works", label: "How it works" },
+  { href: "#privacy", label: "Privacy" },
   { href: "#download", label: "Download" },
 ];
 
@@ -180,6 +177,28 @@ function Nav() {
   );
 }
 
+function SkyActions({ platform }: { platform: Platform }) {
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-3">
+      <a
+        href={platformDownloadUrl(platform)}
+        className="flex items-center gap-2.5 rounded-full bg-ink px-6 py-3 text-sm font-medium text-cream [text-shadow:none] transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-[#141210]"
+        download
+      >
+        {PLATFORM_ICON[platform]}
+        Download for {PLATFORM_LABEL[platform]}
+      </a>
+      <a
+        href={APP_URL}
+        className="rounded-full border border-ink/25 bg-white/10 px-6 py-3 text-sm text-ink backdrop-blur-[2px] transition-[transform,color,border-color,background-color] duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:border-ink/45 pointer-fine:hover:bg-white/25"
+        {...EXTERNAL_LINK_PROPS}
+      >
+        Use in the browser
+      </a>
+    </div>
+  );
+}
+
 function Hero() {
   const platform = usePlatform() ?? "mac";
   return (
@@ -193,170 +212,180 @@ function Hero() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/8 via-black/0 to-black/5 [mask-image:linear-gradient(to_bottom,#000_82%,transparent_99%)]" />
 
-        <div className="relative flex min-h-[720px] flex-col items-center justify-center px-6 py-14 text-center [text-shadow:0_2px_20px_rgba(255,255,255,0.45)] sm:min-h-[820px] md:min-h-[960px]">
+        <div className="relative flex min-h-[720px] flex-col items-center justify-center px-6 py-14 text-center [text-shadow:0_2px_20px_rgba(255,255,255,0.45)] sm:min-h-[820px] md:min-h-[900px]">
           <h1
-            className="rise max-w-2xl text-balance font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl md:text-7xl"
+            className="rise text-balance font-serif text-5xl font-medium tracking-tight text-ink sm:text-6xl md:whitespace-nowrap md:text-7xl"
             style={riseDelay(0.05)}
           >
             Your life, in <span className="font-normal italic">one</span> place.
           </h1>
           <p
-            className="rise mt-5 max-w-xl text-balance text-base font-medium leading-relaxed text-ink sm:text-lg"
+            className="rise mt-6 max-w-3xl text-balance text-base font-medium leading-relaxed text-ink sm:text-lg md:text-wrap"
             style={riseDelay(0.15)}
           >
-            Calendar, tasks, money, health, recipes and the people you know,
-            <br className="hidden sm:block" /> in one app. And Claude can look
-            at it when you ask.
+            Calendar, money, health, tasks and the people you know, connected
+            once. <br className="hidden md:block" />
+            So Claude can finally help with your actual life.
           </p>
-          <div
-            className="rise mt-8 flex flex-col items-center gap-3"
-            style={riseDelay(0.25)}
-          >
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <a
-                href={platformDownloadUrl(platform)}
-                className="flex items-center gap-2.5 rounded-full bg-ink px-6 py-3 text-sm font-medium text-cream [text-shadow:none] transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-[#141210]"
-                download
-              >
-                {PLATFORM_ICON[platform]}
-                Download for {PLATFORM_LABEL[platform]}
-              </a>
-              <a
-                href="#download"
-                className="rounded-full border border-ink/25 bg-white/10 px-6 py-3 text-sm text-ink backdrop-blur-[2px] transition-[transform,color,border-color,background-color] duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:border-ink/45 pointer-fine:hover:bg-white/25"
-              >
-                All platforms
-              </a>
-            </div>
-            <span className="text-xs text-[#211d17] [text-shadow:0_1px_14px_rgba(255,255,255,0.7)]">
-              Free, and the code is on GitHub
-            </span>
+          <div className="rise mt-8" style={riseDelay(0.25)}>
+            <SkyActions platform={platform} />
           </div>
         </div>
       </div>
 
-      <AppMockup className="rise mx-auto mt-6 max-w-5xl px-8 sm:-mt-16 sm:px-6 md:-mt-20" />
-    </section>
-  );
-}
-
-function Thesis() {
-  return (
-    <section
-      id="why"
-      className="mx-auto w-full max-w-3xl scroll-mt-20 px-6 pt-28 sm:pt-36"
-    >
-      <div className="reveal flex flex-col items-center text-center">
-        <span className="text-sm font-medium text-accent">Why Bessel</span>
-        <p className="mt-5 text-balance font-serif text-3xl font-medium leading-[1.2] tracking-tight sm:text-4xl">
-          Your days are spread over a{" "}
-          <span className="font-normal italic">dozen</span> apps.
-        </p>
-        <p className="mt-5 max-w-xl text-balance text-base leading-relaxed text-muted-foreground sm:text-lg">
-          The bank app knows your money, the calendar knows your time, and the
-          rest lives in notes and screenshots. Bessel puts it in one place you
-          can take in at a glance. Claude gets the same view, so asking
-          &ldquo;what&rsquo;s on this week?&rdquo; or &ldquo;what did we spend
-          on food?&rdquo; gets a real answer.
-        </p>
+      <div className="relative mx-auto -mt-40 max-w-4xl px-5 sm:-mt-52 sm:px-6 md:-mt-64">
+        <CompareChat className="rise" />
       </div>
     </section>
   );
 }
 
-const FEATURES: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  span?: 2 | 3;
-}[] = [
+function SectionHeading({
+  eyebrow,
+  title,
+  subtitle,
+}: {
+  eyebrow: string;
+  title: ReactNode;
+  subtitle?: ReactNode;
+}) {
+  return (
+    <div className="reveal flex flex-col items-center text-center">
+      <span className="text-sm font-medium text-accent">{eyebrow}</span>
+      <h2 className="mt-4 max-w-2xl text-balance font-serif text-3xl font-medium tracking-tight sm:text-4xl">
+        {title}
+      </h2>
+      {subtitle && (
+        <p className="mt-4 max-w-xl text-balance text-base leading-relaxed text-muted-foreground">
+          {subtitle}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function HowItWorks() {
+  return (
+    <section
+      id="how-it-works"
+      className="mx-auto w-full max-w-5xl scroll-mt-20 px-6 pt-32 sm:pt-44"
+    >
+      <SectionHeading
+        eyebrow="How it works"
+        title={
+          <>
+            Connect your life <span className="font-normal italic">once</span>.
+          </>
+        }
+        subtitle="Bessel brings in what you already use and keeps it up to date. When you ask Claude something, it can look."
+      />
+      <div className="reveal mt-14">
+        <ContextFlow />
+      </div>
+    </section>
+  );
+}
+
+const QUESTIONS = [
   {
-    icon: <Sun className="size-4.5" />,
-    title: "Your day in one look",
-    description:
-      "What's next on the calendar, what's due, how you slept and whose birthday is coming up. Before a meeting it shows who's coming and what you noted last time.",
-    span: 2,
+    question: "Why am I sleeping worse?",
+    answer:
+      "Mostly late workouts. On days you trained after 19:00 you slept about 35 minutes less, because you fell asleep later.",
+    from: "Sleep and workouts",
   },
   {
-    icon: <CalendarDays className="size-4.5" />,
-    title: "Calendars you can edit",
-    description:
-      "Google and iCloud side by side. Add, move and change events without switching apps.",
+    question: "Prep me for my 2 pm.",
+    answer:
+      "It's with Erik and Maja. Last time Erik said he's moving to Berlin in May, and Maja turns 30 next Friday.",
+    from: "Calendar and people",
   },
   {
-    icon: <ListChecks className="size-4.5" />,
-    title: "Tasks, without the scoreboard",
-    description:
-      "Projects, due dates and chores that come back every week. No streaks and no daily targets.",
-  },
-  {
-    icon: <Wallet className="size-4.5" />,
-    title: "Where the money went",
-    description:
-      "Bank accounts, card bills and investments in one place, sorted into categories as they come in.",
-  },
-  {
-    icon: <Users className="size-4.5" />,
-    title: "Remember people",
-    description:
-      "Your Google contacts, kept in sync both ways, plus a private log of what you talked about. After a meeting it asks if there's anything to note.",
-  },
-  {
-    icon: <ChefHat className="size-4.5" />,
-    title: "Recipes you actually cook",
-    description:
-      "Save a recipe once, scale it, follow it step by step at the stove, and see when you last made it.",
-  },
-  {
-    icon: <Moon className="size-4.5" />,
-    title: "Sleep, workouts and places",
-    description:
-      "From Apple Health and your location history, so you can see where a week actually went.",
-  },
-  {
-    icon: <SquareTerminal className="size-4.5" />,
-    title: "Room for your work",
-    description:
-      "Terminals, git and Claude Code in windows next to everything else, arranged the way you like.",
-  },
-  {
-    icon: <MessageSquare className="size-4.5" />,
-    title: "Ask Claude about your life",
-    description:
-      "Connect Bessel to Claude and it can read your calendar, money, recipes and contacts, add tasks and events, and note down a coffee with a friend. It can't delete anything.",
-    span: 3,
+    question: "Where did my money go?",
+    answer:
+      "18 240 kr this month, about as usual. Eating out is up 1 300 kr, mostly three dinners in the week of the 12th.",
+    from: "Money",
   },
 ];
 
-function Features() {
+function Questions() {
+  return (
+    <section className="mx-auto w-full max-w-6xl px-6 pt-32 sm:pt-44">
+      <SectionHeading
+        eyebrow="What you can ask"
+        title="Better answers about your own life"
+        subtitle="Not generic advice, but answers built on what actually happened in your calendar, your accounts and your nights."
+      />
+      <div className="mt-12 grid gap-3 md:grid-cols-3">
+        {QUESTIONS.map((q) => (
+          <figure
+            key={q.question}
+            className="reveal flex flex-col rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6"
+          >
+            <blockquote className="font-serif text-lg leading-snug">
+              &ldquo;{q.question}&rdquo;
+            </blockquote>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              {q.answer}
+            </p>
+            <figcaption className="mt-auto pt-5 text-xs text-faint-foreground">
+              From your {q.from.toLowerCase()}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+const PROMISES = [
+  {
+    icon: <Eye className="size-4.5" />,
+    title: "You choose what it sees",
+    description:
+      "Nothing comes in until you connect it, and you can disconnect anything again.",
+  },
+  {
+    icon: <ShieldCheck className="size-4.5" />,
+    title: "Claude can't delete anything",
+    description:
+      "It can read, and add tasks, events and notes when you ask. Removing things is always up to you.",
+  },
+  {
+    icon: <FileCode className="size-4.5" />,
+    title: "Every line is open to read",
+    description:
+      "Bessel's code is on GitHub, so you can see exactly what happens with your data.",
+  },
+];
+
+function Privacy() {
   return (
     <section
-      id="features"
-      className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-28 sm:pt-36"
+      id="privacy"
+      className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-32 sm:pt-44"
     >
       <SectionHeading
-        eyebrow="What's in it"
-        title="The everyday, all together"
-        subtitle="Use the parts you need and leave the rest closed."
+        eyebrow="Privacy"
+        title={
+          <>
+            It&rsquo;s your life. You stay in{" "}
+            <span className="font-normal italic">charge</span>.
+          </>
+        }
+        subtitle="Bessel only knows what you connect, and Claude only looks when you ask it something."
       />
-      <div className="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {FEATURES.map((feature) => (
+      <div className="mt-12 grid gap-8 sm:grid-cols-3 sm:gap-6">
+        {PROMISES.map((promise) => (
           <div
-            key={feature.title}
-            className={`group reveal rounded-2xl border border-white/[0.07] bg-white/[0.02] p-6 transition-colors duration-200 pointer-fine:hover:border-white/[0.14] pointer-fine:hover:bg-white/[0.04] ${
-              feature.span === 3
-                ? "sm:col-span-2 lg:col-span-3"
-                : feature.span === 2
-                  ? "lg:col-span-2"
-                  : ""
-            }`}
+            key={promise.title}
+            className="reveal flex flex-col items-center text-center"
           >
-            <div className="flex size-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.03] text-accent transition-colors duration-200 pointer-fine:group-hover:border-accent/25 pointer-fine:group-hover:bg-accent/[0.06]">
-              {feature.icon}
-            </div>
-            <h3 className="mt-4 text-[15px] font-medium">{feature.title}</h3>
-            <p className="mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
-              {feature.description}
+            <span className="flex size-10 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.03] text-accent">
+              {promise.icon}
+            </span>
+            <h3 className="mt-4 text-[15px] font-medium">{promise.title}</h3>
+            <p className="mt-1.5 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              {promise.description}
             </p>
           </div>
         ))}
@@ -365,114 +394,83 @@ function Features() {
   );
 }
 
-const PLATFORMS: {
-  id: Platform;
-  icon: ReactNode;
-  name: string;
-  detail: string;
-}[] = [
+const PLATFORMS: { id: Platform; icon: ReactNode; detail: string }[] = [
   {
     id: "mac",
-    icon: <AppleLogo className="size-6" />,
-    name: "macOS",
-    detail: "Apple Silicon - .dmg",
+    icon: <AppleLogo className="size-4" />,
+    detail: "Apple Silicon",
   },
-  {
-    id: "windows",
-    icon: <WindowsLogo className="size-6" />,
-    name: "Windows",
-    detail: "64-bit installer - .exe",
-  },
-  {
-    id: "linux",
-    icon: <LinuxLogo className="size-6" />,
-    name: "Linux",
-    detail: "AppImage - x64",
-  },
+  { id: "windows", icon: <WindowsLogo className="size-4" />, detail: "64-bit" },
+  { id: "linux", icon: <LinuxLogo className="size-4" />, detail: "AppImage" },
 ];
 
-function Download() {
-  const platform = usePlatform();
+function TheApp() {
+  const detected = usePlatform();
   return (
     <section
       id="download"
-      className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-28 sm:pt-36"
+      className="mx-auto w-full max-w-6xl scroll-mt-20 px-6 pt-32 sm:pt-44"
     >
       <SectionHeading
-        eyebrow="Download"
-        title="On your computer"
-        subtitle="For macOS, Windows and Linux, and it updates itself."
+        eyebrow="The app"
+        title="And a place to see it yourself"
+        subtitle="Your day at a glance on your computer or in the browser. An iPhone app is on the way."
       />
-      <div className="reveal mt-12 flex flex-col gap-3 sm:grid sm:grid-cols-3">
-        {PLATFORMS.map((p) => {
-          const isDetected = p.id === platform;
-          return (
-            <a
-              key={p.name}
-              href={platformDownloadUrl(p.id)}
-              className={`group flex items-center gap-4 rounded-2xl border p-5 transition-[transform,border-color,background-color] duration-200 ease-out-strong active:scale-[0.98] ${
-                isDetected
-                  ? "border-accent/40 bg-accent/[0.06] pointer-fine:hover:border-accent/60"
-                  : "border-white/[0.09] bg-white/[0.035] pointer-fine:hover:border-white/[0.2] pointer-fine:hover:bg-white/[0.06]"
-              }`}
-              download
-            >
-              <span className="flex size-11 shrink-0 items-center justify-center rounded-lg border border-white/[0.1] bg-white/[0.05] text-foreground">
-                {p.icon}
-              </span>
-              <span className="flex min-w-0 flex-1 flex-col">
-                <span className="flex items-center gap-2 text-[15px] font-medium">
-                  {p.name}
-                  {isDetected && (
-                    <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">
-                      Your OS
-                    </span>
-                  )}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {p.detail}
-                </span>
-              </span>
-              <DownloadIcon className="size-4 shrink-0 text-muted-foreground transition-colors duration-200 group-hover:text-foreground" />
-            </a>
-          );
-        })}
+      <TodayPreview className="reveal mx-auto mt-12 max-w-2xl" />
+      <div className="reveal mt-10 flex flex-wrap items-center justify-center gap-2">
+        {PLATFORMS.map((p) => (
+          <a
+            key={p.id}
+            href={platformDownloadUrl(p.id)}
+            className={`flex items-center gap-2.5 rounded-full border px-4 py-2 text-sm transition-[transform,border-color,background-color] duration-150 ease-out-strong active:scale-[0.97] ${
+              p.id === detected
+                ? "border-accent/40 bg-accent/[0.08] text-foreground pointer-fine:hover:border-accent/60"
+                : "border-white/[0.1] text-muted-foreground pointer-fine:hover:border-white/25 pointer-fine:hover:text-foreground"
+            }`}
+            download
+          >
+            {p.icon}
+            {PLATFORM_LABEL[p.id]}
+            <span className="text-xs text-faint-foreground">{p.detail}</span>
+            <DownloadIcon className="size-3.5 text-faint-foreground" />
+          </a>
+        ))}
       </div>
-      <p className="mt-6 text-balance text-center text-sm text-muted-foreground">
-        Or use it in the browser at{" "}
+      <p className="mt-4 text-center text-sm text-muted-foreground">
+        Or{" "}
         <a
           href={APP_URL}
           className="text-foreground underline decoration-white/25 underline-offset-2 pointer-fine:hover:decoration-white/50"
           {...EXTERNAL_LINK_PROPS}
         >
-          app.getbessel.com
+          use it in the browser
         </a>
-        . An iPhone app is on the way.
+        . It updates itself.
       </p>
     </section>
   );
 }
 
-function FinalCta() {
+function Closing() {
   const platform = usePlatform() ?? "mac";
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 pb-24 pt-32 sm:pb-28 sm:pt-40">
-      <div className="reveal flex flex-col items-center text-center">
-        <BesselMark className="size-8 text-accent" />
-        <h2 className="mt-6 text-balance font-serif text-4xl font-medium tracking-tight sm:text-5xl">
-          Bring it all <span className="font-normal italic">together</span>.
+    <section className="relative isolate mt-32 w-full overflow-hidden sm:mt-44">
+      <img
+        src={heroSky}
+        alt=""
+        aria-hidden
+        className="absolute inset-0 h-full w-full object-cover object-[center_30%] [mask-image:linear-gradient(to_bottom,transparent_0%,#000_30%,#000_75%,transparent_100%)]"
+      />
+      <div className="relative flex min-h-[520px] flex-col items-center justify-center px-6 pt-32 pb-24 text-center [text-shadow:0_2px_20px_rgba(255,255,255,0.45)] sm:min-h-[620px]">
+        <h2 className="reveal max-w-2xl text-balance font-serif text-4xl font-medium tracking-tight text-ink sm:text-6xl">
+          Give your AI the <span className="font-normal italic">context</span>.
         </h2>
-        <p className="mt-4 max-w-sm text-balance text-base text-muted-foreground">
-          Free to use. Connect what you already have and it fills itself in.
+        <p className="reveal mt-5 max-w-md text-balance text-base font-medium text-ink">
+          Free to use. Connect what you already have, then ask.
         </p>
-        <a
-          href={platformDownloadUrl(platform)}
-          className="mt-8 flex items-center gap-2.5 rounded-full bg-foreground px-7 py-3 text-sm font-medium text-background transition-transform duration-150 ease-out-strong active:scale-[0.97] pointer-fine:hover:bg-white"
-          download
-        >
-          {PLATFORM_ICON[platform]}
-          Download Bessel
-        </a>
+        <div className="reveal mt-8">
+          <SkyActions platform={platform} />
+        </div>
       </div>
     </section>
   );
@@ -480,26 +478,27 @@ function FinalCta() {
 
 function Footer() {
   return (
-    <footer className="border-t border-white/[0.06]">
+    <footer className="border-t border-white/[0.06] bg-background">
       <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-14 sm:grid-cols-[1fr_auto_auto] sm:gap-20">
         <div className="flex flex-col gap-3">
           <Wordmark />
           <p className="max-w-xs text-sm text-faint-foreground">
-            Your calendar, tasks, money and people in one place.
+            The context your AI is missing.
           </p>
         </div>
         <FooterColumn
           title="Product"
           links={[
-            { label: "Features", href: "#features" },
+            { label: "How it works", href: "#how-it-works" },
+            { label: "Privacy", href: "#privacy" },
             { label: "Download", href: "#download" },
-            { label: "Releases", href: DOWNLOAD_URL },
           ]}
         />
         <FooterColumn
           title="Resources"
           links={[
             { label: "GitHub", href: GITHUB_URL },
+            { label: "Releases", href: DOWNLOAD_URL },
             { label: "Report an issue", href: `${GITHUB_URL}/issues` },
           ]}
         />
@@ -536,28 +535,6 @@ function FooterColumn({
           {link.label}
         </a>
       ))}
-    </div>
-  );
-}
-
-function SectionHeading({
-  eyebrow,
-  title,
-  subtitle,
-}: {
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-}) {
-  return (
-    <div className="reveal flex flex-col items-center text-center">
-      <span className="text-sm font-medium text-accent">{eyebrow}</span>
-      <h2 className="mt-4 text-balance font-serif text-3xl font-medium tracking-tight sm:text-4xl">
-        {title}
-      </h2>
-      <p className="mt-4 max-w-md text-balance text-base text-muted-foreground">
-        {subtitle}
-      </p>
     </div>
   );
 }

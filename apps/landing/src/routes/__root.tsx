@@ -8,9 +8,9 @@ import {
 import appCss from "../styles.css?url";
 
 const SITE_URL = "https://getbessel.com";
-const TITLE = "Bessel - your calendar, tasks, money and people in one place";
+const TITLE = "Bessel - your life, in one place";
 const DESCRIPTION =
-  "Bessel puts your calendar, tasks, money, health, recipes and contacts in one app, and lets Claude read it when you ask. Free for macOS, Windows and Linux, or in the browser.";
+  "Claude can reason about almost anything except your life. Bessel connects your calendar, money, health, tasks and contacts, so it can help with your actual days. Free for macOS, Windows, Linux and the browser.";
 const OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
 const STRUCTURED_DATA = {
