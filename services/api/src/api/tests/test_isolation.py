@@ -217,7 +217,6 @@ EXEMPT: dict[str, str] = {
   "POST /v1/avanza/connect": "Creates or updates the caller's own connection only",
   "POST /v1/montrose/authorize": "Starts the caller's own connection flow",
   "POST /v1/calendars/icloud": "Creates an account for the caller only",
-  "GET /v1/klarna/transactions": "Proxies the caller's own Klarna credentials; reads no Bessel data",
 }
 
 

@@ -1,7 +1,10 @@
 import pytest
+from api.activity.repository import ActivityRepository
 from api.models.activity_event import ActivityEvent
 from api.tests.fixtures.database import SaveFixture
 from httpx import AsyncClient
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Day window: 2024-01-15 00:00:00 UTC → 2024-01-16 00:00:00 UTC
 DAY_START = 1705276800  # 2024-01-15 00:00:00 UTC
@@ -184,3 +187,24 @@ class TestDailyActivity:
     assert resp.status_code == 200
     days = {d["date"]: d["active_secs"] for d in resp.json()["days"]}
     assert days["2024-01-15"] == 180
+
+
+class TestForgetTitles:
+  @pytest.mark.asyncio
+  async def test_blanks_only_titles_before_the_cutoff(self, session: AsyncSession, save_owned: SaveFixture) -> None:
+    old = _ev(1, DAY_START - 1)
+    old.title = "Re: salary review - Inbox"
+    kept = _ev(2, DAY_START)
+    kept.title = "bessel - nvim"
+    await save_owned(old)
+    await save_owned(kept)
+    await save_owned(_ev(3, DAY_START - 2))
+
+    cleared = await ActivityRepository.from_session(session).forget_titles_before(DAY_START)
+
+    assert cleared == 1
+    rows = {e.local_id: e for e in (await session.execute(select(ActivityEvent))).scalars()}
+    assert rows[1].title is None
+    assert rows[1].app_class == "kitty"
+    assert rows[1].ts == DAY_START - 1
+    assert rows[2].title == "bessel - nvim"

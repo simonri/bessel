@@ -8424,6 +8424,7 @@ export const ProjectCreateSchema = {
         {
           type: "string",
           maxLength: 255,
+          pattern: "^(?:[A-Za-z0-9._-]+@)?[A-Za-z0-9_][A-Za-z0-9._-]*$",
         },
         {
           type: "null",
@@ -8456,6 +8457,7 @@ export const ProjectLocationUpdateSchema = {
         {
           type: "string",
           maxLength: 255,
+          pattern: "^(?:[A-Za-z0-9._-]+@)?[A-Za-z0-9_][A-Za-z0-9._-]*$",
         },
         {
           type: "null",

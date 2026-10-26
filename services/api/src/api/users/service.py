@@ -32,7 +32,7 @@ class UserService:
     )
 
     if created:
-      log.info("Created new user", user_id=str(user.id), email=email)
+      log.info("Created new user", user_id=str(user.id))
     return user
 
 

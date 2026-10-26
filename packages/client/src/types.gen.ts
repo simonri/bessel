@@ -13085,51 +13085,6 @@ export type GetWeatherForecastResponses = {
 export type GetWeatherForecastResponse =
   GetWeatherForecastResponses[keyof GetWeatherForecastResponses];
 
-export type GetKlarnaTransactionsData = {
-  body?: never;
-  headers: {
-    /**
-     * Authorization
-     *
-     * Klarna Bearer token
-     */
-    authorization: string;
-    /**
-     * Cookie
-     *
-     * Klarna session cookies
-     */
-    cookie?: string | null;
-  };
-  path?: never;
-  query?: never;
-  url: "/v1/klarna/transactions";
-};
-
-export type GetKlarnaTransactionsErrors = {
-  /**
-   * Validation Error
-   */
-  422: HttpValidationError;
-};
-
-export type GetKlarnaTransactionsError =
-  GetKlarnaTransactionsErrors[keyof GetKlarnaTransactionsErrors];
-
-export type GetKlarnaTransactionsResponses = {
-  /**
-   * Response Get Klarna Transactions
-   *
-   * Successful Response
-   */
-  200: {
-    [key: string]: unknown;
-  };
-};
-
-export type GetKlarnaTransactionsResponse =
-  GetKlarnaTransactionsResponses[keyof GetKlarnaTransactionsResponses];
-
 export type ImportKlarnaTransactionsData = {
   body: KlarnaImportRequest;
   path?: never;

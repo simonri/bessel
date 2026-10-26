@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert
 
 from api.common.repository.base import RepositoryBase
@@ -48,3 +48,7 @@ class ActivityRepository(RepositoryBase[ActivityEvent]):
       select(ActivityEvent.source).where(ActivityEvent.user_id == user_id).group_by(ActivityEvent.source).order_by(func.max(ActivityEvent.ts).desc())
     )
     return list(result.scalars().all())
+
+  async def forget_titles_before(self, ts: int) -> int:
+    """Blanks the window titles of events before `ts`, keeping the app, workspace and time. Returns how many were blanked."""
+    return await self.execute_for_rowcount(update(ActivityEvent).where(ActivityEvent.ts < ts, ActivityEvent.title.is_not(None)).values(title=None))

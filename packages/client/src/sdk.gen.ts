@@ -298,9 +298,6 @@ import type {
   GetIntradayActivityResponses,
   GetInvestmentAccountsData,
   GetInvestmentAccountsResponses,
-  GetKlarnaTransactionsData,
-  GetKlarnaTransactionsErrors,
-  GetKlarnaTransactionsResponses,
   GetLocationHistoryDayData,
   GetLocationHistoryDayErrors,
   GetLocationHistoryDayResponses,
@@ -4043,28 +4040,6 @@ export const getWeatherForecast = <ThrowOnError extends boolean = false>(
     responseTransformer: getWeatherForecastResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/weather",
-    ...options,
-  });
-
-/**
- * Get Klarna Transactions
- *
- * Fetch Klarna transactions and return raw GraphQL response.
- */
-export const getKlarnaTransactions = <ThrowOnError extends boolean = false>(
-  options: Options<GetKlarnaTransactionsData, ThrowOnError>,
-): RequestResult<
-  GetKlarnaTransactionsResponses,
-  GetKlarnaTransactionsErrors,
-  ThrowOnError
-> =>
-  (options.client ?? client).get<
-    GetKlarnaTransactionsResponses,
-    GetKlarnaTransactionsErrors,
-    ThrowOnError
-  >({
-    security: [{ scheme: "bearer", type: "http" }],
-    url: "/v1/klarna/transactions",
     ...options,
   });
 

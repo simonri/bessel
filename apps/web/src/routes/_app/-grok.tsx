@@ -1,10 +1,7 @@
 import { useWindowEntry } from "@/components/canvas/window-manager";
 import { TerminalWidget } from "@/components/terminal-widget";
+import { sshQuote, sshTerminalArgs } from "@/lib/ssh";
 import { decodeCommands } from "@/lib/widget-commands";
-
-function sshQuote(p: string): string {
-  return `'${p.replace(/'/g, "'\\''")}'`;
-}
 
 export function Grok() {
   const entry = useWindowEntry();
@@ -16,11 +13,10 @@ export function Grok() {
     return (
       <TerminalWidget
         command="ssh"
-        args={[
-          "-t",
+        args={sshTerminalArgs(
           sshHost,
           `cd ${sshQuote(path)} && exec \${SHELL:-bash} -lc 'grok'`,
-        ]}
+        )}
         taskDropZone
         commands={commands}
       />

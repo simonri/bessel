@@ -8806,76 +8806,6 @@
         }
       }
     },
-    "/v1/klarna/transactions": {
-      "get": {
-        "tags": [
-          "klarna"
-        ],
-        "summary": "Get Klarna Transactions",
-        "description": "Fetch Klarna transactions and return raw GraphQL response.",
-        "operationId": "get_klarna_transactions",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "description": "Klarna Bearer token",
-              "title": "Authorization"
-            },
-            "description": "Klarna Bearer token"
-          },
-          {
-            "name": "cookie",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Klarna session cookies",
-              "title": "Cookie"
-            },
-            "description": "Klarna session cookies"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Get Klarna Transactions"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v1/klarna/import": {
       "post": {
         "tags": [
@@ -17526,7 +17456,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 255
+                "maxLength": 255,
+                "pattern": "^(?:[A-Za-z0-9._-]+@)?[A-Za-z0-9_][A-Za-z0-9._-]*$"
               },
               {
                 "type": "null"
@@ -17559,7 +17490,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 255
+                "maxLength": 255,
+                "pattern": "^(?:[A-Za-z0-9._-]+@)?[A-Za-z0-9_][A-Za-z0-9._-]*$"
               },
               {
                 "type": "null"

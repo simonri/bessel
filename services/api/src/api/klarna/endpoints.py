@@ -1,5 +1,3 @@
-from typing import Annotated, Any
-
 from api.bank_accounts.repository import BankAccountRepository
 from api.common.utils import utc_now
 from api.exceptions import ValidationError
@@ -7,7 +5,7 @@ from api.klarna.schemas import KlarnaImportRequest, KlarnaImportResponse
 from api.klarna.service import fetch_klarna_items, fetch_klarna_payments, import_pay_later
 from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
-from fastapi import APIRouter, Header
+from fastapi import APIRouter
 
 router = APIRouter(prefix="/klarna", tags=["klarna"])
 
@@ -15,19 +13,6 @@ router = APIRouter(prefix="/klarna", tags=["klarna"])
 def _require_bearer(authorization: str) -> None:
   if not authorization.lower().startswith("bearer "):
     raise ValidationError("Authorization must be a Bearer token")
-
-
-@router.get("/transactions")
-async def get_klarna_transactions(
-  current_user: CurrentDBUser,
-  authorization: Annotated[str, Header(description="Klarna Bearer token")],
-  cookie: Annotated[str | None, Header(description="Klarna session cookies")] = None,
-) -> dict[str, Any]:
-  """Fetch Klarna transactions and return raw GraphQL response."""
-  _require_bearer(authorization)
-
-  items = await fetch_klarna_items(authorization, cookie)
-  return {"data": {"transactionsList": {"items": items}}}
 
 
 @router.post("/import", response_model=KlarnaImportResponse)

@@ -76,7 +76,6 @@ import {
   getHoldings,
   getIntradayActivity,
   getInvestmentAccounts,
-  getKlarnaTransactions,
   getLocationHistoryDay,
   getLocationHistorySummary,
   getMe,
@@ -368,9 +367,6 @@ import type {
   GetIntradayActivityResponse,
   GetInvestmentAccountsData,
   GetInvestmentAccountsResponse,
-  GetKlarnaTransactionsData,
-  GetKlarnaTransactionsError,
-  GetKlarnaTransactionsResponse,
   GetLocationHistoryDayData,
   GetLocationHistoryDayError,
   GetLocationHistoryDayResponse,
@@ -5949,36 +5945,6 @@ export const getWeatherForecastOptions = (
       return data;
     },
     queryKey: getWeatherForecastQueryKey(options),
-  });
-
-export const getKlarnaTransactionsQueryKey = (
-  options: Options<GetKlarnaTransactionsData>,
-) => createQueryKey("getKlarnaTransactions", options);
-
-/**
- * Get Klarna Transactions
- *
- * Fetch Klarna transactions and return raw GraphQL response.
- */
-export const getKlarnaTransactionsOptions = (
-  options: Options<GetKlarnaTransactionsData>,
-) =>
-  queryOptions<
-    GetKlarnaTransactionsResponse,
-    GetKlarnaTransactionsError,
-    GetKlarnaTransactionsResponse,
-    ReturnType<typeof getKlarnaTransactionsQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getKlarnaTransactions({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getKlarnaTransactionsQueryKey(options),
   });
 
 /**

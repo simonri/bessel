@@ -8,9 +8,28 @@ from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.modules import ModulesIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 from sentry_sdk.integrations.threading import ThreadingIntegration
+from sentry_sdk.scrubber import DEFAULT_DENYLIST, EventScrubber
 
 from api.logging import logging
 from api.settings import Environment, settings
+
+# Field names Sentry's default list misses: the third-party logins people connect.
+CREDENTIAL_FIELDS = [
+  "totp_secret",
+  "app_password",
+  "client_secret",
+  "access_token",
+  "refresh_token",
+  "id_token",
+  "code",
+  "code_verifier",
+  "state",
+  "encrypted_credentials",
+]
+
+
+def event_scrubber() -> EventScrubber:
+  return EventScrubber(denylist=[*DEFAULT_DENYLIST, *CREDENTIAL_FIELDS], recursive=True)
 
 
 def configure_sentry() -> None:
@@ -27,6 +46,10 @@ def configure_sentry() -> None:
     release="bessel",
     server_name="bessel",
     environment=settings.ENV,
+    # Bodies and stack variables carry the bank, broker and iCloud logins people connect.
+    max_request_body_size="never",
+    include_local_variables=False,
+    event_scrubber=event_scrubber(),
     default_integrations=False,
     auto_enabling_integrations=False,
     integrations=[

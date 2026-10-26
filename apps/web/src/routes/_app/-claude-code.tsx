@@ -16,11 +16,8 @@ import {
 } from "@/components/claude-sessions/claude-sessions-store";
 import { CLAUDE_SESSION_KEY } from "@/components/claude-sessions/use-open-claude-session";
 import { TerminalWidget } from "@/components/terminal-widget";
+import { sshQuote, sshTerminalArgs } from "@/lib/ssh";
 import { decodeCommands } from "@/lib/widget-commands";
-
-function sshQuote(p: string): string {
-  return `'${p.replace(/'/g, "'\\''")}'`;
-}
 
 const PANEL_BUTTON =
   "rounded-md border border-white/10 px-3 py-1.5 text-12 font-medium text-white/75 transition-colors hover:border-white/20 hover:text-white/95";
@@ -87,11 +84,10 @@ function RemoteClaude({ sshHost, path }: { sshHost: string; path: string }) {
   return (
     <TerminalWidget
       command="ssh"
-      args={[
-        "-t",
+      args={sshTerminalArgs(
         sshHost,
         `cd ${sshQuote(path)} && exec \${SHELL:-bash} -lc '${remoteCommand}'`,
-      ]}
+      )}
       taskDropZone
       commands={commands}
       detectAgentStatus

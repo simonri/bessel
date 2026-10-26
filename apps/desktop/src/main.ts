@@ -189,6 +189,15 @@ function assertSshHost(host: unknown): asserts host is string {
     throw new Error(`Invalid SSH host: ${String(host)}`);
 }
 
+// The host comes from the project's server-side record, so it must sit after
+// `--` where ssh can't read it as an option.
+function assertSshDestination(args: unknown): void {
+  const end = Array.isArray(args) ? args.indexOf("--") : -1;
+  if (!Array.isArray(args) || end === -1)
+    throw new Error("ssh arguments must end options with --");
+  assertSshHost(args[end + 1]);
+}
+
 const SSH_TIMEOUT_MS = 30_000;
 
 // Non-interactive: keys and agents only, never a password prompt. A host seen
@@ -1174,6 +1183,7 @@ app.whenReady().then(() => {
     ): Promise<number | undefined> => {
       if (typeof sessionId !== "string" || !sessionId)
         throw new Error("Invalid terminal session id");
+      if (config.command === "ssh") assertSshDestination(config.args);
       const size = terminalSize(cols, rows) ?? { cols: 80, rows: 24 };
       const existing = ptySessions.get(sessionId);
       if (existing) return existing.generation;

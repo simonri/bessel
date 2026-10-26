@@ -100,6 +100,28 @@ class TestProjectLocation:
     assert resp.status_code == 400
 
 
+class TestSshHost:
+  @pytest.mark.asyncio
+  @pytest.mark.parametrize("host", ["vps", "root@vps", "dev_box", "vps.tailca3fd9.ts.net", "simon@192.168.1.10"])
+  async def test_accepts_hosts_and_aliases(self, client: AsyncClient, host: str) -> None:
+    resp = await client.post("/v1/projects", json={"name": "metron", "ssh_host": host}, headers=DEVICE_A)
+    assert resp.status_code == 201
+    assert resp.json()["ssh_host"] == host
+
+  @pytest.mark.asyncio
+  @pytest.mark.parametrize(
+    "host",
+    ["-oProxyCommand=touch /tmp/x", "-vvv", "root@-oProxyCommand=x", "vps; rm -rf ~", "vps $(id)", "vps\n-oX=y", ""],
+  )
+  async def test_rejects_values_ssh_would_read_as_options_or_shell(self, client: AsyncClient, host: str) -> None:
+    created = await client.post("/v1/projects", json={"name": "metron", "ssh_host": host}, headers=DEVICE_A)
+    assert created.status_code == 422
+
+    project = await client.post("/v1/projects", json={"name": "metron"}, headers=DEVICE_A)
+    moved = await client.put(f"/v1/projects/{project.json()['id']}/location", json={"path": None, "ssh_host": host}, headers=DEVICE_A)
+    assert moved.status_code == 422
+
+
 class TestDevices:
   @pytest.mark.asyncio
   @pytest.mark.keep_session_state
