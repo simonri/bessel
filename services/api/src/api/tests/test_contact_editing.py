@@ -10,6 +10,7 @@ from api.calendars import http as provider_http
 from api.calendars.google import CONTACTS_WRITE_SCOPE, _grant
 from api.common.encryption import decrypt, encrypt
 from api.contacts.edit import build_update
+from api.contacts.phones import compact_phone, display_phone
 from api.contacts.repository import ContactSourceRepository
 from api.contacts.service import sync_source
 from api.models.calendar_account import CalendarAccount, CalendarProvider
@@ -27,7 +28,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 type SessionMaker = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 
 MOBILE = {"value": "+46 70 123 45 67", "type": "mobile", "formattedType": "Mobile", "metadata": {"primary": True}}
-WORK = {"value": "08-123 456", "type": "work", "formattedType": "Work"}
+WORK = {"value": "08123456", "canonicalForm": "+468123456", "type": "work", "formattedType": "Work"}
 
 
 @pytest.fixture(autouse=True)
@@ -93,8 +94,17 @@ class TestBuildUpdate:
     assert fields == ["phoneNumbers"]
     assert body["etag"] == "%E1" and "names" not in body
     new, work = body["phoneNumbers"]
-    assert new == {"value": "+46 70 999 99 99", "type": "Mobile"}
+    assert new == {"value": "+46709999999", "type": "Mobile"}
     assert work == WORK, "an untouched entry goes back exactly as Google sent it"
+
+  def test_numbers_are_saved_without_spacing_keeping_their_labels(self) -> None:
+    person = {"resourceName": "people/c1", "etag": "%E1", "phoneNumbers": [MOBILE, WORK]}
+
+    body, _ = build_update(person, {"phones": [{"label": "Mobile", "value": "+46 70 123 45 67"}, {"label": "Work", "value": "08-12 34 56"}]})
+
+    mobile, work = body["phoneNumbers"]
+    assert mobile == {"value": "+46701234567", "type": "mobile", "formattedType": "Mobile", "metadata": {"primary": True}}
+    assert work == WORK
 
   def test_relabelling_keeps_the_entry_and_clearing_empties_the_field(self) -> None:
     person = {"resourceName": "people/c1", "etag": "%E1", "emailAddresses": [{"value": "a@x.se", "type": "home", "metadata": {"primary": True}}]}
@@ -118,6 +128,20 @@ class TestBuildUpdate:
     assert fields == ["names", "organizations"]
     assert body["names"] == [{"givenName": "Anna", "familyName": "Lind"}]
     assert body["organizations"] == [{"name": "Acme", "title": "CEO", "department": "R&D"}]
+
+  def test_prefix_middle_name_and_suffix_change_on_their_own(self) -> None:
+    person = {"resourceName": "people/c1", "etag": "%E1", "names": [{"honorificPrefix": "Frösåker", "givenName": "Johan", "familyName": "Fryckne"}]}
+
+    kept, _ = build_update(person, {"given_name": "Jon"})
+    changed, _ = build_update(person, {"name_prefix": None, "middle_name": "Erik", "name_suffix": "Jr."})
+
+    assert kept["names"] == [{"honorificPrefix": "Frösåker", "givenName": "Jon", "familyName": "Fryckne"}]
+    assert changed["names"] == [{"givenName": "Johan", "middleName": "Erik", "familyName": "Fryckne", "honorificSuffix": "Jr."}]
+
+  def test_a_middle_name_alone_is_still_a_name(self) -> None:
+    body, _ = build_update({}, {"middle_name": "Erik"})
+
+    assert body == {"names": [{"middleName": "Erik"}]}
 
   def test_a_birthday_without_a_year_leaves_the_year_out(self) -> None:
     body, _ = build_update({}, {"birthday": {"month": 3, "day": 14, "year": None}})
@@ -155,7 +179,7 @@ class TestEditing:
     assert body is not None and body["phoneNumbers"][1] == WORK
     stored = people.people["people/c1"][0]
     assert stored["names"] == [{"givenName": "Anna", "familyName": "Berg"}]
-    assert [p["value"] for p in response.json()["phones"]] == ["+46 70 999 99 99", "08-123 456"]
+    assert [(p["value"], p["display"]) for p in response.json()["phones"]] == [("+46709999999", "070-999 99 99"), ("08123456", "08-12 34 56")]
 
   @pytest.mark.asyncio
   async def test_an_edit_to_someone_changed_in_google_meanwhile_lands_on_the_latest_version(
@@ -203,7 +227,7 @@ class TestEditing:
     )
     assert created.status_code == 201, created.text
     resource_name = next(name for name in people.people if not people.people[name][0]["metadata"].get("deleted"))
-    assert people.people[resource_name][0]["phoneNumbers"] == [{"value": "070-987 65 43", "type": "Mobile"}]
+    assert people.people[resource_name][0]["phoneNumbers"] == [{"value": "0709876543", "type": "Mobile"}]
 
     deleted = await client.delete(f"/v1/contacts/{created.json()['id']}")
 
@@ -281,3 +305,18 @@ class TestEditing:
     assert account is not None
     await session.refresh(account)
     assert decrypt(account.encrypted_credentials) == "refresh", "a grant without a refresh token must keep the stored one"
+
+
+class TestPhones:
+  def test_compact_keeps_only_what_is_dialled(self) -> None:
+    assert compact_phone("+46 (0)70-123 45 67") == "+46701234567"
+    assert compact_phone(" 08.12/34 56 ") == "08123456"
+    assert compact_phone("*21*070 123#") == "*21*070123#"
+    assert compact_phone("Reception") == "Reception"
+
+  def test_display_spaces_swedish_numbers_nationally_and_others_internationally(self) -> None:
+    assert display_phone("+46701234567") == "070-123 45 67"
+    assert display_phone("0812345678") == "08-123 456 78"
+    assert display_phone("+442079460958") == "+44 20 7946 0958"
+    assert display_phone("12") == "12"
+    assert display_phone("Reception") == "Reception"

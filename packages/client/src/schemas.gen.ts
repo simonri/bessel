@@ -2793,6 +2793,18 @@ export const ContactBirthdaySchema = {
 
 export const ContactCreateSchema = {
   properties: {
+    name_prefix: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name Prefix",
+    },
     given_name: {
       anyOf: [
         {
@@ -2805,6 +2817,18 @@ export const ContactCreateSchema = {
       ],
       title: "Given Name",
     },
+    middle_name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Middle Name",
+    },
     family_name: {
       anyOf: [
         {
@@ -2816,6 +2840,18 @@ export const ContactCreateSchema = {
         },
       ],
       title: "Family Name",
+    },
+    name_suffix: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name Suffix",
     },
     nickname: {
       anyOf: [
@@ -3058,9 +3094,15 @@ export const ContactMethodSchemaSchema = {
       type: "string",
       title: "Value",
     },
+    display: {
+      type: "string",
+      title: "Display",
+      description:
+        'How to show the value: phone numbers spaced ("070-123 45 67"), anything else as saved.',
+    },
   },
   type: "object",
-  required: ["label", "value"],
+  required: ["label", "value", "display"],
   title: "ContactMethodSchema",
 } as const;
 
@@ -3153,6 +3195,18 @@ export const ContactSchemaSchema = {
       type: "string",
       title: "Display Name",
     },
+    name_prefix: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name Prefix",
+      description: "Before the name, e.g. 'Dr.'.",
+    },
     given_name: {
       anyOf: [
         {
@@ -3164,6 +3218,17 @@ export const ContactSchemaSchema = {
       ],
       title: "Given Name",
     },
+    middle_name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Middle Name",
+    },
     family_name: {
       anyOf: [
         {
@@ -3174,6 +3239,18 @@ export const ContactSchemaSchema = {
         },
       ],
       title: "Family Name",
+    },
+    name_suffix: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name Suffix",
+      description: "After the name, e.g. 'Jr.'.",
     },
     nickname: {
       anyOf: [
@@ -3349,8 +3426,11 @@ export const ContactSchemaSchema = {
     "id",
     "source_id",
     "display_name",
+    "name_prefix",
     "given_name",
+    "middle_name",
     "family_name",
+    "name_suffix",
     "nickname",
     "organization",
     "job_title",
@@ -3448,6 +3528,18 @@ export const ContactSourceSchemaSchema = {
 
 export const ContactUpdateSchema = {
   properties: {
+    name_prefix: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name Prefix",
+    },
     given_name: {
       anyOf: [
         {
@@ -3460,6 +3552,18 @@ export const ContactUpdateSchema = {
       ],
       title: "Given Name",
     },
+    middle_name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Middle Name",
+    },
     family_name: {
       anyOf: [
         {
@@ -3471,6 +3575,18 @@ export const ContactUpdateSchema = {
         },
       ],
       title: "Family Name",
+    },
+    name_suffix: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name Suffix",
     },
     nickname: {
       anyOf: [

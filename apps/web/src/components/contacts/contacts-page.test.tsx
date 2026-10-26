@@ -106,11 +106,25 @@ beforeEach(() => {
   api.contacts = [
     contact("c1", "Anna Berg", {
       organization: "Acme",
-      phones: [{ label: "Mobile", value: "+46 70 123 45 67" }],
-      emails: [{ label: null, value: "anna@example.com" }],
-      addresses: [{ label: "Home", value: "Storgatan 1, Lund" }],
+      phones: [
+        { label: "Mobile", value: "+46701234567", display: "070-123 45 67" },
+      ],
+      emails: [
+        { label: null, value: "anna@example.com", display: "anna@example.com" },
+      ],
+      addresses: [
+        {
+          label: "Home",
+          value: "Storgatan 1, Lund",
+          display: "Storgatan 1, Lund",
+        },
+      ],
     }),
-    contact("c2", "Bo Ek"),
+    contact("c2", "Bo Ek", {
+      phones: [
+        { label: null, value: "+46731234567", display: "073-123 45 67" },
+      ],
+    }),
   ];
 });
 afterEach(cleanup);
@@ -120,6 +134,7 @@ describe("ContactsPage", () => {
     mount();
 
     await screen.findByText("Anna Berg");
+    expect(screen.getByText("073-123 45 67")).toBeTruthy();
     expect(screen.getByText("A")).toBeTruthy();
     expect(screen.getByText("B")).toBeTruthy();
     expect(screen.getByText(/2 contacts - synced/)).toBeTruthy();
@@ -138,6 +153,9 @@ describe("ContactsPage", () => {
 
     expect(
       screen.getByRole("link", { name: "Call" }).getAttribute("href"),
+    ).toBe("tel:+46701234567");
+    expect(
+      screen.getByRole("link", { name: "070-123 45 67" }).getAttribute("href"),
     ).toBe("tel:+46701234567");
     expect(
       screen

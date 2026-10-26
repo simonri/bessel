@@ -17,8 +17,12 @@ const person = (overrides: Record<string, unknown> = {}) => ({
   display_name: "Anna Berg",
   nickname: null,
   organization: null,
-  phones: [{ label: "Mobile", value: "+46 70 123 45 67" }],
-  emails: [{ label: null, value: "anna@example.com" }],
+  phones: [
+    { label: "Mobile", value: "+46 70 123 45 67", display: "070-123 45 67" },
+  ],
+  emails: [
+    { label: null, value: "anna@example.com", display: "anna@example.com" },
+  ],
   tags: [] as string[],
   ...overrides,
 });

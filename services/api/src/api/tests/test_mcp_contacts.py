@@ -62,7 +62,7 @@ class TestContacts:
       ],
     }
     assert [c["name"] for c in by_tag["contacts"]] == ["Anna Berg"]
-    assert detail["addresses"] == [{"label": None, "value": "Storgatan 1, Lund"}]
+    assert detail["addresses"] == [{"label": None, "value": "Storgatan 1, Lund", "display": "Storgatan 1, Lund"}]
     assert detail["birthday"] == {"month": 3, "day": 14, "year": 1990}
     assert detail["tags"] == ["Climbing"]
 

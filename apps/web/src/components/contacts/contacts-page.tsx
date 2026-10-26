@@ -100,7 +100,7 @@ function MethodRows({
             rel="noreferrer"
             className="min-w-0 break-words text-13 text-white/85 hover:text-primary-300 hover:underline"
           >
-            {m.value}
+            {m.display}
           </a>
           {m.label && (
             <span className="shrink-0 text-11 text-white/35">{m.label}</span>
@@ -437,7 +437,7 @@ export function ContactsPage() {
                     </span>
                     {(c.organization || c.phones[0]) && (
                       <span className="truncate text-11 text-white/35">
-                        {c.organization ?? c.phones[0]?.value}
+                        {c.organization ?? c.phones[0]?.display}
                       </span>
                     )}
                   </span>

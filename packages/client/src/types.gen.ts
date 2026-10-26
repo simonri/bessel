@@ -1884,13 +1884,25 @@ export type ContactBirthday = {
  */
 export type ContactCreate = {
   /**
+   * Name Prefix
+   */
+  name_prefix?: string | null;
+  /**
    * Given Name
    */
   given_name?: string | null;
   /**
+   * Middle Name
+   */
+  middle_name?: string | null;
+  /**
    * Family Name
    */
   family_name?: string | null;
+  /**
+   * Name Suffix
+   */
+  name_suffix?: string | null;
   /**
    * Nickname
    */
@@ -1995,6 +2007,12 @@ export type ContactMethodSchema = {
    * Value
    */
   value: string;
+  /**
+   * Display
+   *
+   * How to show the value: phone numbers spaced ("070-123 45 67"), anything else as saved.
+   */
+  display: string;
 };
 
 /**
@@ -2064,13 +2082,29 @@ export type ContactSchema = {
    */
   display_name: string;
   /**
+   * Name Prefix
+   *
+   * Before the name, e.g. 'Dr.'.
+   */
+  name_prefix: string | null;
+  /**
    * Given Name
    */
   given_name: string | null;
   /**
+   * Middle Name
+   */
+  middle_name: string | null;
+  /**
    * Family Name
    */
   family_name: string | null;
+  /**
+   * Name Suffix
+   *
+   * After the name, e.g. 'Jr.'.
+   */
+  name_suffix: string | null;
   /**
    * Nickname
    */
@@ -2203,13 +2237,25 @@ export type ContactSourceSchema = {
  */
 export type ContactUpdate = {
   /**
+   * Name Prefix
+   */
+  name_prefix?: string | null;
+  /**
    * Given Name
    */
   given_name?: string | null;
   /**
+   * Middle Name
+   */
+  middle_name?: string | null;
+  /**
    * Family Name
    */
   family_name?: string | null;
+  /**
+   * Name Suffix
+   */
+  name_suffix?: string | null;
   /**
    * Nickname
    */

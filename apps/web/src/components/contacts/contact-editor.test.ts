@@ -13,8 +13,8 @@ const anna = {
   birthday: { month: 3, day: 14, year: null },
   notes: null,
   phones: [
-    { label: "Mobile", value: "+46 70 123 45 67" },
-    { label: "Work", value: "08-123 456" },
+    { label: "Mobile", value: "+46701234567", display: "070-123 45 67" },
+    { label: "Work", value: "08123456", display: "08-12 34 56" },
   ],
   emails: [],
   addresses: [],
@@ -37,11 +37,51 @@ describe("draftFrom", () => {
       family_name: "",
     });
   });
+
+  it("keeps a prefix, middle name and suffix in their own fields", () => {
+    const johan = {
+      ...anna,
+      display_name: "Frösåker Johan Fryckne",
+      name_prefix: "Frösåker",
+      given_name: null,
+      middle_name: "Erik",
+      family_name: null,
+      name_suffix: "Jr.",
+    } as ContactSchema;
+
+    expect(draftFrom(johan)).toMatchObject({
+      name_prefix: "Frösåker",
+      given_name: "",
+      middle_name: "Erik",
+      family_name: "",
+      name_suffix: "Jr.",
+    });
+  });
+
+  it("shows numbers spaced, as they're displayed", () => {
+    expect(draftFrom(anna).phones).toEqual([
+      { label: "Mobile", value: "070-123 45 67" },
+      { label: "Work", value: "08-12 34 56" },
+    ]);
+  });
 });
 
 describe("changesFrom", () => {
   it("sends nothing when nothing changed", () => {
     expect(changesFrom(draftFrom(anna), draftFrom(anna))).toEqual({});
+  });
+
+  it("sends a changed prefix, middle name or suffix", () => {
+    const before = draftFrom(anna);
+
+    expect(
+      changesFrom(before, {
+        ...before,
+        name_prefix: "Dr.",
+        middle_name: " Maria ",
+        name_suffix: "",
+      }),
+    ).toEqual({ name_prefix: "Dr.", middle_name: "Maria" });
   });
 
   it("sends only the fields that changed, clearing with null and trimming", () => {
@@ -74,7 +114,7 @@ describe("changesFrom", () => {
     expect(changesFrom(before, after)).toEqual({
       phones: [
         { label: "Mobile", value: "+46 70 999 99 99" },
-        { label: "Work", value: "08-123 456" },
+        { label: "Work", value: "08-12 34 56" },
       ],
     });
   });

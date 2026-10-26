@@ -19,7 +19,7 @@ extension ContactItem: Identifiable {
     /// What the list shows under the name: the company, or else the first number.
     var subtitle: String? {
         if let organization, !organization.isEmpty { return organization }
-        return phones.first?.value
+        return phones.first?.display
     }
 
     /// "Designer at Acme", or whichever of the two is known.

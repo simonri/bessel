@@ -10,11 +10,15 @@ import copy
 from typing import Any
 
 from api.contacts.person import address_text, label_of, primary
+from api.contacts.phones import compact_phone
 
 # Bessel's field -> the People API field it lives in.
 _PERSON_FIELD = {
+  "name_prefix": "names",
   "given_name": "names",
+  "middle_name": "names",
   "family_name": "names",
+  "name_suffix": "names",
   "nickname": "nicknames",
   "organization": "organizations",
   "job_title": "organizations",
@@ -27,13 +31,23 @@ _PERSON_FIELD = {
 }
 # The key each list entry keeps its value under.
 _VALUE_KEY = {"phoneNumbers": "value", "emailAddresses": "value", "urls": "value", "addresses": "formattedValue"}
+# Bessel's name parts -> the People API's.
+_NAME_PARTS = (
+  ("name_prefix", "honorificPrefix"),
+  ("given_name", "givenName"),
+  ("middle_name", "middleName"),
+  ("family_name", "familyName"),
+  ("name_suffix", "honorificSuffix"),
+)
 
 
 def _value_of(field: str, entry: dict[str, Any]) -> str | None:
   value = entry.get(_VALUE_KEY[field])
   if field == "addresses" and not value:
     return address_text(entry)
-  return value.strip() if isinstance(value, str) else None
+  if not isinstance(value, str):
+    return None
+  return compact_phone(value) if field == "phoneNumbers" else value.strip()
 
 
 def _methods(field: str, existing: list[dict[str, Any]], wanted: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -41,10 +55,15 @@ def _methods(field: str, existing: list[dict[str, Any]], wanted: list[dict[str, 
   result = []
   for item in wanted:
     value, label = item["value"].strip(), item.get("label") or None
+    if field == "phoneNumbers":
+      value = compact_phone(value)
     match = next((e for e in unused if _value_of(field, e) == value), None)
     if match is not None:
       unused.remove(match)
       entry = copy.deepcopy(match)
+      if field == "phoneNumbers":
+        # Saved spaced before: the same number, now without the spacing.
+        entry["value"] = value
       if label != label_of(entry):
         entry.pop("formattedType", None)
         if label:
@@ -73,14 +92,14 @@ def _field(field: str, person: dict[str, Any], changes: dict[str, Any]) -> list[
   current = person.get(field, [])
   if field == "names":
     name = copy.deepcopy(primary(current) or {})
-    for key, api_key in (("given_name", "givenName"), ("family_name", "familyName")):
+    for key, api_key in _NAME_PARTS:
       if key in changes:
         name[api_key] = changes[key] or None
     # Output-only, or derived from the parts just changed.
     for derived in ("displayName", "displayNameLastFirst", "unstructuredName", "metadata"):
       name.pop(derived, None)
     name = {k: v for k, v in name.items() if v}
-    return [name] if name.get("givenName") or name.get("familyName") else []
+    return [name] if any(name.get(api_key) for _, api_key in _NAME_PARTS) else []
   if field == "organizations":
     organization = copy.deepcopy(primary(current) or {})
     for key, api_key in (("organization", "name"), ("job_title", "title")):

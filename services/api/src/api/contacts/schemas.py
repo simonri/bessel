@@ -6,12 +6,15 @@ from pydantic import UUID4, Field, StringConstraints, field_validator, model_val
 
 from api.common.pagination import ListResource
 from api.common.schemas import IDSchema, Schema, TimestampedSchema
+from api.contacts.person import primary
+from api.contacts.phones import display_phone
 from api.models.contact import Contact, ContactMethodKind
 
 
 class ContactMethodSchema(Schema):
   label: str | None = Field(description="As the address book names it, e.g. 'Mobile' or 'Work'.")
   value: str
+  display: str = Field(description="How to show the value: phone numbers spaced (\"070-123 45 67\"), anything else as saved.")
 
 
 class ContactSighting(Schema):
@@ -31,8 +34,11 @@ class ContactSchema(TimestampedSchema):
   id: UUID4 = Field(description="The ID of the object.")
   source_id: UUID
   display_name: str
+  name_prefix: str | None = Field(description="Before the name, e.g. 'Dr.'.")
   given_name: str | None
+  middle_name: str | None
   family_name: str | None
+  name_suffix: str | None = Field(description="After the name, e.g. 'Jr.'.")
   nickname: str | None
   organization: str | None
   job_title: str | None
@@ -59,8 +65,13 @@ class ContactSchema(TimestampedSchema):
       return data
 
     def of(kind: ContactMethodKind) -> list[dict[str, Any]]:
-      return [{"label": m.label, "value": m.value} for m in data.methods if m.kind == kind]
+      return [
+        {"label": m.label, "value": m.value, "display": display_phone(m.value) if kind == ContactMethodKind.phone else m.value}
+        for m in data.methods
+        if m.kind == kind
+      ]
 
+    name = primary(data.person.get("names", [])) or {}
     birthday = {"month": data.birthday_month, "day": data.birthday_day, "year": data.birthday_year} if data.birthday_month and data.birthday_day else None
     return {
       "id": data.id,
@@ -68,8 +79,11 @@ class ContactSchema(TimestampedSchema):
       "modified_at": data.modified_at,
       "source_id": data.source_id,
       "display_name": data.display_name,
+      "name_prefix": name.get("honorificPrefix") or None,
       "given_name": data.given_name,
+      "middle_name": name.get("middleName") or None,
       "family_name": data.family_name,
+      "name_suffix": name.get("honorificSuffix") or None,
       "nickname": data.nickname,
       "organization": data.organization,
       "job_title": data.job_title,
@@ -112,8 +126,11 @@ class ContactMethodInput(Schema):
 class ContactUpdate(Schema):
   """Fields to change; any left out stay as they are, and null clears one."""
 
+  name_prefix: str | None = Field(default=None, max_length=255)
   given_name: str | None = Field(default=None, max_length=255)
+  middle_name: str | None = Field(default=None, max_length=255)
   family_name: str | None = Field(default=None, max_length=255)
+  name_suffix: str | None = Field(default=None, max_length=255)
   nickname: str | None = Field(default=None, max_length=255)
   organization: str | None = Field(default=None, max_length=500)
   job_title: str | None = Field(default=None, max_length=500)

@@ -576,8 +576,11 @@ enum API {
     }
 
     struct ContactCreate: Codable, Hashable {
+        var namePrefix: String?
         var givenName: String?
+        var middleName: String?
         var familyName: String?
+        var nameSuffix: String?
         var nickname: String?
         var organization: String?
         var jobTitle: String?
@@ -609,6 +612,7 @@ enum API {
     struct ContactMethodSchema: Codable, Hashable {
         var label: String?
         var value: String
+        var display: String
     }
 
     struct ContactReference: Codable, Hashable {
@@ -628,8 +632,11 @@ enum API {
         var id: UUID
         var sourceId: UUID
         var displayName: String
+        var namePrefix: String?
         var givenName: String?
+        var middleName: String?
         var familyName: String?
+        var nameSuffix: String?
         var nickname: String?
         var organization: String?
         var jobTitle: String?
@@ -662,8 +669,11 @@ enum API {
     }
 
     struct ContactUpdate: Encodable, Hashable {
+        var namePrefix: String??
         var givenName: String??
+        var middleName: String??
         var familyName: String??
+        var nameSuffix: String??
         var nickname: String??
         var organization: String??
         var jobTitle: String??
@@ -4166,8 +4176,11 @@ extension API.ContactBirthday {
 
 extension API.ContactCreate {
     private enum DecodingKeys: String, CodingKey {
+        case namePrefix
         case givenName
+        case middleName
         case familyName
+        case nameSuffix
         case nickname
         case organization
         case jobTitle
@@ -4182,8 +4195,11 @@ extension API.ContactCreate {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.namePrefix = try container.decodeIfPresent(String.self, forKey: .namePrefix)
         self.givenName = try container.decodeIfPresent(String.self, forKey: .givenName)
+        self.middleName = try container.decodeIfPresent(String.self, forKey: .middleName)
         self.familyName = try container.decodeIfPresent(String.self, forKey: .familyName)
+        self.nameSuffix = try container.decodeIfPresent(String.self, forKey: .nameSuffix)
         self.nickname = try container.decodeIfPresent(String.self, forKey: .nickname)
         self.organization = try container.decodeIfPresent(String.self, forKey: .organization)
         self.jobTitle = try container.decodeIfPresent(String.self, forKey: .jobTitle)
@@ -4197,8 +4213,11 @@ extension API.ContactCreate {
     }
 
     private enum EncodingKeys: String, CodingKey {
+        case namePrefix = "name_prefix"
         case givenName = "given_name"
+        case middleName = "middle_name"
         case familyName = "family_name"
+        case nameSuffix = "name_suffix"
         case nickname
         case organization
         case jobTitle = "job_title"
@@ -4213,8 +4232,11 @@ extension API.ContactCreate {
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.namePrefix, forKey: .namePrefix)
         try container.encodeIfPresent(self.givenName, forKey: .givenName)
+        try container.encodeIfPresent(self.middleName, forKey: .middleName)
         try container.encodeIfPresent(self.familyName, forKey: .familyName)
+        try container.encodeIfPresent(self.nameSuffix, forKey: .nameSuffix)
         try container.encodeIfPresent(self.nickname, forKey: .nickname)
         try container.encodeIfPresent(self.organization, forKey: .organization)
         try container.encodeIfPresent(self.jobTitle, forKey: .jobTitle)
@@ -4295,23 +4317,27 @@ extension API.ContactMethodSchema {
     private enum DecodingKeys: String, CodingKey {
         case label
         case value
+        case display
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DecodingKeys.self)
         self.label = try container.decodeIfPresent(String.self, forKey: .label)
         self.value = try container.decode(String.self, forKey: .value)
+        self.display = try container.decode(String.self, forKey: .display)
     }
 
     private enum EncodingKeys: String, CodingKey {
         case label
         case value
+        case display
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encodeIfPresent(self.label, forKey: .label)
         try container.encode(self.value, forKey: .value)
+        try container.encode(self.display, forKey: .display)
     }
 }
 
@@ -4374,8 +4400,11 @@ extension API.ContactSchema {
         case id
         case sourceId
         case displayName
+        case namePrefix
         case givenName
+        case middleName
         case familyName
+        case nameSuffix
         case nickname
         case organization
         case jobTitle
@@ -4401,8 +4430,11 @@ extension API.ContactSchema {
         self.id = try container.decode(UUID.self, forKey: .id)
         self.sourceId = try container.decode(UUID.self, forKey: .sourceId)
         self.displayName = try container.decode(String.self, forKey: .displayName)
+        self.namePrefix = try container.decodeIfPresent(String.self, forKey: .namePrefix)
         self.givenName = try container.decodeIfPresent(String.self, forKey: .givenName)
+        self.middleName = try container.decodeIfPresent(String.self, forKey: .middleName)
         self.familyName = try container.decodeIfPresent(String.self, forKey: .familyName)
+        self.nameSuffix = try container.decodeIfPresent(String.self, forKey: .nameSuffix)
         self.nickname = try container.decodeIfPresent(String.self, forKey: .nickname)
         self.organization = try container.decodeIfPresent(String.self, forKey: .organization)
         self.jobTitle = try container.decodeIfPresent(String.self, forKey: .jobTitle)
@@ -4427,8 +4459,11 @@ extension API.ContactSchema {
         case id
         case sourceId = "source_id"
         case displayName = "display_name"
+        case namePrefix = "name_prefix"
         case givenName = "given_name"
+        case middleName = "middle_name"
         case familyName = "family_name"
+        case nameSuffix = "name_suffix"
         case nickname
         case organization
         case jobTitle = "job_title"
@@ -4454,8 +4489,11 @@ extension API.ContactSchema {
         try container.encode(self.id, forKey: .id)
         try container.encode(self.sourceId, forKey: .sourceId)
         try container.encode(self.displayName, forKey: .displayName)
+        try container.encodeIfPresent(self.namePrefix, forKey: .namePrefix)
         try container.encodeIfPresent(self.givenName, forKey: .givenName)
+        try container.encodeIfPresent(self.middleName, forKey: .middleName)
         try container.encodeIfPresent(self.familyName, forKey: .familyName)
+        try container.encodeIfPresent(self.nameSuffix, forKey: .nameSuffix)
         try container.encodeIfPresent(self.nickname, forKey: .nickname)
         try container.encodeIfPresent(self.organization, forKey: .organization)
         try container.encodeIfPresent(self.jobTitle, forKey: .jobTitle)
@@ -4537,8 +4575,11 @@ extension API.ContactSourceSchema {
 
 extension API.ContactUpdate {
     private enum EncodingKeys: String, CodingKey {
+        case namePrefix = "name_prefix"
         case givenName = "given_name"
+        case middleName = "middle_name"
         case familyName = "family_name"
+        case nameSuffix = "name_suffix"
         case nickname
         case organization
         case jobTitle = "job_title"
@@ -4552,8 +4593,11 @@ extension API.ContactUpdate {
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.namePrefix { try container.encode(value, forKey: .namePrefix) }
         if let value = self.givenName { try container.encode(value, forKey: .givenName) }
+        if let value = self.middleName { try container.encode(value, forKey: .middleName) }
         if let value = self.familyName { try container.encode(value, forKey: .familyName) }
+        if let value = self.nameSuffix { try container.encode(value, forKey: .nameSuffix) }
         if let value = self.nickname { try container.encode(value, forKey: .nickname) }
         if let value = self.organization { try container.encode(value, forKey: .organization) }
         if let value = self.jobTitle { try container.encode(value, forKey: .jobTitle) }

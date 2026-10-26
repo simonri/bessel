@@ -266,7 +266,7 @@ struct ContactDetailView: View {
                                     .font(.caption)
                                     .foregroundStyle(Theme.mutedForeground)
                             }
-                            Text(method.value)
+                            Text(method.display)
                                 .foregroundStyle(Theme.primary)
                                 .multilineTextAlignment(.leading)
                         }

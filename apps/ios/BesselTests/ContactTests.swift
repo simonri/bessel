@@ -15,7 +15,7 @@ private func contactJSON(
     caughtUpOn: String? = nil
 ) -> String {
     func quoted(_ value: String?) -> String { value.map { "\"\($0)\"" } ?? "null" }
-    func methods(_ values: [String]) -> String { "[" + values.map { #"{"label":"mobile","value":"\#($0)"}"# }.joined(separator: ",") + "]" }
+    func methods(_ values: [String]) -> String { "[" + values.map { #"{"label":"mobile","value":"\#($0)","display":"shown \#($0)"}"# }.joined(separator: ",") + "]" }
     return """
     {"created_at":"2026-10-01T08:00:00Z","modified_at":null,"id":"\(id)","source_id":"\(contactID)",
      "display_name":"\(name)","given_name":null,"family_name":null,"nickname":null,"organization":\(quoted(organization)),
@@ -65,7 +65,7 @@ final class ContactListTests: XCTestCase {
 
     func testTheRowShowsTheCompanyOrElseTheFirstNumber() throws {
         XCTAssertEqual(try contact(organization: "Acme", phones: ["070"]).subtitle, "Acme")
-        XCTAssertEqual(try contact(organization: "", phones: ["+46 70 123"]).subtitle, "+46 70 123")
+        XCTAssertEqual(try contact(organization: "", phones: ["+4670123"]).subtitle, "shown +4670123")
         XCTAssertNil(try contact().subtitle)
     }
 

@@ -221,7 +221,16 @@ class TestEndpoints:
   async def _synced(self, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker) -> None:
     people.put(
       "people/c1",
-      names=[{"displayName": "Anna Berg"}],
+      names=[
+        {
+          "displayName": "Dr. Anna Maria Berg Jr.",
+          "honorificPrefix": "Dr.",
+          "givenName": "Anna",
+          "middleName": "Maria",
+          "familyName": "Berg",
+          "honorificSuffix": "Jr.",
+        }
+      ],
       phoneNumbers=[PHONE],
       emailAddresses=[{"value": "anna@example.com"}],
       birthdays=[{"date": {"month": 3, "day": 14}}],
@@ -239,22 +248,23 @@ class TestEndpoints:
     async def names(**params: Any) -> list[str]:
       return [c["display_name"] for c in (await client.get("/v1/contacts", params=params)).json()["items"]]
 
-    assert await names() == ["Anna Berg", "Bo Ek"]
+    assert await names() == ["Bo Ek", "Dr. Anna Maria Berg Jr."]
     assert await names(search="acme") == ["Bo Ek"]
-    assert await names(search="123 45") == ["Anna Berg"]
-    assert await names(search="ANNA@") == ["Anna Berg"]
+    assert await names(search="123 45") == ["Dr. Anna Maria Berg Jr."]
+    assert await names(search="ANNA@") == ["Dr. Anna Maria Berg Jr."]
 
   @pytest.mark.asyncio
   async def test_a_contact_reads_with_its_ways_to_reach_and_birthday(
     self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker
   ) -> None:
     await self._synced(session, user, people, session_maker)
-    anna = next(c for c in (await client.get("/v1/contacts")).json()["items"] if c["display_name"] == "Anna Berg")
+    anna = next(c for c in (await client.get("/v1/contacts")).json()["items"] if c["given_name"] == "Anna")
 
     detail = (await client.get(f"/v1/contacts/{anna['id']}")).json()
 
-    assert detail["phones"] == [{"label": "Mobile", "value": "+46 70 123 45 67"}]
-    assert detail["emails"] == [{"label": None, "value": "anna@example.com"}]
+    assert detail["phones"] == [{"label": "Mobile", "value": "+46 70 123 45 67", "display": "070-123 45 67"}]
+    assert detail["emails"] == [{"label": None, "value": "anna@example.com", "display": "anna@example.com"}]
+    assert [detail[part] for part in ("name_prefix", "given_name", "middle_name", "family_name", "name_suffix")] == ["Dr.", "Anna", "Maria", "Berg", "Jr."]
     assert detail["birthday"] == {"month": 3, "day": 14, "year": None}
     assert detail["external_url"] == "https://contacts.google.com/person/c1"
 
@@ -268,7 +278,7 @@ class TestEndpoints:
     source = (await ContactSourceRepository.from_session(session).list_for_user(user.id))[0]
     await sync_source(session_maker, source.id)
 
-    assert [c["display_name"] for c in (await client.get("/v1/contacts")).json()["items"]] == ["Anna Berg"]
+    assert [c["display_name"] for c in (await client.get("/v1/contacts")).json()["items"]] == ["Dr. Anna Maria Berg Jr."]
     assert (await client.get(f"/v1/contacts/{bo['id']}")).status_code == 404
 
   @pytest.mark.asyncio

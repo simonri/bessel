@@ -50,6 +50,7 @@ dependencies = [
   "pypdfium2>=5.14.0",
   "pillow>=13.0.0",
   "pillow-heif>=1.8.1",
+  "phonenumbers>=9.0.41",
 ]
 
 [dependency-groups]

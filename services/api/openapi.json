@@ -11497,6 +11497,18 @@
       },
       "ContactCreate": {
         "properties": {
+          "name_prefix": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Prefix"
+          },
           "given_name": {
             "anyOf": [
               {
@@ -11509,6 +11521,18 @@
             ],
             "title": "Given Name"
           },
+          "middle_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Middle Name"
+          },
           "family_name": {
             "anyOf": [
               {
@@ -11520,6 +11544,18 @@
               }
             ],
             "title": "Family Name"
+          },
+          "name_suffix": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Suffix"
           },
           "nickname": {
             "anyOf": [
@@ -11763,12 +11799,18 @@
           "value": {
             "type": "string",
             "title": "Value"
+          },
+          "display": {
+            "type": "string",
+            "title": "Display",
+            "description": "How to show the value: phone numbers spaced (\"070-123 45 67\"), anything else as saved."
           }
         },
         "type": "object",
         "required": [
           "label",
-          "value"
+          "value",
+          "display"
         ],
         "title": "ContactMethodSchema"
       },
@@ -11865,6 +11907,18 @@
             "type": "string",
             "title": "Display Name"
           },
+          "name_prefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Prefix",
+            "description": "Before the name, e.g. 'Dr.'."
+          },
           "given_name": {
             "anyOf": [
               {
@@ -11876,6 +11930,17 @@
             ],
             "title": "Given Name"
           },
+          "middle_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Middle Name"
+          },
           "family_name": {
             "anyOf": [
               {
@@ -11886,6 +11951,18 @@
               }
             ],
             "title": "Family Name"
+          },
+          "name_suffix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Suffix",
+            "description": "After the name, e.g. 'Jr.'."
           },
           "nickname": {
             "anyOf": [
@@ -12058,8 +12135,11 @@
           "id",
           "source_id",
           "display_name",
+          "name_prefix",
           "given_name",
+          "middle_name",
           "family_name",
+          "name_suffix",
           "nickname",
           "organization",
           "job_title",
@@ -12161,6 +12241,18 @@
       },
       "ContactUpdate": {
         "properties": {
+          "name_prefix": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Prefix"
+          },
           "given_name": {
             "anyOf": [
               {
@@ -12173,6 +12265,18 @@
             ],
             "title": "Given Name"
           },
+          "middle_name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Middle Name"
+          },
           "family_name": {
             "anyOf": [
               {
@@ -12184,6 +12288,18 @@
               }
             ],
             "title": "Family Name"
+          },
+          "name_suffix": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name Suffix"
           },
           "nickname": {
             "anyOf": [

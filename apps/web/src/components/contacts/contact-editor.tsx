@@ -1,5 +1,6 @@
 import type {
   ContactMethodInput,
+  ContactMethodSchema,
   ContactSchema,
   ContactUpdate,
 } from "@bessel/client";
@@ -10,8 +11,11 @@ import { cn } from "@/lib/utils";
 type MethodField = "phones" | "emails" | "addresses" | "urls";
 
 export interface ContactDraft {
+  name_prefix: string;
   given_name: string;
+  middle_name: string;
   family_name: string;
+  name_suffix: string;
   nickname: string;
   organization: string;
   job_title: string;
@@ -33,15 +37,25 @@ const LABELS: Record<MethodField, string[]> = {
 };
 
 export function draftFrom(contact: ContactSchema | null): ContactDraft {
-  const methods = (
-    items: { label: string | null; value: string }[] | undefined,
-  ) => (items ?? []).map((m) => ({ label: m.label, value: m.value }));
+  // Shown as displayed, so numbers come spaced; the API saves them without.
+  const methods = (items: ContactMethodSchema[] | undefined) =>
+    (items ?? []).map((m) => ({ label: m.label, value: m.display }));
+  const parts = contact && [
+    contact.name_prefix,
+    contact.given_name,
+    contact.middle_name,
+    contact.family_name,
+    contact.name_suffix,
+  ];
   return {
+    name_prefix: contact?.name_prefix ?? "",
     // A contact saved with just a display name edits it as the first name.
     given_name:
       contact?.given_name ??
-      (contact && !contact.family_name ? contact.display_name : ""),
+      (parts && parts.every((p) => !p) ? contact.display_name : ""),
+    middle_name: contact?.middle_name ?? "",
     family_name: contact?.family_name ?? "",
+    name_suffix: contact?.name_suffix ?? "",
     nickname: contact?.nickname ?? "",
     organization: contact?.organization ?? "",
     job_title: contact?.job_title ?? "",
@@ -97,8 +111,11 @@ export function changesFrom(
     return "That birthday isn't a date. Use day and month, and a year if you know it.";
   const changes: ContactUpdate = {};
   for (const key of [
+    "name_prefix",
     "given_name",
+    "middle_name",
     "family_name",
+    "name_suffix",
     "nickname",
     "organization",
     "job_title",
@@ -258,9 +275,11 @@ export function ContactEditor({
       </h1>
       <div className="grid grid-cols-2 gap-3">
         {input("given_name", "First name")}
+        {input("middle_name", "Middle name")}
         {input("family_name", "Last name")}
         {input("nickname", "Nickname")}
-        <div />
+        {input("name_prefix", "Prefix")}
+        {input("name_suffix", "Suffix")}
         {input("organization", "Company")}
         {input("job_title", "Title")}
       </div>
