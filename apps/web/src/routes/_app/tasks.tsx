@@ -48,7 +48,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
-import { QuickAddTask } from "@/components/tasks/quick-add";
+import { NewTaskButton } from "@/components/tasks/new-task-button";
 import { RoutinesStrip } from "@/components/tasks/routines-strip";
 import { SendToClaudeDialog } from "@/components/tasks/send-to-claude";
 import { TaskRow } from "@/components/tasks/task-row";
@@ -701,10 +701,8 @@ function Tasks() {
                 {selecting ? "Done" : "Select"}
               </button>
             )}
+            <NewTaskButton defaultProject={projectFilter} />
           </div>
-          {viewTab !== "done" && (
-            <QuickAddTask defaultProject={projectFilter} />
-          )}
         </div>
 
         {/* Content */}

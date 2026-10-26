@@ -135,9 +135,12 @@ const EMPTY_FORM = {
 export function TaskFormDialog({
   open,
   onOpenChange,
+  defaultProject,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** The project a new task starts in, e.g. the one the list is filtered to. */
+  defaultProject?: string | null;
 }) {
   const cache = useTaskCacheHelpers();
 
@@ -222,7 +225,7 @@ export function TaskFormDialog({
   };
 
   const form = useForm({
-    defaultValues: EMPTY_FORM,
+    defaultValues: { ...EMPTY_FORM, project: defaultProject ?? "" },
     onSubmit: ({ value }) => {
       const isRecurring = value.frequency !== "none";
       const freq = value.frequency as "daily" | "weekly" | "monthly" | "yearly";
