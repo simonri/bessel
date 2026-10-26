@@ -1,7 +1,12 @@
 import type { TaskSchema } from "@bessel/client";
 import { cn } from "@/lib/utils";
 import { TaskRow } from "./task-row";
-import { groupTasksByWhen, type WhenGroup } from "./today-groups";
+import {
+  groupTasksByWhen,
+  upcomingRoutines,
+  type WhenGroup,
+} from "./today-groups";
+import { UpcomingRoutines } from "./upcoming-routines";
 import { WHEN_STYLE } from "./when-icon";
 
 function GroupHeader({ group }: { group: WhenGroup }) {
@@ -35,14 +40,25 @@ export function TodayView({
   draggableToClaude?: boolean;
 }) {
   const groups = groupTasksByWhen(tasks);
+  const upcoming = (
+    <UpcomingRoutines
+      routines={upcomingRoutines(tasks)}
+      onSelectTask={onSelectTask}
+      onCompleteTask={onCompleteTask}
+      draggableToClaude={draggableToClaude}
+    />
+  );
 
   if (groups.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-1 py-10 text-center">
-        <p className="text-13 font-medium text-white/80">All clear ✨</p>
-        <p className="text-12 text-white/45">
-          Enjoy your day. New tasks show up here.
-        </p>
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-3">
+        <div className="flex flex-1 flex-col items-center justify-center gap-1 py-10 text-center">
+          <p className="text-13 font-medium text-white/80">All clear ✨</p>
+          <p className="text-12 text-white/45">
+            Enjoy your day. New tasks show up here.
+          </p>
+        </div>
+        {upcoming}
       </div>
     );
   }
@@ -66,6 +82,7 @@ export function TodayView({
             </div>
           </section>
         ))}
+        {upcoming}
       </div>
     </div>
   );

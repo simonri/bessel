@@ -51,7 +51,30 @@ export function isDueTodayOrEarlier(
   return task.due_date != null && daysUntilDue(task.due_date, now) <= 0;
 }
 
-/** Open, non-recurring tasks by when they're due, in display order. */
+/** A routine that's due today or was due earlier; one due later waits until its day. */
+function isDueRoutine(task: TaskSchema, now: Date): boolean {
+  return isRepeatingTask(task) && isDueTodayOrEarlier(task, now);
+}
+
+/** Routines not due yet, soonest first. */
+export function upcomingRoutines(
+  tasks: TaskSchema[],
+  now = new Date(),
+): TaskSchema[] {
+  return tasks
+    .filter(
+      (t) => isOpen(t) && isRepeatingTask(t) && !isDueTodayOrEarlier(t, now),
+    )
+    .sort(
+      (a, b) =>
+        (a.due_date
+          ? daysUntilDue(a.due_date, now)
+          : Number.POSITIVE_INFINITY) -
+        (b.due_date ? daysUntilDue(b.due_date, now) : Number.POSITIVE_INFINITY),
+    );
+}
+
+/** Open tasks by when they're due, in display order. Routines only show up once they're due. */
 export function groupTasksByWhen(
   tasks: TaskSchema[],
   now = new Date(),
@@ -60,7 +83,8 @@ export function groupTasksByWhen(
     GROUPS.map((g) => [g.key, []]),
   );
   for (const task of tasks) {
-    if (!isOpen(task) || isRepeatingTask(task)) continue;
+    if (!isOpen(task) || (isRepeatingTask(task) && !isDueRoutine(task, now)))
+      continue;
     buckets.get(whenOf(task, now))?.push(task);
   }
   buckets

@@ -49,10 +49,10 @@ import { createPortal } from "react-dom";
 import { toast } from "sonner";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { NewTaskButton } from "@/components/tasks/new-task-button";
-import { RoutinesStrip } from "@/components/tasks/routines-strip";
 import { SendToClaudeDialog } from "@/components/tasks/send-to-claude";
 import { TaskRow } from "@/components/tasks/task-row";
 import { TaskSelectionProvider } from "@/components/tasks/task-selection";
+import { isDueTodayOrEarlier } from "@/components/tasks/today-groups";
 import { TodayView } from "@/components/tasks/today-view";
 import {
   taskMutationOptions,
@@ -544,15 +544,13 @@ function Tasks() {
 
   const maxPage = data?.pagination.max_page ?? 1;
 
-  const repeatingTasks = allTasks.filter(
-    (t) => (t.status ?? "todo") === "todo" && isRepeatingTask(t),
-  );
-
   const boardTasks =
     viewTab === "board"
       ? {
           todo: allTasks.filter(
-            (t) => (t.status ?? "todo") === "todo" && !isRepeatingTask(t),
+            (t) =>
+              (t.status ?? "todo") === "todo" &&
+              (!isRepeatingTask(t) || isDueTodayOrEarlier(t)),
           ),
           in_progress: allTasks.filter((t) => t.status === "in_progress"),
           in_review: allTasks.filter((t) => t.status === "in_review"),
@@ -715,11 +713,6 @@ function Tasks() {
             </div>
           ) : viewTab === "today" ? (
             <div className="flex min-h-0 flex-1 flex-col gap-3">
-              <RoutinesStrip
-                tasks={repeatingTasks}
-                onSelectTask={handleSelectTask}
-                onCompleteTask={handleCompleteTask}
-              />
               <TodayView
                 tasks={allTasks}
                 onSelectTask={handleSelectTask}
@@ -732,11 +725,6 @@ function Tasks() {
               <FirstTaskHint />
             ) : (
               <div className="flex min-h-0 flex-1 flex-col gap-3">
-                <RoutinesStrip
-                  tasks={repeatingTasks}
-                  onSelectTask={handleSelectTask}
-                  onCompleteTask={handleCompleteTask}
-                />
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}

@@ -1,6 +1,10 @@
 import type { TaskSchema } from "@bessel/client";
 import { describe, expect, it } from "vitest";
-import { groupTasksByWhen, isDueTodayOrEarlier } from "./today-groups";
+import {
+  groupTasksByWhen,
+  isDueTodayOrEarlier,
+  upcomingRoutines,
+} from "./today-groups";
 
 const NOW = new Date(2026, 9, 3, 15, 30);
 
@@ -23,9 +27,17 @@ describe("groupTasksByWhen", () => {
           due_date: "2026-09-01" as unknown as Date,
         }),
         task("done", { status: "done" }),
-        task("routine", {
+        task("routine-today", {
           is_recurring: true,
           due_date: "2026-10-03" as unknown as Date,
+        }),
+        task("routine-missed", {
+          is_recurring: true,
+          due_date: "2026-10-01" as unknown as Date,
+        }),
+        task("routine-later", {
+          is_recurring: true,
+          due_date: "2026-10-04" as unknown as Date,
         }),
       ],
       NOW,
@@ -33,8 +45,8 @@ describe("groupTasksByWhen", () => {
 
     expect(groups.map((g) => [g.key, g.tasks.map((t) => t.id)])).toEqual([
       ["doing", ["doing"]],
-      ["overdue", ["late-5", "late-1"]],
-      ["today", ["today"]],
+      ["overdue", ["late-5", "routine-missed", "late-1"]],
+      ["today", ["today", "routine-today"]],
       ["week", ["week"]],
       ["later", ["later"]],
       ["someday", ["someday"]],
@@ -85,5 +97,33 @@ describe("groupTasksByWhen", () => {
       isDueTodayOrEarlier(task("y", { due_date: new Date(2026, 9, 4) }), NOW),
     ).toBe(false);
     expect(isDueTodayOrEarlier(task("z"), NOW)).toBe(false);
+  });
+});
+
+describe("upcomingRoutines", () => {
+  it("lists the routines not due yet, soonest first", () => {
+    const routine = (
+      id: string,
+      due: string,
+      extra: Partial<TaskSchema> = {},
+    ) =>
+      task(id, {
+        is_recurring: true,
+        due_date: due as unknown as Date,
+        ...extra,
+      });
+
+    const upcoming = upcomingRoutines(
+      [
+        routine("next-week", "2026-10-09"),
+        routine("tomorrow", "2026-10-04"),
+        routine("today", "2026-10-03"),
+        routine("done", "2026-10-05", { status: "done" }),
+        task("one-off", { due_date: "2026-10-04" as unknown as Date }),
+      ],
+      NOW,
+    );
+
+    expect(upcoming.map((t) => t.id)).toEqual(["tomorrow", "next-week"]);
   });
 });

@@ -3,7 +3,6 @@ import type { TaskSchema } from "@bessel/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { RoutinesStrip } from "./routines-strip";
 import { TodayView } from "./today-view";
 
 afterEach(cleanup);
@@ -50,35 +49,54 @@ describe("TodayView", () => {
   });
 });
 
-describe("RoutinesStrip", () => {
-  it("lists open recurring tasks only", () => {
+describe("TodayView routines", () => {
+  const day = (offset: number) => {
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` as unknown as Date;
+  };
+  const routine = (id: string, offset: number) =>
+    task(id, {
+      is_recurring: true,
+      rrule_frequency: "weekly",
+      due_date: day(offset),
+    } as Partial<TaskSchema>);
+
+  it("shows a routine in Today on its day and keeps the rest folded away", () => {
     wrap(
-      <RoutinesStrip
-        tasks={[
-          task("Water plants", {
-            is_recurring: true,
-            rrule_frequency: "daily",
-          } as Partial<TaskSchema>),
-          task("One-off"),
-        ]}
+      <TodayView
+        tasks={[routine("Water plants", 0), routine("Take out recycling", 3)]}
         onSelectTask={vi.fn()}
         onCompleteTask={vi.fn()}
       />,
     );
-    expect(screen.getByText("Routines")).toBeTruthy();
-    expect(screen.getByText("Water plants")).toBeTruthy();
-    expect(screen.getByText("Daily")).toBeTruthy();
-    expect(screen.queryByText("One-off")).toBeNull();
+
+    const today = screen.getByRole("region", { name: "Today" });
+    expect(today.textContent).toContain("Water plants");
+    expect(screen.queryByText("Take out recycling")).toBeNull();
+
+    const fold = screen.getByRole("button", { name: /Routines coming up/ });
+    expect(fold.textContent).toContain("1");
+    fireEvent.click(fold);
+
+    expect(
+      screen.getByRole("region", { name: "Routines coming up" }).textContent,
+    ).toContain("Take out recycling");
   });
 
-  it("renders nothing without routines", () => {
-    const { container } = wrap(
-      <RoutinesStrip
-        tasks={[task("a")]}
+  it("shows routines coming up even when nothing is due", () => {
+    wrap(
+      <TodayView
+        tasks={[routine("Take out recycling", 3)]}
         onSelectTask={vi.fn()}
         onCompleteTask={vi.fn()}
       />,
     );
-    expect(container.textContent).toBe("");
+
+    expect(screen.getByText("All clear ✨")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: /Routines coming up/ }),
+    ).toBeTruthy();
   });
 });
