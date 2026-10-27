@@ -30,7 +30,7 @@ import type {
   CalendarViewMode,
   TimedGridEvent,
 } from "../calendar/calendar-types";
-import { DRAFT_ID, TimeGrid } from "../calendar/time-grid";
+import { DRAFT_ID, TimeGrid, useNow } from "../calendar/time-grid";
 import { EntryPopover, type EntrySubject } from "./entry-popover";
 import { MonthTable } from "./month-table";
 import { ProjectsPopover } from "./projects-popover";
@@ -61,8 +61,21 @@ const FALLBACK_COLOR = "#6b7280";
 /** A day here runs 4 am to 4 am, so late nights count to the day before. */
 const DAY_START_HOUR = 4;
 
-function workDay(timeZone: string): Date {
-  return addHours(toWallClock(new Date(), timeZone), -DAY_START_HOUR);
+function workDay(timeZone: string, now = new Date()): Date {
+  return addHours(toWallClock(now, timeZone), -DAY_START_HOUR);
+}
+
+/** Past midnight but before the work day turns, says which day still counts. */
+export function WorkDayHint({ timeZone }: { timeZone: string }) {
+  const now = useNow();
+  if (toWallClock(now, timeZone).getHours() >= DAY_START_HOUR) return null;
+  const dayStart = format(new Date(2000, 0, 1, DAY_START_HOUR), "HH:mm");
+  return (
+    <span className="text-12 text-white/40">
+      Before {dayStart} - still counting{" "}
+      {format(workDay(timeZone, now), "EEE d")}
+    </span>
+  );
 }
 
 function rememberedPageView(): TimeView {
@@ -182,7 +195,7 @@ function CalendarTime({
   writes: TimeWrites;
   switcher: React.ReactNode;
 }) {
-  const today = workDay(timeZone);
+  const today = workDay(timeZone, useNow());
   const { data: entries = [] } = useTimeEntries(
     addDays(days[0], -1),
     addDays(days[days.length - 1], 2),
@@ -417,9 +430,12 @@ function CalendarTime({
       </Header>
 
       <div className="flex shrink-0 flex-wrap items-center gap-2 px-4 pb-2">
-        <span className="mr-auto text-13 font-medium text-white/80">
-          {headerMonth(days, today)}
-        </span>
+        <div className="mr-auto flex items-baseline gap-2">
+          <span className="text-13 font-medium text-white/80">
+            {headerMonth(days, today)}
+          </span>
+          <WorkDayHint timeZone={timeZone} />
+        </div>
         {hasSleep && (
           <SoftButton
             aria-pressed={showSleep}
