@@ -53,6 +53,9 @@ struct CalendarView: View {
                 GeometryReader { geometry in
                     weekGrid(cellHeight: geometry.size.height / 4)
                 }
+                // Eight fixed cells: past this, day names cover the events.
+                // The day list and event pages show everything at full size.
+                .dynamicTypeSize(...DynamicTypeSize.large)
             }
             .padding(.horizontal, 16)
             .padding(.top, Theme.pageTop)
@@ -129,6 +132,8 @@ struct CalendarView: View {
         HStack(spacing: 8) {
             Text(weekTitle)
                 .font(.headline)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
                 .foregroundStyle(Theme.foreground)
             Spacer()
             if !store.isShowingToday {

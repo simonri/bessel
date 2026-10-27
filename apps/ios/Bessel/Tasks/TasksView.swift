@@ -154,6 +154,7 @@ struct TasksView: View {
                 Text(filter.isEmpty ? "Projects" : filter.count == 1 ? filter.first! : "\(filter.count) projects")
                     .lineLimit(1)
             }
+            .dynamicTypeSize(...Chip.largestText)
             .font(.subheadline.weight(.medium))
             .foregroundStyle(filter.isEmpty ? Theme.foreground : Theme.background)
             .padding(.horizontal, 12)

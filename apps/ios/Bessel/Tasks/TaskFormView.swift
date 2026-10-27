@@ -167,8 +167,11 @@ struct TaskFormView: View {
                     .foregroundStyle(value == 0 ? Theme.faintForeground : Theme.priorityColor(value))
                 Text(label)
                     .font(.caption.weight(.medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                     .foregroundStyle(priority == value ? Theme.foreground : Theme.mutedForeground)
             }
+            .dynamicTypeSize(...Chip.largestText)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
             .background(priority == value ? Theme.card : Theme.fill, in: RoundedRectangle(cornerRadius: 14, style: .continuous))

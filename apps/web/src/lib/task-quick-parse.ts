@@ -68,13 +68,23 @@ function weekdayIndex(word: string): number {
   return WEEKDAYS.findIndex((names) => names.includes(w));
 }
 
-/** A calendar date on or after today; rolls into next year when past. */
+/** Short day names that are everyday words too ("sun cream", "sat nav"). */
+const EVERYDAY_WORD_DAYS = new Set(["sun", "sat", "wed"]);
+
+/** Nothing but #tags and bangs after words[i]: the end of the line. */
+function endsLine(words: string[], i: number): boolean {
+  return words.slice(i + 1).every((w) => w.startsWith("#") || /^!+$/.test(w));
+}
+
+/** The next time a calendar date comes around, on or after today; null if it never does. */
 function upcomingDate(today: Date, month: number, day: number): Date | null {
   if (month < 0 || month > 11 || day < 1 || day > 31) return null;
-  let d = new Date(today.getFullYear(), month, day);
-  if (d.getMonth() !== month) return null;
-  if (d < today) d = new Date(today.getFullYear() + 1, month, day);
-  return d.getMonth() === month ? d : null;
+  // Four years ahead reaches the next 29 February.
+  for (let year = today.getFullYear(); year <= today.getFullYear() + 4; year++) {
+    const d = new Date(year, month, day);
+    if (d.getMonth() === month && d >= today) return d;
+  }
+  return null;
 }
 
 export function dueLabel(due: Date, now = new Date()): string {
@@ -115,7 +125,7 @@ function matchDue(words: string[], i: number, today: Date): Match | null {
   }
 
   const weekday = weekdayIndex(w);
-  if (weekday >= 0) {
+  if (weekday >= 0 && (!EVERYDAY_WORD_DAYS.has(w) || endsLine(words, i))) {
     const ahead = (weekday - today.getDay() + 7) % 7 || 7;
     return { length: 1, date: addDays(today, ahead) };
   }

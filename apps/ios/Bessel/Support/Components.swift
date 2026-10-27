@@ -22,7 +22,12 @@ struct Chip: View {
         .padding(.horizontal, 9)
         .padding(.vertical, 4)
         .background(isSelected ? Theme.pastelWash(hue) : Theme.fill, in: Capsule())
+        .dynamicTypeSize(...Self.largestText)
     }
+
+    /// Pills and chips stop growing here: past it a word like "Today" wraps a
+    /// letter per line. The text they label still grows in full.
+    static let largestText = DynamicTypeSize.xxLarge
 }
 
 /// A selectable filter pill for horizontal chip rows.
@@ -35,6 +40,8 @@ struct FilterPill: View {
         Button(action: action) {
             Text(title)
                 .font(.subheadline.weight(.medium))
+                .lineLimit(1)
+                .fixedSize()
                 .foregroundStyle(isSelected ? Theme.background : Theme.foreground)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 7)
@@ -42,6 +49,7 @@ struct FilterPill: View {
                 .contentShape(Capsule())
         }
         .buttonStyle(.plain)
+        .dynamicTypeSize(...Chip.largestText)
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }

@@ -141,6 +141,20 @@ describe("parseQuickTask", () => {
     expect(parse("tomorrow #uni").title).toBe("tomorrow #uni");
   });
 
+  it("reads sun, sat and wed as days only at the end of the line", () => {
+    for (const text of ["Buy sun cream", "Fix the sat nav", "Wed dress fitting"]) {
+      const parsed = parse(text);
+      expect(parsed.dueDate).toBeNull();
+      expect(parsed.title).toBe(text);
+    }
+    expect(parse("Call grandma sun").dueDate).toEqual(day(2026, 10, 11));
+    expect(parse("Brunch sat #travel !").dueDate).toEqual(day(2026, 10, 10));
+  });
+
+  it("rolls 29 February on to the next leap year", () => {
+    expect(parse("Birthday 29 feb").dueDate).toEqual(day(2028, 2, 29));
+  });
+
   it("takes a weekday as a date even mid-sentence (documented trade-off)", () => {
     const parsed = parse("Monday meeting notes");
     expect(parsed.title).toBe("meeting notes");

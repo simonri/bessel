@@ -101,6 +101,14 @@ struct QuickTask: Equatable {
         return prefixed.count == 1 ? prefixed[0] : nil
     }
 
+    /// Short day names that are everyday words too ("sun cream", "sat nav").
+    private static let everydayWordDays: Set<String> = ["sun", "sat", "wed"]
+
+    /// Nothing but #tags and bangs after words[index]: the end of the line.
+    private static func endsLine(_ words: [String], after index: Int) -> Bool {
+        words.dropFirst(index + 1).allSatisfy { $0.hasPrefix("#") || $0.allSatisfy { $0 == "!" } }
+    }
+
     private static let weekdays: [[String]] = [
         ["sunday", "sun"],
         ["monday", "mon"],
@@ -144,7 +152,8 @@ struct QuickTask: Equatable {
             if ["weeks", "week", "w"].contains(unit) { return (3, days(count * 7)) }
         }
 
-        if let weekday = weekdays.firstIndex(where: { $0.contains(word) }) {
+        if let weekday = weekdays.firstIndex(where: { $0.contains(word) }),
+           !everydayWordDays.contains(word) || endsLine(words, after: index) {
             let ahead = (weekday - todayWeekday + 7) % 7
             return (1, days(ahead == 0 ? 7 : ahead))
         }
@@ -167,16 +176,16 @@ struct QuickTask: Equatable {
         return nil
     }
 
-    /// A calendar date on or after today; rolls into next year when past.
+    /// The next time a calendar date comes around, on or after today; nil if it never does.
     private static func upcoming(today: Date, month: Int, day: Int, calendar: Calendar) -> Date? {
         guard (0...11).contains(month), (1...31).contains(day) else { return nil }
         let year = calendar.component(.year, from: today)
-        func make(_ year: Int) -> Date? {
-            let components = DateComponents(year: year, month: month + 1, day: day)
-            guard components.isValidDate(in: calendar) else { return nil }
-            return calendar.date(from: components)
+        // Four years ahead reaches the next 29 February.
+        for candidate in year...(year + 4) {
+            let components = DateComponents(year: candidate, month: month + 1, day: day)
+            guard components.isValidDate(in: calendar), let date = calendar.date(from: components) else { continue }
+            if date >= today { return date }
         }
-        guard let date = make(year) else { return nil }
-        return date < today ? make(year + 1) : date
+        return nil
     }
 }
