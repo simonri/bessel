@@ -167,6 +167,7 @@ import {
   updateCalendar,
   updateCalendarEvent,
   updateContact,
+  updateContactPhoto,
   updateContactTags,
   updateCounter,
   updateDevice,
@@ -611,6 +612,9 @@ import type {
   UpdateCalendarResponse,
   UpdateContactData,
   UpdateContactError,
+  UpdateContactPhotoData,
+  UpdateContactPhotoError,
+  UpdateContactPhotoResponse,
   UpdateContactResponse,
   UpdateContactTagsData,
   UpdateContactTagsError,
@@ -2323,6 +2327,35 @@ export const authorizeContactEditingMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await authorizeContactEditing({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Contact Photo
+ *
+ * Replaces the person's photo in Google, from where it reaches the phone.
+ */
+export const updateContactPhotoMutation = (
+  options?: Partial<Options<UpdateContactPhotoData>>,
+): UseMutationOptions<
+  UpdateContactPhotoResponse,
+  UpdateContactPhotoError,
+  Options<UpdateContactPhotoData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateContactPhotoResponse,
+    UpdateContactPhotoError,
+    Options<UpdateContactPhotoData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateContactPhoto({
         ...options,
         ...fnOptions,
         throwOnError: true,

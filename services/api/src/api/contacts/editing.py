@@ -88,6 +88,20 @@ class ContactEditor:
         raise ResourceNotFound("This contact was deleted in Google.") from e
       return await contacts.save_edited(source, parse_person(saved), replaced_etag=replaced)
 
+  async def set_photo(self, session: AsyncSession, redis: Redis, user_id: UUID, contact_id: UUID, photo: bytes) -> Contact:
+    contacts = ContactRepository.from_session(session)
+    contact = await contacts.get_owned_or_404(contact_id, user_id, not_found_message="Contact not found.")
+    source = await ContactSourceRepository.from_session(session).get_by_id(contact.source_id)
+    assert source is not None
+    async with self._google(session, redis, source) as (google, token):
+      replaced = contact.etag
+      try:
+        saved = await google.update_contact_photo(token, contact.resource_name, photo)
+      except ProviderNotFoundError as e:
+        contact.deleted_at = utc_now()
+        raise ResourceNotFound("This contact was deleted in Google.") from e
+      return await contacts.save_edited(source, parse_person(saved), replaced_etag=replaced)
+
   async def create(self, session: AsyncSession, redis: Redis, user_id: UUID, source_id: UUID, changes: dict[str, Any]) -> Contact:
     source = await ContactSourceRepository.from_session(session).get_by_id(source_id)
     if source is None or source.user_id != user_id:

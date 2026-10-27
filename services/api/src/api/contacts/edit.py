@@ -31,6 +31,25 @@ _PERSON_FIELD = {
 }
 # The key each list entry keeps its value under.
 _VALUE_KEY = {"phoneNumbers": "value", "emailAddresses": "value", "urls": "value", "addresses": "formattedValue"}
+# Labels Google knows by name, so the phone shows them as its own (e.g. "mobile", not a custom "Mobile").
+_GOOGLE_TYPES = {
+  "phoneNumbers": {
+    "mobile": "mobile",
+    "home": "home",
+    "work": "work",
+    "main": "main",
+    "work mobile": "workMobile",
+    "home fax": "homeFax",
+    "work fax": "workFax",
+    "other fax": "otherFax",
+    "pager": "pager",
+    "work pager": "workPager",
+    "google voice": "googleVoice",
+    "other": "other",
+  },
+  "emailAddresses": {"home": "home", "work": "work", "other": "other"},
+  "addresses": {"home": "home", "work": "work", "other": "other"},
+}
 # Bessel's name parts -> the People API's.
 _NAME_PARTS = (
   ("name_prefix", "honorificPrefix"),
@@ -50,6 +69,10 @@ def _value_of(field: str, entry: dict[str, Any]) -> str | None:
   return compact_phone(value) if field == "phoneNumbers" else value.strip()
 
 
+def _google_type(field: str, label: str) -> str:
+  return _GOOGLE_TYPES.get(field, {}).get(label.strip().casefold(), label)
+
+
 def _methods(field: str, existing: list[dict[str, Any]], wanted: list[dict[str, Any]]) -> list[dict[str, Any]]:
   unused = list(existing)
   result = []
@@ -67,11 +90,11 @@ def _methods(field: str, existing: list[dict[str, Any]], wanted: list[dict[str, 
       if label != label_of(entry):
         entry.pop("formattedType", None)
         if label:
-          entry["type"] = label
+          entry["type"] = _google_type(field, label)
         else:
           entry.pop("type", None)
     else:
-      entry = {_VALUE_KEY[field]: value, **({"type": label} if label else {})}
+      entry = {_VALUE_KEY[field]: value, **({"type": _google_type(field, label)} if label else {})}
     result.append(entry)
   return result
 

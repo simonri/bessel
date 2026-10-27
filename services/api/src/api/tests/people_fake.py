@@ -90,6 +90,11 @@ class FakePeople:
     if action == "deleteContact":
       self.delete(resource_name)
       return httpx.Response(200, json={})
+    if action == "updateContactPhoto":
+      assert body is not None and body["photoBytes"]
+      fields = {k: v for k, v in person.items() if k not in ("resourceName", "etag", "metadata")}
+      fields["photos"] = [{"url": f"https://lh3.googleusercontent.com/photo{self.version + 1}", "metadata": {"primary": True}}]
+      return httpx.Response(200, json={"person": self.put(resource_name, **fields)})
     assert action == "updateContact", action
     assert body is not None
     if body.get("etag") != person["etag"]:

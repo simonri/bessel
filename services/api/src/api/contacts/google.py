@@ -1,5 +1,6 @@
 """Reading a Google account's contacts through the People API."""
 
+import base64
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -76,6 +77,16 @@ class GoogleContactsClient:
     )
     _raise_for_write(response)
     return response.json()
+
+  async def update_contact_photo(self, access_token: str, resource_name: str, photo: bytes) -> dict[str, Any]:
+    """Replaces the person's photo with `photo` (JPEG or PNG) and returns the person as Google now has them."""
+    response = await self.http.patch(
+      f"{PEOPLE_API_URL}/{resource_name}:updateContactPhoto",
+      headers=_auth(access_token),
+      json={"photoBytes": base64.b64encode(photo).decode(), "personFields": PERSON_FIELDS},
+    )
+    _raise_for_write(response)
+    return response.json()["person"]
 
   async def create_contact(self, access_token: str, person: dict[str, Any]) -> dict[str, Any]:
     response = await self.http.post(f"{PEOPLE_API_URL}/people:createContact", headers=_auth(access_token), params={"personFields": PERSON_FIELDS}, json=person)

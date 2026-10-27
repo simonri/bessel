@@ -4,6 +4,13 @@ import type {
   ContactSchema,
   ContactUpdate,
 } from "@bessel/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@bessel/ui/components/select";
 import { Plus, Trash2, X } from "lucide-react";
 import { type ReactNode, useId, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -29,8 +36,9 @@ export interface ContactDraft {
   urls: ContactMethodInput[];
 }
 
-const LABELS: Record<MethodField, string[]> = {
-  phones: ["Mobile", "Home", "Work", "Other"],
+// The labels Google and the phone know by name; anything else is a custom label.
+export const LABELS: Record<MethodField, string[]> = {
+  phones: ["Mobile", "Home", "Work", "Main", "Work mobile", "Other"],
   emails: ["Home", "Work", "Other"],
   addresses: ["Home", "Work", "Other"],
   urls: ["Website", "Profile", "Other"],
@@ -150,6 +158,72 @@ function Field({
   );
 }
 
+const CUSTOM = "__custom";
+
+/** Where `label` sits among `options`, ignoring case, so Google's "Work Mobile" is "Work mobile". */
+export function knownLabel(
+  options: string[],
+  label: string | null | undefined,
+) {
+  const wanted = (label ?? "").trim().toLowerCase();
+  return options.find((option) => option.toLowerCase() === wanted);
+}
+
+function LabelPicker({
+  field,
+  label,
+  ariaLabel,
+  onChange,
+}: {
+  field: MethodField;
+  label: string | null | undefined;
+  ariaLabel: string;
+  onChange: (label: string) => void;
+}) {
+  const options = LABELS[field];
+  const known = knownLabel(options, label);
+  const [typing, setTyping] = useState(false);
+  if (typing) {
+    return (
+      <input
+        aria-label={ariaLabel}
+        // biome-ignore lint/a11y/noAutofocus: opened by picking "Custom", so typing is the next step
+        autoFocus
+        placeholder="Label"
+        value={label ?? ""}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => setTyping(false)}
+        className={cn(INPUT, "w-28 shrink-0")}
+      />
+    );
+  }
+  const custom = label && !known ? label : null;
+  return (
+    <Select
+      value={known ?? custom ?? ""}
+      onValueChange={(value) => {
+        if (value === CUSTOM) {
+          setTyping(true);
+          onChange(custom ?? "");
+        } else onChange(value);
+      }}
+    >
+      <SelectTrigger size="sm" aria-label={ariaLabel} className="w-28 shrink-0">
+        <SelectValue placeholder="Label" />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option} value={option}>
+            {option}
+          </SelectItem>
+        ))}
+        {custom && <SelectItem value={custom}>{custom}</SelectItem>}
+        <SelectItem value={CUSTOM}>Custom…</SelectItem>
+      </SelectContent>
+    </Select>
+  );
+}
+
 const INPUT =
   "h-8 w-full min-w-0 rounded-lg bg-white/[0.05] px-2.5 text-13 text-white/85 ring-1 ring-white/[0.06] outline-none placeholder:text-white/25 focus:bg-white/[0.07] focus:ring-primary-400/40";
 
@@ -168,27 +242,19 @@ function Methods({
   items: ContactMethodInput[];
   onChange: (items: ContactMethodInput[]) => void;
 }) {
-  const listId = useId();
   const set = (index: number, patch: Partial<ContactMethodInput>) =>
     onChange(items.map((m, i) => (i === index ? { ...m, ...patch } : m)));
   return (
     <fieldset className="flex flex-col gap-1.5">
       <legend className="mb-1 text-11 text-white/45">{title}</legend>
-      <datalist id={listId}>
-        {LABELS[field].map((l) => (
-          <option key={l} value={l} />
-        ))}
-      </datalist>
       {items.map((item, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: rows have no ids; their order is the order saved
         <div key={i} className="flex items-center gap-1.5">
-          <input
-            aria-label={`${title} ${i + 1} label`}
-            list={listId}
-            placeholder="Label"
-            value={item.label ?? ""}
-            onChange={(e) => set(i, { label: e.target.value })}
-            className={cn(INPUT, "w-24 shrink-0")}
+          <LabelPicker
+            field={field}
+            label={item.label}
+            ariaLabel={`${title} ${i + 1} label`}
+            onChange={(label) => set(i, { label })}
           />
           <input
             aria-label={`${title} ${i + 1}`}

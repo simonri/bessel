@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  ageOf,
   daysAgo,
   describeBirthday,
   describeDate,
@@ -178,5 +179,25 @@ describe("keeping in touch", () => {
         upcomingDay(day(d), today),
       ),
     ).toEqual(["Today", "Tomorrow", "Monday", "16 March"]);
+  });
+});
+
+describe("ageOf", () => {
+  const today = new Date(2026, 9, 27);
+
+  it("counts a birthday later this year as not reached yet", () => {
+    expect(ageOf({ year: 1990, month: 11, day: 1 }, today)).toBe(35);
+    expect(ageOf({ year: 1990, month: 10, day: 28 }, today)).toBe(35);
+  });
+
+  it("counts today's and earlier birthdays", () => {
+    expect(ageOf({ year: 1990, month: 10, day: 27 }, today)).toBe(36);
+    expect(ageOf({ year: 1990, month: 2, day: 1 }, today)).toBe(36);
+  });
+
+  it("has nothing to say without a year, or for a year still to come", () => {
+    expect(ageOf({ year: null, month: 1, day: 5 }, today)).toBeNull();
+    expect(ageOf(null, today)).toBeNull();
+    expect(ageOf({ year: 2027, month: 1, day: 1 }, today)).toBeNull();
   });
 });

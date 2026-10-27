@@ -10,6 +10,7 @@ import {
   listContactsQueryKey,
   syncContactsMutation,
   updateContactMutation,
+  updateContactPhotoMutation,
   updateContactTagsMutation,
 } from "@bessel/client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -138,6 +139,11 @@ export function useContacts() {
       ),
     onError: failed("delete that contact"),
   });
+  const photo = useMutation({
+    ...updateContactPhotoMutation({ client }),
+    onSuccess: replace,
+    onError: failed("change the photo"),
+  });
   const tags = useMutation({
     ...updateContactTagsMutation({ client }),
     onSuccess: replace,
@@ -157,6 +163,14 @@ export function useContacts() {
       create.mutateAsync({ client, body: { ...body, source_id: sourceId } }),
     deleteContact: (id: string) =>
       remove.mutateAsync({ client, path: { contact_id: id } }),
+    /** A JPEG or PNG, base64-encoded; it goes to Google like any other edit. */
+    setPhoto: (id: string, base64: string) =>
+      photo.mutateAsync({
+        client,
+        path: { contact_id: id },
+        body: { photo: base64 },
+      }),
+    changingPhoto: photo.isPending,
     /** Bessel's own tags, which never go to Google. */
     setTags: (id: string, list: string[]) =>
       tags.mutate({ client, path: { contact_id: id }, body: { tags: list } }),

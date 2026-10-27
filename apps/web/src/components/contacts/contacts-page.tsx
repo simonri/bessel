@@ -3,10 +3,12 @@ import type {
   ContactSchema,
   ContactSourceSchema,
 } from "@bessel/client";
-import { formatDistanceToNow } from "date-fns";
+import { Spinner } from "@bessel/ui/components/spinner";
+import { formatDistanceToNow, parseISO } from "date-fns";
 import {
   Cake,
   CalendarHeart,
+  Camera,
   ExternalLink,
   Globe,
   Mail,
@@ -28,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { ContactEditor } from "./contact-editor";
 import { LogPanel } from "./contact-log";
 import {
+  ageOf,
   describeBirthday,
   groupByLetter,
   initials,
@@ -35,6 +38,7 @@ import {
   matchesContact,
   telUrl,
 } from "./contact-meta";
+import { photoForUpload } from "./contact-photo";
 import { Section } from "./contact-section";
 import { useContacts } from "./use-contacts";
 
@@ -45,6 +49,26 @@ function hue(name: string): number {
   let h = 0;
   for (const char of name) h = (h * 31 + char.charCodeAt(0)) % 360;
   return h;
+}
+
+function ListAge({
+  birthday,
+  today,
+}: {
+  birthday: ContactSchema["birthday"];
+  /** The local day, "yyyy-mm-dd". */
+  today: string;
+}) {
+  const age = ageOf(birthday, parseISO(today));
+  if (age === null) return null;
+  return (
+    <span
+      title={`${age} years old`}
+      className="shrink-0 text-11 text-white/35 tabular-nums"
+    >
+      {age}
+    </span>
+  );
 }
 
 function Avatar({
@@ -111,17 +135,58 @@ function MethodRows({
   );
 }
 
+/** The big avatar; picking an image replaces the photo in Google when the address book can be edited. */
+function PhotoPicker({
+  contact,
+  busy,
+  onPick,
+}: {
+  contact: ContactSchema;
+  busy: boolean;
+  onPick: (file: File) => void;
+}) {
+  return (
+    <label className="group relative cursor-pointer rounded-full focus-within:ring-2 focus-within:ring-primary-400/50">
+      <input
+        type="file"
+        aria-label="Change photo"
+        accept="image/jpeg,image/png,image/webp,image/heic"
+        disabled={busy}
+        className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = "";
+          if (file) onPick(file);
+        }}
+      />
+      <Avatar contact={contact} size="lg" />
+      <span
+        className={cn(
+          "absolute inset-0 flex items-center justify-center rounded-full bg-black/70 text-white/90 transition-opacity duration-150",
+          busy ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+        )}
+      >
+        {busy ? <Spinner className="size-5" /> : <Camera className="size-5" />}
+      </span>
+    </label>
+  );
+}
+
 function ContactDetail({
   contact,
   source,
   onEdit,
   onAllowEditing,
+  onPhoto,
+  changingPhoto,
   log,
 }: {
   contact: ContactSchema;
   source?: ContactSourceSchema;
   onEdit: () => void;
   onAllowEditing: () => void;
+  onPhoto: (file: File) => void;
+  changingPhoto: boolean;
   log: React.ReactNode;
 }) {
   const subtitle = [contact.job_title, contact.organization]
@@ -135,7 +200,15 @@ function ContactDetail({
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6 px-6 py-8">
       <header className="flex flex-col items-center gap-3 text-center">
-        <Avatar contact={contact} size="lg" />
+        {source?.can_edit ? (
+          <PhotoPicker
+            contact={contact}
+            busy={changingPhoto}
+            onPick={onPhoto}
+          />
+        ) : (
+          <Avatar contact={contact} size="lg" />
+        )}
         <div>
           <h1 className="type-title text-white/95">
             {contact.display_name || "No name"}
@@ -286,6 +359,8 @@ export function ContactsPage() {
     deleteContact,
     allowEditing,
     setTags,
+    setPhoto,
+    changingPhoto,
   } = useContacts();
   const today = useLocalDay();
   const [search, setSearch] = useState("");
@@ -441,6 +516,7 @@ export function ContactsPage() {
                       </span>
                     )}
                   </span>
+                  <ListAge birthday={c.birthday} today={today} />
                 </button>
               ))}
             </div>
@@ -487,6 +563,12 @@ export function ContactsPage() {
             source={sourceOf(selected.source_id)}
             onEdit={() => setMode("edit")}
             onAllowEditing={() => allowEditing(selected.source_id)}
+            onPhoto={(file) =>
+              void photoForUpload(file)
+                .then((photo) => setPhoto(selected.id, photo))
+                .catch(() => {})
+            }
+            changingPhoto={changingPhoto}
             log={
               <LogPanel
                 key={selected.id}

@@ -5,6 +5,7 @@ as A, then checks B can't read it, can't touch it by id, and can't change it
 through any write. TestCoverage fails when an API route isn't covered here.
 """
 
+import base64
 import json
 from collections.abc import AsyncIterator
 from datetime import UTC, date, datetime, timedelta
@@ -154,6 +155,7 @@ AUDITED: set[str] = {
   "DELETE /v1/contacts/{contact_id}",
   "POST /v1/contacts/sources/{source_id}/authorize",
   "GET /v1/contacts/reminders",
+  "PUT /v1/contacts/{contact_id}/photo",
   "PUT /v1/contacts/{contact_id}/tags",
   "GET /v1/contacts/follow-ups",
   "GET /v1/contacts/brief",
@@ -415,6 +417,8 @@ class TestContacts:
     await save_fixture(contact)
 
     assert (await other_client.patch(f"/v1/contacts/{contact.id}", json={"nickname": "pwned"})).status_code == 404
+    png = base64.b64encode(b"\x89PNG\r\n\x1a\n").decode()
+    assert (await other_client.put(f"/v1/contacts/{contact.id}/photo", json={"photo": png})).status_code == 404
     assert (await other_client.delete(f"/v1/contacts/{contact.id}")).status_code == 404
     assert (await other_client.post("/v1/contacts", json={"source_id": str(source.id), "given_name": "Planted"})).status_code == 404
     assert (await other_client.post(f"/v1/contacts/sources/{source.id}/authorize")).status_code == 404

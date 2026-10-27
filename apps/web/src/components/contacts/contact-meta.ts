@@ -103,6 +103,20 @@ export function describeBirthday(
   };
 }
 
+/** How old they are today, when the year they were born is known. */
+export function ageOf(
+  birthday: ContactBirthday | null | undefined,
+  today: Date,
+): number | null {
+  if (!birthday?.year) return null;
+  const hadBirthday =
+    today.getMonth() + 1 > birthday.month ||
+    (today.getMonth() + 1 === birthday.month &&
+      today.getDate() >= birthday.day);
+  const age = today.getFullYear() - birthday.year - (hadBirthday ? 0 : 1);
+  return age >= 0 ? age : null;
+}
+
 export function mapsUrl(address: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 }

@@ -1,3 +1,4 @@
+import base64
 from collections.abc import AsyncIterator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
 from urllib.parse import parse_qs, urlparse
@@ -94,7 +95,7 @@ class TestBuildUpdate:
     assert fields == ["phoneNumbers"]
     assert body["etag"] == "%E1" and "names" not in body
     new, work = body["phoneNumbers"]
-    assert new == {"value": "+46709999999", "type": "Mobile"}
+    assert new == {"value": "+46709999999", "type": "mobile"}
     assert work == WORK, "an untouched entry goes back exactly as Google sent it"
 
   def test_numbers_are_saved_without_spacing_keeping_their_labels(self) -> None:
@@ -112,8 +113,26 @@ class TestBuildUpdate:
     body, fields = build_update(person, {"emails": [{"label": "Work", "value": "a@x.se"}], "nickname": None, "birthday": None})
 
     assert fields == ["birthdays", "emailAddresses", "nicknames"]
-    assert body["emailAddresses"] == [{"value": "a@x.se", "type": "Work", "metadata": {"primary": True}}]
+    assert body["emailAddresses"] == [{"value": "a@x.se", "type": "work", "metadata": {"primary": True}}]
     assert (body["nicknames"], body["birthdays"]) == ([], [])
+
+  def test_labels_google_knows_are_sent_as_its_own_and_others_as_typed(self) -> None:
+    body, _ = build_update(
+      {},
+      {
+        "phones": [
+          {"label": "Work mobile", "value": "070-111 11 11"},
+          {"label": "MAIN", "value": "08-22 22 22"},
+          {"label": "Gym", "value": "070-333 33 33"},
+        ],
+        "emails": [{"label": "Home", "value": "a@x.se"}, {"label": "Work mobile", "value": "b@x.se"}],
+        "addresses": [{"label": "other", "value": "Storgatan 1"}],
+      },
+    )
+
+    assert [p["type"] for p in body["phoneNumbers"]] == ["workMobile", "main", "Gym"]
+    assert [e["type"] for e in body["emailAddresses"]] == ["home", "Work mobile"], "only phones have a work mobile"
+    assert body["addresses"] == [{"formattedValue": "Storgatan 1", "type": "other"}]
 
   def test_names_and_companies_change_part_by_part(self) -> None:
     person = {
@@ -227,7 +246,7 @@ class TestEditing:
     )
     assert created.status_code == 201, created.text
     resource_name = next(name for name in people.people if not people.people[name][0]["metadata"].get("deleted"))
-    assert people.people[resource_name][0]["phoneNumbers"] == [{"value": "0709876543", "type": "Mobile"}]
+    assert people.people[resource_name][0]["phoneNumbers"] == [{"value": "0709876543", "type": "mobile"}]
 
     deleted = await client.delete(f"/v1/contacts/{created.json()['id']}")
 
@@ -305,6 +324,100 @@ class TestEditing:
     assert account is not None
     await session.refresh(account)
     assert decrypt(account.encrypted_credentials) == "refresh", "a grant without a refresh token must keep the stored one"
+
+
+PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
+
+
+@pytest.mark.keep_session_state
+class TestPhoto:
+  @pytest.mark.asyncio
+  async def test_a_new_photo_goes_to_google_and_shows_what_google_stored(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
+  ) -> None:
+    people.put("people/c1", names=[{"givenName": "Anna"}], phoneNumbers=[MOBILE])
+    await _synced(session, user, people, session_maker)
+    anna = await _contact(session, "people/c1")
+
+    response = await client.put(f"/v1/contacts/{anna.id}/photo", json={"photo": base64.b64encode(PNG).decode()})
+
+    assert response.status_code == 200, response.text
+    method, path, _, body = people.writes[-1]
+    assert (method, path) == ("PATCH", "people/c1:updateContactPhoto")
+    assert body is not None and base64.b64decode(body["photoBytes"]) == PNG
+    stored = people.people["people/c1"][0]
+    assert response.json()["photo_url"] == stored["photos"][0]["url"]
+    assert stored["phoneNumbers"] == [MOBILE], "nothing else changes"
+    assert (await _contact(session, "people/c1")).photo_url == stored["photos"][0]["url"]
+
+  @pytest.mark.asyncio
+  @pytest.mark.parametrize(
+    ("photo", "why"),
+    [
+      (base64.b64encode(b"GIF89a" + b"\x00" * 16).decode(), "JPEG or PNG"),
+      (base64.b64encode(PNG).decode()[:4] + "*" + base64.b64encode(PNG).decode()[4:], "valid base64"),
+      (base64.b64encode(PNG + b"\x00" * (2 * 1024 * 1024)).decode(), "2 MB or smaller"),
+    ],
+  )
+  async def test_only_a_jpeg_or_png_up_to_2_mb_is_sent(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    user: User,
+    people: FakePeople,
+    session_maker: SessionMaker,
+    redis: Redis,
+    photo: str,
+    why: str,
+  ) -> None:
+    people.put("people/c1", names=[{"givenName": "Anna"}])
+    await _synced(session, user, people, session_maker)
+    anna = await _contact(session, "people/c1")
+
+    response = await client.put(f"/v1/contacts/{anna.id}/photo", json={"photo": photo})
+
+    assert response.status_code == 422
+    assert why in response.text
+    assert people.writes == []
+
+  @pytest.mark.asyncio
+  async def test_a_jpeg_is_accepted(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
+  ) -> None:
+    people.put("people/c1", names=[{"givenName": "Anna"}])
+    await _synced(session, user, people, session_maker)
+    anna = await _contact(session, "people/c1")
+
+    response = await client.put(f"/v1/contacts/{anna.id}/photo", json={"photo": base64.b64encode(b"\xff\xd8\xff\xe0" + b"\x00" * 16).decode()})
+
+    assert response.status_code == 200, response.text
+
+  @pytest.mark.asyncio
+  async def test_without_permission_no_photo_is_sent(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
+  ) -> None:
+    people.put("people/c1", names=[{"givenName": "Anna"}])
+    await _synced(session, user, people, session_maker, can_edit=False)
+    anna = await _contact(session, "people/c1")
+
+    response = await client.put(f"/v1/contacts/{anna.id}/photo", json={"photo": base64.b64encode(PNG).decode()})
+
+    assert response.status_code == 403
+    assert people.writes == []
+
+  @pytest.mark.asyncio
+  async def test_someone_deleted_in_google_meanwhile_is_gone(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
+  ) -> None:
+    people.put("people/c1", names=[{"givenName": "Anna"}])
+    await _synced(session, user, people, session_maker)
+    anna = await _contact(session, "people/c1")
+    people.delete("people/c1")
+
+    response = await client.put(f"/v1/contacts/{anna.id}/photo", json={"photo": base64.b64encode(PNG).decode()})
+
+    assert response.status_code == 404
+    assert (await client.get("/v1/contacts")).json()["items"] == []
 
 
 class TestPhones:

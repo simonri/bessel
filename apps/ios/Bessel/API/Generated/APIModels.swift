@@ -680,6 +680,10 @@ enum API {
         var display: String
     }
 
+    struct ContactPhotoUpdate: Codable, Hashable {
+        var photo: String
+    }
+
     struct ContactReference: Codable, Hashable {
         var id: UUID
         var displayName: String
@@ -4643,6 +4647,26 @@ extension API.ContactMethodSchema {
         try container.encodeIfPresent(self.label, forKey: .label)
         try container.encode(self.value, forKey: .value)
         try container.encode(self.display, forKey: .display)
+    }
+}
+
+extension API.ContactPhotoUpdate {
+    private enum DecodingKeys: String, CodingKey {
+        case photo
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.photo = try container.decode(String.self, forKey: .photo)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case photo
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.photo, forKey: .photo)
     }
 }
 

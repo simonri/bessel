@@ -2486,6 +2486,65 @@
         }
       }
     },
+    "/v1/contacts/{contact_id}/photo": {
+      "put": {
+        "tags": [
+          "contacts"
+        ],
+        "summary": "Update Contact Photo",
+        "description": "Replaces the person's photo in Google, from where it reaches the phone.",
+        "operationId": "update_contact_photo",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contact Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactPhotoUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/contacts/{contact_id}/tags": {
       "put": {
         "tags": [
@@ -12397,6 +12456,21 @@
           "display"
         ],
         "title": "ContactMethodSchema"
+      },
+      "ContactPhotoUpdate": {
+        "properties": {
+          "photo": {
+            "type": "string",
+            "maxLength": 4194304,
+            "title": "Photo",
+            "description": "The new photo, a JPEG or PNG, base64-encoded (2 MB at most)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "photo"
+        ],
+        "title": "ContactPhotoUpdate"
       },
       "ContactReference": {
         "properties": {

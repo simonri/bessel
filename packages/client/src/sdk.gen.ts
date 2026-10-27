@@ -95,6 +95,7 @@ import {
   undoCompleteTaskResponseTransformer,
   updateBankAccountResponseTransformer,
   updateCalendarEventResponseTransformer,
+  updateContactPhotoResponseTransformer,
   updateContactResponseTransformer,
   updateContactTagsResponseTransformer,
   updateCounterResponseTransformer,
@@ -547,6 +548,9 @@ import type {
   UpdateCalendarResponses,
   UpdateContactData,
   UpdateContactErrors,
+  UpdateContactPhotoData,
+  UpdateContactPhotoErrors,
+  UpdateContactPhotoResponses,
   UpdateContactResponses,
   UpdateContactTagsData,
   UpdateContactTagsErrors,
@@ -1698,6 +1702,33 @@ export const authorizeContactEditing = <ThrowOnError extends boolean = false>(
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/contacts/sources/{source_id}/authorize",
     ...options,
+  });
+
+/**
+ * Update Contact Photo
+ *
+ * Replaces the person's photo in Google, from where it reaches the phone.
+ */
+export const updateContactPhoto = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateContactPhotoData, ThrowOnError>,
+): RequestResult<
+  UpdateContactPhotoResponses,
+  UpdateContactPhotoErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    UpdateContactPhotoResponses,
+    UpdateContactPhotoErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateContactPhotoResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/contacts/{contact_id}/photo",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

@@ -1,3 +1,4 @@
+import base64
 from datetime import date, datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
@@ -156,6 +157,29 @@ class ContactUpdate(Schema):
   emails: list[ContactMethodInput] | None = None
   addresses: list[ContactMethodInput] | None = None
   urls: list[ContactMethodInput] | None = None
+
+
+MAX_PHOTO_BYTES = 2 * 1024 * 1024
+
+
+class ContactPhotoUpdate(Schema):
+  photo: str = Field(max_length=MAX_PHOTO_BYTES * 2, description="The new photo, a JPEG or PNG, base64-encoded (2 MB at most).")
+
+  @field_validator("photo")
+  @classmethod
+  def _image(cls, photo: str) -> str:
+    try:
+      data = base64.b64decode(photo, validate=True)
+    except ValueError as e:
+      raise ValueError("The photo isn't valid base64") from e
+    if not data.startswith((b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n")):
+      raise ValueError("The photo must be a JPEG or PNG")
+    if len(data) > MAX_PHOTO_BYTES:
+      raise ValueError("The photo must be 2 MB or smaller")
+    return photo
+
+  def image_bytes(self) -> bytes:
+    return base64.b64decode(self.photo)
 
 
 class ContactCreate(ContactUpdate):

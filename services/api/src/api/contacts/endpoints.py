@@ -28,6 +28,7 @@ from api.contacts.schemas import (
   ContactInteractionCreate,
   ContactInteractionSchema,
   ContactListResponse,
+  ContactPhotoUpdate,
   ContactReminders,
   ContactSchema,
   ContactSourceSchema,
@@ -133,6 +134,15 @@ async def update_contact(
 ) -> ContactSchema:
   """Changes the fields sent (null clears one) in Google; numbers and emails sent replace the list."""
   contact = await contact_editor.update(session, redis, current_user.id, contact_id, body.model_dump(exclude_unset=True))
+  return await contact_schema(session, current_user, contact)
+
+
+@router.put("/{contact_id}/photo", summary="Update Contact Photo", response_model=ContactSchema)
+async def update_contact_photo(
+  session: DBSession, current_user: CurrentDBUser, contact_id: UUID, body: ContactPhotoUpdate, redis: Annotated[Redis, Depends(get_redis)]
+) -> ContactSchema:
+  """Replaces the person's photo in Google, from where it reaches the phone."""
+  contact = await contact_editor.set_photo(session, redis, current_user.id, contact_id, body.image_bytes())
   return await contact_schema(session, current_user, contact)
 
 

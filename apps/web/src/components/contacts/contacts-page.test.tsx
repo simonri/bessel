@@ -20,6 +20,7 @@ const api = vi.hoisted(() => ({
   remove: vi.fn(),
   authorize: vi.fn(),
   tags: vi.fn(),
+  photo: vi.fn(),
   entries: {} as Record<string, unknown[]>,
   log: vi.fn(),
   removeEntry: vi.fn(),
@@ -45,6 +46,7 @@ vi.mock("@bessel/client", async (importOriginal) => ({
   deleteContactMutation: () => ({ mutationFn: api.remove }),
   authorizeContactEditingMutation: () => ({ mutationFn: api.authorize }),
   updateContactTagsMutation: () => ({ mutationFn: api.tags }),
+  updateContactPhotoMutation: () => ({ mutationFn: api.photo }),
   listContactInteractionsOptions: ({
     path,
   }: {
@@ -60,6 +62,10 @@ vi.mock("@bessel/client", async (importOriginal) => ({
   }) => ["interactions", path.contact_id],
   logContactInteractionMutation: () => ({ mutationFn: api.log }),
   deleteContactInteractionMutation: () => ({ mutationFn: api.removeEntry }),
+}));
+
+vi.mock("./contact-photo", () => ({
+  photoForUpload: async (file: File) => `resized:${file.name}`,
 }));
 
 const { ContactsPage } = await import("./contacts-page");
@@ -113,6 +119,7 @@ beforeEach(() => {
     api.remove,
     api.authorize,
     api.tags,
+    api.photo,
     api.log,
     api.removeEntry,
   ])
@@ -151,7 +158,133 @@ beforeEach(() => {
     }),
   ];
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
+
+async function pickLabel(trigger: HTMLElement, option: string) {
+  fireEvent.keyDown(trigger, { key: "Enter" });
+  fireEvent.click(await screen.findByRole("option", { name: option }));
+}
+
+describe("ContactsPage details", () => {
+  beforeEach(() => {
+    Element.prototype.scrollIntoView ??= () => {};
+    Element.prototype.hasPointerCapture ??= () => false;
+  });
+
+  it("shows how old someone is in the list when the year they were born is known", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 27, 12));
+    api.contacts = [
+      contact("c1", "Anna Berg", {
+        birthday: { year: 1990, month: 11, day: 1 },
+      }),
+      contact("c2", "Bo Ek", { birthday: { year: 1990, month: 10, day: 27 } }),
+      contact("c3", "Cia Dahl", { birthday: { year: null, month: 1, day: 5 } }),
+    ];
+    mount();
+    await screen.findByText("Anna Berg");
+
+    expect(screen.getByTitle("35 years old").textContent).toBe("35");
+    expect(screen.getByTitle("36 years old").textContent).toBe("36");
+    expect(screen.queryAllByTitle(/years old/)).toHaveLength(2);
+  });
+
+  it("picks a phone's label from Google's, or a custom one", async () => {
+    api.update.mockImplementation(async () => api.contacts[0]);
+    mount();
+    fireEvent.click(await screen.findByText("Anna Berg"));
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+
+    const phoneLabel = screen.getByRole("combobox", { name: "Phones 1 label" });
+    expect(phoneLabel.textContent).toBe("Mobile");
+    await pickLabel(phoneLabel, "Work mobile");
+    await pickLabel(
+      screen.getByRole("combobox", { name: "Addresses 1 label" }),
+      "Custom…",
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "Addresses 1 label" }), {
+      target: { value: "Summer house" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(api.update).toHaveBeenCalledTimes(1));
+    const { body } = api.update.mock.calls[0][0];
+    expect(body.phones).toEqual([
+      { label: "Work mobile", value: "070-123 45 67" },
+    ]);
+    expect(body.addresses).toEqual([
+      { label: "Summer house", value: "Storgatan 1, Lund" },
+    ]);
+  });
+
+  it("keeps a custom label as an option of its own", async () => {
+    api.contacts = [
+      contact("c1", "Anna Berg", {
+        phones: [
+          { label: "Gym", value: "+46701234567", display: "070-123 45 67" },
+        ],
+      }),
+    ];
+    mount();
+    fireEvent.click(await screen.findByText("Anna Berg"));
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+
+    const phoneLabel = screen.getByRole("combobox", { name: "Phones 1 label" });
+    expect(phoneLabel.textContent).toBe("Gym");
+    fireEvent.keyDown(phoneLabel, { key: "Enter" });
+    const options = (await screen.findAllByRole("option")).map(
+      (o) => o.textContent,
+    );
+    expect(options).toEqual([
+      "Mobile",
+      "Home",
+      "Work",
+      "Main",
+      "Work mobile",
+      "Other",
+      "Gym",
+      "Custom…",
+    ]);
+  });
+
+  it("changes the photo through Google when the address book can be edited", async () => {
+    api.photo.mockImplementation(async () => ({
+      ...(api.contacts[0] as object),
+      photo_url: "https://lh3.googleusercontent.com/new",
+    }));
+    mount();
+    fireEvent.click(await screen.findByText("Anna Berg"));
+
+    const input = (await screen.findByLabelText("Change photo")) as HTMLInputElement;
+    fireEvent.change(input, {
+      target: { files: [new File(["x"], "anna.png", { type: "image/png" })] },
+    });
+
+    await waitFor(() => expect(api.photo).toHaveBeenCalledTimes(1));
+    expect(api.photo.mock.calls[0][0]).toMatchObject({
+      path: { contact_id: "c1" },
+      body: { photo: "resized:anna.png" },
+    });
+    await waitFor(() =>
+      expect(
+        document.querySelector(
+          'img[src="https://lh3.googleusercontent.com/new"]',
+        ),
+      ).not.toBeNull(),
+    );
+  });
+
+  it("offers no photo change when the address book can only be read", async () => {
+    api.sources = [{ ...(api.sources[0] as object), can_edit: false }];
+    mount();
+    fireEvent.click(await screen.findByText("Anna Berg"));
+
+    expect(screen.queryByLabelText("Change photo")).toBeNull();
+  });
+});
 
 describe("ContactsPage", () => {
   it("syncs on opening and lists people under their letter", async () => {

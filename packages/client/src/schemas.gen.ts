@@ -3346,6 +3346,21 @@ export const ContactMethodSchemaSchema = {
   title: "ContactMethodSchema",
 } as const;
 
+export const ContactPhotoUpdateSchema = {
+  properties: {
+    photo: {
+      type: "string",
+      maxLength: 4194304,
+      title: "Photo",
+      description:
+        "The new photo, a JPEG or PNG, base64-encoded (2 MB at most).",
+    },
+  },
+  type: "object",
+  required: ["photo"],
+  title: "ContactPhotoUpdate",
+} as const;
+
 export const ContactReferenceSchema = {
   properties: {
     id: {

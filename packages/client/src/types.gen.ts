@@ -2203,6 +2203,18 @@ export type ContactMethodSchema = {
 };
 
 /**
+ * ContactPhotoUpdate
+ */
+export type ContactPhotoUpdate = {
+  /**
+   * Photo
+   *
+   * The new photo, a JPEG or PNG, base64-encoded (2 MB at most).
+   */
+  photo: string;
+};
+
+/**
  * ContactReference
  */
 export type ContactReference = {
@@ -9450,6 +9462,38 @@ export type AuthorizeContactEditingResponses = {
 
 export type AuthorizeContactEditingResponse =
   AuthorizeContactEditingResponses[keyof AuthorizeContactEditingResponses];
+
+export type UpdateContactPhotoData = {
+  body: ContactPhotoUpdate;
+  path: {
+    /**
+     * Contact Id
+     */
+    contact_id: string;
+  };
+  query?: never;
+  url: "/v1/contacts/{contact_id}/photo";
+};
+
+export type UpdateContactPhotoErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateContactPhotoError =
+  UpdateContactPhotoErrors[keyof UpdateContactPhotoErrors];
+
+export type UpdateContactPhotoResponses = {
+  /**
+   * Successful Response
+   */
+  200: ContactSchema;
+};
+
+export type UpdateContactPhotoResponse =
+  UpdateContactPhotoResponses[keyof UpdateContactPhotoResponses];
 
 export type UpdateContactTagsData = {
   body: ContactTagsUpdate;

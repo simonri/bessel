@@ -86,6 +86,7 @@ import type {
   UndoCompleteTaskResponse,
   UpdateBankAccountResponse,
   UpdateCalendarEventResponse,
+  UpdateContactPhotoResponse,
   UpdateContactResponse,
   UpdateContactTagsResponse,
   UpdateCounterResponse,
@@ -593,6 +594,13 @@ export const getContactResponseTransformer = async (
 export const updateContactResponseTransformer = async (
   data: any,
 ): Promise<UpdateContactResponse> => {
+  data = contactSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateContactPhotoResponseTransformer = async (
+  data: any,
+): Promise<UpdateContactPhotoResponse> => {
   data = contactSchemaSchemaResponseTransformer(data);
   return data;
 };
