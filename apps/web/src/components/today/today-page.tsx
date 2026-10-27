@@ -30,9 +30,11 @@ import { localNightBounds } from "@/components/sleep/sleep-summary";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { TaskRow } from "@/components/tasks/task-row";
 import { PageHeader, SoftButton } from "@/components/ui-kit";
+import { usePageVisibility } from "@/components/use-page-visibility";
 import { useTaskStatusActions } from "@/hooks/use-task-status-actions";
 import { client } from "@/lib/client";
 import { useLocalDay } from "@/lib/local-day";
+import { cn } from "@/lib/utils";
 import { AddTaskButton, GetStartedCard } from "./get-started";
 import {
   countdown,
@@ -329,6 +331,21 @@ export function PeopleBlock() {
   );
 }
 
+/** Sleep and screen time, each only while its page is shown in the sidebar. */
+export function HealthBlocks({ now }: { now: Date }) {
+  const { isVisible } = usePageVisibility();
+  const blocks = [
+    isVisible("sleep") && <SleepBlock key="sleep" now={now} />,
+    isVisible("activity") && <ScreenTimeBlock key="activity" now={now} />,
+  ].filter(Boolean);
+  if (blocks.length === 0) return null;
+  return (
+    <div className={cn("grid gap-4", blocks.length > 1 && "sm:grid-cols-2")}>
+      {blocks}
+    </div>
+  );
+}
+
 /** What's happening now and next, with each part one click from its page. */
 export function TodayPage() {
   const now = useMinuteClock();
@@ -339,10 +356,7 @@ export function TodayPage() {
       <NextUp now={now} />
       <TasksBlock now={now} />
       <PeopleBlock />
-      <div className="grid gap-4 sm:grid-cols-2">
-        <SleepBlock now={now} />
-        <ScreenTimeBlock now={now} />
-      </div>
+      <HealthBlocks now={now} />
     </div>
   );
 }
