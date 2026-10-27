@@ -35,7 +35,7 @@ import { useTaskStatusActions } from "@/hooks/use-task-status-actions";
 import { client } from "@/lib/client";
 import { useLocalDay } from "@/lib/local-day";
 import { cn } from "@/lib/utils";
-import { AddTaskButton, GetStartedCard } from "./get-started";
+import { AddTaskButton, GetStartedCard, useGetStarted } from "./get-started";
 import {
   countdown,
   nextEvent,
@@ -112,6 +112,8 @@ export function NextUp({ now }: { now: Date }) {
   const next = nextEvent(events, now);
   const { accounts, isLoading } = useCalendarAccounts();
   const openSettings = useOpenSettings();
+  // The get started card above already offers to connect one.
+  const onboarding = useGetStarted().shown;
   return (
     <Block title="Next up" page="calendar" linkLabel="Calendar">
       {next ? (
@@ -138,9 +140,11 @@ export function NextUp({ now }: { now: Date }) {
       ) : !isLoading && accounts.length === 0 ? (
         <div className="flex items-center justify-between gap-3">
           <p className="text-13 text-white/45">No calendar connected yet.</p>
-          <SoftButton onClick={() => openSettings("integrations", "add")}>
-            Connect a calendar
-          </SoftButton>
+          {!onboarding && (
+            <SoftButton onClick={() => openSettings("integrations", "add")}>
+              Connect a calendar
+            </SoftButton>
+          )}
         </div>
       ) : (
         <p className="text-13 text-white/45">
@@ -206,13 +210,14 @@ export function TasksBlock({ now }: { now: Date }) {
   const { doing, inReview, due, moreDue } = todayTasks(data?.items ?? [], now);
   const select = (task: TaskSchema) => setSelectedId(task.id);
   const empty = doing.length + inReview.length + due.length === 0;
+  const onboarding = useGetStarted().shown;
 
   return (
     <Block title="Tasks" page="tasks" linkLabel="All tasks">
       {data?.items.length === 0 ? (
         <div className="flex items-center justify-between gap-3">
           <p className="text-13 text-white/45">No open tasks.</p>
-          <AddTaskButton>Add a task</AddTaskButton>
+          {!onboarding && <AddTaskButton>Add a task</AddTaskButton>}
         </div>
       ) : empty ? (
         <p className="text-13 text-white/45">

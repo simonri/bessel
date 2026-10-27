@@ -203,6 +203,35 @@ describe("GetStartedCard", () => {
 });
 
 describe("empty Today cards", () => {
+  beforeEach(() =>
+    userStorage.setItem(GET_STARTED_KEY, JSON.stringify({ hidden: true })),
+  );
+
+  it("leave connecting and adding to the get started card while it shows, and offer them once it's hidden", async () => {
+    userStorage.removeItem(GET_STARTED_KEY);
+    mount(
+      <>
+        <GetStartedCard className="" />
+        <NextUp now={new Date()} />
+        <TasksBlock now={new Date()} />
+      </>,
+    );
+    await screen.findByRole("region", { name: "Get started" });
+    await settle();
+    expect(screen.getByText("No calendar connected yet.")).toBeTruthy();
+    expect(screen.getByText("No open tasks.")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Connect a calendar" }),
+    ).toBeNull();
+    expect(screen.queryByRole("button", { name: "Add a task" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Hide" }));
+    expect(
+      await screen.findByRole("button", { name: "Connect a calendar" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Add a task" })).toBeTruthy();
+  });
+
   it("offers to connect a calendar only when none is connected", async () => {
     const first = mount(<NextUp now={new Date()} />);
     fireEvent.click(

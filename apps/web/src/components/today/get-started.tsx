@@ -1,7 +1,12 @@
 import { listCalendarAccountsOptions, listTasksOptions } from "@bessel/client";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import {
+  type ReactNode,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { TaskFormDialog } from "@/components/create-task-dialog";
 import { useOpenSettings } from "@/components/settings-dialog";
 import { SoftButton } from "@/components/ui-kit";
@@ -18,22 +23,34 @@ interface GetStartedState {
   claudeOpened?: boolean;
 }
 
+let cached: { raw: string | null; state: GetStartedState } | null = null;
+
 function readState(): GetStartedState {
+  const raw = userStorage.getItem(GET_STARTED_KEY);
+  if (cached?.raw === raw) return cached.state;
+  let state: GetStartedState = {};
   try {
-    return JSON.parse(userStorage.getItem(GET_STARTED_KEY) ?? "{}") ?? {};
-  } catch {
-    return {};
-  }
+    state = JSON.parse(raw ?? "{}") ?? {};
+  } catch {}
+  cached = { raw, state };
+  return state;
 }
 
-function useGetStartedState() {
-  const [state, setState] = useState(readState);
-  const update = (patch: GetStartedState) => {
-    const next = { ...readState(), ...patch };
-    userStorage.setItem(GET_STARTED_KEY, JSON.stringify(next));
-    setState(next);
+// One store, so the card and the cards it stands in for agree on whether it shows.
+const listeners = new Set<() => void>();
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
   };
-  return [state, update] as const;
+}
+
+function updateState(patch: GetStartedState) {
+  userStorage.setItem(
+    GET_STARTED_KEY,
+    JSON.stringify({ ...readState(), ...patch }),
+  );
+  for (const listener of listeners) listener();
 }
 
 /** Opens the full new-task form, fresh each time. */
@@ -96,14 +113,9 @@ function Step({
   );
 }
 
-/**
- * First steps for a new user, ticked off from their data. Never shown to
- * someone who already has Google connected and tasks, and gone for good once
- * every step is done or it's hidden.
- */
-export function GetStartedCard({ className }: { className: string }) {
-  const openSettings = useOpenSettings();
-  const [state, update] = useGetStartedState();
+/** Whether the get started card shows, and which of its steps are done. */
+export function useGetStarted() {
+  const state = useSyncExternalStore(subscribe, readState);
   const { data: accounts, isSuccess: accountsLoaded } = useQuery(
     listCalendarAccountsOptions({ client }),
   );
@@ -118,13 +130,33 @@ export function GetStartedCard({ className }: { className: string }) {
   const claudeDone = !!state.claudeOpened;
   const dataPending = !googleDone || !taskDone;
 
-  const shouldStart = loaded && dataPending && !state.started && !state.hidden;
+  const shown =
+    loaded &&
+    !state.hidden &&
+    (dataPending || (!claudeDone && !!state.started));
+  return {
+    shown,
+    shouldStart: loaded && dataPending && !state.started && !state.hidden,
+    googleDone,
+    taskDone,
+    claudeDone,
+  };
+}
+
+/**
+ * First steps for a new user, ticked off from their data. Never shown to
+ * someone who already has Google connected and tasks, and gone for good once
+ * every step is done or it's hidden.
+ */
+export function GetStartedCard({ className }: { className: string }) {
+  const openSettings = useOpenSettings();
+  const { shown, shouldStart, googleDone, taskDone, claudeDone } =
+    useGetStarted();
   useEffect(() => {
-    if (shouldStart) update({ started: true });
+    if (shouldStart) updateState({ started: true });
   });
 
-  if (!loaded || state.hidden) return null;
-  if (!dataPending && (claudeDone || !state.started)) return null;
+  if (!shown) return null;
 
   const openIntegrations = () => openSettings("integrations", "add");
 
@@ -134,7 +166,7 @@ export function GetStartedCard({ className }: { className: string }) {
         <h3 className="text-13 font-medium text-white/60">Get started</h3>
         <button
           type="button"
-          onClick={() => update({ hidden: true })}
+          onClick={() => updateState({ hidden: true })}
           className="rounded-md px-1.5 py-0.5 text-12 text-white/45 transition-colors hover:bg-white/[0.06] hover:text-white/80"
         >
           Hide
@@ -165,7 +197,7 @@ export function GetStartedCard({ className }: { className: string }) {
             !claudeDone && (
               <SoftButton
                 onClick={() => {
-                  update({ claudeOpened: true });
+                  updateState({ claudeOpened: true });
                   openIntegrations();
                 }}
               >
