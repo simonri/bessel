@@ -282,7 +282,9 @@ export function moduleSupportsProject(module: ModuleKey): boolean {
   );
 }
 
+// Git runs through the desktop app's git bridge.
 const DESKTOP_ONLY_MODULES: ReadonlySet<ModuleKey> = new Set([
+  "gitStatus",
   "claudeCode",
   "codex",
   "grok",
@@ -305,8 +307,4 @@ const desktopModules: ModuleKey[] = isDesktop ? [...DESKTOP_ONLY_MODULES] : [];
 // Modules also reachable as sidebar pages (see pages.ts) are left out here —
 // the dock and command palette only offer opening a widget for modules that
 // aren't already a page of their own.
-export const MODULE_ORDER: ModuleKey[] = [
-  "tasks",
-  "gitStatus",
-  ...desktopModules,
-];
+export const MODULE_ORDER: ModuleKey[] = ["tasks", ...desktopModules];

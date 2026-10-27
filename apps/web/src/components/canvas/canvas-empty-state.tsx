@@ -46,12 +46,16 @@ export function CanvasEmptyState() {
       >
         <div className="flex flex-col gap-1">
           <h2 className="text-13 font-medium text-white/90">
-            {project
-              ? `Start something in ${project.name}`
-              : "This session is empty"}
+            {!isDesktop
+              ? "Nothing on this board yet"
+              : project
+                ? `Start something in ${project.name}`
+                : "This session is empty"}
           </h2>
           <p className="text-12 text-white/50">
-            Start an agent here, or add widgets from the dock below.
+            {isDesktop
+              ? "Start an agent here, or add widgets from the dock below."
+              : "Add a widget here or from the dock below, then drag and resize it."}
           </p>
         </div>
         <div className="flex flex-wrap justify-center gap-2">

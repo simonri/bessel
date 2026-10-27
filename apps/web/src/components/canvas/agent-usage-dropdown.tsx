@@ -13,6 +13,7 @@ import { format, formatDistanceToNowStrict, parseISO, subDays } from "date-fns";
 import { Gauge } from "lucide-react";
 import { useMemo, useState } from "react";
 import { client } from "@/lib/client";
+import { isDesktop } from "@/lib/environment";
 import { apiDate, localIsoDay, useLocalDay } from "@/lib/local-day";
 import { cn } from "@/lib/utils";
 import {
@@ -139,6 +140,10 @@ export function AgentUsageDropdown() {
   const needsAttention = limits.some(
     (e) => e.utilization_pct >= WARN_THRESHOLD_PCT,
   );
+
+  // Usage is collected by the desktop app; a browser with none to show has
+  // nothing to offer but "open the desktop app".
+  if (!isDesktop && !hasAnyData) return null;
 
   return (
     <Popover>

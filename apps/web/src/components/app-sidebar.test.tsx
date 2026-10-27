@@ -4,6 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { AppSidebar, loadSidebarWidth } from "./app-sidebar";
 
+const env = vi.hoisted(() => ({ desktop: false }));
+vi.mock("@/lib/environment", () => ({
+  get isDesktop() {
+    return env.desktop;
+  },
+}));
 vi.mock("@/components/canvas/project-sessions", () => ({
   ProjectSessions: () => <p>Code folders</p>,
 }));
@@ -37,7 +43,10 @@ Object.defineProperty(window, "localStorage", {
   configurable: true,
 });
 
-beforeEach(() => window.localStorage.clear());
+beforeEach(() => {
+  window.localStorage.clear();
+  env.desktop = false;
+});
 afterEach(cleanup);
 
 describe("loadSidebarWidth", () => {
@@ -78,5 +87,19 @@ describe("AppSidebar", () => {
     expect(pages.textContent).toContain("Screen time");
     expect(pages.textContent).toContain("Today");
     expect(pages.textContent).not.toContain("Sleep");
+  });
+
+  it("has no code folders in a browser, where they can't open", () => {
+    renderSidebar();
+
+    expect(screen.queryByRole("navigation", { name: "Projects" })).toBeNull();
+    expect(screen.queryByText("Code folders")).toBeNull();
+  });
+
+  it("lists code folders in the desktop app", () => {
+    env.desktop = true;
+    renderSidebar();
+
+    expect(screen.getByText("Code folders")).toBeTruthy();
   });
 });
