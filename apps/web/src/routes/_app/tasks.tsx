@@ -66,6 +66,7 @@ import { cn } from "@/lib/utils";
 import { BoardColumn } from "./-board-column";
 import { ProjectFilterButton } from "./-project-filter-button";
 import { DragCard } from "./-task-card";
+import { useProjectFilter } from "./-use-project-filter";
 
 export const Route = createFileRoute("/_app/tasks")({
   component: Tasks,
@@ -116,7 +117,7 @@ function FirstTaskHint() {
 
 function Tasks() {
   const [viewTab, setViewTab] = useState<ViewTab>("today");
-  const [projectFilter, setProjectFilter] = useState<string | null>(null);
+  const [projectFilter, setProjectFilter] = useProjectFilter();
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [activeTask, setActiveTask] = useState<TaskSchema | null>(null);
   const [localOrder, setLocalOrder] = useState<BoardOrder | null>(null);
@@ -167,7 +168,7 @@ function Tasks() {
     ) {
       setProjectFilter(null);
     }
-  }, [projectFilter, projectsData]);
+  }, [projectFilter, projectsData, setProjectFilter]);
 
   // Collapse the project pills into a dropdown once the widget is too narrow to
   // fit them. The pills are always measured off-screen (invisible + absolute, so
