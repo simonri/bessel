@@ -5,7 +5,7 @@ through the same repositories and services as the REST endpoints. Tools never
 delete anything, and money is only ever read.
 """
 
-from api.mcp.tools import activity, calendar, contacts, health, money, recipes, tasks, weather
+from api.mcp.tools import activity, calendar, contacts, health, money, notes, recipes, tasks, weather
 from api.mcp.tools.common import ToolSpec
 
 TOOLS: list[ToolSpec] = [
@@ -17,4 +17,5 @@ TOOLS: list[ToolSpec] = [
   *activity.TOOLS,
   *money.TOOLS,
   *weather.TOOLS,
+  *notes.TOOLS,
 ]
