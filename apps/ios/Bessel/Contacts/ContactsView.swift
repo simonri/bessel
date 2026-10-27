@@ -1,11 +1,11 @@
 import SwiftUI
 
 /// The address book A to Z, with events to follow up on and birthdays and
-/// other dates coming up on top. Pushed from the Calendar tab, whose events
-/// say who you last saw.
-struct ContactsView: View {
+/// other dates coming up on top. `header` sits above the search, pinned.
+struct ContactsView<Header: View>: View {
     @Bindable var store: ContactsStore
     let isActive: Bool
+    @ViewBuilder let header: Header
 
     @State private var search = ""
     @State private var noting: ContactFollowUp?
@@ -27,7 +27,9 @@ struct ContactsView: View {
                             proxy.scrollTo(letter, anchor: .top)
                         }
                         .padding(.trailing, 4)
-                        .padding(.bottom, 80)
+                        // Clear of the pinned header above and the tab bar below.
+                        .padding(.top, 120)
+                        .padding(.bottom, 100)
                     }
                 }
         }
@@ -73,7 +75,12 @@ struct ContactsView: View {
         .contentMargins(.bottom, 80, for: .scrollContent)
         .scrollContentBackground(.hidden)
         .scrollDismissesKeyboard(.immediately)
-        .stickyHeader { searchField }
+        .stickyHeader {
+            VStack(alignment: .leading, spacing: 12) {
+                header
+                searchField
+            }
+        }
         .background(Theme.background)
         .overlay {
             if !store.hasLoaded { ProgressView() }

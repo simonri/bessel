@@ -1,23 +1,28 @@
 import MapKit
 import SwiftUI
 
-struct PlacesView: View {
+struct PlacesView<Header: View>: View {
     @Bindable var store: PlacesStore
     let isActive: Bool
+    /// Owned by whoever shows the page, whose toolbar holds the + button.
+    @Binding var adding: Bool
+    @ViewBuilder let header: Header
 
     @State private var showingMap = false
-    @State private var adding = false
     @State private var selectedID: UUID?
     @State private var justAddedID: UUID?
     @State private var cameraPosition: MapCameraPosition = .automatic
     @Environment(ToastCenter.self) private var toasts
 
     var body: some View {
-        VStack(spacing: 0) {
-            statusPicker
-                .padding(.horizontal, 16)
-                .padding(.top, Theme.pageTop)
-                .padding(.bottom, 12)
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 12) {
+                header
+                statusPicker
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, Theme.pageTop)
+            .padding(.bottom, 12)
             if showingMap {
                 map
             } else {
@@ -27,12 +32,6 @@ struct PlacesView: View {
         .background(Theme.background)
         .navigationTitle("Places")
         .toolbarTitleDisplayMode(.inlineLarge)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { adding = true } label: { Image(systemName: "plus") }
-                    .accessibilityLabel("Add place")
-            }
-        }
         // The new place opens once the add sheet is gone; presenting a
         // sheet while another is dismissing is dropped.
         .sheet(isPresented: $adding, onDismiss: {

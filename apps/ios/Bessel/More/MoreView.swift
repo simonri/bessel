@@ -1,21 +1,37 @@
 import SwiftUI
 
-/// Every page reached from the More tab, routed from its one stack: a
-/// destination declared inside a pushed page pops right back out on iOS 26.
-enum MoreRoute: Hashable {
+/// What the More tab shows; switched with pills at the top, like Health and Gym.
+enum MoreSection: String, CaseIterable, Identifiable {
     case places
     case contacts
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .places: "Places"
+        case .contacts: "Contacts"
+        }
+    }
+}
+
+/// Pages pushed from the More tab, routed from its one stack: a destination
+/// declared inside a pushed page pops right back out on iOS 26.
+enum MoreRoute: Hashable {
     case contact(UUID)
 }
 
-/// The last tab: the pages that don't need a tab of their own.
+/// The last tab: the pages that don't need a tab of their own. It opens
+/// straight on the one used last, so getting back there is a single tap.
 struct MoreView: View {
     let auth: AuthSession
     let isActive: Bool
 
+    @AppStorage("more.section") private var section: MoreSection = .places
     @State private var places: PlacesStore
     @State private var contacts: ContactsStore
     @State private var path: [MoreRoute] = []
+    @State private var addingPlace = false
 
     init(auth: AuthSession, services: AppServices, isActive: Bool) {
         self.auth = auth
@@ -26,74 +42,47 @@ struct MoreView: View {
 
     var body: some View {
         NavigationStack(path: $path) {
-            List {
-                Section {
-                    row(.places, title: "Places", detail: placesDetail, systemImage: "mappin.and.ellipse", hue: 15)
-                    row(.contacts, title: "Contacts", detail: contactsDetail, systemImage: "person.2", hue: 250)
+            Group {
+                switch section {
+                case .places:
+                    PlacesView(store: places, isActive: isShowing(.places), adding: $addingPlace) { sectionPicker }
+                case .contacts:
+                    ContactsView(store: contacts, isActive: isShowing(.contacts)) { sectionPicker }
                 }
-                .listRowBackground(Theme.card)
-                .listRowSeparatorTint(Theme.border)
             }
-            .listStyle(.insetGrouped)
-            .contentMargins(.top, Theme.pageTop, for: .scrollContent)
-            .scrollContentBackground(.hidden)
-            .background(Theme.background)
-            .navigationTitle("More")
+            .navigationTitle(section.title)
             .toolbarTitleDisplayMode(.inlineLarge)
+            // Here rather than in Places, so the avatar stays last, as on every tab.
             .toolbar {
+                if section == .places {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button { addingPlace = true } label: { Image(systemName: "plus") }
+                            .accessibilityLabel("Add place")
+                    }
+                }
                 ProfileToolbarItem(auth: auth)
             }
             .navigationDestination(for: MoreRoute.self) { route in
                 switch route {
-                case .places:
-                    PlacesView(store: places, isActive: isActive && path.last == .places)
-                case .contacts:
-                    ContactsView(store: contacts, isActive: isActive && path.last == .contacts)
                 case .contact(let id):
                     ContactDetailView(store: contacts, contactID: id)
                 }
             }
-            // Counts on the rows; each page refreshes itself once open.
-            .refreshWhileVisible(isActive && path.isEmpty) {
-                async let placesLoad: Void = places.loadIfStale()
-                async let contactsLoad: Void = contacts.loadIfStale()
-                _ = await (placesLoad, contactsLoad)
-            }
+            .haptic(.selection, trigger: section)
         }
     }
 
-    private func row(_ route: MoreRoute, title: String, detail: String?, systemImage: String, hue: Double) -> some View {
-        NavigationLink(value: route) {
-            HStack(spacing: 14) {
-                Image(systemName: systemImage)
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Theme.pastel(hue))
-                    .frame(width: 40, height: 40)
-                    .background(Theme.pastelWash(hue, strength: 1.4), in: Circle())
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(Theme.foreground)
-                    if let detail {
-                        Text(detail)
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.mutedForeground)
-                    }
+    private func isShowing(_ page: MoreSection) -> Bool {
+        isActive && section == page && path.isEmpty
+    }
+
+    private var sectionPicker: some View {
+        HStack(spacing: 8) {
+            ForEach(MoreSection.allCases) { page in
+                FilterPill(title: page.title, isSelected: section == page) {
+                    withAnimation(.snappy) { section = page }
                 }
             }
-            .padding(.vertical, 4)
         }
-    }
-
-    /// "3 to try · 5 been": only once there's something to count.
-    private var placesDetail: String? {
-        guard places.hasLoaded, !places.places.isEmpty else { return "Cafés and spots you want to try" }
-        return "\(places.count(.wantToGo)) to try · \(places.count(.visited)) been"
-    }
-
-    private var contactsDetail: String? {
-        guard contacts.hasLoaded, !contacts.contacts.isEmpty else { return "Birthdays and catching up" }
-        let count = contacts.contacts.count
-        return count == 1 ? "1 person" : "\(count) people"
     }
 }
