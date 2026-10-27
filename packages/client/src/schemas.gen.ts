@@ -622,6 +622,291 @@ export const ActivitySummaryResponseSchema = {
   title: "ActivitySummaryResponse",
 } as const;
 
+export const AddressParts_InputSchema = {
+  properties: {
+    formatted: {
+      type: "string",
+      maxLength: 1000,
+      minLength: 1,
+      title: "Formatted",
+      description: "The whole address on one line, as Google writes it.",
+    },
+    street_address: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Street Address",
+    },
+    postal_code: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 50,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Postal Code",
+    },
+    city: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "City",
+    },
+    region: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Region",
+    },
+    country: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Country",
+    },
+    country_code: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 2,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Country Code",
+    },
+    latitude: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 90,
+          minimum: -90,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Latitude",
+    },
+    longitude: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 180,
+          minimum: -180,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Longitude",
+    },
+  },
+  type: "object",
+  required: ["formatted"],
+  title: "AddressParts",
+  description:
+    "An address in the parts an address book keeps, with where it is when known.",
+} as const;
+
+export const AddressParts_OutputSchema = {
+  properties: {
+    formatted: {
+      type: "string",
+      maxLength: 1000,
+      minLength: 1,
+      title: "Formatted",
+      description: "The whole address on one line, as Google writes it.",
+    },
+    street_address: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 500,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Street Address",
+    },
+    postal_code: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 50,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Postal Code",
+    },
+    city: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "City",
+    },
+    region: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Region",
+    },
+    country: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Country",
+    },
+    country_code: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 2,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Country Code",
+    },
+    latitude: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 90,
+          minimum: -90,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Latitude",
+    },
+    longitude: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 180,
+          minimum: -180,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Longitude",
+    },
+  },
+  type: "object",
+  required: [
+    "formatted",
+    "street_address",
+    "postal_code",
+    "city",
+    "region",
+    "country",
+    "country_code",
+    "latitude",
+    "longitude",
+  ],
+  title: "AddressParts",
+  description:
+    "An address in the parts an address book keeps, with where it is when known.",
+} as const;
+
+export const AddressSuggestionSchema = {
+  properties: {
+    place_id: {
+      type: "string",
+      title: "Place Id",
+      description: "Pass to Get Address for the address's parts.",
+    },
+    main_text: {
+      type: "string",
+      title: "Main Text",
+      description: "The street and number, e.g. 'Drottninggatan 5'.",
+    },
+    secondary_text: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Secondary Text",
+      description: "Where it is, e.g. 'Stockholm, Sverige'.",
+    },
+  },
+  type: "object",
+  required: ["place_id", "main_text", "secondary_text"],
+  title: "AddressSuggestion",
+} as const;
+
+export const AddressSuggestionsResponseSchema = {
+  properties: {
+    suggestions: {
+      items: {
+        $ref: "#/components/schemas/AddressSuggestion",
+      },
+      type: "array",
+      title: "Suggestions",
+    },
+  },
+  type: "object",
+  required: ["suggestions"],
+  title: "AddressSuggestionsResponse",
+} as const;
+
 export const AgentUsageDailyEntrySchema = {
   properties: {
     date: {
@@ -2794,6 +3079,60 @@ export const ClientDiagnosticsUploadSchema = {
   title: "ClientDiagnosticsUpload",
 } as const;
 
+export const ContactAddressSchemaSchema = {
+  properties: {
+    label: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Label",
+      description: "As the address book names it, e.g. 'Mobile' or 'Work'.",
+    },
+    value: {
+      type: "string",
+      title: "Value",
+    },
+    display: {
+      type: "string",
+      title: "Display",
+      description:
+        'How to show the value: phone numbers spaced ("070-123 45 67"), anything else as saved.',
+    },
+    latitude: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Latitude",
+      description:
+        "Where it is, known once the address was picked from Suggest Addresses.",
+    },
+    longitude: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Longitude",
+    },
+  },
+  type: "object",
+  required: ["label", "value", "display", "latitude", "longitude"],
+  title: "ContactAddressSchema",
+} as const;
+
 export const ContactAuthorizeResponseSchema = {
   properties: {
     url: {
@@ -3310,6 +3649,18 @@ export const ContactMethodInputSchema = {
       minLength: 1,
       title: "Value",
     },
+    address: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/AddressParts-Input",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description:
+        "Addresses only: the parts from Get Address, saved as the address book's own fields, and where it is.",
+    },
   },
   type: "object",
   required: ["value"],
@@ -3592,7 +3943,7 @@ export const ContactSchemaSchema = {
     },
     addresses: {
       items: {
-        $ref: "#/components/schemas/ContactMethodSchema",
+        $ref: "#/components/schemas/ContactAddressSchema",
       },
       type: "array",
       title: "Addresses",

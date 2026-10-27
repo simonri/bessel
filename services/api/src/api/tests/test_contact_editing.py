@@ -326,6 +326,111 @@ class TestEditing:
     assert decrypt(account.encrypted_credentials) == "refresh", "a grant without a refresh token must keep the stored one"
 
 
+PICKED = {
+  "formatted": "Drottninggatan 5, 111 51 Stockholm",
+  "street_address": "Drottninggatan 5",
+  "postal_code": "111 51",
+  "city": "Stockholm",
+  "region": "Stockholms län",
+  "country": "Sverige",
+  "country_code": "SE",
+  "latitude": 59.3307,
+  "longitude": 18.0631,
+}
+
+
+@pytest.mark.keep_session_state
+class TestPickedAddresses:
+  @pytest.mark.asyncio
+  async def test_a_picked_address_goes_to_google_in_parts_and_keeps_where_it_is(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
+  ) -> None:
+    people.put("people/c1", names=[{"givenName": "Anna"}])
+    await _synced(session, user, people, session_maker)
+    anna = await _contact(session, "people/c1")
+    people.address_suffix = ", Sverige"
+
+    response = await client.patch(
+      f"/v1/contacts/{anna.id}",
+      json={"addresses": [{"label": "Home", "value": PICKED["formatted"], "address": PICKED}]},
+    )
+
+    assert response.status_code == 200, response.text
+    sent = people.writes[-1][3]
+    assert sent is not None and sent["addresses"] == [
+      {
+        "formattedValue": "Drottninggatan 5, 111 51 Stockholm",
+        "type": "home",
+        "streetAddress": "Drottninggatan 5",
+        "postalCode": "111 51",
+        "city": "Stockholm",
+        "region": "Stockholms län",
+        "country": "Sverige",
+        "countryCode": "SE",
+      }
+    ]
+    [address] = response.json()["addresses"]
+    assert address["value"] == "Drottninggatan 5, 111 51 Stockholm, Sverige", "as Google stored it"
+    assert (address["latitude"], address["longitude"]) == (59.3307, 18.0631)
+    listed = (await client.get("/v1/contacts")).json()["items"][0]["addresses"][0]
+    assert (listed["latitude"], listed["longitude"]) == (59.3307, 18.0631)
+
+  @pytest.mark.asyncio
+  async def test_picking_the_same_text_still_replaces_the_old_parts(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
+  ) -> None:
+    old = {
+      "formattedValue": PICKED["formatted"],
+      "streetAddress": "Drottninggatan 5",
+      "city": "Solna",
+      "region": "Uppland",
+      "extendedAddress": "c/o Berg",
+      "type": "home",
+    }
+    people.put("people/c1", names=[{"givenName": "Anna"}], addresses=[old])
+    await _synced(session, user, people, session_maker)
+    anna = await _contact(session, "people/c1")
+
+    picked = {**PICKED, "region": None}
+    await client.patch(f"/v1/contacts/{anna.id}", json={"addresses": [{"label": "Home", "value": PICKED["formatted"], "address": picked}]})
+
+    [sent] = (people.writes[-1][3] or {})["addresses"]
+    assert sent["city"] == "Stockholm"
+    assert "region" not in sent, "a part the new address doesn't have is dropped, not kept from the old one"
+    assert "extendedAddress" not in sent
+    assert sent["type"] == "home"
+
+  @pytest.mark.asyncio
+  async def test_a_typed_address_goes_as_typed_with_no_location(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
+  ) -> None:
+    people.put("people/c1", names=[{"givenName": "Anna"}])
+    await _synced(session, user, people, session_maker)
+    anna = await _contact(session, "people/c1")
+
+    response = await client.patch(f"/v1/contacts/{anna.id}", json={"addresses": [{"label": "Summer house", "value": "Ön, Gotland"}]})
+
+    [sent] = (people.writes[-1][3] or {})["addresses"]
+    assert sent == {"formattedValue": "Ön, Gotland", "type": "Summer house"}
+    [address] = response.json()["addresses"]
+    assert (address["latitude"], address["longitude"]) == (None, None)
+
+  @pytest.mark.asyncio
+  async def test_a_new_contact_keeps_where_its_picked_address_is(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
+  ) -> None:
+    source = await _synced(session, user, people, session_maker)
+
+    created = await client.post(
+      "/v1/contacts",
+      json={"source_id": str(source.id), "given_name": "Cia", "addresses": [{"label": "Work", "value": PICKED["formatted"], "address": PICKED}]},
+    )
+
+    assert created.status_code == 201, created.text
+    [address] = created.json()["addresses"]
+    assert (address["latitude"], address["longitude"]) == (59.3307, 18.0631)
+
+
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
 
 

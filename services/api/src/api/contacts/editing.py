@@ -14,6 +14,7 @@ from uuid import UUID
 import httpx
 import structlog
 
+from api.addresses.repository import AddressLocationRepository
 from api.calendars import http as provider_http
 from api.calendars.google import GoogleCalendarClient
 from api.calendars.locks import AccountBusyError, account_lock
@@ -22,7 +23,7 @@ from api.common.encryption import decrypt
 from api.common.utils import utc_now
 from api.contacts.edit import build_update
 from api.contacts.google import GoogleContactsClient, StaleEtag
-from api.contacts.person import parse_person
+from api.contacts.person import address_text, parse_person
 from api.contacts.repository import ContactRepository, ContactSourceRepository
 from api.exceptions import ForbiddenError, ResourceNotFound, ServiceUnavailableError, ValidationError
 from api.logging import Logger
@@ -86,6 +87,7 @@ class ContactEditor:
       except ProviderNotFoundError as e:
         contact.deleted_at = utc_now()
         raise ResourceNotFound("This contact was deleted in Google.") from e
+      await _remember_locations(session, user_id, changes, saved)
       return await contacts.save_edited(source, parse_person(saved), replaced_etag=replaced)
 
   async def set_photo(self, session: AsyncSession, redis: Redis, user_id: UUID, contact_id: UUID, photo: bytes) -> Contact:
@@ -111,6 +113,7 @@ class ContactEditor:
       raise ValidationError("Give the contact a name, company, number or email.", status_code=422)
     async with self._google(session, redis, source) as (google, token):
       saved = await google.create_contact(token, body)
+      await _remember_locations(session, user_id, changes, saved)
       return await ContactRepository.from_session(session).save_edited(source, parse_person(saved), replaced_etag=None)
 
   async def delete(self, session: AsyncSession, redis: Redis, user_id: UUID, contact_id: UUID) -> None:
@@ -120,6 +123,16 @@ class ContactEditor:
     async with self._google(session, redis, source) as (google, token):
       await google.delete_contact(token, contact.resource_name)
       contact.deleted_at = utc_now()
+
+
+async def _remember_locations(session: AsyncSession, user_id: UUID, changes: dict[str, Any], saved: dict[str, Any]) -> None:
+  """Keeps where each picked address is, under the text Google stored for it (it may write it differently)."""
+  repository = AddressLocationRepository.from_session(session)
+  for item, entry in zip(changes.get("addresses") or [], saved.get("addresses", []), strict=False):
+    parts = item.get("address") or {}
+    latitude, longitude, text = parts.get("latitude"), parts.get("longitude"), address_text(entry)
+    if latitude is not None and longitude is not None and text:
+      await repository.save(user_id, text, latitude, longitude)
 
 
 contact_editor = ContactEditor()

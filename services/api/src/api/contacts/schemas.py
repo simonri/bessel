@@ -5,6 +5,7 @@ from uuid import UUID
 
 from pydantic import UUID4, Field, StringConstraints, field_validator, model_validator
 
+from api.addresses.schemas import AddressParts
 from api.common.pagination import ListResource
 from api.common.schemas import IDSchema, Schema, TimestampedSchema
 from api.contacts.person import primary
@@ -16,6 +17,11 @@ class ContactMethodSchema(Schema):
   label: str | None = Field(description="As the address book names it, e.g. 'Mobile' or 'Work'.")
   value: str
   display: str = Field(description="How to show the value: phone numbers spaced (\"070-123 45 67\"), anything else as saved.")
+
+
+class ContactAddressSchema(ContactMethodSchema):
+  latitude: float | None = Field(default=None, description="Where it is, known once the address was picked from Suggest Addresses.")
+  longitude: float | None = Field(default=None)
 
 
 class ContactSighting(Schema):
@@ -57,7 +63,7 @@ class ContactSchema(TimestampedSchema):
   external_url: str | None = Field(description="The person in Google Contacts, where they can be edited.")
   phones: list[ContactMethodSchema]
   emails: list[ContactMethodSchema]
-  addresses: list[ContactMethodSchema]
+  addresses: list[ContactAddressSchema]
   urls: list[ContactMethodSchema]
   dates: list[ContactDate] = Field(description="Other dates the address book keeps, such as anniversaries; birthdays are under birthday.")
   tags: list[str] = Field(description="Bessel's own, never sent to Google.")
@@ -138,6 +144,9 @@ class ContactSourceSchema(IDSchema):
 class ContactMethodInput(Schema):
   label: str | None = Field(default=None, max_length=100)
   value: str = Field(min_length=1, max_length=1000)
+  address: AddressParts | None = Field(
+    default=None, description="Addresses only: the parts from Get Address, saved as the address book's own fields, and where it is."
+  )
 
 
 class ContactUpdate(Schema):

@@ -62,6 +62,7 @@ import {
   downloadDocument,
   getAccountsOverview,
   getActivitySummary,
+  getAddress,
   getAgentUsageDaily,
   getAgentUsageStatus,
   getAvanza,
@@ -152,6 +153,7 @@ import {
   setProjectLocation,
   spendingByCategory,
   structureRecipeText,
+  suggestAddresses,
   syncAgentUsage,
   syncBankConnection,
   syncCalendarAccount,
@@ -333,6 +335,9 @@ import type {
   GetActivitySummaryData,
   GetActivitySummaryError,
   GetActivitySummaryResponse,
+  GetAddressData,
+  GetAddressError,
+  GetAddressResponse,
   GetAgentUsageDailyData,
   GetAgentUsageDailyError,
   GetAgentUsageDailyResponse,
@@ -574,6 +579,9 @@ import type {
   StructureRecipeTextData,
   StructureRecipeTextError,
   StructureRecipeTextResponse,
+  SuggestAddressesData,
+  SuggestAddressesError,
+  SuggestAddressesResponse,
   SyncAgentUsageData,
   SyncAgentUsageError,
   SyncAgentUsageResponse,
@@ -998,6 +1006,63 @@ export const getAgentUsageDailyOptions = (
       return data;
     },
     queryKey: getAgentUsageDailyQueryKey(options),
+  });
+
+export const suggestAddressesQueryKey = (
+  options: Options<SuggestAddressesData>,
+) => createQueryKey("suggestAddresses", options);
+
+/**
+ * Suggest Addresses
+ *
+ * Street addresses matching what's typed, best first. Empty when address search isn't configured.
+ */
+export const suggestAddressesOptions = (
+  options: Options<SuggestAddressesData>,
+) =>
+  queryOptions<
+    SuggestAddressesResponse,
+    SuggestAddressesError,
+    SuggestAddressesResponse,
+    ReturnType<typeof suggestAddressesQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await suggestAddresses({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: suggestAddressesQueryKey(options),
+  });
+
+export const getAddressQueryKey = (options: Options<GetAddressData>) =>
+  createQueryKey("getAddress", options);
+
+/**
+ * Get Address
+ *
+ * A suggested address in the parts an address book keeps, with its coordinates.
+ */
+export const getAddressOptions = (options: Options<GetAddressData>) =>
+  queryOptions<
+    GetAddressResponse,
+    GetAddressError,
+    GetAddressResponse,
+    ReturnType<typeof getAddressQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAddress({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAddressQueryKey(options),
   });
 
 export const listAssistantNotesQueryKey = (

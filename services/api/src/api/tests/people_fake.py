@@ -26,6 +26,8 @@ class FakePeople:
   writes: list[tuple[str, str, str | None, dict[str, Any] | None]] = field(default_factory=list)
   scope: str = "https://www.googleapis.com/auth/contacts.readonly"
   write_status: int | None = None
+  # Google rewrites some addresses it stores, e.g. adding the country.
+  address_suffix: str = ""
 
   def put(self, resource_name: str, **fields: Any) -> dict[str, Any]:
     self.version += 1
@@ -103,4 +105,6 @@ class FakePeople:
     fields = {k: v for k, v in person.items() if k not in ("resourceName", "etag", "metadata")}
     for name in mask:
       fields[name] = body.get(name, [])
+    if self.address_suffix and "addresses" in mask:
+      fields["addresses"] = [{**a, "formattedValue": a["formattedValue"] + self.address_suffix} for a in fields["addresses"]]
     return httpx.Response(200, json=self.put(resource_name, **{k: v for k, v in fields.items() if v}))

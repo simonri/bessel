@@ -40,13 +40,14 @@ describe("mutation errors", () => {
 });
 
 describe("query errors", () => {
-  async function failQuery(error: unknown) {
+  async function failQuery(error: unknown, meta?: Record<string, unknown>) {
     const queryClient = makeQueryClient();
     await queryClient
       .fetchQuery({
-        queryKey: ["thing"],
+        queryKey: ["thing", { text: "Storgatan 1" }],
         queryFn: () => Promise.reject(error),
         retry: false,
+        meta,
       })
       .catch(() => {});
   }
@@ -59,6 +60,23 @@ describe("query errors", () => {
     await failQuery(apiError(500));
     await failQuery(apiError(422));
     expect(captureException).toHaveBeenCalledTimes(2);
+    consoleError.mockRestore();
+  });
+
+  it("leave out a private key, such as what someone typed", async () => {
+    captureException.mockClear();
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    await failQuery(apiError(502), { privateKey: true });
+    await failQuery(apiError(502));
+
+    const [[, hidden], [, shown]] = captureException.mock.calls;
+    expect(hidden.queryKey).toBe("[private]");
+    expect(JSON.stringify(consoleError.mock.calls[0])).not.toContain(
+      "Storgatan",
+    );
+    expect(shown.queryKey).toContain("Storgatan 1");
     consoleError.mockRestore();
   });
 

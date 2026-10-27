@@ -47,6 +47,18 @@ vi.mock("@bessel/client", async (importOriginal) => ({
   authorizeContactEditingMutation: () => ({ mutationFn: api.authorize }),
   updateContactTagsMutation: () => ({ mutationFn: api.tags }),
   updateContactPhotoMutation: () => ({ mutationFn: api.photo }),
+  suggestAddressesOptions: ({ query }: { query: { text: string } }) => ({
+    queryKey: ["suggest", query.text],
+    queryFn: async () => ({
+      suggestions: [
+        { place_id: "p1", main_text: "Storgatan 1", secondary_text: "Lund" },
+      ],
+    }),
+  }),
+  getAddressOptions: () => ({
+    queryKey: ["address", "p1"],
+    queryFn: async () => PICKED,
+  }),
   listContactInteractionsOptions: ({
     path,
   }: {
@@ -66,6 +78,18 @@ vi.mock("@bessel/client", async (importOriginal) => ({
 
 vi.mock("./contact-photo", () => ({
   photoForUpload: async (file: File) => `resized:${file.name}`,
+}));
+
+const PICKED = vi.hoisted(() => ({
+  formatted: "Storgatan 1, 222 22 Lund, Sverige",
+  street_address: "Storgatan 1",
+  postal_code: "222 22",
+  city: "Lund",
+  region: null,
+  country: "Sverige",
+  country_code: "SE",
+  latitude: 55.7,
+  longitude: 13.19,
 }));
 
 const { ContactsPage } = await import("./contacts-page");
@@ -205,9 +229,12 @@ describe("ContactsPage details", () => {
       screen.getByRole("combobox", { name: "Addresses 1 label" }),
       "Custom…",
     );
-    fireEvent.change(screen.getByRole("textbox", { name: "Addresses 1 label" }), {
-      target: { value: "Summer house" },
-    });
+    fireEvent.change(
+      screen.getByRole("textbox", { name: "Addresses 1 label" }),
+      {
+        target: { value: "Summer house" },
+      },
+    );
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
     await waitFor(() => expect(api.update).toHaveBeenCalledTimes(1));
@@ -217,6 +244,29 @@ describe("ContactsPage details", () => {
     ]);
     expect(body.addresses).toEqual([
       { label: "Summer house", value: "Storgatan 1, Lund" },
+    ]);
+  });
+
+  it("saves a suggested address with its parts", async () => {
+    api.update.mockImplementation(async () => api.contacts[0]);
+    mount();
+    fireEvent.click(await screen.findByText("Anna Berg"));
+    fireEvent.click(screen.getByRole("button", { name: "Edit" }));
+
+    const address = screen.getByRole("combobox", { name: "Addresses 1" });
+    fireEvent.focus(address);
+    fireEvent.change(address, { target: { value: "Storgatan 1" } });
+    fireEvent.mouseDown(
+      await screen.findByRole("option", { name: /Storgatan 1/ }),
+    );
+    await waitFor(() =>
+      expect((address as HTMLInputElement).value).toBe(PICKED.formatted),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    await waitFor(() => expect(api.update).toHaveBeenCalledTimes(1));
+    expect(api.update.mock.calls[0][0].body.addresses).toEqual([
+      { label: "Home", value: PICKED.formatted, address: PICKED },
     ]);
   });
 
@@ -258,7 +308,9 @@ describe("ContactsPage details", () => {
     mount();
     fireEvent.click(await screen.findByText("Anna Berg"));
 
-    const input = (await screen.findByLabelText("Change photo")) as HTMLInputElement;
+    const input = (await screen.findByLabelText(
+      "Change photo",
+    )) as HTMLInputElement;
     fireEvent.change(input, {
       target: { files: [new File(["x"], "anna.png", { type: "image/png" })] },
     });

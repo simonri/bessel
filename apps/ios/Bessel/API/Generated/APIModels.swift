@@ -178,6 +178,40 @@ enum API {
         @Lossy var apps: [ActivityAppSummary]
     }
 
+    struct AddressParts-Input: Codable, Hashable {
+        var formatted: String
+        var streetAddress: String?
+        var postalCode: String?
+        var city: String?
+        var region: String?
+        var country: String?
+        var countryCode: String?
+        var latitude: Double?
+        var longitude: Double?
+    }
+
+    struct AddressParts-Output: Codable, Hashable {
+        var formatted: String
+        var streetAddress: String?
+        var postalCode: String?
+        var city: String?
+        var region: String?
+        var country: String?
+        var countryCode: String?
+        var latitude: Double?
+        var longitude: Double?
+    }
+
+    struct AddressSuggestion: Codable, Hashable {
+        var placeId: String
+        var mainText: String
+        var secondaryText: String?
+    }
+
+    struct AddressSuggestionsResponse: Codable, Hashable {
+        @Lossy var suggestions: [AddressSuggestion]
+    }
+
     struct AgentUsageDailyEntry: Codable, Hashable {
         var date: String
         var device: String
@@ -570,6 +604,14 @@ enum API {
         var payloads: [[String: JSONValue]]
     }
 
+    struct ContactAddressSchema: Codable, Hashable {
+        var label: String?
+        var value: String
+        var display: String
+        var latitude: Double?
+        var longitude: Double?
+    }
+
     struct ContactAuthorizeResponse: Codable, Hashable {
         var url: String
     }
@@ -672,6 +714,7 @@ enum API {
     struct ContactMethodInput: Codable, Hashable {
         var label: String?
         var value: String
+        var address: AddressParts-Input?
     }
 
     struct ContactMethodSchema: Codable, Hashable {
@@ -714,7 +757,7 @@ enum API {
         var externalUrl: String?
         @Lossy var phones: [ContactMethodSchema]
         @Lossy var emails: [ContactMethodSchema]
-        @Lossy var addresses: [ContactMethodSchema]
+        @Lossy var addresses: [ContactAddressSchema]
         @Lossy var urls: [ContactMethodSchema]
         @Lossy var dates: [ContactDate]
         var tags: [String]
@@ -2651,6 +2694,158 @@ extension API.ActivitySummaryResponse {
     }
 }
 
+extension API.AddressParts-Input {
+    private enum DecodingKeys: String, CodingKey {
+        case formatted
+        case streetAddress
+        case postalCode
+        case city
+        case region
+        case country
+        case countryCode
+        case latitude
+        case longitude
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.formatted = try container.decode(String.self, forKey: .formatted)
+        self.streetAddress = try container.decodeIfPresent(String.self, forKey: .streetAddress)
+        self.postalCode = try container.decodeIfPresent(String.self, forKey: .postalCode)
+        self.city = try container.decodeIfPresent(String.self, forKey: .city)
+        self.region = try container.decodeIfPresent(String.self, forKey: .region)
+        self.country = try container.decodeIfPresent(String.self, forKey: .country)
+        self.countryCode = try container.decodeIfPresent(String.self, forKey: .countryCode)
+        self.latitude = try container.decodeIfPresent(Double.self, forKey: .latitude)
+        self.longitude = try container.decodeIfPresent(Double.self, forKey: .longitude)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case formatted
+        case streetAddress = "street_address"
+        case postalCode = "postal_code"
+        case city
+        case region
+        case country
+        case countryCode = "country_code"
+        case latitude
+        case longitude
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.formatted, forKey: .formatted)
+        try container.encodeIfPresent(self.streetAddress, forKey: .streetAddress)
+        try container.encodeIfPresent(self.postalCode, forKey: .postalCode)
+        try container.encodeIfPresent(self.city, forKey: .city)
+        try container.encodeIfPresent(self.region, forKey: .region)
+        try container.encodeIfPresent(self.country, forKey: .country)
+        try container.encodeIfPresent(self.countryCode, forKey: .countryCode)
+        try container.encodeIfPresent(self.latitude, forKey: .latitude)
+        try container.encodeIfPresent(self.longitude, forKey: .longitude)
+    }
+}
+
+extension API.AddressParts-Output {
+    private enum DecodingKeys: String, CodingKey {
+        case formatted
+        case streetAddress
+        case postalCode
+        case city
+        case region
+        case country
+        case countryCode
+        case latitude
+        case longitude
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.formatted = try container.decode(String.self, forKey: .formatted)
+        self.streetAddress = try container.decodeIfPresent(String.self, forKey: .streetAddress)
+        self.postalCode = try container.decodeIfPresent(String.self, forKey: .postalCode)
+        self.city = try container.decodeIfPresent(String.self, forKey: .city)
+        self.region = try container.decodeIfPresent(String.self, forKey: .region)
+        self.country = try container.decodeIfPresent(String.self, forKey: .country)
+        self.countryCode = try container.decodeIfPresent(String.self, forKey: .countryCode)
+        self.latitude = try container.decodeIfPresent(Double.self, forKey: .latitude)
+        self.longitude = try container.decodeIfPresent(Double.self, forKey: .longitude)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case formatted
+        case streetAddress = "street_address"
+        case postalCode = "postal_code"
+        case city
+        case region
+        case country
+        case countryCode = "country_code"
+        case latitude
+        case longitude
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.formatted, forKey: .formatted)
+        try container.encodeIfPresent(self.streetAddress, forKey: .streetAddress)
+        try container.encodeIfPresent(self.postalCode, forKey: .postalCode)
+        try container.encodeIfPresent(self.city, forKey: .city)
+        try container.encodeIfPresent(self.region, forKey: .region)
+        try container.encodeIfPresent(self.country, forKey: .country)
+        try container.encodeIfPresent(self.countryCode, forKey: .countryCode)
+        try container.encodeIfPresent(self.latitude, forKey: .latitude)
+        try container.encodeIfPresent(self.longitude, forKey: .longitude)
+    }
+}
+
+extension API.AddressSuggestion {
+    private enum DecodingKeys: String, CodingKey {
+        case placeId
+        case mainText
+        case secondaryText
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.placeId = try container.decode(String.self, forKey: .placeId)
+        self.mainText = try container.decode(String.self, forKey: .mainText)
+        self.secondaryText = try container.decodeIfPresent(String.self, forKey: .secondaryText)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case placeId = "place_id"
+        case mainText = "main_text"
+        case secondaryText = "secondary_text"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.placeId, forKey: .placeId)
+        try container.encode(self.mainText, forKey: .mainText)
+        try container.encodeIfPresent(self.secondaryText, forKey: .secondaryText)
+    }
+}
+
+extension API.AddressSuggestionsResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case suggestions
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._suggestions = try container.decode(Lossy<API.AddressSuggestion>.self, forKey: .suggestions)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case suggestions
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.suggestions, forKey: .suggestions)
+    }
+}
+
 extension API.AgentUsageDailyEntry {
     private enum DecodingKeys: String, CodingKey {
         case date
@@ -4238,6 +4433,42 @@ extension API.ClientDiagnosticsUpload {
     }
 }
 
+extension API.ContactAddressSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case label
+        case value
+        case display
+        case latitude
+        case longitude
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.label = try container.decodeIfPresent(String.self, forKey: .label)
+        self.value = try container.decode(String.self, forKey: .value)
+        self.display = try container.decode(String.self, forKey: .display)
+        self.latitude = try container.decodeIfPresent(Double.self, forKey: .latitude)
+        self.longitude = try container.decodeIfPresent(Double.self, forKey: .longitude)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case label
+        case value
+        case display
+        case latitude
+        case longitude
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.label, forKey: .label)
+        try container.encode(self.value, forKey: .value)
+        try container.encode(self.display, forKey: .display)
+        try container.encodeIfPresent(self.latitude, forKey: .latitude)
+        try container.encodeIfPresent(self.longitude, forKey: .longitude)
+    }
+}
+
 extension API.ContactAuthorizeResponse {
     private enum DecodingKeys: String, CodingKey {
         case url
@@ -4602,23 +4833,27 @@ extension API.ContactMethodInput {
     private enum DecodingKeys: String, CodingKey {
         case label
         case value
+        case address
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DecodingKeys.self)
         self.label = try container.decodeIfPresent(String.self, forKey: .label)
         self.value = try container.decode(String.self, forKey: .value)
+        self.address = try container.decodeIfPresent(AddressParts-Input.self, forKey: .address)
     }
 
     private enum EncodingKeys: String, CodingKey {
         case label
         case value
+        case address
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encodeIfPresent(self.label, forKey: .label)
         try container.encode(self.value, forKey: .value)
+        try container.encodeIfPresent(self.address, forKey: .address)
     }
 }
 
@@ -4767,7 +5002,7 @@ extension API.ContactSchema {
         self.externalUrl = try container.decodeIfPresent(String.self, forKey: .externalUrl)
         self._phones = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .phones)
         self._emails = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .emails)
-        self._addresses = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .addresses)
+        self._addresses = try container.decode(Lossy<API.ContactAddressSchema>.self, forKey: .addresses)
         self._urls = try container.decode(Lossy<API.ContactMethodSchema>.self, forKey: .urls)
         self._dates = try container.decode(Lossy<API.ContactDate>.self, forKey: .dates)
         self.tags = try container.decode([String].self, forKey: .tags)

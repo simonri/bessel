@@ -27,7 +27,10 @@ export function makeQueryClient() {
       onError: (error, query) => {
         const status = errorStatus(error);
         if (!isReportable(status)) return;
-        const queryKey = JSON.stringify(query.queryKey);
+        // `meta: { privateKey: true }` for keys holding what someone typed, such as an address.
+        const queryKey = query.meta?.privateKey
+          ? "[private]"
+          : JSON.stringify(query.queryKey);
         console.error(`Query failed with ${status}`, queryKey, error);
         captureException(new Error(`Query failed with ${status}`), {
           queryKey,

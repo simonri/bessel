@@ -50,6 +50,15 @@ _GOOGLE_TYPES = {
   "emailAddresses": {"home": "home", "work": "work", "other": "other"},
   "addresses": {"home": "home", "work": "work", "other": "other"},
 }
+# Get Address's parts -> the People API's address fields.
+_ADDRESS_PARTS = (
+  ("street_address", "streetAddress"),
+  ("postal_code", "postalCode"),
+  ("city", "city"),
+  ("region", "region"),
+  ("country", "country"),
+  ("country_code", "countryCode"),
+)
 # Bessel's name parts -> the People API's.
 _NAME_PARTS = (
   ("name_prefix", "honorificPrefix"),
@@ -95,8 +104,22 @@ def _methods(field: str, existing: list[dict[str, Any]], wanted: list[dict[str, 
           entry.pop("type", None)
     else:
       entry = {_VALUE_KEY[field]: value, **({"type": _google_type(field, label)} if label else {})}
+    if field == "addresses" and item.get("address"):
+      _set_parts(entry, value, item["address"])
     result.append(entry)
   return result
+
+
+def _set_parts(entry: dict[str, Any], value: str, parts: dict[str, Any]) -> None:
+  """A picked address replaces every part the entry had, so none of the old address is left behind."""
+  for _, api_key in _ADDRESS_PARTS:
+    entry.pop(api_key, None)
+  for stale in ("extendedAddress", "poBox"):
+    entry.pop(stale, None)
+  entry["formattedValue"] = value
+  for key, api_key in _ADDRESS_PARTS:
+    if parts.get(key):
+      entry[api_key] = parts[key]
 
 
 def build_update(person: dict[str, Any], changes: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:

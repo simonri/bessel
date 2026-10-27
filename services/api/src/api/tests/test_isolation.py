@@ -216,6 +216,8 @@ EXEMPT: dict[str, str] = {
   "GET /v1/mcp-connector": "The server's public connector address, no user data",
   "GET /v1/investments/crypto/price/{coin_id}": "Public price data, no user data",
   "GET /v1/places/search": "External Google Places lookup, no stored data",
+  "GET /v1/addresses/suggestions": "External Google Places lookup, no stored data",
+  "GET /v1/addresses/{place_id}": "External Google Places lookup, no stored data",
   "POST /v1/recipes/import": "Structures the posted text with an LLM; reads and stores nothing",
   "POST /v1/client-diagnostics": "Logs the caller's own crash reports; reads and stores nothing",
   "POST /v1/calendars/google/authorize": "Starts the caller's own connection flow",

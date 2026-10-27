@@ -14,6 +14,7 @@ import {
 import { Plus, Trash2, X } from "lucide-react";
 import { type ReactNode, useId, useState } from "react";
 import { cn } from "@/lib/utils";
+import { AddressInput } from "./address-input";
 
 type MethodField = "phones" | "emails" | "addresses" | "urls";
 
@@ -106,7 +107,12 @@ function birthdayOf(
 
 const cleanMethods = (items: ContactMethodInput[]) =>
   items
-    .map((m) => ({ label: text(m.label ?? ""), value: m.value.trim() }))
+    .map((m) => ({
+      label: text(m.label ?? ""),
+      value: m.value.trim(),
+      // A picked address: its parts go too, and make it a change even when the text is the same.
+      ...(m.address ? { address: m.address } : {}),
+    }))
     .filter((m) => m.value);
 
 /** Only what changed from `before` (everything set, for a new contact), or an error to show. */
@@ -256,13 +262,23 @@ function Methods({
             ariaLabel={`${title} ${i + 1} label`}
             onChange={(label) => set(i, { label })}
           />
-          <input
-            aria-label={`${title} ${i + 1}`}
-            placeholder={placeholder}
-            value={item.value}
-            onChange={(e) => set(i, { value: e.target.value })}
-            className={INPUT}
-          />
+          {field === "addresses" ? (
+            <AddressInput
+              ariaLabel={`${title} ${i + 1}`}
+              placeholder={placeholder}
+              value={item.value}
+              onChange={(value, address) => set(i, { value, address })}
+              className={INPUT}
+            />
+          ) : (
+            <input
+              aria-label={`${title} ${i + 1}`}
+              placeholder={placeholder}
+              value={item.value}
+              onChange={(e) => set(i, { value: e.target.value })}
+              className={INPUT}
+            />
+          )}
           <button
             type="button"
             aria-label={`Remove ${title.toLowerCase()} ${i + 1}`}

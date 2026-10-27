@@ -1,4 +1,5 @@
 from .activity_event import ActivityEvent
+from .address_location import AddressLocation
 from .agent_usage_daily import AgentUsageDaily
 from .agent_usage_status import AgentUsageStatus
 from .assistant_note import AssistantNote
@@ -64,6 +65,7 @@ __all__ = [
   "ActivityEvent",
   "AgentUsageDaily",
   "AgentUsageStatus",
+  "AddressLocation",
   "AssistantNote",
   "User",
   "BankAccount",

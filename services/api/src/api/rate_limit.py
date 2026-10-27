@@ -53,6 +53,8 @@ async def _authenticate(scope: Scope) -> tuple[str, RateLimitGroup]:
 _PRODUCTION_RULES: dict[str, Sequence[Rule]] = {
   # Each search spends quota on the paid Google Places key.
   r"^/v1/places/search": [Rule(group=RateLimitGroup.default, minute=30, zone="places-search")],
+  # Suggestions come per keystroke; Google bills them with the pick as one session.
+  r"^/v1/addresses/": [Rule(group=RateLimitGroup.default, minute=120, hour=1500, zone="address-search")],
   r"^/v1/(tasks/[^/]+/attachments|transactions/[^/]+/documents)$": [
     Rule(group=RateLimitGroup.default, method="post", minute=30, zone="uploads"),
     Rule(group=RateLimitGroup.default, minute=500, zone="api"),

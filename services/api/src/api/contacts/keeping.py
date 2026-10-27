@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.addresses.repository import AddressLocationRepository, address_key
 from api.calendars.repository import CalendarAccountRepository, CalendarEventRepository
 from api.common.utils import utc_now
 from api.contacts.repository import ContactEventDismissalRepository, ContactInteractionRepository, ContactRepository
@@ -207,7 +208,19 @@ async def contact_schemas(session: AsyncSession, user: User, contacts: Sequence[
   if not contacts:
     return []
   seen = await _last_seen_for(_Context(session, user), contacts)
-  return [ContactSchema.model_validate(c).model_copy(update={"last_seen": seen[c.id]}) for c in contacts]
+  addresses = [m.value for c in contacts for m in c.methods if m.kind == ContactMethodKind.address]
+  located = await AddressLocationRepository.from_session(session).for_addresses(user.id, addresses)
+  return [_with_locations(ContactSchema.model_validate(c).model_copy(update={"last_seen": seen[c.id]}), located) for c in contacts]
+
+
+def _with_locations(contact: ContactSchema, located: dict[str, tuple[float, float]]) -> ContactSchema:
+  if not located:
+    return contact
+  addresses = []
+  for address in contact.addresses:
+    where = located.get(address_key(address.value))
+    addresses.append(address.model_copy(update={"latitude": where[0], "longitude": where[1]}) if where else address)
+  return contact.model_copy(update={"addresses": addresses})
 
 
 async def contact_schema(session: AsyncSession, user: User, contact: Contact) -> ContactSchema:

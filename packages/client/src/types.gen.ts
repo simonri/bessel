@@ -436,6 +436,132 @@ export type ActivitySummaryResponse = {
 };
 
 /**
+ * AddressParts
+ *
+ * An address in the parts an address book keeps, with where it is when known.
+ */
+export type AddressPartsInput = {
+  /**
+   * Formatted
+   *
+   * The whole address on one line, as Google writes it.
+   */
+  formatted: string;
+  /**
+   * Street Address
+   */
+  street_address?: string | null;
+  /**
+   * Postal Code
+   */
+  postal_code?: string | null;
+  /**
+   * City
+   */
+  city?: string | null;
+  /**
+   * Region
+   */
+  region?: string | null;
+  /**
+   * Country
+   */
+  country?: string | null;
+  /**
+   * Country Code
+   */
+  country_code?: string | null;
+  /**
+   * Latitude
+   */
+  latitude?: number | null;
+  /**
+   * Longitude
+   */
+  longitude?: number | null;
+};
+
+/**
+ * AddressParts
+ *
+ * An address in the parts an address book keeps, with where it is when known.
+ */
+export type AddressPartsOutput = {
+  /**
+   * Formatted
+   *
+   * The whole address on one line, as Google writes it.
+   */
+  formatted: string;
+  /**
+   * Street Address
+   */
+  street_address: string | null;
+  /**
+   * Postal Code
+   */
+  postal_code: string | null;
+  /**
+   * City
+   */
+  city: string | null;
+  /**
+   * Region
+   */
+  region: string | null;
+  /**
+   * Country
+   */
+  country: string | null;
+  /**
+   * Country Code
+   */
+  country_code: string | null;
+  /**
+   * Latitude
+   */
+  latitude: number | null;
+  /**
+   * Longitude
+   */
+  longitude: number | null;
+};
+
+/**
+ * AddressSuggestion
+ */
+export type AddressSuggestion = {
+  /**
+   * Place Id
+   *
+   * Pass to Get Address for the address's parts.
+   */
+  place_id: string;
+  /**
+   * Main Text
+   *
+   * The street and number, e.g. 'Drottninggatan 5'.
+   */
+  main_text: string;
+  /**
+   * Secondary Text
+   *
+   * Where it is, e.g. 'Stockholm, Sverige'.
+   */
+  secondary_text: string | null;
+};
+
+/**
+ * AddressSuggestionsResponse
+ */
+export type AddressSuggestionsResponse = {
+  /**
+   * Suggestions
+   */
+  suggestions: Array<AddressSuggestion>;
+};
+
+/**
  * AgentUsageDailyEntry
  */
 export type AgentUsageDailyEntry = {
@@ -1889,6 +2015,38 @@ export type ClientDiagnosticsUpload = {
 };
 
 /**
+ * ContactAddressSchema
+ */
+export type ContactAddressSchema = {
+  /**
+   * Label
+   *
+   * As the address book names it, e.g. 'Mobile' or 'Work'.
+   */
+  label: string | null;
+  /**
+   * Value
+   */
+  value: string;
+  /**
+   * Display
+   *
+   * How to show the value: phone numbers spaced ("070-123 45 67"), anything else as saved.
+   */
+  display: string;
+  /**
+   * Latitude
+   *
+   * Where it is, known once the address was picked from Suggest Addresses.
+   */
+  latitude: number | null;
+  /**
+   * Longitude
+   */
+  longitude: number | null;
+};
+
+/**
  * ContactAuthorizeResponse
  */
 export type ContactAuthorizeResponse = {
@@ -2178,6 +2336,10 @@ export type ContactMethodInput = {
    * Value
    */
   value: string;
+  /**
+   * Addresses only: the parts from Get Address, saved as the address book's own fields, and where it is.
+   */
+  address?: AddressPartsInput | null;
 };
 
 /**
@@ -2338,7 +2500,7 @@ export type ContactSchema = {
   /**
    * Addresses
    */
-  addresses: Array<ContactMethodSchema>;
+  addresses: Array<ContactAddressSchema>;
   /**
    * Urls
    */
@@ -8286,6 +8448,83 @@ export type GetAgentUsageDailyResponses = {
 
 export type GetAgentUsageDailyResponse =
   GetAgentUsageDailyResponses[keyof GetAgentUsageDailyResponses];
+
+export type SuggestAddressesData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Text
+     *
+     * What has been typed so far.
+     */
+    text: string;
+    /**
+     * Session
+     *
+     * One id per address being typed, sent with every suggestion request and the final Get Address; start a new one after a pick.
+     */
+    session: string;
+  };
+  url: "/v1/addresses/suggestions";
+};
+
+export type SuggestAddressesErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SuggestAddressesError =
+  SuggestAddressesErrors[keyof SuggestAddressesErrors];
+
+export type SuggestAddressesResponses = {
+  /**
+   * Successful Response
+   */
+  200: AddressSuggestionsResponse;
+};
+
+export type SuggestAddressesResponse =
+  SuggestAddressesResponses[keyof SuggestAddressesResponses];
+
+export type GetAddressData = {
+  body?: never;
+  path: {
+    /**
+     * Place Id
+     */
+    place_id: string;
+  };
+  query: {
+    /**
+     * Session
+     *
+     * One id per address being typed, sent with every suggestion request and the final Get Address; start a new one after a pick.
+     */
+    session: string;
+  };
+  url: "/v1/addresses/{place_id}";
+};
+
+export type GetAddressErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetAddressError = GetAddressErrors[keyof GetAddressErrors];
+
+export type GetAddressResponses = {
+  /**
+   * Successful Response
+   */
+  200: AddressPartsOutput;
+};
+
+export type GetAddressResponse = GetAddressResponses[keyof GetAddressResponses];
 
 export type ListAssistantNotesData = {
   body?: never;

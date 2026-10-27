@@ -263,6 +263,9 @@ import type {
   GetActivitySummaryData,
   GetActivitySummaryErrors,
   GetActivitySummaryResponses,
+  GetAddressData,
+  GetAddressErrors,
+  GetAddressResponses,
   GetAgentUsageDailyData,
   GetAgentUsageDailyErrors,
   GetAgentUsageDailyResponses,
@@ -506,6 +509,9 @@ import type {
   StructureRecipeTextData,
   StructureRecipeTextErrors,
   StructureRecipeTextResponses,
+  SuggestAddressesData,
+  SuggestAddressesErrors,
+  SuggestAddressesResponses,
   SyncAgentUsageData,
   SyncAgentUsageErrors,
   SyncAgentUsageResponses,
@@ -812,6 +818,46 @@ export const getAgentUsageDaily = <ThrowOnError extends boolean = false>(
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/agent-usage/daily",
+    ...options,
+  });
+
+/**
+ * Suggest Addresses
+ *
+ * Street addresses matching what's typed, best first. Empty when address search isn't configured.
+ */
+export const suggestAddresses = <ThrowOnError extends boolean = false>(
+  options: Options<SuggestAddressesData, ThrowOnError>,
+): RequestResult<
+  SuggestAddressesResponses,
+  SuggestAddressesErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).get<
+    SuggestAddressesResponses,
+    SuggestAddressesErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/addresses/suggestions",
+    ...options,
+  });
+
+/**
+ * Get Address
+ *
+ * A suggested address in the parts an address book keeps, with its coordinates.
+ */
+export const getAddress = <ThrowOnError extends boolean = false>(
+  options: Options<GetAddressData, ThrowOnError>,
+): RequestResult<GetAddressResponses, GetAddressErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetAddressResponses,
+    GetAddressErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/addresses/{place_id}",
     ...options,
   });
 
