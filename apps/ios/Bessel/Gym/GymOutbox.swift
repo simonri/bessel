@@ -42,9 +42,10 @@ final class GymOutbox {
     }
 
     /// Sends what's waiting, oldest first, telling `reached` about each change
-    /// the server now has. Returns whether everything went through.
+    /// the server now has and `refused` about each it turned down for good.
+    /// Returns whether everything went through.
     @discardableResult
-    func send(reached: (GymChange) -> Void = { _ in }) async -> Bool {
+    func send(reached: (GymChange) -> Void = { _ in }, refused: (GymChange, Error) -> Void = { _, _ in }) async -> Bool {
         guard !isSending else { return changes.isEmpty }
         isSending = true
         defer { isSending = false }
@@ -60,6 +61,7 @@ final class GymOutbox {
             } catch {
                 // Refused for good (say, a name taken on another device); the next load shows what's true.
                 Self.log.error("Gym change refused: \(error.userMessage, privacy: .public)")
+                refused(change, error)
             }
             changes.removeFirst()
             save()

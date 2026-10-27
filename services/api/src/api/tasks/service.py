@@ -2,6 +2,7 @@ from typing import Any
 from uuid import UUID
 
 from api.common.utils import utc_now
+from api.exceptions import ValidationError
 from api.models.project import Project
 from api.models.task import Task
 from api.postgres import AsyncSession
@@ -10,6 +11,13 @@ from api.tasks.attachment_storage import delete_attachment_file
 from api.tasks.recurrence import compute_next_due_date
 from api.tasks.repository import TaskRepository
 from api.tasks.schemas import TaskCreate
+
+
+def _title(title: str) -> str:
+  title = title.strip()
+  if not title:
+    raise ValidationError("A task needs a title.", status_code=422)
+  return title
 
 
 class TaskService:
@@ -26,6 +34,7 @@ class TaskService:
   async def create(self, session: AsyncSession, user_id: UUID, body: TaskCreate) -> Task:
     repo = TaskRepository.from_session(session)
     task_data = body.model_dump()
+    task_data["title"] = _title(task_data["title"])
     project = await self.resolve_project(session, task_data.pop("project", None), user_id)
     task_data["project_id"] = project.id if project else None
     task_data["user_id"] = user_id
@@ -44,6 +53,8 @@ class TaskService:
   async def update(self, session: AsyncSession, task: Task, changes: dict[str, Any]) -> Task:
     """Applies `changes` (TaskUpdate fields that were set) to `task`."""
     changes = dict(changes)
+    if changes.get("title") is not None:
+      changes["title"] = _title(changes["title"])
     if "project" in changes:
       project = await self.resolve_project(session, changes.pop("project"), task.user_id)
       changes["project_id"] = project.id if project else None

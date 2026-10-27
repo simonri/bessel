@@ -1,10 +1,5 @@
 import SwiftUI
 
-/// Opens a contact's page from anywhere on the contacts screen.
-struct ContactRoute: Hashable {
-    let id: UUID
-}
-
 /// The address book A to Z, with events to follow up on and birthdays and
 /// other dates coming up on top. Pushed from the Calendar tab, whose events
 /// say who you last saw.
@@ -40,7 +35,7 @@ struct ContactsView: View {
                 ForEach(sections) { section in
                     Section {
                         ForEach(section.contacts) { contact in
-                            NavigationLink(value: ContactRoute(id: contact.id)) {
+                            NavigationLink(value: CalendarRoute.contact(contact.id)) {
                                 ContactRow(name: contact.displayName, photoURL: contact.photoUrl, detail: contact.subtitle)
                             }
                             .listRowBackground(Theme.card)
@@ -69,9 +64,6 @@ struct ContactsView: View {
         }
         .navigationTitle("Contacts")
         .toolbarTitleDisplayMode(.inlineLarge)
-        .navigationDestination(for: ContactRoute.self) { route in
-            ContactDetailView(store: store, contactID: route.id)
-        }
         .sheet(item: $noting) { followUp in
             FollowUpNoteSheet(followUp: followUp, store: store)
         }
@@ -108,7 +100,7 @@ struct ContactsView: View {
         if let dates = store.reminders?.dates, !dates.isEmpty {
             Section {
                 ForEach(dates, id: \.self) { reminder in
-                    NavigationLink(value: ContactRoute(id: reminder.contact.id)) {
+                    NavigationLink(value: CalendarRoute.contact(reminder.contact.id)) {
                         ContactRow(
                             name: reminder.contact.displayName,
                             photoURL: reminder.contact.photoUrl,

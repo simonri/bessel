@@ -1,3 +1,4 @@
+import CoreLocation
 import Foundation
 import Observation
 import SwiftUI
@@ -66,6 +67,15 @@ final class PlacesStore {
         } catch {
             guard loads.isCurrent(ticket), !error.isCancellation else { return }
             loadError = error.userMessage
+        }
+    }
+
+    /// A place already saved with this name, within a short walk of the spot.
+    func saved(like draft: PlaceCreate) -> PlaceItem? {
+        let spot = CLLocation(latitude: draft.latitude, longitude: draft.longitude)
+        return places.first { place in
+            place.name.localizedCaseInsensitiveCompare(draft.name) == .orderedSame
+                && CLLocation(latitude: place.latitude, longitude: place.longitude).distance(from: spot) < 150
         }
     }
 

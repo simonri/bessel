@@ -122,7 +122,7 @@ final class GymStore {
     @discardableResult
     func addExercise(named name: String, muscles: Set<GymMuscle> = []) -> GymExercise? {
         let name = Self.tidy(name)
-        guard !name.isEmpty else { return nil }
+        guard !name.isEmpty, isShortEnough(name) else { return nil }
         guard !isNameTaken(name) else {
             errorMessage = "You already have an exercise called \(name)."
             return nil
@@ -134,7 +134,7 @@ final class GymStore {
 
     func rename(_ exercise: GymExercise, to name: String) {
         let name = Self.tidy(name)
-        guard !name.isEmpty, name != exercise.name else { return }
+        guard !name.isEmpty, name != exercise.name, isShortEnough(name) else { return }
         guard !isNameTaken(name, except: exercise.id) else {
             errorMessage = "You already have an exercise called \(name)."
             return
@@ -176,12 +176,33 @@ final class GymStore {
     }
 
     /// Each change the server takes becomes part of its copy here, so it stays
-    /// shown after it leaves the queue.
+    /// shown after it leaves the queue. One it turns down for good is said out
+    /// loud, since it was already on screen.
     func sendChanges() async {
-        await outbox.send { change in
+        await outbox.send(reached: { change in
             change.apply(to: &server)
-        }
+        }, refused: { change, error in
+            errorMessage = "\(describe(change)) couldn't be saved. \(error.userMessage)"
+        })
         rebuild()
+    }
+
+    private func describe(_ change: GymChange) -> String {
+        let name = { (id: UUID) in self.exercise(id)?.name ?? "An exercise" }
+        switch change {
+        case let .saveExercise(id, newName, _): return exercise(id) == nil ? newName : name(id)
+        case let .deleteExercise(id): return "Deleting \(name(id))"
+        case let .saveSet(id, _, weightKg): return "\(name(id)) at \(GymFormat.weight(weightKg))"
+        case let .deleteSet(id, _): return "Removing a set from \(name(id))"
+        }
+    }
+
+    private func isShortEnough(_ name: String) -> Bool {
+        guard name.count <= GymFormat.maxNameLength else {
+            errorMessage = "Keep the name under \(GymFormat.maxNameLength) characters."
+            return false
+        }
+        return true
     }
 
     /// The server's list with every waiting change on top, latest trained first.

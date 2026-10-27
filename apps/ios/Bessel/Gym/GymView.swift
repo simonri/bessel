@@ -434,10 +434,17 @@ struct LogTopSetSheet: View {
                         .onChange(of: weightText) { _, text in
                             if let value = GymFormat.parse(text) { weight = value }
                         }
+                        // Typing replaces the prefilled weight instead of adding to it.
+                        .onChange(of: editingWeight) { _, editing in
+                            guard editing else { return }
+                            Task { @MainActor in
+                                UIApplication.shared.sendAction(#selector(UIResponder.selectAll(_:)), to: nil, from: nil, for: nil)
+                            }
+                        }
                         .accessibilityLabel("Weight in kilograms")
-                    Text("kg")
+                    Text(isTooHeavy ? "Up to \(GymFormat.number(GymFormat.maxWeightKg)) kg" : "kg")
                         .font(.headline)
-                        .foregroundStyle(Theme.mutedForeground)
+                        .foregroundStyle(isTooHeavy ? Theme.destructive : Theme.mutedForeground)
                 }
                 .frame(maxWidth: .infinity)
                 stepButton("plus", label: "More") { nudge(step) }
@@ -487,12 +494,16 @@ struct LogTopSetSheet: View {
                 .background(Theme.primary, in: Capsule())
         }
         .buttonStyle(.plain)
-        .disabled(GymFormat.parse(weightText) == nil)
-        .opacity(GymFormat.parse(weightText) == nil ? 0.5 : 1)
+        .disabled(GymFormat.loggable(weightText) == nil)
+        .opacity(GymFormat.loggable(weightText) == nil ? 0.5 : 1)
+    }
+
+    private var isTooHeavy: Bool {
+        (GymFormat.parse(weightText) ?? 0) > GymFormat.maxWeightKg
     }
 
     private func save(_ exercise: GymExercise) {
-        guard let value = GymFormat.parse(weightText), value >= 0 else { return }
+        guard let value = GymFormat.loggable(weightText) else { return }
         editingWeight = false
         let isNewBest = store.logTopSet(exercise, weightKg: value)
         history.removeAll { $0.dayKey == today }

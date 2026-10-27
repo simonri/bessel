@@ -136,8 +136,18 @@ enum GymFormat {
         return date.formatted(.dateTime.month(.abbreviated).day())
     }
 
+    /// What the server takes: heavier than any top set, so a slip of the keyboard.
+    static let maxWeightKg: Double = 1000
+    static let maxNameLength = 100
+
     /// Reads "62,5" as well as "62.5".
     static func parse(_ text: String) -> Double? {
         Double(text.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: "."))
+    }
+
+    /// A weight that can be saved, or nil.
+    static func loggable(_ text: String) -> Double? {
+        guard let value = parse(text), (0...maxWeightKg).contains(value) else { return nil }
+        return value
     }
 }

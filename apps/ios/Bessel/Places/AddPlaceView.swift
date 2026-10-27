@@ -130,8 +130,13 @@ struct AddPlaceView: View {
             defer { savingID = nil }
             do {
                 let item = try await PlaceSearch.resolve(completion)
-                let created = try await store.create(PlaceSearch.draft(from: item, fallbackName: completion.title, status: status))
-                onAdded(created)
+                let draft = PlaceSearch.draft(from: item, fallbackName: completion.title, status: status)
+                // Already saved: open that one rather than keep two.
+                if let saved = store.saved(like: draft) {
+                    onAdded(saved)
+                } else {
+                    onAdded(try await store.create(draft))
+                }
                 dismiss()
             } catch {
                 errorMessage = "Couldn't add that place. Try again in a moment."

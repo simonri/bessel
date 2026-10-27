@@ -13,6 +13,7 @@ struct TaskFormView: View {
     @State private var priority = 0
     @State private var dueDate: Date?
     @State private var project = ""
+    @State private var repeats: API.RruleFrequency?
     @State private var isSaving = false
     @State private var errorMessage: String?
     @State private var showingDatePicker = false
@@ -53,6 +54,15 @@ struct TaskFormView: View {
                         DatePicker("Due", selection: dueBinding, displayedComponents: .date)
                             .datePickerStyle(.graphical)
                             .listRowBackground(Theme.card)
+                    }
+                }
+
+                pickerSection("Repeat") {
+                    ChipRow {
+                        repeatPill("Never", nil)
+                        repeatPill("Every day", .daily)
+                        repeatPill("Every week", .weekly)
+                        repeatPill("Every month", .monthly)
                     }
                 }
 
@@ -141,6 +151,12 @@ struct TaskFormView: View {
         }
     }
 
+    private func repeatPill(_ label: String, _ value: API.RruleFrequency?) -> some View {
+        FilterPill(title: label, isSelected: repeats == value) {
+            withAnimation(.snappy) { repeats = value }
+        }
+    }
+
     private func priorityPill(_ label: String, _ value: Int) -> some View {
         Button {
             withAnimation(.snappy) { priority = value }
@@ -173,7 +189,10 @@ struct TaskFormView: View {
             ("Next week", QuickTask.parse("next week", projects: []).dueDate),
             ("No date", nil),
         ]
+        // A picked date leads, so it's in view rather than past the screen edge.
+        let leadsWithDate = isCustomDate && !showingDatePicker
         return ChipRow {
+            if leadsWithDate { customDatePill(today: today) }
             ForEach(options, id: \.0) { label, date in
                 FilterPill(title: label, isSelected: !showingDatePicker && sameDay(dueDate, date)) {
                     withAnimation(.snappy) {
@@ -182,11 +201,15 @@ struct TaskFormView: View {
                     }
                 }
             }
-            FilterPill(title: customDateLabel, isSelected: showingDatePicker || isCustomDate) {
-                withAnimation(.snappy) {
-                    if dueDate == nil { dueDate = today }
-                    showingDatePicker.toggle()
-                }
+            if !leadsWithDate { customDatePill(today: today) }
+        }
+    }
+
+    private func customDatePill(today: Date) -> some View {
+        FilterPill(title: customDateLabel, isSelected: showingDatePicker || isCustomDate) {
+            withAnimation(.snappy) {
+                if dueDate == nil { dueDate = today }
+                showingDatePicker.toggle()
             }
         }
     }
@@ -244,7 +267,7 @@ struct TaskFormView: View {
         priority = task.priority
         dueDate = task.dueDate
         project = task.project ?? ""
-        showingDatePicker = isCustomDate
+        repeats = task.isRecurring ? task.rruleFrequency : nil
     }
 
     private func save() {
@@ -253,7 +276,7 @@ struct TaskFormView: View {
             return result.isEmpty ? nil : result
         }
         // Sent as a whole: a field emptied in the form goes as an explicit null.
-        let update = TaskUpdate(
+        var update = TaskUpdate(
             title: trimmed(title) ?? task.title,
             description: .some(trimmed(taskDescription)),
             status: status,
@@ -261,6 +284,15 @@ struct TaskFormView: View {
             dueDate: .some(dueDate),
             project: .some(trimmed(project))
         )
+        // Only when changed, so an interval or weekday set on the desktop survives.
+        let current = task.isRecurring ? task.rruleFrequency : nil
+        if repeats != current {
+            update.isRecurring = repeats != nil
+            update.rruleFrequency = .some(repeats)
+            update.rruleInterval = .some(repeats == nil ? nil : 1)
+            update.rruleDayOfWeek = .some(nil)
+            update.rruleDayOfMonth = .some(nil)
+        }
         isSaving = true
         errorMessage = nil
         Task {

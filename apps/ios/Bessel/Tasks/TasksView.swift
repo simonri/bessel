@@ -432,6 +432,14 @@ private struct TaskComposer: View {
             if parsed.project == nil {
                 projectMenu
             }
+            if let tag = newProjectTag {
+                Button {
+                    adopt(tag)
+                } label: {
+                    Chip(text: "New project \(tag)", hue: PastelHue.forName(tag), systemImage: "plus", isSelected: false)
+                }
+                .buttonStyle(.plain)
+            }
             if tokens.isEmpty {
                 Chip(text: "Try \"fri\" or \"!\"", hue: 32, systemImage: "calendar", isSelected: false)
             }
@@ -452,7 +460,7 @@ private struct TaskComposer: View {
         Menu {
             Picker("Project", selection: $chosenProject) {
                 Text("No project").tag(String?.none)
-                ForEach(store.projects, id: \.self) { project in
+                ForEach(pickableProjects, id: \.self) { project in
                     Text(project).tag(Optional(project))
                 }
             }
@@ -461,6 +469,27 @@ private struct TaskComposer: View {
         }
         .menuOrder(.fixed)
         .accessibilityLabel("Project")
+    }
+
+    /// A "#tag" that isn't one of your projects yet: offered as a new one
+    /// rather than read as one, since a tag can just be part of the title.
+    private var newProjectTag: String? {
+        guard parsed.project == nil else { return nil }
+        return text.split(whereSeparator: \.isWhitespace)
+            .first { $0.hasPrefix("#") && $0.count > 1 }
+            .map { String($0.dropFirst()) }
+    }
+
+    private var pickableProjects: [String] {
+        guard let chosenProject, !store.projects.contains(chosenProject) else { return store.projects }
+        return store.projects + [chosenProject]
+    }
+
+    private func adopt(_ tag: String) {
+        chosenProject = tag
+        text = text.split(whereSeparator: \.isWhitespace)
+            .filter { $0 != "#\(tag)" }
+            .joined(separator: " ")
     }
 
     private func submit() {

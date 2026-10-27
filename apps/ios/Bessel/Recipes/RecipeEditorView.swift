@@ -282,9 +282,14 @@ struct RecipePasteView: View {
                 .background(Theme.card, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
 
                 if let errorMessage {
-                    Label(errorMessage, systemImage: "exclamationmark.circle")
-                        .font(.footnote)
-                        .foregroundStyle(Theme.destructive)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label(errorMessage, systemImage: "exclamationmark.circle")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.destructive)
+                        Button("Write it myself") { draft = Self.untidied(text) }
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(Theme.primary)
+                    }
                 }
 
                 HStack(spacing: 10) {
@@ -342,9 +347,23 @@ struct RecipePasteView: View {
             do {
                 draft = try await store.structure(text)
             } catch {
-                errorMessage = "Couldn't tidy this one right now. Try again, or start from scratch."
+                errorMessage = "Couldn't tidy this one right now. Try again, or write it in yourself."
             }
         }
+    }
+
+    /// The pasted text as it is: the first line as the name, the rest kept as
+    /// one step to sort into place, so nothing pasted is lost.
+    static func untidied(_ text: String) -> RecipeImportResult {
+        var lines = text.split(whereSeparator: \.isNewline).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        let title = lines.isEmpty ? "" : String(lines.removeFirst().prefix(200))
+        var body = RecipeBody()
+        if !lines.isEmpty {
+            var step = RecipeBody.Step()
+            step.text = lines.joined(separator: "\n")
+            body.steps = [step]
+        }
+        return RecipeImportResult(title: title, recipeType: .main, body: body)
     }
 }
 

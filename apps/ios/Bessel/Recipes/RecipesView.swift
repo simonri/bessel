@@ -128,8 +128,8 @@ struct RecipesView: View {
                 switch sheet {
                 case .paste:
                     RecipePasteView(store: store) { created in path.append(created.id) }
-                case .scratch:
-                    RecipeEditorView(store: store, recipe: nil, draft: composedDraft) { created in
+                case .scratch(let draft):
+                    RecipeEditorView(store: store, recipe: nil, draft: draft) { created in
                         draftTitle = ""
                         path.append(created.id)
                     }
@@ -174,9 +174,10 @@ struct RecipesView: View {
     }
 
     private func startRecipe() {
-        guard composedDraft != nil else { return }
+        // Taken now: by the time the sheet builds, the closing composer may have reset.
+        guard let draft = composedDraft else { return }
         composerFocused = false
-        sheet = .scratch
+        sheet = .scratch(draft)
     }
 
     /// In the page rather than `.searchable`, whose bar sits flush under the title.
@@ -249,9 +250,16 @@ struct RecipesView: View {
     }
 }
 
-enum RecipeSheet: String, Identifiable {
-    case paste, scratch
-    var id: String { rawValue }
+enum RecipeSheet: Identifiable {
+    case paste
+    case scratch(RecipeImportResult)
+
+    var id: String {
+        switch self {
+        case .paste: "paste"
+        case .scratch: "scratch"
+        }
+    }
 }
 
 /// Pinterest-style: a square tinted tile with the type's emoji and the cook

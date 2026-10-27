@@ -68,8 +68,9 @@ struct MainTabView: View {
         }
         .environment(toasts)
         .overlay(alignment: .bottom) {
+            // Above the floating + button, which it would otherwise cover.
             ToastOverlay(center: toasts)
-                .padding(.bottom, 64)
+                .padding(.bottom, 134)
         }
         .haptic(.selection, trigger: selection)
         .onChange(of: selection) {

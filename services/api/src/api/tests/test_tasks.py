@@ -60,6 +60,18 @@ class TestTaskReorder:
     assert (await client.get(f"/v1/tasks/{task['id']}")).json()["position"] == 4000
 
 
+class TestTaskTitle:
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_a_blank_title_is_turned_away(self, client: AsyncClient) -> None:
+    assert (await client.post("/v1/tasks", json={"title": "   "})).status_code == 422
+    task = (await client.post("/v1/tasks", json={"title": "  Buy milk "})).json()
+    assert task["title"] == "Buy milk"
+
+    assert (await client.patch(f"/v1/tasks/{task['id']}", json={"title": " "})).status_code == 422
+    assert (await client.get(f"/v1/tasks/{task['id']}")).json()["title"] == "Buy milk"
+
+
 class TestRemovedAreas:
   @pytest.mark.asyncio
   async def test_old_clients_still_get_an_empty_list(self, client: AsyncClient) -> None:

@@ -155,6 +155,34 @@ final class GymStoreTests: XCTestCase {
         XCTAssertTrue(store.exercises(matching: "squat", muscle: .chest).isEmpty)
     }
 
+    func testASetTheServerTurnsDownIsSaidOutLoud() async {
+        let store = makeStore()
+        let squat = store.addExercise(named: "Squat")!
+        MockURLProtocol.responder = { request in
+            if request.url!.path.contains("/sets/") { return (422, [:], Data(#"{"detail":"Input should be less than or equal to 1000"}"#.utf8)) }
+            return (200, [:], Data(#"{"id":"\#(squat.id)","name":"Squat","muscles":[],"created_at":"2026-10-01T08:00:00Z"}"#.utf8))
+        }
+
+        store.logTopSet(squat, weightKg: 2060, on: "2026-10-08")
+        await store.sendChanges()
+
+        XCTAssertTrue(store.outbox.isEmpty)
+        XCTAssertNil(store.exercise(squat.id)?.lastSet, "The refused set doesn't stay on screen")
+        let message = store.errorMessage ?? ""
+        XCTAssertTrue(message.hasPrefix("Squat at ") && message.contains("couldn't be saved."), message)
+    }
+
+    func testOnlyLoggableWeightsAndShortNames() {
+        XCTAssertEqual(GymFormat.loggable("1000"), 1000)
+        XCTAssertNil(GymFormat.loggable("1000,5"))
+        XCTAssertNil(GymFormat.loggable("-5"))
+        let store = makeStore()
+        MockURLProtocol.responder = { _ in throw URLError(.notConnectedToInternet) }
+        XCTAssertNil(store.addExercise(named: String(repeating: "a", count: 101)))
+        XCTAssertNotNil(store.errorMessage)
+        XCTAssertNotNil(store.addExercise(named: String(repeating: "a", count: 100)))
+    }
+
     func testNamesAreUniqueIgnoringCase() {
         let store = makeStore()
         MockURLProtocol.responder = { _ in throw URLError(.notConnectedToInternet) }
