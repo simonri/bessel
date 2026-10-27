@@ -30,6 +30,7 @@ import {
 import { Textarea } from "@bessel/ui/components/textarea";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { addDays, nextMonday, parseISO } from "date-fns";
 import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -42,6 +43,8 @@ import {
 } from "@/components/task-attachments";
 import { useTaskCacheHelpers } from "@/hooks/use-task-cache";
 import { client } from "@/lib/client";
+import { localIsoDay, useLocalDay } from "@/lib/local-day";
+import { cn } from "@/lib/utils";
 
 const PRIORITIES = [
   { value: "0", label: "None" },
@@ -58,6 +61,16 @@ const FREQUENCIES = [
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
 ];
+
+/** The due date shortcuts, as "yyyy-mm-dd" days counted from `today`. */
+export function dueDateQuickPicks(today: string) {
+  const day = parseISO(today);
+  return [
+    { label: "Today", value: today },
+    { label: "Tomorrow", value: localIsoDay(addDays(day, 1)) },
+    { label: "Next week", value: localIsoDay(nextMonday(day)) },
+  ];
+}
 
 interface ProjectInputProps {
   value: string;
@@ -143,6 +156,7 @@ export function TaskFormDialog({
   defaultProject?: string | null;
 }) {
   const cache = useTaskCacheHelpers();
+  const today = useLocalDay();
 
   const { data: projectsData = [] } = useQuery({
     ...listProjectsOptions({ client }),
@@ -374,6 +388,27 @@ export function TaskFormDialog({
                     value={field.state.value}
                     onChange={(e) => field.handleChange(e.target.value)}
                   />
+                  <div className="flex flex-wrap gap-1">
+                    {dueDateQuickPicks(today).map((pick) => {
+                      const selected = field.state.value === pick.value;
+                      return (
+                        <button
+                          key={pick.label}
+                          type="button"
+                          aria-pressed={selected}
+                          onClick={() => field.handleChange(pick.value)}
+                          className={cn(
+                            "h-6 rounded-full px-2.5 text-11 font-medium ring-1 transition-colors duration-150",
+                            selected
+                              ? "bg-white/[0.1] text-white/90 ring-white/15"
+                              : "text-white/50 ring-white/[0.06] hover:bg-white/[0.05] hover:text-white/80",
+                          )}
+                        >
+                          {pick.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </form.Field>
