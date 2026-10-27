@@ -72,6 +72,17 @@ const pressedPicks = () =>
     .getAllByRole("button", { pressed: true })
     .map((button) => button.textContent);
 
+const RECURRENCES = ["No recurrence", "Daily", "Weekly", "Monthly", "Yearly"];
+
+async function chooseRecurrence(label: string) {
+  const trigger = screen
+    .getAllByRole("combobox")
+    .find((el) => RECURRENCES.includes(el.textContent ?? "")) as HTMLElement;
+  fireEvent.keyDown(trigger, { key: "Enter" });
+  fireEvent.click(await screen.findByRole("option", { name: label }));
+  await waitFor(() => expect(trigger.textContent).toBe(label));
+}
+
 async function submit(title = "Water the plants") {
   fireEvent.change(screen.getByLabelText(/Title/), {
     target: { value: title },
@@ -142,6 +153,71 @@ describe("TaskFormDialog", () => {
     fireEvent.click(screen.getByRole("button", { name: "Today" }));
     const body = await submit();
     expect(body.due_date).toEqual(new Date("2026-10-27T00:00:00Z"));
+  });
+});
+
+describe("TaskFormDialog routines", () => {
+  it("starts a routine today when no due date is set", async () => {
+    mount();
+
+    await chooseRecurrence("Weekly");
+    expect(dueInput().value).toBe("2026-10-27");
+
+    const body = await submit();
+    expect(body).toMatchObject({
+      is_recurring: true,
+      rrule_frequency: "weekly",
+      due_date: new Date("2026-10-27T00:00:00Z"),
+    });
+  });
+
+  it("keeps a due date the user already set", async () => {
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: "Next week" }));
+
+    await chooseRecurrence("Daily");
+    expect(dueInput().value).toBe("2026-11-02");
+
+    await chooseRecurrence("No recurrence");
+    expect(dueInput().value).toBe("2026-11-02");
+  });
+
+  it("takes the filled-in date out again when the recurrence goes back to none, unless the user changed it", async () => {
+    mount();
+
+    await chooseRecurrence("Monthly");
+    await chooseRecurrence("No recurrence");
+    expect(dueInput().value).toBe("");
+
+    await chooseRecurrence("Monthly");
+    fireEvent.click(screen.getByRole("button", { name: "Today" }));
+    await chooseRecurrence("No recurrence");
+    expect(dueInput().value).toBe("2026-10-27");
+
+    fireEvent.change(dueInput(), { target: { value: "" } });
+    await chooseRecurrence("Monthly");
+    fireEvent.change(dueInput(), { target: { value: "2026-10-28" } });
+    fireEvent.change(dueInput(), { target: { value: "2026-10-27" } });
+    await chooseRecurrence("No recurrence");
+    expect(dueInput().value).toBe("2026-10-27");
+  });
+
+  it("still starts a routine today when its due date was cleared", async () => {
+    mount();
+
+    await chooseRecurrence("Yearly");
+    fireEvent.change(dueInput(), { target: { value: "" } });
+
+    const body = await submit();
+    expect(body.due_date).toEqual(new Date("2026-10-27T00:00:00Z"));
+  });
+
+  it("leaves a one-off task without a due date", async () => {
+    mount();
+
+    const body = await submit();
+    expect(body.is_recurring).toBe(false);
+    expect(body.due_date).toBeUndefined();
   });
 });
 

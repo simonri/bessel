@@ -157,6 +157,9 @@ export function TaskFormDialog({
 }) {
   const cache = useTaskCacheHelpers();
   const today = useLocalDay();
+  // The due date filled in for the user when they picked a recurrence, so
+  // going back to none can take it out again.
+  const autoDueDate = useRef<string | null>(null);
 
   const { data: projectsData = [] } = useQuery({
     ...listProjectsOptions({ client }),
@@ -243,13 +246,15 @@ export function TaskFormDialog({
     onSubmit: ({ value }) => {
       const isRecurring = value.frequency !== "none";
       const freq = value.frequency as "daily" | "weekly" | "monthly" | "yearly";
+      // A routine without a start never comes due.
+      const dueDate = value.dueDate || (isRecurring ? today : "");
 
       createMutation.mutate({
         client,
         body: {
           title: value.title.trim(),
           description: value.description.trim() || undefined,
-          due_date: value.dueDate ? new Date(value.dueDate) : undefined,
+          due_date: dueDate ? new Date(dueDate) : undefined,
           priority: Number(value.priority),
           project: value.project.trim() || undefined,
           is_recurring: isRecurring,
@@ -386,7 +391,10 @@ export function TaskFormDialog({
                     id="task-due"
                     type="date"
                     value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                    onChange={(e) => {
+                      autoDueDate.current = null;
+                      field.handleChange(e.target.value);
+                    }}
                   />
                   <div className="flex flex-wrap gap-1">
                     {dueDateQuickPicks(today).map((pick) => {
@@ -396,7 +404,10 @@ export function TaskFormDialog({
                           key={pick.label}
                           type="button"
                           aria-pressed={selected}
-                          onClick={() => field.handleChange(pick.value)}
+                          onClick={() => {
+                            autoDueDate.current = null;
+                            field.handleChange(pick.value);
+                          }}
                           className={cn(
                             "h-6 rounded-full px-2.5 text-11 font-medium ring-1 transition-colors duration-150",
                             selected
@@ -455,7 +466,20 @@ export function TaskFormDialog({
                 <Label>Recurrence</Label>
                 <Select
                   value={field.state.value}
-                  onValueChange={field.handleChange}
+                  onValueChange={(frequency) => {
+                    field.handleChange(frequency);
+                    const dueDate = form.getFieldValue("dueDate");
+                    if (frequency !== "none" && !dueDate) {
+                      autoDueDate.current = today;
+                      form.setFieldValue("dueDate", today);
+                    } else if (
+                      frequency === "none" &&
+                      dueDate === autoDueDate.current
+                    ) {
+                      autoDueDate.current = null;
+                      form.setFieldValue("dueDate", "");
+                    }
+                  }}
                 >
                   <SelectTrigger className="w-full">
                     <SelectValue />
