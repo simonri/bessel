@@ -30,7 +30,16 @@ import {
 import { Textarea } from "@bessel/ui/components/textarea";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { addDays, nextMonday, parseISO } from "date-fns";
+import {
+  addDays,
+  addMonths,
+  getDay,
+  getDaysInMonth,
+  nextMonday,
+  parseISO,
+  setDate,
+  startOfMonth,
+} from "date-fns";
 import { Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -70,6 +79,27 @@ export function dueDateQuickPicks(today: string) {
     { label: "Tomorrow", value: localIsoDay(addDays(day, 1)) },
     { label: "Next week", value: localIsoDay(nextMonday(day)) },
   ];
+}
+
+/**
+ * The first day on or after `today` that a routine's rule lands on: a weekday
+ * (0 = Monday) or a day of the month, clamped to short months.
+ */
+export function firstOccurrence(
+  today: string,
+  rule: { dayOfWeek: number } | { dayOfMonth: number },
+): string {
+  const day = parseISO(today);
+  if ("dayOfWeek" in rule) {
+    const ahead = (rule.dayOfWeek - ((getDay(day) + 6) % 7) + 7) % 7;
+    return localIsoDay(addDays(day, ahead));
+  }
+  const inMonth = (month: Date) =>
+    setDate(month, Math.min(rule.dayOfMonth, getDaysInMonth(month)));
+  const thisMonth = inMonth(day);
+  return localIsoDay(
+    thisMonth >= day ? thisMonth : inMonth(addMonths(startOfMonth(day), 1)),
+  );
 }
 
 interface ProjectInputProps {
@@ -160,6 +190,14 @@ export function TaskFormDialog({
   // The due date filled in for the user when they picked a recurrence, so
   // going back to none can take it out again.
   const autoDueDate = useRef<string | null>(null);
+  const moveAutoDueDate = (
+    rule: Parameters<typeof firstOccurrence>[1] | null,
+  ) => {
+    const dueDate = form.getFieldValue("dueDate");
+    if (dueDate && dueDate !== autoDueDate.current) return;
+    autoDueDate.current = rule ? firstOccurrence(today, rule) : today;
+    form.setFieldValue("dueDate", autoDueDate.current);
+  };
 
   const { data: projectsData = [] } = useQuery({
     ...listProjectsOptions({ client }),
@@ -469,9 +507,8 @@ export function TaskFormDialog({
                   onValueChange={(frequency) => {
                     field.handleChange(frequency);
                     const dueDate = form.getFieldValue("dueDate");
-                    if (frequency !== "none" && !dueDate) {
-                      autoDueDate.current = today;
-                      form.setFieldValue("dueDate", today);
+                    if (frequency !== "none") {
+                      moveAutoDueDate(null);
                     } else if (
                       frequency === "none" &&
                       dueDate === autoDueDate.current
@@ -508,9 +545,12 @@ export function TaskFormDialog({
                         <Label>Day of week</Label>
                         <Select
                           value={field.state.value || "none"}
-                          onValueChange={(v) =>
-                            field.handleChange(v === "none" ? "" : v)
-                          }
+                          onValueChange={(v) => {
+                            field.handleChange(v === "none" ? "" : v);
+                            moveAutoDueDate(
+                              v === "none" ? null : { dayOfWeek: Number(v) },
+                            );
+                          }}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select day" />
@@ -550,7 +590,17 @@ export function TaskFormDialog({
                           min={1}
                           max={31}
                           value={field.state.value}
-                          onChange={(e) => field.handleChange(e.target.value)}
+                          onChange={(e) => {
+                            field.handleChange(e.target.value);
+                            const dayOfMonth = Number(e.target.value);
+                            moveAutoDueDate(
+                              Number.isInteger(dayOfMonth) &&
+                                dayOfMonth >= 1 &&
+                                dayOfMonth <= 31
+                                ? { dayOfMonth }
+                                : null,
+                            );
+                          }}
                           onBlur={field.handleBlur}
                           placeholder="e.g. 1 for 1st of month"
                         />

@@ -28,7 +28,7 @@ vi.mock("@bessel/client", async (importOriginal) => {
   };
 });
 
-const { TaskFormDialog, dueDateQuickPicks } = await import(
+const { TaskFormDialog, dueDateQuickPicks, firstOccurrence } = await import(
   "./create-task-dialog"
 );
 
@@ -212,12 +212,75 @@ describe("TaskFormDialog routines", () => {
     expect(body.due_date).toEqual(new Date("2026-10-27T00:00:00Z"));
   });
 
+  it("starts a weekly routine on its weekday, and back on today without one", async () => {
+    mount();
+
+    await chooseRecurrence("Weekly");
+    const weekday = screen
+      .getAllByRole("combobox")
+      .find((el) => el.textContent === "Same as due date") as HTMLElement;
+    fireEvent.keyDown(weekday, { key: "Enter" });
+    fireEvent.click(await screen.findByRole("option", { name: "Friday" }));
+    await waitFor(() => expect(dueInput().value).toBe("2026-10-30"));
+
+    await chooseRecurrence("Daily");
+    expect(dueInput().value).toBe("2026-10-27");
+  });
+
+  it("starts a monthly routine on its day of the month", async () => {
+    mount();
+
+    await chooseRecurrence("Monthly");
+    fireEvent.change(screen.getByLabelText("Day of month"), {
+      target: { value: "3" },
+    });
+    expect(dueInput().value).toBe("2026-11-03");
+
+    const body = await submit();
+    expect(body).toMatchObject({
+      rrule_day_of_month: 3,
+      due_date: new Date("2026-11-03T00:00:00Z"),
+    });
+  });
+
+  it("doesn't move a date the user picked when the routine's day changes", async () => {
+    mount();
+    fireEvent.click(screen.getByRole("button", { name: "Tomorrow" }));
+
+    await chooseRecurrence("Monthly");
+    fireEvent.change(screen.getByLabelText("Day of month"), {
+      target: { value: "3" },
+    });
+    expect(dueInput().value).toBe("2026-10-28");
+  });
+
   it("leaves a one-off task without a due date", async () => {
     mount();
 
     const body = await submit();
     expect(body.is_recurring).toBe(false);
     expect(body.due_date).toBeUndefined();
+  });
+});
+
+describe("firstOccurrence", () => {
+  it("finds the weekday on or after today, Monday being 0", () => {
+    expect(firstOccurrence("2026-10-27", { dayOfWeek: 1 })).toBe("2026-10-27");
+    expect(firstOccurrence("2026-10-27", { dayOfWeek: 0 })).toBe("2026-11-02");
+    expect(firstOccurrence("2026-11-01", { dayOfWeek: 6 })).toBe("2026-11-01");
+  });
+
+  it("finds the day of the month, clamped to short months", () => {
+    expect(firstOccurrence("2026-10-27", { dayOfMonth: 27 })).toBe(
+      "2026-10-27",
+    );
+    expect(firstOccurrence("2026-10-27", { dayOfMonth: 3 })).toBe("2026-11-03");
+    expect(firstOccurrence("2026-11-05", { dayOfMonth: 31 })).toBe(
+      "2026-11-30",
+    );
+    expect(firstOccurrence("2027-01-31", { dayOfMonth: 30 })).toBe(
+      "2027-02-28",
+    );
   });
 });
 
