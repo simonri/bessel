@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { orderPrimaryPages, PRIMARY_PAGES } from "./pages";
+import {
+  movePage,
+  orderPrimaryPages,
+  type PageKey,
+  PRIMARY_PAGES,
+} from "./pages";
 
 describe("orderPrimaryPages", () => {
   it("keeps the default order when nothing is saved", () => {
@@ -23,5 +28,20 @@ describe("orderPrimaryPages", () => {
       second,
       ...[...rest].reverse(),
     ]);
+  });
+});
+
+describe("movePage", () => {
+  it("moves the page onto the other one", () => {
+    const moved = movePage([], "today", "travel");
+    expect(moved.slice(0, 3)).toEqual(["canvas", "travel", "today"]);
+  });
+
+  it("saves every page, so ones hidden from the sidebar keep their place", () => {
+    const order = [...PRIMARY_PAGES].reverse();
+    const moved = movePage(order, "recipes", "investments");
+    const expected: PageKey[] = order.filter((key) => key !== "recipes");
+    expected.splice(order.indexOf("investments"), 0, "recipes");
+    expect(moved).toEqual(expected);
   });
 });

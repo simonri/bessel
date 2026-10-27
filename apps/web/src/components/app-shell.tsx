@@ -16,6 +16,7 @@ import { isPageKey, PAGE_REGISTRY, type PageKey } from "@/components/pages";
 import { SettingsDialogProvider } from "@/components/settings-dialog";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
+import { useHiddenPageFallback } from "@/components/use-page-visibility";
 import { WINDOW_FRAME, WindowTitleBar } from "@/components/window-chrome";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -148,6 +149,7 @@ export function AppShell() {
     [],
   );
   const showCanvas = useCallback(() => selectPage("canvas"), [selectPage]);
+  useHiddenPageFallback(activePage, setActivePage);
 
   useEffect(() => {
     userStorage.setItem(ACTIVE_PAGE_KEY, activePage);

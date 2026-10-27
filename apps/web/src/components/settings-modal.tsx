@@ -10,6 +10,7 @@ import {
   Info,
   Laptop,
   LayoutDashboard,
+  PanelLeft,
   Plug,
   Search,
   X,
@@ -23,6 +24,7 @@ import {
   type IntegrationsTab,
 } from "@/components/settings-integrations-page";
 import { MonitorPage } from "@/components/settings-monitor-page";
+import { PagesPage } from "@/components/settings-pages-page";
 import { SettingsPageHeader } from "@/components/settings-ui";
 import { cn } from "@/lib/utils";
 
@@ -30,6 +32,7 @@ const isDesktop = typeof window !== "undefined" && !!window.electron;
 
 export type SettingsPage =
   | "dashboard"
+  | "pages"
   | "integrations"
   | "devices"
   | "monitor"
@@ -54,6 +57,14 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
         description: "Configure the top bar and widget display settings.",
         icon: LayoutDashboard,
         keywords: "top bar widgets grid gap",
+      },
+      {
+        key: "pages",
+        label: "Pages",
+        description: "Choose which optional pages show in the sidebar.",
+        icon: PanelLeft,
+        keywords:
+          "sidebar show hide trading hyperliquid investments sleep screen time",
       },
     ],
   },
@@ -235,6 +246,7 @@ export function SettingsModal({
                 <SettingsPageHeader title={active.label} />
                 <div className="mt-5">
                   {page === "dashboard" && <DashboardPage />}
+                  {page === "pages" && <PagesPage />}
                   {page === "devices" && <DevicesPage />}
                   {page === "monitor" && <MonitorPage />}
                   {page === "about" && <AboutPage />}

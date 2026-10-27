@@ -1,6 +1,18 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest";
-import { loadSidebarWidth } from "./app-sidebar";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SettingsProvider } from "@/hooks/use-settings";
+import { AppSidebar, loadSidebarWidth } from "./app-sidebar";
+
+vi.mock("@/components/canvas/project-sessions", () => ({
+  ProjectSessions: () => <p>Code folders</p>,
+}));
+vi.mock("@/components/use-page-visibility", () => ({
+  usePageVisibility: () => ({
+    isVisible: (page: string) => page !== "sleep",
+    isSettled: () => true,
+  }),
+}));
 
 function memoryStorage(): Storage {
   const data = new Map<string, string>();
@@ -26,6 +38,7 @@ Object.defineProperty(window, "localStorage", {
 });
 
 beforeEach(() => window.localStorage.clear());
+afterEach(cleanup);
 
 describe("loadSidebarWidth", () => {
   it("uses the default width when nothing is stored", () => {
@@ -42,5 +55,28 @@ describe("loadSidebarWidth", () => {
   it("ignores garbage", () => {
     window.localStorage.setItem("bessel:sidebarWidth", "wide");
     expect(loadSidebarWidth()).toBe(208);
+  });
+});
+
+describe("AppSidebar", () => {
+  function renderSidebar() {
+    render(
+      <SettingsProvider>
+        <AppSidebar
+          activePage="today"
+          onSelectPage={() => {}}
+          onNewSession={() => {}}
+        />
+      </SettingsProvider>,
+    );
+  }
+
+  it("leaves out pages that shouldn't show", () => {
+    renderSidebar();
+    const pages = screen.getByRole("navigation", { name: "Pages" });
+
+    expect(pages.textContent).toContain("Screen time");
+    expect(pages.textContent).toContain("Today");
+    expect(pages.textContent).not.toContain("Sleep");
   });
 });

@@ -10,6 +10,9 @@ vi.mock("@/components/settings-devices-page", () => ({
 vi.mock("@/components/settings-monitor-page", () => ({
   MonitorPage: () => null,
 }));
+vi.mock("@/components/settings-pages-page", () => ({
+  PagesPage: () => null,
+}));
 vi.mock("@/components/settings-integrations-page", () => ({
   IntegrationsPage: () => null,
 }));
@@ -37,6 +40,11 @@ describe("matchingGroups", () => {
     expect(matchingGroups("avanza").map((group) => group.label)).toEqual([
       "Connections",
     ]);
-    expect(labels("  ")).toEqual(["Dashboard", "Integrations"]);
+    expect(labels("  ")).toEqual(["Dashboard", "Pages", "Integrations"]);
+  });
+
+  it("finds the pages switches by a page's name", () => {
+    expect(labels("sleep")).toEqual(["Pages"]);
+    expect(labels("screen time")).toEqual(["Pages"]);
   });
 });

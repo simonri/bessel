@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type { PageKey } from "@/components/pages";
 import { userStorage } from "@/lib/user-storage";
 
 export interface ActivityMapping {
@@ -50,6 +51,13 @@ interface Settings {
   hyperliquidAddress: string | null;
   /** Sidebar page order; pages missing from it keep their default slot. */
   navOrder: string[];
+  /** Optional pages someone turned on or off in Settings > Pages. */
+  pageChoices: Partial<Record<PageKey, boolean>>;
+  /**
+   * Optional pages nobody chose for show even without data. True only for
+   * settings saved before those pages became opt-in.
+   */
+  showOptionalPages: boolean;
 }
 
 const STORAGE_KEY = "bessel:settings";
@@ -75,6 +83,8 @@ const DEFAULT_SETTINGS: Settings = {
   calendarReminders: true,
   hyperliquidAddress: null,
   navOrder: [],
+  pageChoices: {},
+  showOptionalPages: false,
 };
 
 /**
@@ -85,6 +95,7 @@ const DEFAULT_SETTINGS: Settings = {
  */
 const SAVED_BEFORE: Partial<Settings> = {
   cryptoPairs: "BTCUSDT",
+  showOptionalPages: true,
 };
 
 function withDefaults(stored: Partial<Settings>): Settings {

@@ -14,7 +14,6 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import {
-  arrayMove,
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
@@ -25,10 +24,12 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { ProjectSessions } from "@/components/canvas/project-sessions";
 import {
   MORE_PAGES,
+  movePage,
   orderPrimaryPages,
   PAGE_REGISTRY,
   type PageKey,
 } from "@/components/pages";
+import { usePageVisibility } from "@/components/use-page-visibility";
 import { useSettings } from "@/hooks/use-settings";
 import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
@@ -266,7 +267,8 @@ export const AppSidebar = memo(function AppSidebar({
   const [width, setWidth] = useState(loadSidebarWidth);
   const openCanvas = useCallback(() => onSelectPage("canvas"), [onSelectPage]);
   const { settings, update } = useSettings();
-  const pages = orderPrimaryPages(settings.navOrder);
+  const { isVisible } = usePageVisibility();
+  const pages = orderPrimaryPages(settings.navOrder).filter(isVisible);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
@@ -274,10 +276,10 @@ export const AppSidebar = memo(function AppSidebar({
   const reorder = ({ active, over }: DragEndEvent) => {
     if (!over || active.id === over.id) return;
     update({
-      navOrder: arrayMove(
-        pages,
-        pages.indexOf(active.id as PageKey),
-        pages.indexOf(over.id as PageKey),
+      navOrder: movePage(
+        settings.navOrder,
+        active.id as PageKey,
+        over.id as PageKey,
       ),
     });
   };

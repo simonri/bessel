@@ -1,3 +1,4 @@
+import { arrayMove } from "@dnd-kit/sortable";
 import { Bot, CheckSquare, LayoutGrid, Sun } from "lucide-react";
 import { lazy } from "react";
 import { MODULE_REGISTRY } from "@/components/canvas/module-registry";
@@ -113,6 +114,24 @@ export const PRIMARY_PAGES: PageKey[] = [
   ...(isDesktop ? (["obsidian"] as PageKey[]) : []),
 ];
 
+/**
+ * Sidebar pages that need something most people don't have yet (an address,
+ * a desktop or iPhone app). Hidden until the account has their data or
+ * someone turns them on in Settings > Pages.
+ */
+export const OPTIONAL_PAGES = [
+  "hyperliquid",
+  "investments",
+  "sleep",
+  "activity",
+] as const satisfies readonly PageKey[];
+
+export type OptionalPage = (typeof OPTIONAL_PAGES)[number];
+
+export function isOptionalPage(page: PageKey): page is OptionalPage {
+  return (OPTIONAL_PAGES as readonly PageKey[]).includes(page);
+}
+
 /** Tucked behind the sidebar's "More" menu. */
 export const MORE_PAGES: PageKey[] = [
   ...(isDesktop ? (["sessions"] as PageKey[]) : []),
@@ -137,6 +156,19 @@ export function orderPrimaryPages(order: readonly string[]): PageKey[] {
     if (!rank.has(key)) ordered.splice(Math.min(i, ordered.length), 0, key);
   }
   return ordered;
+}
+
+/**
+ * The saved order after dragging `page` onto `over`. Moves within every
+ * primary page, hidden ones included, so a page hidden now keeps its place.
+ */
+export function movePage(
+  order: readonly string[],
+  page: PageKey,
+  over: PageKey,
+): PageKey[] {
+  const pages = orderPrimaryPages(order);
+  return arrayMove(pages, pages.indexOf(page), pages.indexOf(over));
 }
 
 export function isPageKey(value: unknown): value is PageKey {

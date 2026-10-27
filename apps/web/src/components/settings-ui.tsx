@@ -1,6 +1,6 @@
 import { Spinner } from "@bessel/ui/components/spinner";
 import { Switch } from "@bessel/ui/components/switch";
-import type { ReactNode } from "react";
+import { type ReactNode, useId } from "react";
 import { PrimaryButton } from "@/components/ui-kit";
 import { cn } from "@/lib/utils";
 
@@ -92,9 +92,11 @@ export function SettingsToggleRow({
   onCheckedChange: (value: boolean) => void;
   disabled?: boolean;
 }) {
+  const id = useId();
   return (
-    <SettingsRow label={label} description={description}>
+    <SettingsRow label={label} description={description} htmlFor={id}>
       <Switch
+        id={id}
         checked={checked}
         onCheckedChange={onCheckedChange}
         disabled={disabled}
