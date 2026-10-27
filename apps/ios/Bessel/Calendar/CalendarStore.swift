@@ -200,6 +200,30 @@ final class CalendarStore {
         await load()
     }
 
+    /// Google's consent page in the browser sheet; the Bessel web page it
+    /// returns to connects the account and hands back only the result.
+    /// Returns whether an account was connected; throws Google's or the
+    /// server's reason when it wasn't.
+    func connectGoogle() async throws -> Bool {
+        let before = Set(accounts.map(\.id))
+        let scheme = AppConfig.authCallbackScheme
+        let response: API.GoogleAuthorizeResponse = try await client.post(
+            "/v1/calendars/google/authorize",
+            query: [URLQueryItem(name: "app_scheme", value: scheme)]
+        )
+        guard let url = URL(string: response.url) else { throw URLError(.badURL) }
+        var result: GoogleConnectResult?
+        do {
+            result = GoogleConnectResult(callback: try await WebSignIn.open(url, callbackScheme: scheme))
+        } catch is CancellationError {
+            // Closed by hand; an older web page connects and then just waits.
+        }
+        await load()
+        if case let .failed(message) = result { throw GoogleConnectError(message: message) }
+        if case .connected = result { return true }
+        return accounts.contains { !before.contains($0.id) }
+    }
+
     // MARK: - Writing
 
     /// Creates an event from the editor's values.

@@ -1,4 +1,5 @@
 import json
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -29,6 +30,11 @@ log: Logger = structlog.get_logger()
 SYNC_PAST_DAYS = 90
 SYNC_FUTURE_DAYS = 365
 OAUTH_STATE_TTL_SECONDS = 600
+# The Bessel iOS builds' URL schemes (their bundle ids). The web callback page
+# hands the app only "connected" or "failed" on one of these, never the code.
+APP_SCHEME = re.compile(r"com\.simonri\.bessel(\.[A-Za-z0-9]+)?")
+# Separates the app's scheme from the encrypted state; never in a Fernet token.
+APP_STATE_SEPARATOR = "~"
 SYNC_ACCOUNT_ACTOR = "sync_calendar_account"
 
 
@@ -62,16 +68,22 @@ def _google_client(http: httpx.AsyncClient) -> GoogleCalendarClient:
 
 
 class CalendarService:
-  def google_authorize_url(self, user_id: UUID, *, scopes: str | None = None, login_hint: str | None = None) -> str:
+  def google_authorize_url(self, user_id: UUID, *, scopes: str | None = None, login_hint: str | None = None, app_scheme: str | None = None) -> str:
     """Google's consent page. Without `scopes` it asks for everything calendar needs; the Contacts page asks
-    for just the contacts scope, which Google adds to what the account already granted."""
+    for just the contacts scope, which Google adds to what the account already granted. With `app_scheme`
+    the callback page sends the result back to the app once it has connected the account."""
     require_google_config()
     state = encrypt(json.dumps({"user_id": str(user_id)}))
+    if app_scheme is not None:
+      if not APP_SCHEME.fullmatch(app_scheme):
+        raise ValidationError("That app can't connect a calendar.", status_code=422)
+      state = f"{app_scheme}{APP_STATE_SEPARATOR}{state}"
     return authorize_url(state, **({"scopes": scopes} if scopes else {}), login_hint=login_hint)
 
   async def complete_google_connect(self, accounts: CalendarAccountRepository, user_id: UUID, *, code: str, state: str) -> CalendarAccount:
     try:
-      state_user_id = UUID(json.loads(decrypt(state, ttl=OAUTH_STATE_TTL_SECONDS))["user_id"])
+      token = state.rpartition(APP_STATE_SEPARATOR)[2]
+      state_user_id = UUID(json.loads(decrypt(token, ttl=OAUTH_STATE_TTL_SECONDS))["user_id"])
     except (InvalidToken, ValueError, KeyError) as e:
       raise OAuthCallbackError("This sign-in link has expired. Start again from Bessel.") from e
     # Without this, anyone could send their own authorize link to someone else

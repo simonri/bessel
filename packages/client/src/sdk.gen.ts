@@ -119,6 +119,7 @@ import type {
   AuthorizeContactEditingErrors,
   AuthorizeContactEditingResponses,
   AuthorizeGoogleData,
+  AuthorizeGoogleErrors,
   AuthorizeGoogleResponses,
   AuthorizeMontroseData,
   AuthorizeMontroseResponses,
@@ -1201,10 +1202,14 @@ export const listCalendarAccounts = <ThrowOnError extends boolean = false>(
  */
 export const authorizeGoogle = <ThrowOnError extends boolean = false>(
   options?: Options<AuthorizeGoogleData, ThrowOnError>,
-): RequestResult<AuthorizeGoogleResponses, unknown, ThrowOnError> =>
+): RequestResult<
+  AuthorizeGoogleResponses,
+  AuthorizeGoogleErrors,
+  ThrowOnError
+> =>
   (options?.client ?? client).post<
     AuthorizeGoogleResponses,
-    unknown,
+    AuthorizeGoogleErrors,
     ThrowOnError
   >({
     security: [{ scheme: "bearer", type: "http" }],

@@ -142,7 +142,11 @@ describe("parseQuickTask", () => {
   });
 
   it("reads sun, sat and wed as days only at the end of the line", () => {
-    for (const text of ["Buy sun cream", "Fix the sat nav", "Wed dress fitting"]) {
+    for (const text of [
+      "Buy sun cream",
+      "Fix the sat nav",
+      "Wed dress fitting",
+    ]) {
       const parsed = parse(text);
       expect(parsed.dueDate).toBeNull();
       expect(parsed.title).toBe(text);

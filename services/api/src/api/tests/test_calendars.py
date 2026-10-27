@@ -380,6 +380,27 @@ class TestGoogleConnect:
     assert account.sync_error is None
 
   @pytest.mark.asyncio
+  async def test_the_app_flow_marks_its_scheme_and_still_connects(
+    self, client: AsyncClient, session: AsyncSession, google_configured: None, job_queue_manager: JobQueueManager, mocker: MockerFixture
+  ) -> None:
+    mocker.patch.object(GoogleCalendarClient, "exchange_code", return_value=GoogleGrant("access", "refresh", can_write=True))
+    mocker.patch.object(GoogleCalendarClient, "get_email", return_value="me@gmail.com")
+    resp = await client.post("/v1/calendars/google/authorize", params={"app_scheme": "com.simonri.bessel.dev"})
+    state = parse_qs(urlparse(resp.json()["url"]).query)["state"][0]
+    assert state.startswith("com.simonri.bessel.dev~")
+
+    resp = await client.post("/v1/calendars/google/callback", json={"code": "c", "state": state})
+
+    assert resp.status_code == 201
+    assert (await session.execute(select(CalendarAccount))).scalar_one().email == "me@gmail.com"
+
+  @pytest.mark.asyncio
+  @pytest.mark.parametrize("scheme", ["https", "evil", "com.simonri.bessel.dev.x/y", "com.simonri.besselx"])
+  async def test_only_bessel_apps_get_the_result(self, client: AsyncClient, google_configured: None, scheme: str) -> None:
+    resp = await client.post("/v1/calendars/google/authorize", params={"app_scheme": scheme})
+    assert resp.status_code == 422
+
+  @pytest.mark.asyncio
   async def test_callback_rejects_tampered_state(self, client: AsyncClient, google_configured: None) -> None:
     resp = await client.post("/v1/calendars/google/callback", json={"code": "c", "state": "forged"})
     assert resp.status_code == 400

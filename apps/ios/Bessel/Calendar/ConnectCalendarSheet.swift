@@ -6,11 +6,22 @@ struct ConnectCalendarSheet: View {
     let store: CalendarStore
 
     @Environment(\.dismiss) private var dismiss
+    @State private var connectingGoogle = false
+    @State private var errorMessage: String?
 
     var body: some View {
         NavigationStack {
             List {
                 Section {
+                    Button(action: connectGoogle) {
+                        HStack {
+                            Label("Google Calendar", systemImage: "g.circle")
+                                .foregroundStyle(Theme.foreground)
+                            Spacer()
+                            if connectingGoogle { ProgressView() }
+                        }
+                    }
+                    .disabled(connectingGoogle)
                     NavigationLink {
                         ICloudConnectForm(store: store) { dismiss() }
                     } label: {
@@ -20,6 +31,15 @@ struct ConnectCalendarSheet: View {
                     Text("Your events show up here and on the desktop, and new ones you add go to that calendar.")
                 }
                 .listRowBackground(Theme.card)
+
+                if let errorMessage {
+                    Section {
+                        Label(errorMessage, systemImage: "exclamationmark.circle")
+                            .font(.footnote)
+                            .foregroundStyle(Theme.destructive)
+                    }
+                    .listRowBackground(Theme.card)
+                }
             }
             .scrollContentBackground(.hidden)
             .background(Theme.background)
@@ -34,6 +54,19 @@ struct ConnectCalendarSheet: View {
         .presentationDetents([.medium, .large])
         .presentationCornerRadius(28)
         .presentationDragIndicator(.hidden)
+    }
+
+    private func connectGoogle() {
+        connectingGoogle = true
+        errorMessage = nil
+        Task {
+            defer { connectingGoogle = false }
+            do {
+                if try await store.connectGoogle() { dismiss() }
+            } catch {
+                errorMessage = error.userMessage
+            }
+        }
     }
 }
 

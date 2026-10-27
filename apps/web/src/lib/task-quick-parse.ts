@@ -80,7 +80,11 @@ function endsLine(words: string[], i: number): boolean {
 function upcomingDate(today: Date, month: number, day: number): Date | null {
   if (month < 0 || month > 11 || day < 1 || day > 31) return null;
   // Four years ahead reaches the next 29 February.
-  for (let year = today.getFullYear(); year <= today.getFullYear() + 4; year++) {
+  for (
+    let year = today.getFullYear();
+    year <= today.getFullYear() + 4;
+    year++
+  ) {
     const d = new Date(year, month, day);
     if (d.getMonth() === month && d >= today) return d;
   }

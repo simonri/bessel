@@ -53,8 +53,6 @@ final class AuthSession {
 
     private var tokens: TokenSet?
     private var refreshTask: Task<TokenSet, Error>?
-    private var webAuthSession: ASWebAuthenticationSession?
-    private let presenter = WebAuthPresenter()
     private static let tokensKey = "tokens"
 
     func restore() {
@@ -240,23 +238,7 @@ final class AuthSession {
     }
 
     private func authenticate(url: URL) async throws -> URL {
-        try await withCheckedThrowingContinuation { continuation in
-            let session = ASWebAuthenticationSession(
-                url: url,
-                callbackURLScheme: AppConfig.authCallbackScheme
-            ) { callbackURL, error in
-                if let callbackURL {
-                    continuation.resume(returning: callbackURL)
-                } else if let error = error as? ASWebAuthenticationSessionError, error.code == .canceledLogin {
-                    continuation.resume(throwing: CancellationError())
-                } else {
-                    continuation.resume(throwing: error ?? AuthError.invalidCallback)
-                }
-            }
-            session.presentationContextProvider = presenter
-            webAuthSession = session
-            session.start()
-        }
+        try await WebSignIn.open(url, callbackScheme: AppConfig.authCallbackScheme)
     }
 
     private static func email(fromIDToken idToken: String) -> String? {
@@ -271,14 +253,6 @@ final class AuthSession {
         base64 += String(repeating: "=", count: (4 - base64.count % 4) % 4)
         guard let data = Data(base64Encoded: base64) else { return nil }
         return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
-    }
-}
-
-private final class WebAuthPresenter: NSObject, ASWebAuthenticationPresentationContextProviding {
-    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        UIApplication.shared.connectedScenes
-            .compactMap { ($0 as? UIWindowScene)?.keyWindow }
-            .first ?? ASPresentationAnchor()
     }
 }
 

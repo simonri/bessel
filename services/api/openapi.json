@@ -1331,6 +1331,32 @@
         ],
         "summary": "Start Google Calendar Connection",
         "operationId": "authorize_google",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "app_scheme",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 100
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The Bessel app's URL scheme, when the app opened the flow: the result is sent back to it.",
+              "title": "App Scheme"
+            },
+            "description": "The Bessel app's URL scheme, when the app opened the flow: the result is sent back to it."
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1341,13 +1367,18 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/v1/calendars/google/callback": {

@@ -93,8 +93,13 @@ final class APIClient {
         }
     }
 
-    func post<T: Decodable>(_ path: String, body: (some Encodable)? = Optional<Int>.none, timeout: TimeInterval = requestTimeout) async throws -> T {
-        try await send(Request(method: "POST", path: path, body: try encodeBody(body), timeout: timeout))
+    func post<T: Decodable>(
+        _ path: String,
+        query: [URLQueryItem] = [],
+        body: (some Encodable)? = Optional<Int>.none,
+        timeout: TimeInterval = requestTimeout
+    ) async throws -> T {
+        try await send(Request(method: "POST", path: path, query: query, body: try encodeBody(body), timeout: timeout))
     }
 
     /// A post sent again later, maybe from another launch: the same key each

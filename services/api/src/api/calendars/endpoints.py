@@ -53,8 +53,14 @@ async def list_calendar_accounts(
 
 
 @router.post("/google/authorize", summary="Start Google Calendar Connection", response_model=GoogleAuthorizeResponse)
-async def authorize_google(current_user: CurrentDBUser) -> GoogleAuthorizeResponse:
-  return GoogleAuthorizeResponse(url=calendar_service.google_authorize_url(current_user.id))
+async def authorize_google(
+  current_user: CurrentDBUser,
+  app_scheme: Annotated[
+    str | None,
+    Query(max_length=100, description="The Bessel app's URL scheme, when the app opened the flow: the result is sent back to it."),
+  ] = None,
+) -> GoogleAuthorizeResponse:
+  return GoogleAuthorizeResponse(url=calendar_service.google_authorize_url(current_user.id, app_scheme=app_scheme))
 
 
 @router.post("/google/webhook", include_in_schema=False)

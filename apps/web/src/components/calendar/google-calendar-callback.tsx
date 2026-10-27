@@ -4,6 +4,11 @@ import { Spinner } from "@bessel/ui/components/spinner";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { client } from "@/lib/client";
+import {
+  appReturnURL,
+  type ConnectResult,
+  returnToApp,
+} from "@/lib/oauth-app-return";
 
 type Outcome =
   | { status: "pending" }
@@ -16,6 +21,7 @@ const FALLBACK_MESSAGE =
 
 // Google redirects here, not to the API, so the code is exchanged with the
 // signed-in user's token and the API can check the flow was started by them.
+// When the phone started it, the result (never the code) goes back to the app.
 export function GoogleCalendarCallbackPage() {
   const { isLoading, isAuthenticated, loginWithRedirect } = useAuth0();
   const [params] = useState(() => new URLSearchParams(window.location.search));
@@ -40,8 +46,13 @@ export function GoogleCalendarCallbackPage() {
 
     const code = params.get("code");
     const state = params.get("state");
+    const finish = (result: ConnectResult) => {
+      setOutcome(result);
+      const back = appReturnURL(state, result);
+      if (back) returnToApp(back);
+    };
     if (params.has("error") || !code || !state) {
-      setOutcome({ status: "failed", message: DENIED_MESSAGE });
+      finish({ status: "failed", message: DENIED_MESSAGE });
       return;
     }
 
@@ -50,12 +61,10 @@ export function GoogleCalendarCallbackPage() {
       body: { code, state },
       throwOnError: true,
     })
-      .then(({ data }) =>
-        setOutcome({ status: "connected", email: data.email }),
-      )
+      .then(({ data }) => finish({ status: "connected", email: data.email }))
       .catch((error: unknown) => {
         const detail = (error as { detail?: unknown } | null)?.detail;
-        setOutcome({
+        finish({
           status: "failed",
           message: typeof detail === "string" ? detail : FALLBACK_MESSAGE,
         });

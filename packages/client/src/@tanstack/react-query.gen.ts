@@ -191,6 +191,7 @@ import type {
   AuthorizeContactEditingError,
   AuthorizeContactEditingResponse,
   AuthorizeGoogleData,
+  AuthorizeGoogleError,
   AuthorizeGoogleResponse,
   AuthorizeMontroseData,
   AuthorizeMontroseResponse,
@@ -1613,12 +1614,12 @@ export const authorizeGoogleMutation = (
   options?: Partial<Options<AuthorizeGoogleData>>,
 ): UseMutationOptions<
   AuthorizeGoogleResponse,
-  DefaultError,
+  AuthorizeGoogleError,
   Options<AuthorizeGoogleData>
 > => {
   const mutationOptions: UseMutationOptions<
     AuthorizeGoogleResponse,
-    DefaultError,
+    AuthorizeGoogleError,
     Options<AuthorizeGoogleData>
   > = {
     mutationFn: async (fnOptions) => {

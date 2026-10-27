@@ -8696,9 +8696,26 @@ export type ListCalendarAccountsResponse =
 export type AuthorizeGoogleData = {
   body?: never;
   path?: never;
-  query?: never;
+  query?: {
+    /**
+     * App Scheme
+     *
+     * The Bessel app's URL scheme, when the app opened the flow: the result is sent back to it.
+     */
+    app_scheme?: string | null;
+  };
   url: "/v1/calendars/google/authorize";
 };
+
+export type AuthorizeGoogleErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type AuthorizeGoogleError =
+  AuthorizeGoogleErrors[keyof AuthorizeGoogleErrors];
 
 export type AuthorizeGoogleResponses = {
   /**

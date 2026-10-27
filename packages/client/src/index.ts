@@ -476,6 +476,8 @@ export {
   type AuthorizeContactEditingResponse,
   type AuthorizeContactEditingResponses,
   type AuthorizeGoogleData,
+  type AuthorizeGoogleError,
+  type AuthorizeGoogleErrors,
   type AuthorizeGoogleResponse,
   type AuthorizeGoogleResponses,
   type AuthorizeMontroseData,
