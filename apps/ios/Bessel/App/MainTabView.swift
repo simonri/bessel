@@ -5,7 +5,7 @@ enum AppTab: String, CaseIterable, Identifiable {
     case calendar
     case health
     case recipes
-    case places
+    case more
 
     var id: String { rawValue }
 
@@ -15,7 +15,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         case .calendar: "Calendar"
         case .health: "Health"
         case .recipes: "Recipes"
-        case .places: "Places"
+        case .more: "More"
         }
     }
 
@@ -25,7 +25,7 @@ enum AppTab: String, CaseIterable, Identifiable {
         case .calendar: "calendar"
         case .health: "heart"
         case .recipes: "fork.knife"
-        case .places: "mappin.and.ellipse"
+        case .more: "ellipsis.circle"
         }
     }
 }
@@ -61,9 +61,9 @@ struct MainTabView: View {
                 .tabItem { Label(AppTab.recipes.title, systemImage: AppTab.recipes.icon) }
                 .tag(AppTab.recipes)
                 .floatingTabBar()
-            PlacesView(auth: auth, services: services, isActive: selection == .places)
-                .tabItem { Label(AppTab.places.title, systemImage: AppTab.places.icon) }
-                .tag(AppTab.places)
+            MoreView(auth: auth, services: services, isActive: selection == .more)
+                .tabItem { Label(AppTab.more.title, systemImage: AppTab.more.icon) }
+                .tag(AppTab.more)
                 .floatingTabBar()
         }
         .environment(toasts)

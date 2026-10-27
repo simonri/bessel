@@ -35,7 +35,7 @@ struct ContactsView: View {
                 ForEach(sections) { section in
                     Section {
                         ForEach(section.contacts) { contact in
-                            NavigationLink(value: CalendarRoute.contact(contact.id)) {
+                            NavigationLink(value: MoreRoute.contact(contact.id)) {
                                 ContactRow(name: contact.displayName, photoURL: contact.photoUrl, detail: contact.subtitle)
                             }
                             .listRowBackground(Theme.card)
@@ -100,7 +100,7 @@ struct ContactsView: View {
         if let dates = store.reminders?.dates, !dates.isEmpty {
             Section {
                 ForEach(dates, id: \.self) { reminder in
-                    NavigationLink(value: CalendarRoute.contact(reminder.contact.id)) {
+                    NavigationLink(value: MoreRoute.contact(reminder.contact.id)) {
                         ContactRow(
                             name: reminder.contact.displayName,
                             photoURL: reminder.contact.photoUrl,
@@ -172,7 +172,7 @@ struct ContactsView: View {
     @ViewBuilder
     private var emptyState: some View {
         if store.contacts.isEmpty {
-            EmptyState(emoji: "📇", title: "No contacts yet", detail: "Connect a Google account on the web and the people in it show up here.")
+            EmptyState(emoji: "📇", title: "No contacts yet", detail: "Connect your Google account in Calendar and the people in it show up here.")
         } else {
             EmptyState(emoji: "🔍", title: "No matches", detail: "Try a name, a company, a tag or part of a number.")
         }

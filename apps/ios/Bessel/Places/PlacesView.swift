@@ -2,10 +2,9 @@ import MapKit
 import SwiftUI
 
 struct PlacesView: View {
-    let auth: AuthSession
+    @Bindable var store: PlacesStore
     let isActive: Bool
 
-    @State private var store: PlacesStore
     @State private var showingMap = false
     @State private var adding = false
     @State private var selectedID: UUID?
@@ -13,57 +12,48 @@ struct PlacesView: View {
     @State private var cameraPosition: MapCameraPosition = .automatic
     @Environment(ToastCenter.self) private var toasts
 
-    init(auth: AuthSession, services: AppServices, isActive: Bool) {
-        self.auth = auth
-        self.isActive = isActive
-        _store = State(initialValue: PlacesStore(services: services))
-    }
-
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                statusPicker
-                    .padding(.horizontal, 16)
-                    .padding(.top, Theme.pageTop)
-                    .padding(.bottom, 12)
-                if showingMap {
-                    map
-                } else {
-                    list
-                }
+        VStack(spacing: 0) {
+            statusPicker
+                .padding(.horizontal, 16)
+                .padding(.top, Theme.pageTop)
+                .padding(.bottom, 12)
+            if showingMap {
+                map
+            } else {
+                list
             }
-            .background(Theme.background)
-            .navigationTitle("Places")
-            .toolbarTitleDisplayMode(.inlineLarge)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button { adding = true } label: { Image(systemName: "plus") }
-                        .accessibilityLabel("Add place")
-                }
-                ProfileToolbarItem(auth: auth)
-            }
-            // The new place opens once the add sheet is gone; presenting a
-            // sheet while another is dismissing is dropped.
-            .sheet(isPresented: $adding, onDismiss: {
-                selectedID = justAddedID
-                justAddedID = nil
-            }) {
-                AddPlaceView(store: store) { created in
-                    store.status = created.status
-                    justAddedID = created.id
-                }
-            }
-            .sheet(item: selectedPlace) { selection in
-                PlaceDetailView(store: store, placeID: selection.id)
-            }
-            .alert("Something went wrong", isPresented: errorBinding) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(store.errorMessage ?? "")
-            }
-            .refreshWhileVisible(isActive) { await store.loadIfStale() }
-            .loadErrorToast($store.loadError, isActive: isActive) { await store.load() }
         }
+        .background(Theme.background)
+        .navigationTitle("Places")
+        .toolbarTitleDisplayMode(.inlineLarge)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { adding = true } label: { Image(systemName: "plus") }
+                    .accessibilityLabel("Add place")
+            }
+        }
+        // The new place opens once the add sheet is gone; presenting a
+        // sheet while another is dismissing is dropped.
+        .sheet(isPresented: $adding, onDismiss: {
+            selectedID = justAddedID
+            justAddedID = nil
+        }) {
+            AddPlaceView(store: store) { created in
+                store.status = created.status
+                justAddedID = created.id
+            }
+        }
+        .sheet(item: selectedPlace) { selection in
+            PlaceDetailView(store: store, placeID: selection.id)
+        }
+        .alert("Something went wrong", isPresented: errorBinding) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(store.errorMessage ?? "")
+        }
+        .refreshWhileVisible(isActive) { await store.loadIfStale() }
+        .loadErrorToast($store.loadError, isActive: isActive) { await store.load() }
     }
 
     private var statusPicker: some View {

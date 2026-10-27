@@ -13,11 +13,6 @@ enum EventEditorTarget: Identifiable {
     }
 }
 
-enum CalendarRoute: Hashable {
-    case contacts
-    case contact(UUID)
-}
-
 /// The week as eight cells filling the screen, two across and edge to edge:
 /// Monday to Sunday with their events, and a month to jump around in.
 struct CalendarView: View {
@@ -30,18 +25,15 @@ struct CalendarView: View {
     @State private var dayList: Date?
     @State private var showingCalendars = false
     @State private var showingConnect = false
-    @State private var contacts: ContactsStore
-    @State private var path: [CalendarRoute] = []
 
     init(auth: AuthSession, services: AppServices, isActive: Bool) {
         self.auth = auth
         self.isActive = isActive
         _store = State(initialValue: CalendarStore(services: services))
-        _contacts = State(initialValue: ContactsStore(services: services))
     }
 
     var body: some View {
-        NavigationStack(path: $path) {
+        NavigationStack {
             VStack(alignment: .leading, spacing: 12) {
                 header
                 if store.hasLoaded && store.accounts.isEmpty {
@@ -65,27 +57,11 @@ struct CalendarView: View {
             .toolbarTitleDisplayMode(.inlineLarge)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { path.append(.contacts) } label: { Image(systemName: "person.2") }
-                        .accessibilityLabel("Contacts")
-                }
-                ToolbarItem(placement: .topBarTrailing) {
                     // Picks which calendars show, so a filter rather than the tab's own icon.
                     Button { showingCalendars = true } label: { Image(systemName: "line.3.horizontal.decrease") }
                         .accessibilityLabel("Calendars")
                 }
                 ProfileToolbarItem(auth: auth)
-            }
-            // A page of its own rather than a tab: a sixth tab would land
-            // under More, which wraps it in a second navigation bar. Both
-            // levels are routed from here: a destination declared inside a
-            // pushed page pops right back out on iOS 26.
-            .navigationDestination(for: CalendarRoute.self) { route in
-                switch route {
-                case .contacts:
-                    ContactsView(store: contacts, isActive: isActive)
-                case .contact(let id):
-                    ContactDetailView(store: contacts, contactID: id)
-                }
             }
             .sheet(item: $detailEvent) { event in
                 EventDetailSheet(store: store, eventID: event.id) { editing in
