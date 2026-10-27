@@ -114,19 +114,24 @@ export const PRIMARY_PAGES: PageKey[] = [
   ...(isDesktop ? (["obsidian"] as PageKey[]) : []),
 ];
 
-/**
- * Sidebar pages that need something most people don't have yet (an address,
- * a desktop or iPhone app). Hidden until the account has their data or
- * someone turns them on in Settings > Pages.
- */
-export const OPTIONAL_PAGES = [
+const OPTIONAL_PAGE_KEYS = [
   "hyperliquid",
   "investments",
   "sleep",
   "activity",
+  "canvas",
 ] as const satisfies readonly PageKey[];
 
-export type OptionalPage = (typeof OPTIONAL_PAGES)[number];
+export type OptionalPage = (typeof OPTIONAL_PAGE_KEYS)[number];
+
+/**
+ * Sidebar pages that need something most people don't have yet (an address,
+ * a desktop or iPhone app). Hidden until the account has their data or
+ * someone turns them on in Settings > Pages. The canvas is one of them in a
+ * browser, where its agents and terminals can't run.
+ */
+export const OPTIONAL_PAGES: readonly OptionalPage[] =
+  OPTIONAL_PAGE_KEYS.filter((page) => page !== "canvas" || !isDesktop);
 
 export function isOptionalPage(page: PageKey): page is OptionalPage {
   return (OPTIONAL_PAGES as readonly PageKey[]).includes(page);

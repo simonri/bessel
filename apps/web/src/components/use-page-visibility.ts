@@ -5,6 +5,7 @@ import {
 } from "@bessel/client";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useWindowState } from "@/components/canvas/window-manager";
 import {
   isOptionalPage,
   type OptionalPage,
@@ -30,6 +31,7 @@ function useOptionalPageData(
   skip: (page: OptionalPage) => boolean,
 ): Record<OptionalPage, boolean | undefined> {
   const { settings } = useSettings();
+  const { windowsByWorkspace } = useWindowState();
   const accounts = useQuery({
     ...listBankAccountsOptions({ client, query: BANK_ACCOUNTS_QUERY }),
     enabled: !skip("investments"),
@@ -55,6 +57,7 @@ function useOptionalPageData(
     ),
     sleep: known(sleep, (d) => d.items.length > 0),
     activity: known(activity, (d) => d.sources.length > 0),
+    canvas: [...windowsByWorkspace.values()].some((w) => w.length > 0),
   };
 }
 
@@ -72,10 +75,10 @@ export function usePageVisibility() {
     [pageChoices, showOptionalPages],
   );
   const data = useOptionalPageData(decided);
-  const { hyperliquid, investments, sleep, activity } = data;
+  const { hyperliquid, investments, sleep, activity, canvas } = data;
 
   return useMemo(() => {
-    const hasData = { hyperliquid, investments, sleep, activity };
+    const hasData = { hyperliquid, investments, sleep, activity, canvas };
     const isVisible = (page: PageKey) =>
       !isOptionalPage(page) ||
       (pageChoices[page] ?? (showOptionalPages || !!hasData[page]));
@@ -91,6 +94,7 @@ export function usePageVisibility() {
     investments,
     sleep,
     activity,
+    canvas,
   ]);
 }
 

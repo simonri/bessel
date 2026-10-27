@@ -40,7 +40,14 @@ vi.mock("@bessel/client", () => ({
 }));
 vi.mock("@/components/pages", () => ({
   isOptionalPage: (page: string) =>
-    ["hyperliquid", "investments", "sleep", "activity"].includes(page),
+    ["hyperliquid", "investments", "sleep", "activity", "canvas"].includes(
+      page,
+    ),
+}));
+
+const boards = vi.hoisted(() => ({ windows: new Map<string, unknown[]>() }));
+vi.mock("@/components/canvas/window-manager", () => ({
+  useWindowState: () => ({ windowsByWorkspace: boards.windows }),
 }));
 
 const { usePageVisibility, useHiddenPageFallback } = await import(
@@ -86,7 +93,13 @@ function visibility() {
   });
 }
 
-const OPTIONAL: PageKey[] = ["hyperliquid", "investments", "sleep", "activity"];
+const OPTIONAL: PageKey[] = [
+  "hyperliquid",
+  "investments",
+  "sleep",
+  "activity",
+  "canvas",
+];
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -95,6 +108,7 @@ beforeEach(() => {
   api.sources = [];
   api.failSleep = false;
   api.fetched = [];
+  boards.windows = new Map([["a", []]]);
 });
 afterEach(() => vi.clearAllMocks());
 
@@ -131,6 +145,17 @@ describe("optional pages for a new user", () => {
     );
     expect(result.current.isVisible("activity")).toBe(true);
     expect(result.current.isVisible("hyperliquid")).toBe(true);
+  });
+
+  it("show the canvas once a board has a widget on it", () => {
+    boards.windows = new Map([
+      ["a", []],
+      ["b", [{ id: "w1" }]],
+    ]);
+    const { result } = visibility();
+
+    expect(result.current.isSettled("canvas")).toBe(true);
+    expect(result.current.isVisible("canvas")).toBe(true);
   });
 
   it("don't count everyday accounts as investments", async () => {

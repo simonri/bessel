@@ -12,6 +12,7 @@ const NEEDS: Record<OptionalPage, string> = {
   investments: "Needs an Avanza or Montrose account.",
   sleep: "Comes from the Bessel iPhone app, which isn't public yet.",
   activity: "Recorded by the Bessel desktop app.",
+  canvas: "A board of widgets. Its agents and terminals need the desktop app.",
 };
 
 export function PagesPage() {
