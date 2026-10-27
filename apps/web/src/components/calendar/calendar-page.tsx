@@ -17,6 +17,8 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import { useOpenSettings } from "@/components/settings-dialog";
+import type { IntegrationsTab } from "@/components/settings-integrations-page";
 import { IconButton, SoftButton } from "@/components/ui-kit";
 import { clearPageTarget, usePageTarget } from "@/lib/page-target";
 import { userStorage } from "@/lib/user-storage";
@@ -24,6 +26,7 @@ import { headerMonth, visibleDays } from "./calendar-dates";
 import { CalendarSidebar } from "./calendar-sidebar";
 import { toWallClock, useCalendarTimeZone } from "./calendar-timezone";
 import type {
+  CalendarAccount,
   CalendarEvent,
   CalendarInfo,
   CalendarViewMode,
@@ -159,13 +162,32 @@ export function defaultCalendarId(
   );
 }
 
+/** Why a new event has nowhere to go, and where in Settings to fix it. */
+export function noCalendarNotice(accounts: CalendarAccount[]): {
+  message: string;
+  action: string;
+  tab: IntegrationsTab;
+} {
+  return accounts.length === 0
+    ? {
+        message: "Connect a calendar to add events",
+        action: "Connect",
+        tab: "add",
+      }
+    : {
+        message: "None of your shown calendars allow adding events",
+        action: "Manage accounts",
+        tab: "connected",
+      };
+}
+
 type Selection =
   | { kind: "event"; eventId: string }
   | { kind: "draft"; timing: EventDraftTiming; calendarId: string };
 
 export function CalendarView({
   nav: { date, view, days, setDate, setView },
-  data: { accounts, calendars, events },
+  data: { accounts, calendars, events, isLoading },
   actions,
   mutations,
   timeZone,
@@ -179,6 +201,7 @@ export function CalendarView({
   onTimeZoneChange: (timeZone: string) => void;
 }) {
   const today = toWallClock(new Date(), timeZone);
+  const openSettings = useOpenSettings();
   // null follows the container width; the toggle pins it open or closed.
   const [sidebarPinned, setSidebarPinned] = useState<boolean | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -375,6 +398,19 @@ export function CalendarView({
   const selectedId =
     selection?.kind === "draft" ? DRAFT_ID : (selectedEvent?.id ?? null);
 
+  const explainNoCalendar = () => {
+    // Accounts not loaded yet look the same as none connected.
+    if (isLoading) return;
+    const notice = noCalendarNotice(accounts);
+    toast.info(notice.message, {
+      id: "calendar-no-writable",
+      action: {
+        label: notice.action,
+        onClick: () => openSettings("integrations", notice.tab),
+      },
+    });
+  };
+
   const startCreating = (timing: EventDraftTiming) => {
     if (editorDirty) return;
     const calendarId = defaultCalendarId(
@@ -382,9 +418,7 @@ export function CalendarView({
       rememberedCalendarId(),
     );
     if (!calendarId) {
-      toast.info(
-        "Connect a calendar account that allows editing to add events",
-      );
+      explainNoCalendar();
       return;
     }
     setPendingMove(null);
@@ -540,6 +574,19 @@ export function CalendarView({
               </IconButton>
             </div>
           </header>
+          {!isLoading && accounts.length === 0 && !sidebarOpen && (
+            <p className="shrink-0 px-4 pb-2 text-12 text-white/40">
+              No calendar connected yet.{" "}
+              <button
+                type="button"
+                onClick={() => openSettings("integrations", "add")}
+                className="text-white/65 underline-offset-2 outline-none hover:text-white/90 hover:underline focus-visible:underline"
+              >
+                Connect one
+              </button>{" "}
+              to see and add events.
+            </p>
+          )}
           <TimeGrid
             days={days}
             events={displayEvents}
@@ -563,6 +610,8 @@ export function CalendarView({
             }
             onSelectedAnchor={setAnchor}
             onCreate={startCreating}
+            // A press that only closes an open popover isn't an attempt to add.
+            onCreateBlocked={() => !selection && explainNoCalendar()}
             onMove={handleMove}
             renderMenu={renderMenu}
           />

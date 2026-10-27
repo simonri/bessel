@@ -143,6 +143,7 @@ export function TimeGrid<E extends GridEvent>({
   onSelectEvent,
   onSelectedAnchor,
   onCreate,
+  onCreateBlocked,
   onMove,
   showAllDay = true,
   backgrounds = [],
@@ -165,6 +166,8 @@ export function TimeGrid<E extends GridEvent>({
   /** Reports the selected event's chip, which anchors its popover. */
   onSelectedAnchor: (element: HTMLElement | null) => void;
   onCreate: (timing: EventDraftTiming) => void;
+  /** A press on empty space while `canCreate` is false, to say why nothing happens. */
+  onCreateBlocked?: () => void;
   onMove: (
     eventId: string,
     timing: EventDraftTiming,
@@ -485,8 +488,11 @@ export function TimeGrid<E extends GridEvent>({
                 pressedEmpty.current = !fromPortal(e) && !onEventChip(e.target);
               }}
               onPointerDown={(e) => {
-                if (!canCreate || e.button !== 0 || !pressedEmpty.current)
+                if (e.button !== 0 || !pressedEmpty.current) return;
+                if (!canCreate) {
+                  onCreateBlocked?.();
                   return;
+                }
                 e.currentTarget.setPointerCapture(e.pointerId);
                 const p = point(e, e.currentTarget);
                 const index = dayIndexAt(p.x, p.width, days.length);
@@ -573,7 +579,11 @@ export function TimeGrid<E extends GridEvent>({
             pressedEmpty.current = !fromPortal(e) && !onEventChip(e.target);
           }}
           onPointerDown={(e) => {
-            if (!canCreate || e.button !== 0 || !pressedEmpty.current) return;
+            if (e.button !== 0 || !pressedEmpty.current) return;
+            if (!canCreate) {
+              onCreateBlocked?.();
+              return;
+            }
             e.currentTarget.setPointerCapture(e.pointerId);
             const p = point(e, e.currentTarget);
             const minutes = minutesAt(p.y);

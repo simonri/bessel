@@ -569,3 +569,64 @@ describe("TimeGrid dayStartHour", () => {
     });
   });
 });
+
+describe("TimeGrid without a calendar to add to", () => {
+  function renderLocked() {
+    const onCreate = vi.fn();
+    const onCreateBlocked = vi.fn();
+    render(
+      <TimeGrid
+        days={days}
+        events={[event]}
+        colorOf={() => "#4986e7"}
+        selectedEventId={null}
+        editableIds={new Set()}
+        canCreate={false}
+        timeZone={Intl.DateTimeFormat().resolvedOptions().timeZone}
+        onTimeZoneChange={() => {}}
+        onSelectDay={() => {}}
+        onSelectEvent={() => {}}
+        onSelectedAnchor={() => {}}
+        onCreate={onCreate}
+        onCreateBlocked={onCreateBlocked}
+        onMove={() => {}}
+      />,
+    );
+    const chip = screen.getByRole("button", { name: /Planning/ });
+    return {
+      onCreate,
+      onCreateBlocked,
+      chip,
+      grid: chip.closest(".touch-none") as HTMLElement,
+      allDay: screen.getByText("All-day").nextElementSibling as HTMLElement,
+    };
+  }
+
+  it("reports a drag on empty time instead of creating", () => {
+    const { onCreate, onCreateBlocked, grid } = renderLocked();
+    fireEvent.pointerDown(grid, {
+      button: 0,
+      pointerId: 1,
+      clientX: 10,
+      clientY: 20,
+    });
+    fireEvent.pointerMove(grid, { pointerId: 1, clientX: 10, clientY: 200 });
+    fireEvent.pointerUp(grid, { pointerId: 1, clientX: 10, clientY: 200 });
+    fireEvent.doubleClick(grid, { clientX: 10, clientY: 20 });
+    expect(onCreateBlocked).toHaveBeenCalledTimes(1);
+    expect(onCreate).not.toHaveBeenCalled();
+  });
+
+  it("reports a press on the all-day strip", () => {
+    const { onCreateBlocked, allDay } = renderLocked();
+    fireEvent.pointerDown(allDay, { button: 0, pointerId: 1, clientX: 10 });
+    expect(onCreateBlocked).toHaveBeenCalledTimes(1);
+  });
+
+  it("stays quiet for presses on an event or with another button", () => {
+    const { onCreateBlocked, chip, grid } = renderLocked();
+    fireEvent.pointerDown(chip, { button: 0, pointerId: 1 });
+    fireEvent.pointerDown(grid, { button: 2, pointerId: 1 });
+    expect(onCreateBlocked).not.toHaveBeenCalled();
+  });
+});

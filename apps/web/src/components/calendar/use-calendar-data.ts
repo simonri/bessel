@@ -31,6 +31,8 @@ export interface CalendarData {
   accounts: CalendarAccount[];
   calendars: CalendarInfo[];
   events: CalendarEvent[];
+  /** True until the accounts first load, while `accounts` is empty either way. */
+  isLoading: boolean;
 }
 
 export interface CalendarActions {
@@ -266,7 +268,7 @@ export function useCalendarData(range: {
     return event ? [event] : [];
   });
 
-  return { accounts, calendars, events };
+  return { accounts, calendars, events, isLoading: accountsData === undefined };
 }
 
 export function useCalendarActions(): CalendarActions {
