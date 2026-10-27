@@ -153,7 +153,7 @@ struct ProfileView: View {
 
     private var healthStatus: String {
         guard let lastSynced = WorkoutSyncAnchor.lastSyncedAt else { return "Not connected" }
-        return "Synced \(lastSynced.formatted(.relative(presentation: .named)))"
+        return "Checked \(lastSynced.formatted(.relative(presentation: .named)))"
     }
 
     private static let versionLabel: String = {

@@ -187,6 +187,19 @@ final class CalendarStore {
         }
     }
 
+    // MARK: - Accounts
+
+    /// Checks the Apple ID with iCloud and adds its calendars; their events
+    /// arrive with the first sync, a moment later.
+    func connectICloud(appleID: String, appPassword: String) async throws {
+        let body = API.ICloudConnectRequest(
+            appleId: appleID.trimmingCharacters(in: .whitespaces),
+            appPassword: appPassword.trimmingCharacters(in: .whitespaces)
+        )
+        let _: CalendarAccount = try await client.post("/v1/calendars/icloud", body: body)
+        await load()
+    }
+
     // MARK: - Writing
 
     /// Creates an event from the editor's values.

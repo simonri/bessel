@@ -374,16 +374,11 @@ struct CalendarsSheet: View {
     let store: CalendarStore
 
     @Environment(\.dismiss) private var dismiss
+    @State private var connecting = false
 
     var body: some View {
         NavigationStack {
             List {
-                if store.accounts.isEmpty {
-                    Text("Connect a Google or iCloud calendar on the desktop app to see it here.")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.mutedForeground)
-                        .listRowBackground(Theme.card)
-                }
                 ForEach(store.accounts) { account in
                     Section {
                         ForEach(account.calendars) { calendar in
@@ -408,6 +403,18 @@ struct CalendarsSheet: View {
                     }
                     .listRowBackground(Theme.card)
                 }
+                Section {
+                    Button {
+                        connecting = true
+                    } label: {
+                        Label("Connect a calendar", systemImage: "plus")
+                    }
+                    .foregroundStyle(Theme.primary)
+                }
+                .listRowBackground(Theme.card)
+            }
+            .sheet(isPresented: $connecting) {
+                ConnectCalendarSheet(store: store)
             }
             .scrollContentBackground(.hidden)
             .background(Theme.background)

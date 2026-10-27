@@ -29,6 +29,7 @@ struct CalendarView: View {
     @State private var editorTarget: EventEditorTarget?
     @State private var dayList: Date?
     @State private var showingCalendars = false
+    @State private var showingConnect = false
     @State private var contacts: ContactsStore
     @State private var path: [CalendarRoute] = []
 
@@ -44,11 +45,7 @@ struct CalendarView: View {
             VStack(alignment: .leading, spacing: 12) {
                 header
                 if store.hasLoaded && store.accounts.isEmpty {
-                    Label("Connect Google Calendar or iCloud on the desktop app to see your events here.", systemImage: "calendar.badge.plus")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.mutedForeground)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .card(padding: 14)
+                    connectCard
                 }
                 GeometryReader { geometry in
                     weekGrid(cellHeight: geometry.size.height / 4)
@@ -108,6 +105,9 @@ struct CalendarView: View {
             .sheet(isPresented: $showingCalendars) {
                 CalendarsSheet(store: store)
             }
+            .sheet(isPresented: $showingConnect) {
+                ConnectCalendarSheet(store: store)
+            }
             .alert("Couldn't update the calendar", isPresented: errorBinding) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -143,7 +143,7 @@ struct CalendarView: View {
             }
             navButton("chevron.left", label: "Previous week") { Task { await store.step(weeks: -1) } }
             navButton("chevron.right", label: "Next week") { Task { await store.step(weeks: 1) } }
-            if store.canCreate {
+            if store.hasLoaded {
                 Button(action: newEvent) {
                     Image(systemName: "plus")
                         .font(.system(size: 15, weight: .bold))
@@ -238,10 +238,30 @@ struct CalendarView: View {
 
     // MARK: - Actions
 
+    private var connectCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("See your events here", systemImage: "calendar.badge.plus")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.foreground)
+            Text("Connect Google Calendar or iCloud to see your week and add to it.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.mutedForeground)
+            Button("Connect a calendar") { showingConnect = true }
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.primary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(padding: 14)
+    }
+
     /// Tap a day: a one-hour event at 9, or at the next full hour today.
     private func create(on day: Date) {
         guard store.canCreate else {
-            store.errorMessage = "Connect a calendar account that allows editing on the desktop to add events."
+            if store.accounts.isEmpty {
+                showingConnect = true
+            } else {
+                store.errorMessage = "Your calendars here are read-only. Connect one you can edit to add events."
+            }
             return
         }
         let calendar = Calendar.current

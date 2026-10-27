@@ -96,6 +96,9 @@ struct HealthView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     sectionPicker
                     if store.isConnected {
+                        if store.hasNothingFromHealth {
+                            NothingFromHealthCard()
+                        }
                         DayPager(day: store.day, isToday: store.isToday) { offset in
                             Task { await store.step(offset) }
                         }
@@ -162,7 +165,8 @@ struct HealthView: View {
             .frame(maxWidth: .infinity)
         } else if let lastSyncedAt = store.lastSyncedAt {
             VStack(spacing: 6) {
-                Text("Synced with Apple Health \(lastSyncedAt.formatted(.relative(presentation: .named)))")
+                // "Checked", not "Synced": iOS doesn't say whether reading was allowed.
+                Text("Checked Apple Health \(lastSyncedAt.formatted(.relative(presentation: .named)))")
                     .foregroundStyle(Theme.faintForeground)
                 Button("Doesn't match Apple Health? Sync everything again") {
                     Task { await store.syncEverythingAgain() }
@@ -179,6 +183,30 @@ struct HealthView: View {
             get: { store.errorMessage != nil },
             set: { if !$0 { store.errorMessage = nil } }
         )
+    }
+}
+
+/// Shown when Apple Health has handed over nothing at all, most often
+/// because reading was turned off: iOS gives apps no way to tell.
+private struct NothingFromHealthCard: View {
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Nothing from Apple Health yet", systemImage: "heart.text.square")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(Theme.foreground)
+            Text("If you didn't allow access, turn it on in Settings › Health › Data Access & Devices › Bessel. Sleep and workouts show up here after that.")
+                .font(.subheadline)
+                .foregroundStyle(Theme.mutedForeground)
+            Button("Open Settings") {
+                if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(Theme.primary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .card(padding: 16)
     }
 }
 

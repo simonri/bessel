@@ -50,6 +50,11 @@ final class HealthStore {
 
     var isToday: Bool { Calendar.current.isDateInToday(day) }
 
+    /// Connected, loaded, and not one night, workout or step to show.
+    var hasNothingFromHealth: Bool {
+        isConnected && hasLoaded && !isSyncing && (summary?.isEmpty ?? true) && recentWorkouts.isEmpty && recentNights.isEmpty
+    }
+
     var latestWorkout: HealthKitWorkoutItem? { recentWorkouts.first }
 
     /// The shown night's stages within its main sleep, for the sleep detail.
