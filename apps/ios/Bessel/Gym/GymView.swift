@@ -514,8 +514,10 @@ struct LogTopSetSheet: View {
             return
         }
         withAnimation(.bouncy) { celebrating = true }
+        // Over the whole screen, not just this sheet; it keeps falling after the sheet closes.
+        Confetti.fire()
         Task {
-            try? await Task.sleep(for: .seconds(1.6))
+            try? await Task.sleep(for: .seconds(1.8))
             dismiss()
         }
     }

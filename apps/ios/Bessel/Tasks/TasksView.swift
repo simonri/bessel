@@ -436,6 +436,9 @@ private struct TaskComposer: View {
     @Environment(ToastCenter.self) private var toasts
     /// The project picked from the chip; a "#project" in the text wins over it.
     @State private var chosenProject: String?
+    /// "New project…" was picked, so a "#name" typed after it is that project
+    /// when sent, without a second tap.
+    @State private var namingProject = false
 
     init(store: TasksStore, text: Binding<String>, isFocused: FocusState<Bool>.Binding) {
         self.store = store
@@ -486,6 +489,12 @@ private struct TaskComposer: View {
                     Text(project).tag(Optional(project))
                 }
             }
+            Divider()
+            Button {
+                startNamingProject()
+            } label: {
+                Label("New project…", systemImage: "plus")
+            }
         } label: {
             Chip(text: chosenProject ?? "No project", hue: PastelHue.forName(chosenProject ?? ""), systemImage: "number", isSelected: chosenProject != nil)
         }
@@ -507,6 +516,14 @@ private struct TaskComposer: View {
         return store.projects + [chosenProject]
     }
 
+    /// Types the "#" for them: the name goes straight into the task box.
+    private func startNamingProject() {
+        namingProject = true
+        let spaced = text.isEmpty || text.hasSuffix(" ") ? text : text + " "
+        text = spaced + "#"
+        isFocused.wrappedValue = true
+    }
+
     private func adopt(_ tag: String) {
         chosenProject = tag
         text = text.split(whereSeparator: \.isWhitespace)
@@ -515,7 +532,13 @@ private struct TaskComposer: View {
     }
 
     private func submit() {
-        let task = parsed
+        var project = chosenProject
+        var line = text
+        if namingProject, let tag = newProjectTag {
+            project = tag
+            line = text.split(whereSeparator: \.isWhitespace).filter { $0 != "#\(tag)" }.joined(separator: " ")
+        }
+        let task = QuickTask.parse(line, projects: store.projects)
         guard !task.title.isEmpty, !isSaving else { return }
         isSaving = true
         let draft = TaskCreate(
@@ -524,7 +547,7 @@ private struct TaskComposer: View {
             status: .todo,
             priority: task.priority,
             dueDate: task.dueDate,
-            project: task.project ?? chosenProject
+            project: task.project ?? project
         )
         Task {
             defer { isSaving = false }
@@ -533,6 +556,7 @@ private struct TaskComposer: View {
                 // Before closing: the composer leaves the screen with its focus.
                 if !sent { toasts.show("Saved on your phone. It'll be added when you're back online.") }
                 text = ""
+                namingProject = false
                 isFocused.wrappedValue = false
             } catch {
                 store.errorMessage = error.userMessage

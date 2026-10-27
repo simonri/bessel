@@ -19,6 +19,21 @@ struct ContactsView: View {
     }
 
     var body: some View {
+        ScrollViewReader { proxy in
+            list
+                .overlay(alignment: .trailing) {
+                    if search.isEmpty, sections.count > 1 {
+                        LetterIndex(letters: sections.map(\.letter)) { letter in
+                            proxy.scrollTo(letter, anchor: .top)
+                        }
+                        .padding(.trailing, 4)
+                        .padding(.bottom, 80)
+                    }
+                }
+        }
+    }
+
+    private var list: some View {
         List {
             if store.hasLoaded {
                 if search.isEmpty {
@@ -44,6 +59,7 @@ struct ContactsView: View {
                     } header: {
                         SectionHeading(title: section.letter)
                     }
+                    .id(section.letter)
                 }
                 if search.isEmpty, !store.contacts.isEmpty {
                     syncFooter
