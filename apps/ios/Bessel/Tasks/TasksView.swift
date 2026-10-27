@@ -201,7 +201,11 @@ struct TasksView: View {
         ForEach(groups) { group in
             Section {
                 ForEach(group.tasks) { task in
-                    openRow(task)
+                    if store.isQueued(task) {
+                        queuedRow(task)
+                    } else {
+                        openRow(task)
+                    }
                 }
             } header: {
                 SectionHeading(
@@ -335,6 +339,22 @@ struct TasksView: View {
         }
     }
 
+    /// Added without a connection: it can only be deleted until it's sent.
+    private func queuedRow(_ task: TaskItem) -> some View {
+        TaskRow(task: task, onComplete: nil, isWaiting: true)
+            .contentShape(Rectangle())
+            .onTapGesture { toasts.show("This one is still waiting for a connection.") }
+            .listRowBackground(Theme.card)
+            .listRowSeparatorTint(Theme.border)
+            .swipeActions(edge: .trailing) {
+                Button(role: .destructive) {
+                    store.discardQueued(task)
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+    }
+
     /// Press and hold a task: copy it as a prompt for Claude, or delete it.
     @ViewBuilder
     private func taskMenu(_ task: TaskItem) -> some View {
@@ -413,6 +433,7 @@ private struct TaskComposer: View {
     var isFocused: FocusState<Bool>.Binding
 
     @State private var isSaving = false
+    @Environment(ToastCenter.self) private var toasts
     /// The project picked from the chip; a "#project" in the text wins over it.
     @State private var chosenProject: String?
 
@@ -508,7 +529,9 @@ private struct TaskComposer: View {
         Task {
             defer { isSaving = false }
             do {
-                try await store.create(draft)
+                let sent = try await store.create(draft)
+                // Before closing: the composer leaves the screen with its focus.
+                if !sent { toasts.show("Saved on your phone. It'll be added when you're back online.") }
                 text = ""
                 isFocused.wrappedValue = false
             } catch {

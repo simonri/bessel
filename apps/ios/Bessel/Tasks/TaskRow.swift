@@ -4,6 +4,8 @@ struct TaskRow: View {
     let task: TaskItem
     /// Nil for finished tasks, which show a static tick.
     let onComplete: (() -> Void)?
+    /// Added without a connection and not sent yet.
+    var isWaiting = false
 
     @State private var isTicked = false
 
@@ -62,11 +64,17 @@ struct TaskRow: View {
     }
 
     private var hasMeta: Bool {
-        task.dueDate != nil || task.completedAt != nil || task.project != nil || task.recurrenceLabel != nil
+        isWaiting || task.dueDate != nil || task.completedAt != nil || task.project != nil || task.recurrenceLabel != nil
     }
 
     private var meta: some View {
         HStack(spacing: 8) {
+            if isWaiting {
+                Label("Waiting to sync", systemImage: "icloud.slash")
+                    .labelStyle(CompactLabelStyle())
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Theme.mutedForeground)
+            }
             if task.status == .done, let completedAt = task.completedAt {
                 Text(completedAt.formatted(.relative(presentation: .named)))
                     .font(.caption)

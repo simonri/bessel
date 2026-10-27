@@ -97,6 +97,14 @@ final class APIClient {
         try await send(Request(method: "POST", path: path, body: try encodeBody(body), timeout: timeout))
     }
 
+    /// A post sent again later, maybe from another launch: the same key each
+    /// time, so a create that landed but lost its answer isn't made twice.
+    func post<T: Decodable>(_ path: String, body: some Encodable, idempotencyKey: String) async throws -> T {
+        var request = Request(method: "POST", path: path, body: try encodeBody(body))
+        request.id = idempotencyKey
+        return try await send(request)
+    }
+
     /// For a body that's JSON already, like a report the OS produced.
     func postNoContent(_ path: String, json: Data) async throws {
         _ = try await sendRaw(Request(method: "POST", path: path, body: json))
@@ -133,7 +141,7 @@ final class APIClient {
         var timeout: TimeInterval = APIClient.requestTimeout
         /// Same for every attempt, so the server can tie retries together and
         /// return the first result instead of applying a change twice.
-        let id = UUID().uuidString
+        var id = UUID().uuidString
 
         var isRead: Bool { method == "GET" || method == "HEAD" }
     }

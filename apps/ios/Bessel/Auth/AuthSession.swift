@@ -135,6 +135,7 @@ final class AuthSession {
         ResponseCache.removeAll()
         DeleteOutbox.clear()
         GymOutbox.clear()
+        TaskQueue.clear()
         state = .signedOut
     }
 

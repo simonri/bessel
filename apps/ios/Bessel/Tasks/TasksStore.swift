@@ -40,6 +40,8 @@ final class TasksStore {
     /// Projects to show; empty shows everything.
     var projectFilter: Set<String> = []
     private(set) var open: [TaskItem] = []
+    /// Added without a connection and still on their way, shown in Today.
+    private(set) var queued: [TaskItem] = []
     private(set) var done: [TaskItem] = []
     private(set) var projects: [String] = []
     private(set) var hasLoaded = false
@@ -51,6 +53,8 @@ final class TasksStore {
     private let client: APIClient
     private let outbox: DeleteOutbox
     private let cache: ResponseCache
+    @ObservationIgnored private let queue: TaskQueue
+    @ObservationIgnored private var isSendingQueue = false
     @ObservationIgnored private var loads = LoadGeneration()
     @ObservationIgnored private let changes = SerialQueues<UUID>()
     private var donePage = 1
@@ -68,10 +72,12 @@ final class TasksStore {
 
     private static let cacheKey = "tasks.v1"
 
-    init(services: AppServices) {
+    init(services: AppServices, queue: TaskQueue? = nil) {
         client = services.client
         outbox = services.outbox
         cache = services.cache
+        self.queue = queue ?? TaskQueue(account: services.account)
+        queued = self.queue.tasks.map(\.placeholder)
         if let snapshot = cache.load(Snapshot.self, key: Self.cacheKey) {
             let pending = outbox.pendingIDs
             open = snapshot.open.filter { !pending.contains($0.id) && $0.status != .unknown }
@@ -105,7 +111,7 @@ final class TasksStore {
 
     func whenGroups(now: Date = .now) -> [WhenGroup] {
         var buckets: [WhenGroup.Key: [TaskItem]] = [:]
-        for task in oneOffs {
+        for task in oneOffs + queued.filter(matchesFilter) {
             buckets[when(task, now: now), default: []].append(task)
         }
         buckets[.overdue]?.sort { ($0.dueDate ?? .distantPast) < ($1.dueDate ?? .distantPast) }
@@ -130,11 +136,14 @@ final class TasksStore {
     // MARK: - Loading
 
     func loadIfStale() async {
+        try? await sendQueued()
         guard loads.isStale(maxAge: AppServices.freshFor) else { return }
         await load()
     }
 
+    /// Sends waiting tasks first, so the list that comes back already has them.
     func load() async {
+        try? await sendQueued()
         let ticket = loads.begin()
         defer { hasLoaded = true }
         do {
@@ -192,11 +201,53 @@ final class TasksStore {
 
     // MARK: - Mutations
 
-    func create(_ draft: TaskCreate) async throws {
+    /// Kept on the phone first, then sent, so it's never lost to a bad
+    /// connection. Returns false when it's waiting to be sent; throws when the
+    /// server turned it down.
+    @discardableResult
+    func create(_ draft: TaskCreate) async throws -> Bool {
         loads.invalidate()
-        let created: TaskItem = try await client.post("/v1/tasks", body: draft)
-        withAnimation(.snappy) { place(created) }
-        rememberProject(created.project)
+        let pending = queue.add(draft)
+        withAnimation(.snappy) { queued = queue.tasks.map(\.placeholder) }
+        rememberProject(draft.project)
+        try await sendQueued(reporting: pending.id)
+        return !queue.contains(pending.id)
+    }
+
+    func isQueued(_ task: TaskItem) -> Bool {
+        queue.contains(task.id)
+    }
+
+    /// Deleting a task that never reached the server: it just stops waiting.
+    func discardQueued(_ task: TaskItem) {
+        queue.remove(task.id)
+        withAnimation(.snappy) { queued = queue.tasks.map(\.placeholder) }
+    }
+
+    /// Sends waiting tasks oldest first and stops at the first that can't get
+    /// through. One the server turns down is dropped and said out loud, or
+    /// thrown when it's `reporting`, the one just added.
+    func sendQueued(reporting id: UUID? = nil) async throws {
+        guard !isSendingQueue else { return }
+        isSendingQueue = true
+        defer { isSendingQueue = false }
+        while let pending = queue.tasks.first {
+            do {
+                let created: TaskItem = try await client.post("/v1/tasks", body: pending.draft, idempotencyKey: pending.id.uuidString)
+                queue.remove(pending.id)
+                withAnimation(.snappy) {
+                    queued = queue.tasks.map(\.placeholder)
+                    place(created)
+                }
+            } catch where error.isTransient || error.isCancellation {
+                return
+            } catch {
+                queue.remove(pending.id)
+                withAnimation(.snappy) { queued = queue.tasks.map(\.placeholder) }
+                if pending.id == id { throw error }
+                errorMessage = "\u{201C}\(pending.draft.title)\u{201D} couldn't be added. \(error.userMessage)"
+            }
+        }
     }
 
     func update(_ task: TaskItem, with update: TaskUpdate) async throws {
