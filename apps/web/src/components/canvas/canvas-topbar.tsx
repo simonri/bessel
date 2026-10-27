@@ -1,4 +1,4 @@
-import { Menu, Network, ScrollText, Settings, X } from "lucide-react";
+import { Menu, Network, ScrollText, Search, Settings, X } from "lucide-react";
 import { memo, useEffect, useState } from "react";
 import { AgentUsageDropdown } from "@/components/canvas/agent-usage-dropdown";
 import { AvatarMenu } from "@/components/canvas/avatar-menu";
@@ -24,11 +24,21 @@ import { TopbarTooltip } from "./topbar-tooltip";
 // clear the "Bessel" title.
 const MAC_TRAFFIC_LIGHT_INSET = "pl-20";
 
+const SEARCH_SHORTCUT =
+  typeof window !== "undefined" &&
+  (window.electron?.platform === "darwin" ||
+    /Mac|iPhone|iPad/.test(navigator.platform))
+    ? "⌘K"
+    : "Ctrl K";
+
 export const CanvasTopBar = memo(function CanvasTopBar({
   nav,
+  onSearch,
 }: {
   /** On small screens, the sidebar's open state and toggle for the menu button. */
   nav?: { open: boolean; toggle: () => void };
+  /** Opens the command palette, which Ctrl/⌘ K also opens. */
+  onSearch: () => void;
 }) {
   const openSettings = useOpenSettings();
   const [logsOpen, setLogsOpen] = useState(false);
@@ -104,6 +114,19 @@ export const CanvasTopBar = memo(function CanvasTopBar({
           noDrag,
         )}
       >
+        <button
+          type="button"
+          onClick={onSearch}
+          aria-label="Search"
+          aria-keyshortcuts="Control+K Meta+K"
+          className="flex h-7 shrink-0 items-center gap-2 rounded-lg bg-white/[0.04] pr-1.5 pl-2.5 text-12 text-white/45 outline-none ring-1 ring-white/[0.06] transition-[background-color,color] duration-150 hover:bg-white/[0.07] hover:text-white/85 focus-visible:ring-primary-400/50 max-md:size-7 max-md:justify-center max-md:bg-transparent max-md:p-0 max-md:text-white/40 max-md:ring-0"
+        >
+          <Search className="size-3.5 shrink-0" />
+          <span className="max-md:hidden">Search</span>
+          <kbd className="rounded bg-white/[0.06] px-1 font-sans text-10 font-medium text-white/40 max-md:hidden">
+            {SEARCH_SHORTCUT}
+          </kbd>
+        </button>
         <div className={TOPBAR_GROUP}>
           {window.electron && <ProjectsDropdown />}
           <TimeSinceDropdown />

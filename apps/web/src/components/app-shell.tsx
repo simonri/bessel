@@ -138,6 +138,7 @@ export function AppShell() {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [openTaskId, setOpenTaskId] = useState<string | null>(null);
   const showShortcuts = useCallback(() => setShortcutsOpen(true), []);
+  const openPalette = useCallback(() => setPaletteOpen(true), []);
   const closePalette = useCallback(() => setPaletteOpen(false), []);
   const closeNewSession = useCallback(() => setNewSession(null), []);
   const selectPage = useCallback((page: PageKey) => {
@@ -208,7 +209,7 @@ export function AppShell() {
             {isDesktop && <AvanzaReporter />}
 
             <div className="relative flex h-full flex-col">
-              <CanvasTopBar nav={topBarNav} />
+              <CanvasTopBar nav={topBarNav} onSearch={openPalette} />
               <div className="relative flex min-h-0 flex-1">
                 {!isMobile ? (
                   <AppSidebar
