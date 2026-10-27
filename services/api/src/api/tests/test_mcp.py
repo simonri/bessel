@@ -206,6 +206,8 @@ ISOLATION_TESTED = {
   "update_recipe",
   "get_sleep",
   "list_workouts",
+  "get_daily_health",
+  "get_gym_log",
   "get_computer_activity",
 }
 

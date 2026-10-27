@@ -82,3 +82,29 @@ class GymTopSetRepository(RepositoryBase[GymTopSet], RepositoryIDMixin[GymTopSet
       .order_by(GymTopSet.exercise_id, GymTopSet.weight_kg.desc(), GymTopSet.performed_on.desc())
     )
     return await self.get_all(statement)
+
+  async def list_between(self, user_id: UUID, start: date, end: date) -> list[tuple[GymTopSet, GymExercise]]:
+    """Top sets from [start, end] with their exercise, oldest day first."""
+    statement = (
+      select(GymTopSet, GymExercise)
+      .join(GymExercise, GymExercise.id == GymTopSet.exercise_id)
+      .where(
+        GymTopSet.user_id == user_id,
+        GymTopSet.deleted_at.is_(None),
+        GymExercise.deleted_at.is_(None),
+        GymTopSet.performed_on >= start,
+        GymTopSet.performed_on <= end,
+      )
+      .order_by(GymTopSet.performed_on, GymExercise.name)
+    )
+    return list((await self.session.execute(statement)).tuples().all())
+
+  async def latest_before(self, user_id: UUID, before: date) -> Sequence[GymTopSet]:
+    """Each exercise's most recent top set from before `before`."""
+    statement = (
+      self.get_base_statement()
+      .where(GymTopSet.user_id == user_id, GymTopSet.deleted_at.is_(None), GymTopSet.performed_on < before)
+      .ext(distinct_on(GymTopSet.exercise_id))
+      .order_by(GymTopSet.exercise_id, GymTopSet.performed_on.desc())
+    )
+    return await self.get_all(statement)

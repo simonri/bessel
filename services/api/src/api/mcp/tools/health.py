@@ -1,4 +1,4 @@
-from datetime import datetime, time, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -6,7 +6,8 @@ from mcp.server.mcpserver import Context
 from pydantic import Field
 
 from api.common.schemas import Schema
-from api.healthkit.repository import HealthKitSleepSampleRepository, HealthKitWorkoutRepository
+from api.gym.repository import GymTopSetRepository
+from api.healthkit.repository import HealthKitDailyMetricRepository, HealthKitSleepSampleRepository, HealthKitWorkoutRepository
 from api.healthkit.schemas import SleepDailyEntry, SleepStageSummary
 from api.healthkit.service import healthkit_sleep_service
 from api.mcp.context import user_session
@@ -14,6 +15,8 @@ from api.mcp.dates import Day, TimezoneParam, local_window, parse_day, resolve_t
 from api.mcp.tools.common import ToolSpec, read
 
 MAX_SLEEP_DAYS = 92
+MAX_DAILY_DAYS = 92
+MAX_GYM_DAYS = 366
 
 
 class Sleep(Schema):
@@ -93,7 +96,88 @@ async def list_workouts(
   )
 
 
+class HealthDay(Schema):
+  date: date
+  steps: int | None
+  active_energy_kcal: float | None
+  exercise_minutes: float | None
+  resting_heart_rate: float | None = Field(description="Beats per minute.")
+  hrv_ms: float | None = Field(description="Heart rate variability in milliseconds.")
+
+
+class DailyHealth(Schema):
+  days: list[HealthDay] = Field(description="Oldest first. A day the phone sent nothing for is missing.")
+
+
+async def get_daily_health(ctx: Context, start: Day = "7 days ago", end: Day = "today", timezone: TimezoneParam = None) -> DailyHealth:
+  """Daily totals from Apple Health: steps, active energy, exercise minutes, resting heart rate and HRV.
+
+  Steps show walks that were never started as a workout, e.g. "did I move enough today".
+  """
+  async with user_session(ctx) as (session, user):
+    tz = resolve_timezone(user, timezone)
+    today = today_in(tz)
+    start_day, end_day = parse_day(start, today), parse_day(end, today)
+    local_window(start_day, end_day, tz, max_days=MAX_DAILY_DAYS)
+    rows = await HealthKitDailyMetricRepository.from_session(session).list_between(user.id, start_day, end_day)
+  return DailyHealth(
+    days=[
+      HealthDay(
+        date=row.date,
+        steps=row.steps,
+        active_energy_kcal=row.active_energy_kcal,
+        exercise_minutes=row.exercise_minutes,
+        resting_heart_rate=row.resting_heart_rate,
+        hrv_ms=row.hrv_ms,
+      )
+      for row in rows
+    ]
+  )
+
+
+class GymSet(Schema):
+  exercise: str
+  muscles: list[str] = Field(description="Muscle groups it works, e.g. chest, triceps.")
+  weight_kg: float = Field(description="The heaviest set of the day. Reps aren't logged.")
+  previous_kg: float | None = Field(description="This exercise's top set the time before, to see progress; null the first time.")
+
+
+class GymDay(Schema):
+  date: date
+  sets: list[GymSet]
+
+
+class GymLog(Schema):
+  days: list[GymDay] = Field(description="Days with logged lifts, newest first.")
+
+
+async def get_gym_log(ctx: Context, start: Day = "30 days ago", end: Day = "today", timezone: TimezoneParam = None) -> GymLog:
+  """Lifts the user logged in the Bessel app: per day, each exercise's heaviest set in kg and the one before it.
+
+  Use it to see which session was done (e.g. push or pull from the exercises) and whether the weights are going up.
+  Apple Health workouts only say "strength training"; this is what was lifted.
+  """
+  async with user_session(ctx) as (session, user):
+    tz = resolve_timezone(user, timezone)
+    today = today_in(tz)
+    start_day, end_day = parse_day(start, today), parse_day(end, today)
+    local_window(start_day, end_day, tz, max_days=MAX_GYM_DAYS)
+    repo = GymTopSetRepository.from_session(session)
+    rows = await repo.list_between(user.id, start_day, end_day)
+    previous = {top.exercise_id: float(top.weight_kg) for top in await repo.latest_before(user.id, start_day)}
+
+  days: dict[date, list[GymSet]] = {}
+  for top, exercise in rows:
+    days.setdefault(top.performed_on, []).append(
+      GymSet(exercise=exercise.name, muscles=exercise.muscles, weight_kg=float(top.weight_kg), previous_kg=previous.get(exercise.id))
+    )
+    previous[exercise.id] = float(top.weight_kg)
+  return GymLog(days=[GymDay(date=day, sets=sets) for day, sets in sorted(days.items(), reverse=True)])
+
+
 TOOLS: list[ToolSpec] = [
   read(get_sleep, "Sleep"),
   read(list_workouts, "Workouts"),
+  read(get_daily_health, "Daily health"),
+  read(get_gym_log, "Gym log"),
 ]

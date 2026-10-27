@@ -1,8 +1,11 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 from uuid import uuid4
 
 import pytest
 from api.models.activity_event import ActivityEvent
+from api.models.gym import GymExercise, GymTopSet
+from api.models.healthkit_daily_metric import HealthKitDailyMetric
 from api.models.healthkit_sleep_sample import HealthKitSleepSample
 from api.models.healthkit_workout import HealthKitWorkout
 from api.tests.fixtures.database import SaveFixture
@@ -52,6 +55,62 @@ class TestHealth:
     workouts = (await mcp_call(connect, "list_workouts"))["workouts"]
     assert [(w["type"], w["duration_secs"], w["distance_m"]) for w in workouts] == [("running", 1800.0, 5000.0)]
     assert (await mcp_call(connect, "list_workouts", token="token-b"))["workouts"] == []
+
+
+class TestDailyHealth:
+  @pytest.mark.asyncio
+  async def test_days_in_range_oldest_first_and_only_the_users_own(self, connect: ConnectFixture, save_owned: SaveFixture) -> None:
+    for day, steps, rhr in [(date(2026, 10, 3), 4000, 58.0), (date(2026, 10, 4), 9000, 55.0), (date(2026, 10, 5), 12000, None)]:
+      await save_owned(HealthKitDailyMetric(date=day, steps=steps, resting_heart_rate=rhr, exercise_minutes=30.0))
+
+    health = await mcp_call(connect, "get_daily_health", {"start": "2026-10-04", "end": "2026-10-05", "timezone": "Europe/Stockholm"})
+
+    assert [(d["date"], d["steps"], d["resting_heart_rate"]) for d in health["days"]] == [("2026-10-04", 9000, 55.0), ("2026-10-05", 12000, None)]
+    other = await mcp_call(connect, "get_daily_health", {"start": "2026-10-01", "end": "2026-10-31", "timezone": "Europe/Stockholm"}, token="token-b")
+    assert other == {"days": []}
+
+  @pytest.mark.asyncio
+  async def test_a_range_longer_than_three_months_is_refused(self, connect: ConnectFixture) -> None:
+    message = await mcp_call_error(connect, "get_daily_health", {"start": "2026-01-01", "end": "2026-06-30", "timezone": "Europe/Stockholm"})
+    assert "at most 92 days" in message
+
+
+class TestGymLog:
+  @pytest.mark.asyncio
+  async def test_lifts_per_day_newest_first_with_the_weight_before(self, connect: ConnectFixture, save_owned: SaveFixture) -> None:
+    bench = GymExercise(name="Bänkpress", muscles=["chest", "triceps"])
+    squat = GymExercise(name="Knäböj", muscles=["quads"])
+    await save_owned(bench)
+    await save_owned(squat)
+    for exercise, day, kg in [
+      (bench, date(2026, 9, 20), "75"),
+      (bench, date(2026, 10, 1), "80"),
+      (bench, date(2026, 10, 8), "82.5"),
+      (squat, date(2026, 10, 8), "100"),
+      (bench, date(2026, 10, 20), "85"),
+    ]:
+      await save_owned(GymTopSet(exercise_id=exercise.id, performed_on=day, weight_kg=Decimal(kg)))
+
+    window = await mcp_call(connect, "get_gym_log", {"start": "2026-10-05", "end": "2026-10-15", "timezone": "Europe/Stockholm"})
+    assert window == {
+      "days": [
+        {
+          "date": "2026-10-08",
+          "sets": [
+            {"exercise": "Bänkpress", "muscles": ["chest", "triceps"], "weight_kg": 82.5, "previous_kg": 80.0},
+            {"exercise": "Knäböj", "muscles": ["quads"], "weight_kg": 100.0, "previous_kg": None},
+          ],
+        }
+      ]
+    }
+
+    month = await mcp_call(connect, "get_gym_log", {"start": "2026-10-01", "end": "2026-10-31", "timezone": "Europe/Stockholm"})
+    assert [d["date"] for d in month["days"]] == ["2026-10-20", "2026-10-08", "2026-10-01"]
+    assert [(s["weight_kg"], s["previous_kg"]) for s in month["days"][0]["sets"]] == [(85.0, 82.5)]
+    assert [(s["weight_kg"], s["previous_kg"]) for s in month["days"][2]["sets"]] == [(80.0, 75.0)]
+
+    other = await mcp_call(connect, "get_gym_log", {"start": "2026-10-01", "end": "2026-10-31", "timezone": "Europe/Stockholm"}, token="token-b")
+    assert other == {"days": []}
 
 
 class TestComputerActivity:
