@@ -666,6 +666,38 @@ export const AssetType = {
 export type AssetType = (typeof AssetType)[keyof typeof AssetType];
 
 /**
+ * AssistantNoteResponse
+ */
+export type AssistantNoteResponse = {
+  /**
+   * Key
+   *
+   * What the assistant saved it under, e.g. 'morgonrapport'.
+   */
+  key: string;
+  /**
+   * Content
+   */
+  content: string;
+  /**
+   * Updated At
+   */
+  updated_at: Date;
+};
+
+/**
+ * AssistantNotesResponse
+ */
+export type AssistantNotesResponse = {
+  /**
+   * Notes
+   *
+   * Most recently updated first.
+   */
+  notes: Array<AssistantNoteResponse>;
+};
+
+/**
  * AvanzaAccountSchema
  */
 export type AvanzaAccountSchema = {
@@ -8230,6 +8262,23 @@ export type GetAgentUsageDailyResponses = {
 
 export type GetAgentUsageDailyResponse =
   GetAgentUsageDailyResponses[keyof GetAgentUsageDailyResponses];
+
+export type ListAssistantNotesData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/assistant-notes";
+};
+
+export type ListAssistantNotesResponses = {
+  /**
+   * Successful Response
+   */
+  200: AssistantNotesResponse;
+};
+
+export type ListAssistantNotesResponse =
+  ListAssistantNotesResponses[keyof ListAssistantNotesResponses];
 
 export type ListBankAccountsData = {
   body?: never;

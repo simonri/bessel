@@ -101,6 +101,7 @@ import {
   linkBankConnectionAccount,
   linkMontroseAccount,
   listActivitySources,
+  listAssistantNotes,
   listBankAccounts,
   listBankConnections,
   listCalendarAccounts,
@@ -435,6 +436,8 @@ import type {
   LinkMontroseAccountResponse,
   ListActivitySourcesData,
   ListActivitySourcesResponse,
+  ListAssistantNotesData,
+  ListAssistantNotesResponse,
   ListBankAccountsData,
   ListBankAccountsError,
   ListBankAccountsResponse,
@@ -988,6 +991,36 @@ export const getAgentUsageDailyOptions = (
       return data;
     },
     queryKey: getAgentUsageDailyQueryKey(options),
+  });
+
+export const listAssistantNotesQueryKey = (
+  options?: Options<ListAssistantNotesData>,
+) => createQueryKey("listAssistantNotes", options);
+
+/**
+ * List Assistant Notes
+ *
+ * What assistants saved over MCP to remember between conversations, e.g. the morning report's state.
+ */
+export const listAssistantNotesOptions = (
+  options?: Options<ListAssistantNotesData>,
+) =>
+  queryOptions<
+    ListAssistantNotesResponse,
+    DefaultError,
+    ListAssistantNotesResponse,
+    ReturnType<typeof listAssistantNotesQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listAssistantNotes({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listAssistantNotesQueryKey(options),
   });
 
 export const listBankAccountsQueryKey = (

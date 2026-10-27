@@ -27,7 +27,6 @@ import {
   AlertTriangle,
   Check,
   ChevronDown,
-  Copy,
   Gem,
   HeartPulse,
   Landmark,
@@ -50,6 +49,10 @@ import { useContactSources } from "@/components/contacts/use-contacts";
 import { IntegrationIcon } from "@/components/integration-icons";
 import { useOpenPage } from "@/components/open-page-context";
 import type { PageKey } from "@/components/pages";
+import {
+  CopyButton,
+  connectorAddress,
+} from "@/components/settings-claude-page";
 import {
   useCloseSettings,
   useOpenSettings,
@@ -257,24 +260,6 @@ function HyperliquidDialog({
   );
 }
 
-function CopyConnectorAddress({ url }: { url: string }) {
-  const [copied, setCopied] = useState(false);
-  return (
-    <SoftButton
-      aria-label="Copy the connector address"
-      onClick={() => {
-        void navigator.clipboard.writeText(url).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1500);
-        });
-      }}
-    >
-      {copied ? <Check /> : <Copy />}
-      {copied ? "Copied" : "Copy address"}
-    </SoftButton>
-  );
-}
-
 function matches(item: Item, query: string): boolean {
   const text =
     `${item.name} ${typeof item.detail === "string" ? item.detail : ""} ${item.brings}`.toLowerCase();
@@ -333,7 +318,7 @@ export function IntegrationsPage({
   const sendingActivity = (activity?.sources.length ?? 0) > 0;
   const vault = settings.obsidianVaultPath;
   const wallet = settings.hyperliquidAddress;
-  const mcpUrl = `${client.getConfig().baseUrl}/mcp`;
+  const mcpUrl = connectorAddress();
 
   const connected: Item[] = [
     ...accounts.map((account): Item => {
@@ -678,7 +663,13 @@ export function IntegrationsPage({
       name: "Claude",
       detail: <span className="font-mono">{mcpUrl}</span>,
       brings: "Reads all of this when you ask",
-      status: <CopyConnectorAddress url={mcpUrl} />,
+      status: (
+        <CopyButton
+          text={mcpUrl}
+          label="Copy address"
+          ariaLabel="Copy the connector address"
+        />
+      ),
     },
   ];
   const addItems: Item[] = addable.map(({ add, ...item }) =>

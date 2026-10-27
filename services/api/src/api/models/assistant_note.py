@@ -9,7 +9,7 @@ from api.models.base import RecordModel
 class AssistantNote(RecordModel):
   """What an assistant keeps between conversations under one key, e.g. the
   morning report's sleep streak and the suggestions the user already turned
-  down. Written over MCP; not shown in the app."""
+  down. Written over MCP; Settings > Claude shows them."""
 
   __tablename__ = "assistant_notes"
 

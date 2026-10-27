@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from api.activity.endpoints import router as activity_router
 from api.agent_usage.endpoints import router as agent_usage_router
+from api.assistant_notes.endpoints import router as assistant_notes_router
 from api.auth.endpoints import router as auth_router
 from api.avanza.endpoints import router as avanza_router
 from api.bank_accounts.endpoints import router as bank_accounts_router
@@ -36,6 +37,7 @@ router = APIRouter(prefix="/v1")
 router.include_router(auth_router)
 router.include_router(activity_router)
 router.include_router(agent_usage_router)
+router.include_router(assistant_notes_router)
 router.include_router(bank_accounts_router)
 router.include_router(avanza_router)
 router.include_router(montrose_router)

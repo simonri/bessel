@@ -10,6 +10,7 @@ import {
   Info,
   Laptop,
   LayoutDashboard,
+  MessageSquare,
   PanelLeft,
   Plug,
   Search,
@@ -17,6 +18,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { AboutPage } from "@/components/settings-about-page";
+import { ClaudePage } from "@/components/settings-claude-page";
 import { DashboardPage } from "@/components/settings-dashboard-page";
 import { DevicesPage } from "@/components/settings-devices-page";
 import {
@@ -34,6 +36,7 @@ export type SettingsPage =
   | "dashboard"
   | "pages"
   | "integrations"
+  | "claude"
   | "devices"
   | "monitor"
   | "about";
@@ -78,6 +81,13 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
         icon: Plug,
         keywords:
           "accounts google icloud calendar contacts bank avanza montrose klarna hyperliquid claude obsidian timeline connect",
+      },
+      {
+        key: "claude",
+        label: "Claude",
+        description: "Connect Claude to Bessel and see what it remembers.",
+        icon: MessageSquare,
+        keywords: "mcp connector assistant ai memory notes morning report",
       },
     ],
   },
@@ -247,6 +257,7 @@ export function SettingsModal({
                 <div className="mt-5">
                   {page === "dashboard" && <DashboardPage />}
                   {page === "pages" && <PagesPage />}
+                  {page === "claude" && <ClaudePage />}
                   {page === "devices" && <DevicesPage />}
                   {page === "monitor" && <MonitorPage />}
                   {page === "about" && <AboutPage />}

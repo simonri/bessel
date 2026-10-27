@@ -43,6 +43,7 @@ import type {
   LinkAvanzaAccountResponse,
   LinkBankConnectionAccountResponse,
   LinkMontroseAccountResponse,
+  ListAssistantNotesResponse,
   ListBankAccountsResponse,
   ListBankConnectionsResponse,
   ListCalendarAccountsResponse,
@@ -119,6 +120,25 @@ export const getAgentUsageStatusResponseTransformer = async (
   data: any,
 ): Promise<GetAgentUsageStatusResponse> => {
   data = agentUsageStatusResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const assistantNoteResponseSchemaResponseTransformer = (data: any) => {
+  data.updated_at = new Date(data.updated_at);
+  return data;
+};
+
+const assistantNotesResponseSchemaResponseTransformer = (data: any) => {
+  data.notes = data.notes.map((item: any) =>
+    assistantNoteResponseSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listAssistantNotesResponseTransformer = async (
+  data: any,
+): Promise<ListAssistantNotesResponse> => {
+  data = assistantNotesResponseSchemaResponseTransformer(data);
   return data;
 };
 

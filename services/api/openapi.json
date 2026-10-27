@@ -577,6 +577,33 @@
         }
       }
     },
+    "/v1/assistant-notes": {
+      "get": {
+        "tags": [
+          "assistant-notes"
+        ],
+        "summary": "List Assistant Notes",
+        "description": "What assistants saved over MCP to remember between conversations, e.g. the morning report's state.",
+        "operationId": "list_assistant_notes",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantNotesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/bank-accounts": {
       "get": {
         "tags": [
@@ -9869,6 +9896,48 @@
           "other"
         ],
         "title": "AssetType"
+      },
+      "AssistantNoteResponse": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "What the assistant saved it under, e.g. 'morgonrapport'."
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "content",
+          "updated_at"
+        ],
+        "title": "AssistantNoteResponse"
+      },
+      "AssistantNotesResponse": {
+        "properties": {
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/AssistantNoteResponse"
+            },
+            "type": "array",
+            "title": "Notes",
+            "description": "Most recently updated first."
+          }
+        },
+        "type": "object",
+        "required": [
+          "notes"
+        ],
+        "title": "AssistantNotesResponse"
       },
       "AvanzaAccountSchema": {
         "properties": {

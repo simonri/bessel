@@ -52,6 +52,7 @@ import {
   linkAvanzaAccountResponseTransformer,
   linkBankConnectionAccountResponseTransformer,
   linkMontroseAccountResponseTransformer,
+  listAssistantNotesResponseTransformer,
   listBankAccountsResponseTransformer,
   listBankConnectionsResponseTransformer,
   listCalendarAccountsResponseTransformer,
@@ -368,6 +369,8 @@ import type {
   LinkMontroseAccountResponses,
   ListActivitySourcesData,
   ListActivitySourcesResponses,
+  ListAssistantNotesData,
+  ListAssistantNotesResponses,
   ListBankAccountsData,
   ListBankAccountsErrors,
   ListBankAccountsResponses,
@@ -803,6 +806,25 @@ export const getAgentUsageDaily = <ThrowOnError extends boolean = false>(
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/agent-usage/daily",
+    ...options,
+  });
+
+/**
+ * List Assistant Notes
+ *
+ * What assistants saved over MCP to remember between conversations, e.g. the morning report's state.
+ */
+export const listAssistantNotes = <ThrowOnError extends boolean = false>(
+  options?: Options<ListAssistantNotesData, ThrowOnError>,
+): RequestResult<ListAssistantNotesResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    ListAssistantNotesResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listAssistantNotesResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/assistant-notes",
     ...options,
   });
 

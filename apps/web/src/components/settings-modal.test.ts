@@ -16,6 +16,9 @@ vi.mock("@/components/settings-pages-page", () => ({
 vi.mock("@/components/settings-integrations-page", () => ({
   IntegrationsPage: () => null,
 }));
+vi.mock("@/components/settings-claude-page", () => ({
+  ClaudePage: () => null,
+}));
 
 const { matchingGroups } = await import("./settings-modal");
 
@@ -40,7 +43,17 @@ describe("matchingGroups", () => {
     expect(matchingGroups("avanza").map((group) => group.label)).toEqual([
       "Connections",
     ]);
-    expect(labels("  ")).toEqual(["Dashboard", "Pages", "Integrations"]);
+    expect(labels("  ")).toEqual([
+      "Dashboard",
+      "Pages",
+      "Integrations",
+      "Claude",
+    ]);
+  });
+
+  it("finds the Claude page by MCP or what it remembers", () => {
+    expect(labels("mcp")).toEqual(["Claude"]);
+    expect(labels("memory")).toEqual(["Claude"]);
   });
 
   it("finds the pages switches by a page's name", () => {

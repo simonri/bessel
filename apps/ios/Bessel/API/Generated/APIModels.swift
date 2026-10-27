@@ -254,6 +254,16 @@ enum API {
         static let allCases: [AssetType] = [.stock, .etf, .mutualFund, .bond, .crypto, .realEstate, .other]
     }
 
+    struct AssistantNoteResponse: Codable, Hashable {
+        var key: String
+        var content: String
+        var updatedAt: Date
+    }
+
+    struct AssistantNotesResponse: Codable, Hashable {
+        @Lossy var notes: [AssistantNoteResponse]
+    }
+
     struct AvanzaAccountSchema: Codable, Hashable {
         var id: UUID
         var name: String
@@ -2918,6 +2928,54 @@ extension API.AgentUsageSyncResponse {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.dailySynced, forKey: .dailySynced)
         try container.encode(self.statusSynced, forKey: .statusSynced)
+    }
+}
+
+extension API.AssistantNoteResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case key
+        case content
+        case updatedAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.content = try container.decode(String.self, forKey: .content)
+        self.updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case key
+        case content
+        case updatedAt = "updated_at"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.key, forKey: .key)
+        try container.encode(self.content, forKey: .content)
+        try container.encode(API.Instant(self.updatedAt), forKey: .updatedAt)
+    }
+}
+
+extension API.AssistantNotesResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case notes
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._notes = try container.decode(Lossy<API.AssistantNoteResponse>.self, forKey: .notes)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case notes
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.notes, forKey: .notes)
     }
 }
 

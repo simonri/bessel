@@ -945,6 +945,44 @@ export const AssetTypeSchema = {
   title: "AssetType",
 } as const;
 
+export const AssistantNoteResponseSchema = {
+  properties: {
+    key: {
+      type: "string",
+      title: "Key",
+      description: "What the assistant saved it under, e.g. 'morgonrapport'.",
+    },
+    content: {
+      type: "string",
+      title: "Content",
+    },
+    updated_at: {
+      type: "string",
+      format: "date-time",
+      title: "Updated At",
+    },
+  },
+  type: "object",
+  required: ["key", "content", "updated_at"],
+  title: "AssistantNoteResponse",
+} as const;
+
+export const AssistantNotesResponseSchema = {
+  properties: {
+    notes: {
+      items: {
+        $ref: "#/components/schemas/AssistantNoteResponse",
+      },
+      type: "array",
+      title: "Notes",
+      description: "Most recently updated first.",
+    },
+  },
+  type: "object",
+  required: ["notes"],
+  title: "AssistantNotesResponse",
+} as const;
+
 export const AvanzaAccountSchemaSchema = {
   properties: {
     id: {
