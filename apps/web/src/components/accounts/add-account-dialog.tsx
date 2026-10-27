@@ -92,7 +92,7 @@ const MONTROSE_SUBTYPES: Record<string, string> = {
   Credit: "loan",
 };
 
-function useProviders(): Provider[] {
+function useProviders(): { providers: Provider[]; banksClosed: boolean } {
   const { data: banks } = useQuery(listBankConnectionsOptions({ client }));
   const { data: avanza } = useQuery(getAvanzaOptions({ client }));
   const { data: montrose } = useQuery(getMontroseOptions({ client }));
@@ -129,7 +129,7 @@ function useProviders(): Provider[] {
     kind: "klarna",
     hint: "Purchases you pay later",
   });
-  return providers;
+  return { providers, banksClosed: banks?.available === false };
 }
 
 /** One place to add any account: pick the bank, see what Bessel can and can't do, approve, choose accounts. */
@@ -210,7 +210,7 @@ function BackButton({
 }
 
 function Choose({ onNext }: { onNext: (state: AddStep) => void }) {
-  const providers = useProviders();
+  const { providers, banksClosed } = useProviders();
   const [query, setQuery] = useState("");
   const shown = providers.filter((p) =>
     p.name.toLowerCase().includes(query.trim().toLowerCase()),
@@ -263,6 +263,12 @@ function Choose({ onNext }: { onNext: (state: AddStep) => void }) {
         {shown.length === 0 && (
           <p className="py-6 text-center text-13 text-white/45">
             No bank called "{query}" yet. Upload a file from it instead.
+          </p>
+        )}
+        {banksClosed && (
+          <p className="mt-3 type-caption text-white/45">
+            Direct bank connections aren't open to everyone yet. You can upload
+            a file from your bank below.
           </p>
         )}
       </div>

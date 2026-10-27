@@ -11,6 +11,7 @@ import { addDays, format, isSameDay, subDays } from "date-fns";
 import { useMemo, useState } from "react";
 import { DayRings } from "@/components/health/day-rings";
 import { NightChart } from "@/components/sleep/night-chart";
+import { NoSleepYet } from "@/components/sleep/no-sleep-yet";
 import { RhythmChart } from "@/components/sleep/rhythm-chart";
 import { SleepCards } from "@/components/sleep/sleep-cards";
 import {
@@ -165,17 +166,7 @@ function SleepPage() {
             ))}
           </div>
         ) : !night ? (
-          <div
-            className={`${CARD} flex flex-col items-center gap-1 py-10 text-center`}
-          >
-            <p className="text-13 font-medium text-white/80">
-              No sleep here yet 🌙
-            </p>
-            <p className="max-w-sm text-12 leading-relaxed text-white/45">
-              Sleep comes from Apple Health through the Bessel app on your
-              iPhone. Wear your watch to bed and the night shows up here.
-            </p>
-          </div>
+          <NoSleepYet className={CARD} />
         ) : (
           <div className={`${CARD} @container flex flex-col gap-5`}>
             <NightChart segments={sleepSegments} />

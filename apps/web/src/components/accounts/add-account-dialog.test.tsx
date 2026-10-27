@@ -39,13 +39,17 @@ const montrose = vi.hoisted(() => ({
   },
 }));
 
+const banks = vi.hoisted(() => ({ open: true }));
+
 function query(key: string, data: unknown) {
   return () => ({ queryKey: [key], queryFn: async () => data });
 }
 
 vi.mock("@bessel/client", () => ({
   listBankConnectionsOptions: query("connections", {
-    available: true,
+    get available() {
+      return banks.open;
+    },
     bank_options: [],
     connections: [
       {
@@ -133,6 +137,7 @@ afterEach(() => {
   linkBank.mockClear();
   linkMontrose.mockClear();
   connectMontrose.mockClear();
+  banks.open = true;
   montrose.status = {
     logo: "https://logo.example/montrose.png",
     connection: null,
@@ -290,5 +295,25 @@ describe("choosing accounts after approving a bank", () => {
       ["x1", "new-Allkonto"],
       ["x2", "b1"],
     ]);
+  });
+});
+
+describe("direct bank connections", () => {
+  const note = /Direct bank connections aren't open to everyone yet/;
+
+  it("are said to be closed, with a file upload offered, when not open to this account", async () => {
+    banks.open = false;
+    mount({ step: "choose" });
+
+    expect(await screen.findByText(note)).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Upload a file" })).toBeTruthy();
+  });
+
+  it("aren't mentioned when they're open", async () => {
+    mount({ step: "choose" });
+
+    await screen.findByRole("button", { name: /Klarna/ });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.queryByText(note)).toBeNull();
   });
 });

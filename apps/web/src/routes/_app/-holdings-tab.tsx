@@ -17,6 +17,7 @@ import { AccountLogo } from "@/components/accounts/accounts-overview";
 import { BankLogo } from "@/components/bank-logo";
 import { EmptyState, Panel } from "@/components/ui-kit";
 import { client } from "@/lib/client";
+import { isDesktop } from "@/lib/environment";
 import { formatQuantity } from "@/lib/money";
 import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
@@ -447,13 +448,23 @@ export function HoldingsTab() {
         title="No investment accounts yet"
         className="py-12"
       >
-        <p>
-          Add Avanza on the{" "}
-          <Link to="/accounts" className="underline underline-offset-2">
-            Accounts
-          </Link>{" "}
-          page to see your holdings here.
-        </p>
+        {isDesktop ? (
+          <p>
+            Add Avanza on the{" "}
+            <Link to="/accounts" className="underline underline-offset-2">
+              Accounts
+            </Link>{" "}
+            page to see your holdings here.
+          </p>
+        ) : (
+          <p>
+            Avanza connects from the Bessel desktop app. Add Montrose on the{" "}
+            <Link to="/accounts" className="underline underline-offset-2">
+              Accounts
+            </Link>{" "}
+            page.
+          </p>
+        )}
       </EmptyState>
     );
   }
