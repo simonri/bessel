@@ -13,7 +13,10 @@ import { format } from "date-fns";
 import { ArrowRight, Play } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import type { TimedCalendarEvent } from "@/components/calendar/calendar-types";
-import { toCalendarEvent } from "@/components/calendar/use-calendar-data";
+import {
+  toCalendarEvent,
+  useCalendarAccounts,
+} from "@/components/calendar/use-calendar-data";
 import { describeDate, upcomingDay } from "@/components/contacts/contact-meta";
 import {
   FollowUpList,
@@ -22,6 +25,7 @@ import {
 import { MeetingBrief } from "@/components/contacts/meeting-brief";
 import { useOpenPage } from "@/components/open-page-context";
 import type { PageKey } from "@/components/pages";
+import { useOpenSettings } from "@/components/settings-dialog";
 import { localNightBounds } from "@/components/sleep/sleep-summary";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
 import { TaskRow } from "@/components/tasks/task-row";
@@ -29,6 +33,7 @@ import { PageHeader, SoftButton } from "@/components/ui-kit";
 import { useTaskStatusActions } from "@/hooks/use-task-status-actions";
 import { client } from "@/lib/client";
 import { useLocalDay } from "@/lib/local-day";
+import { AddTaskButton, GetStartedCard } from "./get-started";
 import {
   countdown,
   nextEvent,
@@ -100,9 +105,11 @@ function useUpcomingEvents(now: Date) {
     .filter((e): e is TimedCalendarEvent => e !== null && !e.allDay);
 }
 
-function NextUp({ now }: { now: Date }) {
+export function NextUp({ now }: { now: Date }) {
   const events = useUpcomingEvents(now);
   const next = nextEvent(events, now);
+  const { accounts, isLoading } = useCalendarAccounts();
+  const openSettings = useOpenSettings();
   return (
     <Block title="Next up" page="calendar" linkLabel="Calendar">
       {next ? (
@@ -125,6 +132,13 @@ function NextUp({ now }: { now: Date }) {
               ? `now, until ${format(next.event.end, "HH:mm")}`
               : countdown(now, next.event.start)}
           </span>
+        </div>
+      ) : !isLoading && accounts.length === 0 ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-13 text-white/45">No calendar connected yet.</p>
+          <SoftButton onClick={() => openSettings("integrations", "add")}>
+            Connect a calendar
+          </SoftButton>
         </div>
       ) : (
         <p className="text-13 text-white/45">
@@ -173,7 +187,7 @@ function TaskList({
   );
 }
 
-function TasksBlock({ now }: { now: Date }) {
+export function TasksBlock({ now }: { now: Date }) {
   const { data } = useQuery(
     listTasksOptions({
       client,
@@ -193,7 +207,12 @@ function TasksBlock({ now }: { now: Date }) {
 
   return (
     <Block title="Tasks" page="tasks" linkLabel="All tasks">
-      {empty ? (
+      {data?.items.length === 0 ? (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-13 text-white/45">No open tasks.</p>
+          <AddTaskButton>Add a task</AddTaskButton>
+        </div>
+      ) : empty ? (
         <p className="text-13 text-white/45">
           Nothing due today. Pick something from your tasks when you're ready.
         </p>
@@ -316,6 +335,7 @@ export function TodayPage() {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4">
       <PageHeader title="Today" summary={format(now, "EEEE d MMMM")} />
+      <GetStartedCard className={CARD} />
       <NextUp now={now} />
       <TasksBlock now={now} />
       <PeopleBlock />
