@@ -15,6 +15,7 @@ from uuid import UUID, uuid4
 import pytest
 import pytest_asyncio
 from api.app import app
+from api.assistant_notes.repository import AssistantNoteRepository
 from api.common.encryption import encrypt
 from api.models.bank_account import BankAccount
 from api.models.bank_connection import BankConnection, BankConnectionAccount
@@ -48,6 +49,7 @@ AUDITED: set[str] = {
   "GET /v1/activity/sources",
   "GET /v1/activity/summary",
   "GET /v1/agent-usage/daily",
+  "GET /v1/assistant-notes",
   "GET /v1/agent-usage/status",
   "POST /v1/agent-usage/sync",
   # Avanza's are in test_avanza.py::TestIsolation.
@@ -485,6 +487,16 @@ class TestTimeTracking:
 
     assert [e["note"] for e in (await client.get("/v1/time/entries", params=week)).json()] == [None]
     assert (await client.get("/v1/time/summary", params=summary)).json()["totals"][0]["seconds"] == 3600
+
+
+class TestAssistantNotes:
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_read_assistant_notes(self, client: AsyncClient, other_client: AsyncClient, session: AsyncSession, user: User) -> None:
+    await AssistantNoteRepository.from_session(session).save(user.id, "morgonrapport", "A's streak")
+    await session.flush()
+
+    assert (await other_client.get("/v1/assistant-notes")).json() == {"notes": []}
+    assert [n["content"] for n in (await client.get("/v1/assistant-notes")).json()["notes"]] == ["A's streak"]
 
 
 class TestNotifications:
