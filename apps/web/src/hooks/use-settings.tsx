@@ -66,7 +66,7 @@ const LOOK = { theme: "orange", wallpaper: "stone" } as const satisfies Pick<
 >;
 
 const DEFAULT_SETTINGS: Settings = {
-  cryptoPairs: "BTCUSDT",
+  cryptoPairs: "",
   activityMappings: [],
   ...LOOK,
   gridGap: 4,
@@ -77,8 +77,18 @@ const DEFAULT_SETTINGS: Settings = {
   navOrder: [],
 };
 
+/**
+ * What a key missing from saved settings meant when those settings were saved.
+ * New users get the leaner DEFAULT_SETTINGS; settings saved before a default
+ * changed keep what their owner always saw. Every save writes every key, so a
+ * key is only ever missing from settings saved before it existed.
+ */
+const SAVED_BEFORE: Partial<Settings> = {
+  cryptoPairs: "BTCUSDT",
+};
+
 function withDefaults(stored: Partial<Settings>): Settings {
-  return { ...DEFAULT_SETTINGS, ...stored, ...LOOK };
+  return { ...DEFAULT_SETTINGS, ...SAVED_BEFORE, ...stored, ...LOOK };
 }
 
 function loadSettings(): Settings {

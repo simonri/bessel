@@ -112,3 +112,44 @@ describe("the one look", () => {
     expect(result.current.settings.wallpaper).toBe("stone");
   });
 });
+
+describe("crypto pairs", () => {
+  it("are empty for a new user", () => {
+    const { result } = setup();
+
+    expect(result.current.settings.cryptoPairs).toBe("");
+  });
+
+  it("stay empty once a new user's settings are saved", () => {
+    const first = setup();
+    act(() => first.result.current.update({ navOrder: ["tasks"] }));
+    first.unmount();
+
+    const { result } = setup();
+
+    expect(result.current.settings.navOrder).toEqual(["tasks"]);
+    expect(result.current.settings.cryptoPairs).toBe("");
+  });
+
+  it("keep the old BTCUSDT default for settings saved before it changed", () => {
+    window.localStorage.setItem(
+      "bessel:settings",
+      JSON.stringify({ gridGap: 8 }),
+    );
+
+    const { result } = setup();
+
+    expect(result.current.settings.cryptoPairs).toBe("BTCUSDT");
+  });
+
+  it("keep a list someone cleared", () => {
+    window.localStorage.setItem(
+      "bessel:settings",
+      JSON.stringify({ cryptoPairs: "" }),
+    );
+
+    const { result } = setup();
+
+    expect(result.current.settings.cryptoPairs).toBe("");
+  });
+});
