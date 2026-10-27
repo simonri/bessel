@@ -1,8 +1,7 @@
-import { listTasksOptions } from "@bessel/client";
+import { listCalendarAccountsOptions, listTasksOptions } from "@bessel/client";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import { useCalendarAccounts } from "@/components/calendar/use-calendar-data";
 import { TaskFormDialog } from "@/components/create-task-dialog";
 import { useOpenSettings } from "@/components/settings-dialog";
 import { SoftButton } from "@/components/ui-kit";
@@ -105,13 +104,16 @@ function Step({
 export function GetStartedCard({ className }: { className: string }) {
   const openSettings = useOpenSettings();
   const [state, update] = useGetStartedState();
-  const { accounts, isLoading: accountsLoading } = useCalendarAccounts();
+  const { data: accounts, isSuccess: accountsLoaded } = useQuery(
+    listCalendarAccountsOptions({ client }),
+  );
   const { data: tasks, isSuccess: tasksLoaded } = useQuery(
     listTasksOptions({ client, query: { page: 1, limit: 1 } }),
   );
 
-  const loaded = !accountsLoading && tasksLoaded;
-  const googleDone = accounts.some((a) => a.provider === "google");
+  const loaded = accountsLoaded && tasksLoaded;
+  const googleDone =
+    accounts?.accounts.some((a) => a.provider === "google") ?? false;
   const taskDone = (tasks?.items.length ?? 0) > 0;
   const claudeDone = !!state.claudeOpened;
   const dataPending = !googleDone || !taskDone;

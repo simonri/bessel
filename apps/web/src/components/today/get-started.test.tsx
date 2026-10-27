@@ -9,6 +9,7 @@ const api = vi.hoisted(() => ({
   anyTasks: [] as unknown[],
   openTasks: [] as unknown[],
   hold: null as Promise<void> | null,
+  accountsFail: false,
   openSettings: vi.fn(),
 }));
 
@@ -29,6 +30,7 @@ vi.mock("@bessel/client", async (importOriginal) => ({
     queryKey: ["accounts"],
     queryFn: async () => {
       if (api.hold) await api.hold;
+      if (api.accountsFail) throw new Error("offline");
       return { accounts: api.accounts };
     },
   }),
@@ -59,7 +61,11 @@ const { NextUp, TasksBlock } = await import("./today-page");
 
 function mount(node = <GetStartedCard className="" />) {
   return render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider
+      client={
+        new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      }
+    >
       {node}
     </QueryClientProvider>,
   );
@@ -75,6 +81,7 @@ beforeEach(() => {
   api.anyTasks = [];
   api.openTasks = [];
   api.hold = null;
+  api.accountsFail = false;
   api.openSettings.mockReset();
 });
 afterEach(cleanup);
@@ -135,6 +142,15 @@ describe("GetStartedCard", () => {
 
   it("never shows for an existing user with Google and tasks", async () => {
     api.accounts = [account("google")];
+    api.anyTasks = [task];
+    const { container } = mount();
+    await settle();
+    expect(container.innerHTML).toBe("");
+    expect(userStorage.getItem(GET_STARTED_KEY)).toBeNull();
+  });
+
+  it("renders nothing and starts nothing when accounts fail to load", async () => {
+    api.accountsFail = true;
     api.anyTasks = [task];
     const { container } = mount();
     await settle();
