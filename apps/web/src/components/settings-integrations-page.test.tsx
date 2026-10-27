@@ -42,6 +42,10 @@ const state = vi.hoisted(() => ({
 
 vi.mock("@bessel/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@bessel/client")>()),
+  getMcpConnectorOptions: () => ({
+    queryKey: ["connector"],
+    queryFn: async () => ({ url: "https://api.example.com/mcp" }),
+  }),
   listBankConnectionsOptions: () => ({
     queryKey: ["banks"],
     queryFn: async () => state.banks,

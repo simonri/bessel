@@ -7039,6 +7039,19 @@ export const LocationVisitSchema = {
   title: "LocationVisit",
 } as const;
 
+export const MCPConnectorResponseSchema = {
+  properties: {
+    url: {
+      type: "string",
+      title: "Url",
+      description: "The public address to add as a custom connector in Claude.",
+    },
+  },
+  type: "object",
+  required: ["url"],
+  title: "MCPConnectorResponse",
+} as const;
+
 export const MeResponseSchema = {
   properties: {
     id: {

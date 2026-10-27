@@ -77,6 +77,7 @@ import {
   getInvestmentAccounts,
   getLocationHistoryDay,
   getLocationHistorySummary,
+  getMcpConnector,
   getMe,
   getMeetingBrief,
   getMonthlyFlow,
@@ -371,6 +372,8 @@ import type {
   GetLocationHistoryDayResponse,
   GetLocationHistorySummaryData,
   GetLocationHistorySummaryResponse,
+  GetMcpConnectorData,
+  GetMcpConnectorResponse,
   GetMeData,
   GetMeetingBriefData,
   GetMeetingBriefError,
@@ -1611,6 +1614,37 @@ export const syncMontroseMutation = (
   };
   return mutationOptions;
 };
+
+export const getMcpConnectorQueryKey = (
+  options?: Options<GetMcpConnectorData>,
+) => createQueryKey("getMcpConnector", options);
+
+/**
+ * Get MCP Connector
+ *
+ * Where Claude connects. The web app can't derive it: in production it calls the API on its own origin, while
+ * connector tokens are issued for the API's own address.
+ */
+export const getMcpConnectorOptions = (
+  options?: Options<GetMcpConnectorData>,
+) =>
+  queryOptions<
+    GetMcpConnectorResponse,
+    DefaultError,
+    GetMcpConnectorResponse,
+    ReturnType<typeof getMcpConnectorQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMcpConnector({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMcpConnectorQueryKey(options),
+  });
 
 export const listCalendarAccountsQueryKey = (
   options?: Options<ListCalendarAccountsData>,

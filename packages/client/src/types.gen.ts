@@ -4430,6 +4430,18 @@ export type LocationVisit = {
 };
 
 /**
+ * MCPConnectorResponse
+ */
+export type McpConnectorResponse = {
+  /**
+   * Url
+   *
+   * The public address to add as a custom connector in Claude.
+   */
+  url: string;
+};
+
+/**
  * MeResponse
  */
 export type MeResponse = {
@@ -8724,6 +8736,23 @@ export type SyncMontroseResponses = {
    */
   202: unknown;
 };
+
+export type GetMcpConnectorData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/mcp-connector";
+};
+
+export type GetMcpConnectorResponses = {
+  /**
+   * Successful Response
+   */
+  200: McpConnectorResponse;
+};
+
+export type GetMcpConnectorResponse =
+  GetMcpConnectorResponses[keyof GetMcpConnectorResponses];
 
 export type ListCalendarAccountsData = {
   body?: never;

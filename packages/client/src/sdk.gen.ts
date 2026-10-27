@@ -302,6 +302,8 @@ import type {
   GetLocationHistoryDayResponses,
   GetLocationHistorySummaryData,
   GetLocationHistorySummaryResponses,
+  GetMcpConnectorData,
+  GetMcpConnectorResponses,
   GetMeData,
   GetMeetingBriefData,
   GetMeetingBriefErrors,
@@ -1201,6 +1203,21 @@ export const syncMontrose = <ThrowOnError extends boolean = false>(
     url: "/v1/montrose/sync",
     ...options,
   });
+
+/**
+ * Get MCP Connector
+ *
+ * Where Claude connects. The web app can't derive it: in production it calls the API on its own origin, while
+ * connector tokens are issued for the API's own address.
+ */
+export const getMcpConnector = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMcpConnectorData, ThrowOnError>,
+): RequestResult<GetMcpConnectorResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetMcpConnectorResponses,
+    unknown,
+    ThrowOnError
+  >({ url: "/v1/mcp-connector", ...options });
 
 /**
  * List Calendar Accounts

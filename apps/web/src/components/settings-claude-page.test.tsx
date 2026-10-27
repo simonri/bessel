@@ -10,12 +10,18 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const api = vi.hoisted(() => ({
+  connector: null as Promise<{ url: string }> | null,
   notes: [] as { key: string; content: string; updated_at: Date }[],
   fail: false,
 }));
 
 vi.mock("@bessel/client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@bessel/client")>()),
+  getMcpConnectorOptions: () => ({
+    queryKey: ["connector"],
+    queryFn: () =>
+      api.connector ?? Promise.resolve({ url: "https://api.example.com/mcp" }),
+  }),
   listAssistantNotesOptions: () => ({
     queryKey: ["notes"],
     queryFn: async () => {
@@ -23,9 +29,6 @@ vi.mock("@bessel/client", async (importOriginal) => ({
       return { notes: api.notes };
     },
   }),
-}));
-vi.mock("@/lib/client", () => ({
-  client: { getConfig: () => ({ baseUrl: "https://api.example.com" }) },
 }));
 
 const { ClaudePage } = await import("./settings-claude-page");
@@ -47,6 +50,7 @@ function mount() {
 beforeEach(() => {
   api.notes = [];
   api.fail = false;
+  api.connector = null;
   writeText.mockClear();
   Object.defineProperty(navigator, "clipboard", {
     value: { writeText },
@@ -59,7 +63,7 @@ describe("ClaudePage connect", () => {
   it("shows the connector address and copies it", async () => {
     mount();
 
-    expect(screen.getByText("https://api.example.com/mcp")).toBeTruthy();
+    expect(await screen.findByText("https://api.example.com/mcp")).toBeTruthy();
     fireEvent.click(
       screen.getByRole("button", { name: "Copy the connector address" }),
     );
@@ -67,8 +71,22 @@ describe("ClaudePage connect", () => {
     expect(await screen.findByText("Copied")).toBeTruthy();
   });
 
-  it("copies a Claude Code command for the same address", () => {
+  it("waits for the API's address instead of guessing one", () => {
+    api.connector = new Promise(() => {});
     mount();
+
+    const copy = screen.getByRole("button", {
+      name: "Copy the connector address",
+    }) as HTMLButtonElement;
+    expect(copy.disabled).toBe(true);
+    expect(screen.queryByText(/\/mcp/)).toBeNull();
+    fireEvent.click(copy);
+    expect(writeText).not.toHaveBeenCalled();
+  });
+
+  it("copies a Claude Code command for the same address", async () => {
+    mount();
+    await screen.findByText("https://api.example.com/mcp");
 
     fireEvent.click(
       screen.getByRole("button", { name: "Copy the Claude Code command" }),

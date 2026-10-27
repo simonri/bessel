@@ -1325,6 +1325,28 @@
         ]
       }
     },
+    "/v1/mcp-connector": {
+      "get": {
+        "tags": [
+          "mcp"
+        ],
+        "summary": "Get MCP Connector",
+        "description": "Where Claude connects. The web app can't derive it: in production it calls the API on its own origin, while\nconnector tokens are issued for the API's own address.",
+        "operationId": "get_mcp_connector",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MCPConnectorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/calendars/accounts": {
       "get": {
         "tags": [
@@ -16099,6 +16121,20 @@
           "longitude"
         ],
         "title": "LocationVisit"
+      },
+      "MCPConnectorResponse": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "The public address to add as a custom connector in Claude."
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "MCPConnectorResponse"
       },
       "MeResponse": {
         "properties": {

@@ -1,4 +1,7 @@
-import { listAssistantNotesOptions } from "@bessel/client";
+import {
+  getMcpConnectorOptions,
+  listAssistantNotesOptions,
+} from "@bessel/client";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { Check, Copy } from "lucide-react";
@@ -13,8 +16,13 @@ import { SoftButton } from "@/components/ui-kit";
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
 
-export function connectorAddress() {
-  return `${client.getConfig().baseUrl}/mcp`;
+/** Where Claude connects, as the API reports it: undefined until it has. */
+export function useConnectorAddress(): string | undefined {
+  const { data } = useQuery({
+    ...getMcpConnectorOptions({ client }),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+  return data?.url;
 }
 
 export function CopyButton({
@@ -22,7 +30,8 @@ export function CopyButton({
   label,
   ariaLabel,
 }: {
-  text: string;
+  /** Undefined while it's still loading, which disables the button. */
+  text: string | undefined;
   label: string;
   ariaLabel: string;
 }) {
@@ -30,7 +39,9 @@ export function CopyButton({
   return (
     <SoftButton
       aria-label={ariaLabel}
+      disabled={!text}
       onClick={() => {
+        if (!text) return;
         void navigator.clipboard.writeText(text).then(() => {
           setCopied(true);
           setTimeout(() => setCopied(false), 1500);
@@ -50,8 +61,9 @@ const STEPS = [
 ];
 
 function Connect() {
-  const address = connectorAddress();
-  const command = `claude mcp add --transport http bessel ${address}`;
+  const address = useConnectorAddress();
+  const command =
+    address && `claude mcp add --transport http bessel ${address}`;
   return (
     <SettingsSection
       title="Connect"
@@ -59,7 +71,7 @@ function Connect() {
     >
       <SettingsRow
         label="Connector address"
-        description={<span className="font-mono">{address}</span>}
+        description={<span className="font-mono">{address ?? "…"}</span>}
       >
         <CopyButton
           text={address}
@@ -81,7 +93,9 @@ function Connect() {
       </div>
       <SettingsRow
         label="Claude Code"
-        description={<span className="font-mono break-all">{command}</span>}
+        description={
+          <span className="font-mono break-all">{command ?? "…"}</span>
+        }
       >
         <CopyButton
           text={command}

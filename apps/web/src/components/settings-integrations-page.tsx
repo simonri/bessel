@@ -51,7 +51,7 @@ import { useOpenPage } from "@/components/open-page-context";
 import type { PageKey } from "@/components/pages";
 import {
   CopyButton,
-  connectorAddress,
+  useConnectorAddress,
 } from "@/components/settings-claude-page";
 import {
   useCloseSettings,
@@ -318,7 +318,7 @@ export function IntegrationsPage({
   const sendingActivity = (activity?.sources.length ?? 0) > 0;
   const vault = settings.obsidianVaultPath;
   const wallet = settings.hyperliquidAddress;
-  const mcpUrl = connectorAddress();
+  const mcpUrl = useConnectorAddress();
 
   const connected: Item[] = [
     ...accounts.map((account): Item => {
@@ -661,7 +661,7 @@ export function IntegrationsPage({
         />
       ),
       name: "Claude",
-      detail: <span className="font-mono">{mcpUrl}</span>,
+      detail: <span className="font-mono">{mcpUrl ?? "…"}</span>,
       brings: "Reads all of this when you ask",
       status: (
         <CopyButton

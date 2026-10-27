@@ -1282,6 +1282,10 @@ enum API {
         var longitude: Double?
     }
 
+    struct MCPConnectorResponse: Codable, Hashable {
+        var url: String
+    }
+
     struct MeResponse: Codable, Hashable {
         var id: UUID
         var email: String?
@@ -7073,6 +7077,26 @@ extension API.LocationVisit {
         try container.encode(self.hierarchyLevel, forKey: .hierarchyLevel)
         try container.encodeIfPresent(self.latitude, forKey: .latitude)
         try container.encodeIfPresent(self.longitude, forKey: .longitude)
+    }
+}
+
+extension API.MCPConnectorResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case url
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.url = try container.decode(String.self, forKey: .url)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case url
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.url, forKey: .url)
     }
 }
 
