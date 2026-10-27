@@ -149,10 +149,10 @@ function WidgetRow({
             }}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="No project" />
+              <SelectValue placeholder="No folder" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={NO_PROJECT}>No project</SelectItem>
+              <SelectItem value={NO_PROJECT}>No folder</SelectItem>
               {projects.map((p) => (
                 <SelectItem key={p.id} value={p.id}>
                   {p.name}

@@ -92,7 +92,7 @@ describe("AppSidebar", () => {
   it("has no code folders in a browser, where they can't open", () => {
     renderSidebar();
 
-    expect(screen.queryByRole("navigation", { name: "Projects" })).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Code" })).toBeNull();
     expect(screen.queryByText("Code folders")).toBeNull();
   });
 

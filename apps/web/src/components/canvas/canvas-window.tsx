@@ -329,7 +329,7 @@ function ProjectSwitcher({ entry }: { entry: WindowEntry }) {
         <ProjectPickerMenu
           projects={projects}
           onSelect={switchProject}
-          noProjectLabel="No project"
+          noProjectLabel="No folder"
         />
       </PopoverContent>
     </Popover>

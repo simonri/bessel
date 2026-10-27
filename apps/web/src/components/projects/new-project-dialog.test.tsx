@@ -138,6 +138,8 @@ describe("NewProjectDialog", () => {
     await act(async () => reply.resolve({ cwd: "/root", dirs: [] }));
 
     expect(screen.queryByRole("heading", { name: /Select folder/ })).toBeNull();
-    expect(screen.getByRole("heading", { name: "New project" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Add code folder" }),
+    ).toBeTruthy();
   });
 });

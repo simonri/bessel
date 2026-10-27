@@ -137,7 +137,7 @@ function useItems(onClose: () => void, onNavigate: (page: PageKey) => void) {
         items.push({
           id: key,
           label: config.title,
-          sublabel: "Open without project",
+          sublabel: "Open without a folder",
           icon: Icon,
           group: "other",
           action: () => {

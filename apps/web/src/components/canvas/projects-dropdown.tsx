@@ -220,7 +220,7 @@ export function ProjectsDropdown() {
     ...deleteProjectMutation(),
     onSuccess: invalidateWithTasks,
     onError: (error) =>
-      toast.error(errorDetail(error, "Couldn't delete the project")),
+      toast.error(errorDetail(error, "Couldn't remove the folder")),
   });
 
   const reset = () => {
@@ -272,7 +272,7 @@ export function ProjectsDropdown() {
         }),
       ]);
     } catch (error) {
-      toast.error(errorDetail(error, "Couldn't save the project"));
+      toast.error(errorDetail(error, "Couldn't save the folder"));
       return;
     }
     setEditingId(null);
@@ -303,10 +303,10 @@ export function ProjectsDropdown() {
         }}
       >
         <PopoverTrigger asChild>
-          <TopbarTooltip label="Projects">
+          <TopbarTooltip label="Code folders">
             <button
               type="button"
-              aria-label="Projects"
+              aria-label="Code folders"
               className={TOPBAR_ICON_BUTTON}
             >
               <FolderOpen />
@@ -314,11 +314,11 @@ export function ProjectsDropdown() {
           </TopbarTooltip>
         </PopoverTrigger>
         <TopbarPanel>
-          <TopbarPanelHeader title="Projects" />
+          <TopbarPanelHeader title="Code folders" />
 
           <TopbarPanelBody>
             {projects.length === 0 && (
-              <TopbarPanelEmpty>No projects yet</TopbarPanelEmpty>
+              <TopbarPanelEmpty>No code folders yet</TopbarPanelEmpty>
             )}
             {projects.map((p) => (
               <div key={p.id}>
@@ -439,7 +439,7 @@ export function ProjectsDropdown() {
               )}
             >
               <Plus className="size-3.5" />
-              Add project
+              Add folder
             </button>
           </TopbarPanelFooter>
 

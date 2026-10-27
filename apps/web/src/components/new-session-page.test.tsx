@@ -165,7 +165,7 @@ describe("NewSessionPage", () => {
   it("can start without a project, and Escape cancels", () => {
     const { manager, onCancel } = mount(null);
     expect(
-      (screen.getByRole("radio", { name: /^No project/ }) as HTMLInputElement)
+      (screen.getByRole("radio", { name: /^No folder/ }) as HTMLInputElement)
         .checked,
     ).toBe(true);
     fireEvent.click(screen.getByRole("button", { name: /^Open Claude$/ }));

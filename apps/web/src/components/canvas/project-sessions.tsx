@@ -68,7 +68,7 @@ const MENU_SURFACE = "bg-popover min-w-44";
 const COLLAPSED_KEY = "bessel:collapsedProjects";
 const NO_WINDOWS: WindowEntry[] = [];
 const NO_BACKGROUND: ClaudeSessionView[] = [];
-const NO_PROJECT_LABEL = "No project";
+const NO_PROJECT_LABEL = "No folder";
 
 function loadCollapsed(): Set<string> {
   try {
@@ -270,7 +270,7 @@ function SessionRow({
         <ContextMenuSub>
           <ContextMenuSubTrigger>
             <FolderInput className="size-3.5" />
-            Move to project
+            Move to folder
           </ContextMenuSubTrigger>
           <ContextMenuSubContent className={MENU_SURFACE}>
             {projects.map((p) => (
@@ -287,7 +287,7 @@ function SessionRow({
               disabled={!workspace.projectId}
               onSelect={() => setWorkspaceProject(workspace.id, null)}
             >
-              No project
+              No folder
             </ContextMenuItem>
           </ContextMenuSubContent>
         </ContextMenuSub>
@@ -576,8 +576,8 @@ function HeaderActions({
       <button
         type="button"
         onClick={() => onNewProjectOpenChange(true)}
-        title="New project"
-        aria-label="New project"
+        title="Add code folder"
+        aria-label="Add code folder"
         className={ICON_BUTTON}
       >
         <Plus className="size-3" />
@@ -599,7 +599,7 @@ function FirstProjectCard({ onAdd }: { onAdd: () => void }) {
   return (
     <div className="mx-1 mt-1 flex flex-col gap-2 rounded-lg border border-white/10 bg-white/[0.03] p-3">
       <p className="text-12 font-medium text-white/80">
-        Add your first project
+        Add your first code folder
       </p>
       <p className="text-11 leading-relaxed text-white/45">
         Pick a folder you work in. Bessel opens Claude, terminals and git there.
@@ -610,7 +610,7 @@ function FirstProjectCard({ onAdd }: { onAdd: () => void }) {
         className="flex h-7 w-fit items-center gap-1.5 rounded-md bg-primary-500 px-2.5 text-12 font-medium text-white transition-[background-color] duration-150 hover:bg-primary-400"
       >
         <Plus className="size-3" />
-        Add project
+        Add folder
       </button>
     </div>
   );
@@ -618,7 +618,7 @@ function FirstProjectCard({ onAdd }: { onAdd: () => void }) {
 
 /**
  * The sidebar's project tree: every project from the API with its sessions
- * (canvases) nested under it, plus a "No project" group for sessions that
+ * (canvases) nested under it, plus a "No folder" group for sessions that
  * belong to none. Clicking a session switches to it and brings the canvas on
  * screen; a project's "+" (or clicking one with nothing open) offers its
  * quick-start menu.
@@ -722,7 +722,7 @@ export function ProjectSessions({
   return (
     <div className="flex flex-col">
       <div className="group/header mb-0.5 flex h-7 items-center justify-between pl-2 pr-1">
-        <span className="text-12 font-medium text-white/40">Projects</span>
+        <span className="text-12 font-medium text-white/40">Code</span>
         <HeaderActions
           newProjectOpen={newProjectOpen}
           onNewProjectOpenChange={setNewProjectOpen}

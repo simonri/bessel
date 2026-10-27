@@ -91,7 +91,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
               label: "Devices",
               description: "Manage the devices linked to your account.",
               icon: Laptop,
-              keywords: "computers projects",
+              keywords: "computers code folders projects",
             },
             {
               key: "monitor" as const,

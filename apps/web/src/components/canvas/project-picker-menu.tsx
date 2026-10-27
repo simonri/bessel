@@ -13,7 +13,7 @@ export function useProjectsWithPath(): ProjectWithPath[] {
 export function ProjectPickerMenu({
   projects,
   onSelect,
-  noProjectLabel = "Open without project",
+  noProjectLabel = "Open without a folder",
 }: {
   projects: ProjectWithPath[];
   onSelect: (project?: ProjectWithPath) => void;
@@ -22,7 +22,7 @@ export function ProjectPickerMenu({
   return (
     <>
       <div className="border-b border-white/10 px-3 py-2.5">
-        <p className="text-12 font-medium text-white/50">Select project</p>
+        <p className="text-12 font-medium text-white/50">Select folder</p>
       </div>
 
       <button

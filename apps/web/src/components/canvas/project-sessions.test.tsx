@@ -135,7 +135,7 @@ function mount(props: Partial<Parameters<typeof ProjectSessions>[0]> = {}) {
   return { manager: () => captured!, onOpenCanvas, onNewSession };
 }
 
-const GROUPS = [...PROJECTS.map((p) => p.name), "No project"];
+const GROUPS = [...PROJECTS.map((p) => p.name), "No folder"];
 
 /** Rows are nested by order: after their group's header, before the next one. */
 function expectInGroup(group: string, row: string) {
@@ -155,7 +155,7 @@ function expectInGroup(group: string, row: string) {
 }
 
 describe("ProjectSessions", () => {
-  it("nests sessions under their project and files the rest under No project", () => {
+  it("nests sessions under their project and files the rest under No folder", () => {
     seed(
       [
         {
@@ -176,8 +176,8 @@ describe("ProjectSessions", () => {
 
     for (const p of PROJECTS) expect(screen.getByText(p.name)).toBeTruthy();
     expectInGroup("metron", "Refactor");
-    expectInGroup("No project", "Orphaned");
-    expectInGroup("No project", "Scratch");
+    expectInGroup("No folder", "Orphaned");
+    expectInGroup("No folder", "Scratch");
     // The project's badge sums windows across its sessions; the session's own
     // badge shows its count.
     expect(screen.getAllByText("2")).toHaveLength(2);
@@ -268,15 +268,25 @@ describe("ProjectSessions", () => {
     expect(onNewSession).toHaveBeenLastCalledWith(null);
   });
 
+  it("calls its folders code, apart from tasks' projects", () => {
+    seed([{ id: "a", windows: [] }], "a");
+    mount();
+    expect(screen.getByText("Code")).toBeTruthy();
+    expect(screen.queryByText("Projects")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Add code folder" }),
+    ).toBeTruthy();
+  });
+
   it("invites adding a first project when there are none", () => {
     seed([{ id: "a", windows: [] }], "a");
     mount();
-    expect(screen.queryByText("Add your first project")).toBeNull();
+    expect(screen.queryByText("Add your first code folder")).toBeNull();
     cleanup();
 
     projectsMock.list = [];
     mount();
-    expect(screen.getByText("Add your first project")).toBeTruthy();
+    expect(screen.getByText("Add your first code folder")).toBeTruthy();
   });
 
   it("collapses a project, remembering it across remounts", () => {
@@ -400,7 +410,7 @@ describe("ProjectSessions", () => {
       expect(screen.queryByText("Open in a window")).toBeNull();
       expect(screen.queryByText("Finished long ago")).toBeNull();
       // Unknown directory, no project.
-      expectInGroup("No project", "Scratch");
+      expectInGroup("No folder", "Scratch");
     });
 
     it("opens a background session in a new canvas session", () => {

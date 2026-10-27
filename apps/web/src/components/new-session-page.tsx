@@ -471,14 +471,14 @@ export function NewSessionPage({
         </div>
       </header>
 
-      <Field label="Project">
+      <Field label="Folder">
         <fieldset
           className={cn(
             glassSurface({ weight: "light" }),
             "max-h-56 divide-y divide-white/[0.06] overflow-y-auto rounded-lg border border-white/10",
           )}
         >
-          <legend className="sr-only">Project</legend>
+          <legend className="sr-only">Folder</legend>
           {projects.map((p) => (
             <ProjectOption
               key={p.id}
@@ -493,7 +493,7 @@ export function NewSessionPage({
           <ProjectOption
             name={`${formId}-project`}
             value=""
-            label="No project"
+            label="No folder"
             sublabel="Start in the home directory"
             selected={project === null}
             onSelect={() => setSelectedProjectId(null)}

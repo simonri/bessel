@@ -337,7 +337,7 @@ export const AppSidebar = memo(function AppSidebar({
         </nav>
 
         {isDesktop && (
-          <nav aria-label="Projects" className="border-t border-white/10 pt-3">
+          <nav aria-label="Code" className="border-t border-white/10 pt-3">
             <ProjectSessions
               isOnCanvasPage={activePage === "canvas"}
               onOpenCanvas={openCanvas}

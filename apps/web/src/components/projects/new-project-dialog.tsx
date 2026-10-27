@@ -150,7 +150,7 @@ function StartStep({
   return (
     <>
       <Header
-        title="New project"
+        title="Add code folder"
         description="A folder you work in. Claude, terminals and git open there."
       />
       <div className="flex flex-col gap-4 px-5 pb-4">
@@ -560,7 +560,7 @@ function WebStart({
   return (
     <>
       <Header
-        title="New project"
+        title="Add code folder"
         description="A folder you work in. Claude, terminals and git open there."
       />
       <form
@@ -632,7 +632,7 @@ export function NewProjectDialog({
           toast.success(`Added “${project.name}”`);
           onCreated?.(project);
         },
-        onError: () => toast.error("Couldn't add the project"),
+        onError: () => toast.error("Couldn't add the folder"),
       },
     );
   };

@@ -478,8 +478,8 @@ export function GitStatus() {
           <>
             <p className="text-13 text-white/50">
               {unconfiguredCount === 1
-                ? "1 project isn't set up on this device"
-                : `${unconfiguredCount} projects aren't set up on this device`}
+                ? "1 code folder isn't set up on this device"
+                : `${unconfiguredCount} code folders aren't set up on this device`}
             </p>
             <p className="text-12 text-white/50">
               Set a local path via the folder icon in the top bar
@@ -487,9 +487,9 @@ export function GitStatus() {
           </>
         ) : (
           <>
-            <p className="text-13 text-white/50">No projects configured</p>
+            <p className="text-13 text-white/50">No code folders yet</p>
             <p className="text-12 text-white/50">
-              Add a project via the folder icon in the top bar
+              Add one via the folder icon in the top bar
             </p>
           </>
         )}
@@ -567,8 +567,8 @@ export function GitStatus() {
       {unconfiguredCount > 0 && (
         <div className="shrink-0 border-b border-white/[0.06] px-3 py-1 text-11 text-white/40">
           {unconfiguredCount === 1
-            ? "1 more project isn't set up on this device"
-            : `${unconfiguredCount} more projects aren't set up on this device`}
+            ? "1 more code folder isn't set up on this device"
+            : `${unconfiguredCount} more code folders aren't set up on this device`}
         </div>
       )}
 

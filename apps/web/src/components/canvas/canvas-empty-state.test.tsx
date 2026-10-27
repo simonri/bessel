@@ -112,7 +112,7 @@ describe("dock in a project's session", () => {
     expect(manager().allWindows).toMatchObject([
       { module: "terminal", data: { projectPath: "/home/me/metron" } },
     ]);
-    expect(screen.queryByText("Select project")).toBeNull();
+    expect(screen.queryByText("Select folder")).toBeNull();
   });
 
   it("still lets you pick another project with a right-click", () => {
@@ -127,7 +127,7 @@ describe("dock in a project's session", () => {
   it("asks for a project when the session has none", () => {
     const manager = mount();
     fireEvent.click(screen.getByTitle("Claude"));
-    expect(screen.getByText("Select project")).toBeTruthy();
+    expect(screen.getByText("Select folder")).toBeTruthy();
     expect(manager().allWindows).toHaveLength(0);
   });
 });
