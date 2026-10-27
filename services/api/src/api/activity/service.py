@@ -10,6 +10,8 @@ from api.activity.schemas import ActivityAppSummary, ActivitySummaryResponse
 # inter-event gaps at 2x that so tracker downtime / suspend gaps don't inflate
 # totals.
 MAX_GAP_SECS = 600
+# A break longer than this ends a period of use, e.g. going to bed.
+PERIOD_BREAK_SECS = 30 * 60
 
 
 class ActiveSegment:
@@ -42,8 +44,9 @@ class ActivityService:
   async def summarize(self, repo: ActivityRepository, user_id: UUID, source: str, start_ts: int, end_ts: int) -> ActivitySummaryResponse:
     """Active time on `source` in the window, broken down per app."""
     segments = await self.get_active_segments(repo, user_id, source, start_ts, end_ts)
-    sources = await repo.get_sources(user_id)
+    return self.summarize_segments(source, await repo.get_sources(user_id), segments)
 
+  def summarize_segments(self, source: str, sources: list[str], segments: list[ActiveSegment]) -> ActivitySummaryResponse:
     totals: dict[str, int] = {}
     total_active = 0
     for seg in segments:
@@ -81,6 +84,16 @@ class ActivityService:
       if seg_end > seg_start:
         segments.append(ActiveSegment(seg_start, seg_end, event.app_class))
     return segments
+
+  def active_periods(self, segments: list[ActiveSegment]) -> list[tuple[int, int]]:
+    """Stretches of use as (start_ts, end_ts): segments in time order, joined unless a break is over PERIOD_BREAK_SECS."""
+    periods: list[tuple[int, int]] = []
+    for seg in segments:
+      if periods and seg.start_ts - periods[-1][1] <= PERIOD_BREAK_SECS:
+        periods[-1] = (periods[-1][0], max(periods[-1][1], seg.end_ts))
+      else:
+        periods.append((seg.start_ts, seg.end_ts))
+    return periods
 
   def split_by_local_day(self, segment: ActiveSegment, tz: ZoneInfo | None, tz_offset_mins: int) -> list[tuple[str, int]]:
     """Split a segment into (date, seconds) pairs at local-midnight boundaries.

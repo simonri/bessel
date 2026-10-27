@@ -131,6 +131,25 @@ class TestComputerActivity:
     assert (theirs["total_active_secs"], theirs["apps"], theirs["sources"]) == (0, [], [])
 
   @pytest.mark.asyncio
+  async def test_periods_of_use_split_on_long_breaks_and_run_past_midnight(self, connect: ConnectFixture, save_owned: SaveFixture) -> None:
+    def at(day: int, hour: int, minute: int) -> int:
+      return int(datetime(2026, 10, day, hour, minute, tzinfo=UTC).timestamp())
+
+    # Each event counts for up to 10 minutes: 20:00–20:30, a 40 min break, 21:10–22:30 (a 15 min gap inside), then 00:00–00:10.
+    times = [at(4, 20, m) for m in range(0, 21, 5)] + [at(4, 21, m) for m in range(10, 60, 5)] + [at(4, 22, 20), at(5, 0, 0), at(5, 0, 5)]
+    for i, ts in enumerate(times):
+      await save_owned(ActivityEvent(local_id=i, ts=ts, state="active", app_class="kitty", title=None, workspace=None, source="laptop"))
+    await save_owned(ActivityEvent(local_id=len(times), ts=at(5, 0, 10), state="idle", app_class=None, title=None, workspace=None, source="laptop"))
+
+    summary = await mcp_call(connect, "get_computer_activity", {"start": "2026-10-04", "end": "2026-10-05", "timezone": "UTC"})
+
+    assert [(p["start"], p["end"]) for p in summary["periods"]] == [
+      ("2026-10-04T20:00:00Z", "2026-10-04T20:30:00Z"),
+      ("2026-10-04T21:10:00Z", "2026-10-04T22:30:00Z"),
+      ("2026-10-05T00:00:00Z", "2026-10-05T00:10:00Z"),
+    ]
+
+  @pytest.mark.asyncio
   async def test_no_activity_is_a_tool_error(self, connect: ConnectFixture) -> None:
     args = {"start": "2026-10-04", "end": "2026-10-04", "timezone": "UTC"}
     assert await mcp_call_error(connect, "get_computer_activity", args) == "No computer activity has been recorded."
