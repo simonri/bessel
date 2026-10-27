@@ -24,6 +24,13 @@ const PROJECTS = [
   { id: "p3", name: "elsewhere", path: null, ssh_host: null },
 ];
 
+const env = vi.hoisted(() => ({ desktop: true }));
+vi.mock("@/lib/environment", () => ({
+  get isDesktop() {
+    return env.desktop;
+  },
+}));
+
 const projectsMock = vi.hoisted(() => ({ list: [] as unknown[] }));
 vi.mock("@/hooks/use-projects", () => ({
   useProjects: () => ({ data: projectsMock.list, isSuccess: true }),
@@ -95,7 +102,10 @@ function claudeSession(
   };
 }
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  env.desktop = true;
+});
 beforeEach(() => {
   projectsMock.list = PROJECTS;
   window.localStorage.clear();
@@ -287,6 +297,33 @@ describe("ProjectSessions", () => {
     projectsMock.list = [];
     mount();
     expect(screen.getByText("Add your first code folder")).toBeTruthy();
+  });
+
+  it("stays out of a browser for someone with no folders or sessions to switch", () => {
+    env.desktop = false;
+    projectsMock.list = [];
+    seed([{ id: "a", windows: [] }], "a");
+    mount();
+    expect(screen.queryByText("Code")).toBeNull();
+    expect(screen.queryByText("Add your first code folder")).toBeNull();
+    cleanup();
+
+    seed(
+      [
+        { id: "a", name: "Board", windows: [] },
+        { id: "b", name: "Scratch", windows: [] },
+      ],
+      "a",
+    );
+    mount();
+    expect(screen.getByText("Code")).toBeTruthy();
+    expect(screen.queryByText("Add your first code folder")).toBeNull();
+    cleanup();
+
+    projectsMock.list = PROJECTS;
+    seed([{ id: "a", windows: [] }], "a");
+    mount();
+    expect(screen.getByText("metron")).toBeTruthy();
   });
 
   it("collapses a project, remembering it across remounts", () => {

@@ -89,15 +89,7 @@ describe("AppSidebar", () => {
     expect(pages.textContent).not.toContain("Sleep");
   });
 
-  it("has no code folders in a browser, where they can't open", () => {
-    renderSidebar();
-
-    expect(screen.queryByRole("navigation", { name: "Code" })).toBeNull();
-    expect(screen.queryByText("Code folders")).toBeNull();
-  });
-
-  it("lists code folders in the desktop app", () => {
-    env.desktop = true;
+  it("lists code folders", () => {
     renderSidebar();
 
     expect(screen.getByText("Code folders")).toBeTruthy();

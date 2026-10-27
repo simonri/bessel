@@ -31,7 +31,6 @@ import {
 } from "@/components/pages";
 import { usePageVisibility } from "@/components/use-page-visibility";
 import { useSettings } from "@/hooks/use-settings";
-import { isDesktop } from "@/lib/environment";
 import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
 
@@ -336,15 +335,16 @@ export const AppSidebar = memo(function AppSidebar({
           </div>
         </nav>
 
-        {isDesktop && (
-          <nav aria-label="Code" className="border-t border-white/10 pt-3">
-            <ProjectSessions
-              isOnCanvasPage={activePage === "canvas"}
-              onOpenCanvas={openCanvas}
-              onNewSession={onNewSession}
-            />
-          </nav>
-        )}
+        <nav
+          aria-label="Code"
+          className="border-t border-white/10 pt-3 empty:hidden"
+        >
+          <ProjectSessions
+            isOnCanvasPage={activePage === "canvas"}
+            onOpenCanvas={openCanvas}
+            onNewSession={onNewSession}
+          />
+        </nav>
       </div>
       {!overlay && <SidebarResizeHandle width={width} onResize={setWidth} />}
     </aside>

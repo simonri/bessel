@@ -52,6 +52,7 @@ import { NewProjectDialog } from "@/components/projects/new-project-dialog";
 import { useProjectMutations } from "@/hooks/use-project-mutations";
 import { useProjects } from "@/hooks/use-projects";
 import { client } from "@/lib/client";
+import { isDesktop } from "@/lib/environment";
 import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
 import type { ProjectWithPath } from "./project-picker-menu";
@@ -719,6 +720,11 @@ export function ProjectSessions({
   const shownActiveId = isOnCanvasPage ? activeWorkspaceId : null;
   const canClose = workspaces.length > 1;
 
+  // Code folders open Claude, terminals and git through the desktop app; in a
+  // browser the section only stays for someone who already has sessions.
+  if (!isDesktop && projectList.length === 0 && workspaces.length <= 1)
+    return null;
+
   return (
     <div className="flex flex-col">
       <div className="group/header mb-0.5 flex h-7 items-center justify-between pl-2 pr-1">
@@ -775,7 +781,7 @@ export function ProjectSessions({
             onEndBackground={requestEnd}
           />
         )}
-        {projectList.length === 0 && (
+        {isDesktop && projectList.length === 0 && (
           <FirstProjectCard onAdd={() => setNewProjectOpen(true)} />
         )}
       </div>
