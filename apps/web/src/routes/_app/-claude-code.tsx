@@ -174,7 +174,7 @@ function BackgroundClaude() {
     return (
       <Panel
         title="Trust this folder first"
-        detail={`Claude only runs in the background in folders you've trusted. Run \`claude\` once in ${entry?.data?.projectPath || "your home folder"} and accept the prompt, then try again.`}
+        detail={`Claude only runs here in folders you've trusted. Run \`claude\` once in ${entry?.data?.projectPath || "your home folder"} and accept the prompt, then try again.`}
       >
         <button type="button" className={PANEL_BUTTON} onClick={start}>
           Try again

@@ -1,11 +1,5 @@
 // @vitest-environment jsdom
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   useWindowManager,
@@ -234,25 +228,16 @@ describe("NewSessionPage", () => {
     ]);
   });
 
-  it("starts sessions in the background without opening windows", async () => {
-    const { manager, onCancel, onCreated } = mount("p1");
+  it("always opens Claude in windows, with no run mode to choose", () => {
+    const { manager } = mount("p1");
     openOptions();
-    fireEvent.click(screen.getByLabelText("2"));
-    fireEvent.click(screen.getByRole("radio", { name: /In background/ }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Start 2 in background in metron" }),
-    );
 
-    await waitFor(() => expect(onCancel).toHaveBeenCalledTimes(1));
-    expect(claudeSessions.create).toHaveBeenCalledTimes(2);
-    expect(claudeSessions.create).toHaveBeenCalledWith({
-      cwd: "/home/me/metron",
-      name: "metron",
-      projectId: "p1",
-      resumeSessionId: undefined,
-    });
-    expect(onCreated).not.toHaveBeenCalled();
-    expect(manager().windows).toHaveLength(0);
+    expect(screen.queryByRole("radio", { name: /background/i })).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open Claude in metron" }),
+    );
+    expect(claudeSessions.create).not.toHaveBeenCalled();
+    expect(manager().windows).toHaveLength(1);
   });
 
   it("opens a conversation that's already running instead of starting another", async () => {
@@ -275,9 +260,8 @@ describe("NewSessionPage", () => {
     ]);
   });
 
-  it("keeps SSH projects to opening windows", () => {
+  it("doesn't list past conversations for an SSH project", () => {
     mount("p2");
-    expect(screen.queryByRole("radio", { name: /In background/ })).toBeNull();
     expect(claudeSessions.conversations).not.toHaveBeenCalled();
   });
 });

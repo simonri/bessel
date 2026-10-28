@@ -1,7 +1,6 @@
 import { glassSurface } from "@bessel/ui/lib/glass";
 import { ArrowLeft, Check, ChevronRight, Play } from "lucide-react";
 import { useEffect, useId, useMemo, useState } from "react";
-import { toast } from "sonner";
 import { tileEvenly } from "@/components/canvas/layout-engine";
 import { MODULE_REGISTRY } from "@/components/canvas/module-registry";
 import {
@@ -17,7 +16,6 @@ import {
 import {
   claudeSessionsApi,
   isLive,
-  isUntrustedWorkspaceError,
   useClaudeSessions,
 } from "@/components/claude-sessions/claude-sessions-store";
 import type { ClaudeConversation } from "@/components/claude-sessions/claude-sessions-types";
@@ -30,7 +28,6 @@ type AgentModule = Extract<ModuleKey, "claudeCode" | "codex" | "grok">;
 const AGENTS: AgentModule[] = ["claudeCode", "codex", "grok"];
 const COUNTS = [1, 2, 3, 4] as const;
 type Count = (typeof COUNTS)[number];
-type RunMode = "open" | "background";
 const NEW_CONVERSATION = "";
 const MAX_RESUMED_NAME = 48;
 
@@ -294,8 +291,8 @@ function ConversationOption({
 /**
  * Full-page form for starting a session: pick the project (preselected when
  * opened from a project's "+"), which agent, and how many — they open tiled
- * evenly across a fresh canvas. Claude can also continue a past conversation
- * and run in the background without opening any windows.
+ * evenly across a fresh canvas. Claude can also continue a past conversation;
+ * its sessions keep running when their windows close.
  */
 export function NewSessionPage({
   projectId,
@@ -313,8 +310,6 @@ export function NewSessionPage({
   const [count, setCount] = useState<Count>(1);
   const [name, setName] = useState("");
   const [conversationId, setConversationId] = useState(NEW_CONVERSATION);
-  const [runMode, setRunMode] = useState<RunMode>("open");
-  const [starting, setStarting] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const formId = useId();
   const { sessions } = useClaudeSessions();
@@ -323,9 +318,9 @@ export function NewSessionPage({
   const project = projects.find((p) => p.id === selectedProjectId) ?? null;
   const agentTitle = MODULE_REGISTRY[agent].title;
   const isClaude = agent === "claudeCode";
-  // Background sessions run on this machine, so not for SSH projects.
-  const canBackground = isClaude && isDesktop && !project?.ssh_host;
-  const conversationPath = canBackground && project ? project.path : null;
+  // Claude's own sessions run on this machine, so not for SSH projects.
+  const localClaude = isClaude && isDesktop && !project?.ssh_host;
+  const conversationPath = localClaude && project ? project.path : null;
   const conversations = useConversations(conversationPath);
   const conversation =
     (conversationPath &&
@@ -338,7 +333,6 @@ export function NewSessionPage({
           isLive(s.status),
       )
     : undefined;
-  const background = canBackground && runMode === "background";
   const effectiveCount: Count = conversation ? 1 : count;
   const defaultName = isClaude
     ? conversation
@@ -359,50 +353,17 @@ export function NewSessionPage({
     return () => window.removeEventListener("keydown", onKey);
   }, [onCancel]);
 
-  const startInBackground = async () => {
-    setStarting(true);
-    const sessionName = name.trim() || defaultName;
-    try {
-      for (let i = 0; i < effectiveCount; i++) {
-        await claudeSessionsApi().create({
-          cwd: project?.path ?? "",
-          name: sessionName,
-          projectId: project?.id,
-          resumeSessionId: conversation?.sessionId,
-        });
-      }
-      toast.success(
-        effectiveCount > 1
-          ? `Started ${effectiveCount} Claude sessions in the background`
-          : `Started “${sessionName}” in the background`,
-      );
-      onCancel();
-    } catch (err) {
-      toast.error(
-        isUntrustedWorkspaceError(err)
-          ? `Run \`claude\` once in ${project?.path ?? "your home folder"} and accept the trust prompt first.`
-          : "Couldn't start Claude in the background",
-      );
-    } finally {
-      setStarting(false);
-    }
-  };
-
   const submit = () => {
-    if (!isDesktop || starting) return;
+    if (!isDesktop) return;
     if (runningSession) {
       openClaudeSession(runningSession);
-      return;
-    }
-    if (background) {
-      void startInBackground();
       return;
     }
     createSession({
       projectId: project?.id,
       name,
       // Claude sessions outlive their windows; the canvas needn't.
-      closeWhenEmpty: canBackground,
+      closeWhenEmpty: localClaude,
       specs: specsFor(
         agent,
         effectiveCount,
@@ -421,17 +382,10 @@ export function NewSessionPage({
   const submitLabel = runningSession
     ? "Open running session"
     : conversation
-      ? background
-        ? "Resume in background"
-        : "Resume conversation"
-      : background
-        ? effectiveCount > 1
-          ? `Start ${effectiveCount} in background`
-          : "Start in background"
-        : `Open ${effectiveCount > 1 ? `${effectiveCount} × ${agentTitle}` : agentTitle}`;
+      ? "Resume conversation"
+      : `Open ${effectiveCount > 1 ? `${effectiveCount} × ${agentTitle}` : agentTitle}`;
 
   const optionsSummary = [
-    background ? "In background" : null,
     effectiveCount > 1 ? `${effectiveCount} windows` : "1 window",
     name.trim() ? `“${name.trim()}”` : null,
   ]
@@ -464,8 +418,8 @@ export function NewSessionPage({
         <div>
           <h1 className="type-title text-white/90">New session</h1>
           <p className="mt-0.5 text-12 text-white/50">
-            {background
-              ? "Runs on this machine without a window. Reach it from the sidebar, claude.ai or the Claude app."
+            {localClaude
+              ? "Opens a fresh canvas with your agents side by side. Claude keeps going when you close it, and you can carry on from the Claude app."
               : "Opens a fresh canvas with your agents laid out side by side."}
           </p>
         </div>
@@ -587,38 +541,6 @@ export function NewSessionPage({
         </button>
         {showOptions && (
           <>
-            {canBackground && (
-              <Field label="Run">
-                <fieldset className="grid grid-cols-2 gap-2">
-                  <legend className="sr-only">Run</legend>
-                  {(
-                    [
-                      ["open", "Open now", "In a new canvas"],
-                      [
-                        "background",
-                        "In background",
-                        "No window, reach it anywhere",
-                      ],
-                    ] as const
-                  ).map(([mode, title, description]) => (
-                    <RadioOption
-                      key={mode}
-                      name={`${formId}-run`}
-                      value={mode}
-                      checked={runMode === mode}
-                      onSelect={() => setRunMode(mode)}
-                      className="flex-col gap-0.5 px-3 py-2.5"
-                    >
-                      <span className="text-12 font-medium">{title}</span>
-                      <span className="text-11 text-white/45">
-                        {description}
-                      </span>
-                    </RadioOption>
-                  ))}
-                </fieldset>
-              </Field>
-            )}
-
             <Field
               label="How many"
               hint={conversation ? "One per conversation" : undefined}
@@ -642,13 +564,10 @@ export function NewSessionPage({
                     ))}
                   </fieldset>
                   <span className="text-12 text-white/40">
-                    session{effectiveCount > 1 ? "s" : ""}
-                    {background ? ", in the background" : ", tiled evenly"}
+                    session{effectiveCount > 1 ? "s" : ""}, tiled evenly
                   </span>
                 </div>
-                {!background && (
-                  <LayoutPreview count={effectiveCount} agent={agent} />
-                )}
+                <LayoutPreview count={effectiveCount} agent={agent} />
               </div>
             </Field>
 
@@ -691,7 +610,7 @@ export function NewSessionPage({
           </button>
           <button
             type="submit"
-            disabled={!isDesktop || starting}
+            disabled={!isDesktop}
             className="flex items-center gap-1.5 rounded-lg bg-primary-500 px-3.5 py-1.5 text-12 font-medium text-white shadow-lg shadow-primary-500/20 transition-[background-color] duration-150 hover:bg-primary-400 disabled:opacity-40"
           >
             <Play className="size-3 fill-current" />

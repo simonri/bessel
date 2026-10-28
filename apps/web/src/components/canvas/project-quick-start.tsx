@@ -12,16 +12,13 @@ import {
 import {
   History,
   LayoutTemplate,
-  MoonStar,
   SlidersHorizontal,
   SquareDashed,
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import {
   claudeSessionsApi,
   isLive,
-  isUntrustedWorkspaceError,
   useClaudeSessions,
 } from "@/components/claude-sessions/claude-sessions-store";
 import type { ClaudeConversation } from "@/components/claude-sessions/claude-sessions-types";
@@ -75,12 +72,10 @@ function ModuleIcon({ module }: { module: ModuleKey }) {
 function ConversationsSubmenu({
   project,
   onResume,
-  onResumeInBackground,
   onMoreOptions,
 }: {
   project: ProjectWithPath;
   onResume: (conversation: ClaudeConversation) => void;
-  onResumeInBackground: (conversation: ClaudeConversation) => void;
   onMoreOptions: () => void;
 }) {
   const [conversations, setConversations] = useState<
@@ -115,33 +110,18 @@ function ConversationsSubmenu({
                 isLive(s.status) && s.conversationIds.includes(c.sessionId),
             );
             return (
-              <div key={c.sessionId} className="flex items-center">
-                <DropdownMenuItem
-                  className="min-w-0 flex-1"
-                  onSelect={() => onResume(c)}
-                >
-                  <span className="min-w-0 flex-1 truncate">{c.title}</span>
-                  {running ? (
-                    <span className="shrink-0 rounded bg-emerald-400/15 px-1.5 py-px text-10 font-medium text-emerald-300">
-                      Running
-                    </span>
-                  ) : (
-                    <span className="shrink-0 text-11 tabular-nums text-white/35">
-                      {timeAgo(c.updatedAt)}
-                    </span>
-                  )}
-                </DropdownMenuItem>
-                {!running && (
-                  <DropdownMenuItem
-                    aria-label={`Resume “${c.title}” in background`}
-                    title="Resume in background"
-                    className="shrink-0 px-2 [&_svg]:text-white/35 focus:[&_svg]:text-white/80"
-                    onSelect={() => onResumeInBackground(c)}
-                  >
-                    <MoonStar />
-                  </DropdownMenuItem>
+              <DropdownMenuItem key={c.sessionId} onSelect={() => onResume(c)}>
+                <span className="min-w-0 flex-1 truncate">{c.title}</span>
+                {running ? (
+                  <span className="shrink-0 rounded bg-emerald-400/15 px-1.5 py-px text-10 font-medium text-emerald-300">
+                    Running
+                  </span>
+                ) : (
+                  <span className="shrink-0 text-11 tabular-nums text-white/35">
+                    {timeAgo(c.updatedAt)}
+                  </span>
                 )}
-              </div>
+              </DropdownMenuItem>
             );
           })
         )}
@@ -228,24 +208,6 @@ export function ProjectQuickStart({
     else startClaude(conversation);
   };
 
-  const startInBackground = (resume?: ClaudeConversation) => {
-    claudeSessionsApi()
-      .create({
-        cwd: project.path,
-        name: resume ? resume.title.slice(0, MAX_RESUMED_NAME) : project.name,
-        projectId: project.id,
-        ...(resume ? { resumeSessionId: resume.sessionId } : {}),
-      })
-      .then((view) => toast.success(`Started “${view.name}” in the background`))
-      .catch((err: unknown) =>
-        toast.error(
-          isUntrustedWorkspaceError(err)
-            ? `Run \`claude\` once in ${project.path} and accept the trust prompt first.`
-            : "Couldn't start Claude in the background",
-        ),
-      );
-  };
-
   const openModule = (module: (typeof OTHER_AGENTS)[number]) => {
     createSession({
       projectId: project.id,
@@ -311,32 +273,17 @@ export function ProjectQuickStart({
                 <DropdownMenuShortcut>⏎</DropdownMenuShortcut>
               </DropdownMenuItem>
               {isLocal && (
-                <>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      close();
-                      startInBackground();
-                    }}
-                  >
-                    <MoonStar className="size-3.5" />
-                    Claude in background
-                  </DropdownMenuItem>
-                  <ConversationsSubmenu
-                    project={project}
-                    onResume={(c) => {
-                      close();
-                      resumeConversation(c);
-                    }}
-                    onResumeInBackground={(c) => {
-                      close();
-                      startInBackground(c);
-                    }}
-                    onMoreOptions={() => {
-                      close();
-                      onMoreOptions();
-                    }}
-                  />
-                </>
+                <ConversationsSubmenu
+                  project={project}
+                  onResume={(c) => {
+                    close();
+                    resumeConversation(c);
+                  }}
+                  onMoreOptions={() => {
+                    close();
+                    onMoreOptions();
+                  }}
+                />
               )}
               <DropdownMenuSeparator />
               {OTHER_AGENTS.map((module) => (

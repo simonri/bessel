@@ -61,7 +61,7 @@ function useDetachNotice() {
           : `${running.length} Claude sessions are still running`,
         {
           description:
-            "In the background. Reopen from the sidebar, or continue on your phone.",
+            "Closing the window doesn't stop it. Reopen it from the sidebar, or carry on in the Claude app.",
           action: {
             label: running.length === 1 ? "End session" : "End all",
             onClick: () => {

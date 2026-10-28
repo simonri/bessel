@@ -136,18 +136,12 @@ describe("ProjectQuickStart", () => {
     await waitFor(() => expect(screen.queryByRole("menu")).toBeNull());
   });
 
-  it("starts Claude in the background without opening a window", async () => {
-    const { manager } = mount();
-    fireEvent.click(
-      await screen.findByRole("menuitem", { name: /Claude in background/ }),
-    );
+  it("has one way to start Claude: a window, which can close and leave it running", async () => {
+    mount();
+    await screen.findByRole("menuitem", { name: /^Claude/ });
 
-    expect(claude.create).toHaveBeenCalledWith({
-      cwd: "/home/me/metron",
-      name: "metron",
-      projectId: "p1",
-    });
-    expect(claudeWindows(manager())).toHaveLength(0);
+    expect(screen.queryByRole("menuitem", { name: /background/i })).toBeNull();
+    expect(claude.create).not.toHaveBeenCalled();
   });
 
   it("continues a past conversation", async () => {
@@ -171,33 +165,16 @@ describe("ProjectQuickStart", () => {
     });
   });
 
-  it("continues a past conversation in the background", async () => {
-    const { manager } = mount();
+  it("offers no second way to continue a conversation", async () => {
+    mount();
     const sub = await screen.findByRole("menuitem", {
       name: /Continue a conversation/,
     });
     act(() => sub.focus());
     fireEvent.keyDown(sub, { key: "ArrowRight" });
     await screen.findByRole("menuitem", { name: /^Widget icons/ });
-    fireEvent.keyDown(sub, { key: "ArrowRight" });
-    await waitFor(() =>
-      expect(document.activeElement?.textContent).toContain("Widget icons"),
-    );
-    fireEvent.keyDown(document.activeElement as Element, { key: "ArrowDown" });
-    await waitFor(() =>
-      expect(document.activeElement?.getAttribute("aria-label")).toBe(
-        "Resume “Widget icons” in background",
-      ),
-    );
-    fireEvent.keyDown(document.activeElement as Element, { key: "Enter" });
 
-    expect(claude.create).toHaveBeenCalledWith({
-      cwd: "/home/me/metron",
-      name: "Widget icons",
-      projectId: "p1",
-      resumeSessionId: "c-1",
-    });
-    expect(claudeWindows(manager())).toHaveLength(0);
+    expect(screen.queryByRole("menuitem", { name: /background/i })).toBeNull();
   });
 
   it("opens an empty session under the project", async () => {

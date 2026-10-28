@@ -305,7 +305,7 @@ function SessionRow({
   );
 }
 
-// A Claude session running in the background with no window showing it.
+// A Claude session still running with no window showing it.
 // Dimmer than a canvas session: it's there, but not open.
 function BackgroundSessionRow({
   session,
@@ -331,7 +331,7 @@ function BackgroundSessionRow({
           <button
             type="button"
             onClick={() => onOpen(session)}
-            title={`${session.name} - ${STATUS_LABEL[session.status]}, running in the background`}
+            title={`${session.name} - ${STATUS_LABEL[session.status]}, no window open`}
             className="flex h-full min-w-0 flex-1 items-center gap-2 text-left"
           >
             <StatusDot status={status} />
