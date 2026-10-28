@@ -17,6 +17,19 @@ import type {
   VaultWriteResult,
 } from "../components/obsidian/vault-types";
 
+export interface RemoteControlStatus {
+  /** Only Linux keeps the server running outside Bessel, as a systemd user service. */
+  supported: boolean;
+  state: "off" | "running" | "starting" | "failed" | "untrusted";
+}
+
+export interface PhoneNotifications {
+  /** Claude's "Push when actions required". */
+  inputNeeded: boolean;
+  /** Claude's "Push when Claude decides". */
+  claudeDecides: boolean;
+}
+
 interface ElectronPortEntry {
   port: number;
   address: string;
@@ -212,6 +225,19 @@ declare global {
         start: () => Promise<void>;
         stop: () => Promise<void>;
         setEnabled: (enabled: boolean) => Promise<void>;
+      };
+      /** A Claude Remote Control server per code folder, so the phone can start sessions here. */
+      remoteControl: {
+        status: (folder: string) => Promise<RemoteControlStatus>;
+        enable: (folder: string, name: string) => Promise<RemoteControlStatus>;
+        disable: (folder: string) => Promise<RemoteControlStatus>;
+      };
+      /** Claude's own push settings for the Claude app, in ~/.claude/settings.json. */
+      claudeNotifications: {
+        get: () => Promise<PhoneNotifications>;
+        set: (
+          patch: Partial<PhoneNotifications>,
+        ) => Promise<PhoneNotifications>;
       };
       agentUsage: {
         /** This machine's Claude Code usage, ready for /v1/agent-usage/sync. */

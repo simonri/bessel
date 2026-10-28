@@ -7,6 +7,10 @@ import { formatDistanceToNow } from "date-fns";
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import {
+  PhoneNotificationsSection,
+  StartFromPhone,
+} from "@/components/settings-claude-computer";
+import {
   SettingsError,
   SettingsLoading,
   SettingsRow,
@@ -189,6 +193,8 @@ export function ClaudePage() {
     <div className="space-y-8">
       <Connect />
       <Memory />
+      <StartFromPhone />
+      <PhoneNotificationsSection />
     </div>
   );
 }

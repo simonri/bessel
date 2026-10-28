@@ -182,6 +182,19 @@ const bridge = {
     setEnabled: (enabled: boolean) =>
       ipcRenderer.invoke("monitor:setEnabled", enabled),
   },
+  remoteControl: {
+    status: (folder: string) =>
+      ipcRenderer.invoke("remoteControl:status", folder),
+    enable: (folder: string, name: string) =>
+      ipcRenderer.invoke("remoteControl:enable", folder, name),
+    disable: (folder: string) =>
+      ipcRenderer.invoke("remoteControl:disable", folder),
+  },
+  claudeNotifications: {
+    get: () => ipcRenderer.invoke("claudeNotifications:get"),
+    set: (patch: { inputNeeded?: boolean; claudeDecides?: boolean }) =>
+      ipcRenderer.invoke("claudeNotifications:set", patch),
+  },
   agentUsage: {
     collect: (): Promise<AgentUsageSnapshot> =>
       ipcRenderer.invoke("agentUsage:collect"),

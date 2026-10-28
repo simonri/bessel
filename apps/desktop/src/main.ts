@@ -42,6 +42,7 @@ import {
 } from "./ipc.js";
 import { KLARNA_PARTITION, signInToKlarna } from "./klarna.js";
 import { registerPortsHandlers } from "./ports.js";
+import { registerRemoteControlHandlers } from "./remote-control.js";
 import { isRealEncryptionAvailable } from "./secure-storage.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
@@ -1558,6 +1559,7 @@ app.whenReady().then(() => {
   });
 
   registerServiceInstallerHandlers();
+  registerRemoteControlHandlers();
   registerClaudeSessionHandlers({
     log: appendLog,
     childEnv: childProcessEnv,
