@@ -36,6 +36,7 @@ from .ingest_token import IngestToken
 from .klarna import KlarnaPayLater
 from .location_import import LocationImport
 from .location_segment import LocationSegment
+from .memory_fact import MemoryFact
 from .montrose import MontroseAccount, MontroseConnection
 from .notification import Notification
 from .place import Place
@@ -96,6 +97,7 @@ __all__ = [
   "KlarnaPayLater",
   "LocationImport",
   "LocationSegment",
+  "MemoryFact",
   "MontroseAccount",
   "MontroseConnection",
   "Model",

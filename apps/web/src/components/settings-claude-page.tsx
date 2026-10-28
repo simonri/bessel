@@ -10,6 +10,7 @@ import {
   PhoneNotificationsSection,
   StartFromPhone,
 } from "@/components/settings-claude-computer";
+import { KnownAboutYou } from "@/components/settings-claude-memory";
 import {
   SettingsError,
   SettingsLoading,
@@ -157,8 +158,8 @@ function Memory() {
   );
   return (
     <SettingsSection
-      title="What Claude remembers"
-      description="Notes Claude keeps between conversations, e.g. the morning report's streaks and the suggestions you turned down."
+      title="Report notes"
+      description="Working notes the reports keep between runs, e.g. streaks and the suggestions you turned down."
     >
       {isLoading ? (
         <SettingsLoading />
@@ -187,11 +188,12 @@ function Memory() {
   );
 }
 
-/** How to connect Claude to Bessel over MCP, and what it remembers. */
+/** How to connect Claude to Bessel over MCP, and what it knows about the user. */
 export function ClaudePage() {
   return (
     <div className="space-y-8">
       <Connect />
+      <KnownAboutYou />
       <Memory />
       <StartFromPhone />
       <PhoneNotificationsSection />

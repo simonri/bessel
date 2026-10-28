@@ -943,6 +943,13 @@ enum API {
         var event: CalendarEventSchema?
     }
 
+    struct Evidence: Codable, Hashable {
+        var source: String
+        var ref: String?
+        var day: Date?
+        var note: String?
+    }
+
     struct GoogleAuthorizeResponse: Codable, Hashable {
         var url: String
     }
@@ -1354,6 +1361,66 @@ enum API {
         var lastSeen: ContactSighting?
         @Lossy var recent: [ContactInteractionSchema]
         var upcoming: ContactDateReminder?
+    }
+
+    struct MemoryFactSchema: Codable, Hashable {
+        var id: UUID
+        var area: String
+        var attribute: String
+        var statement: String
+        var kind: MemoryKind
+        var status: MemoryStatus
+        var importance: Int
+        var sensitivity: MemorySensitivity
+        @Lossy var evidence: [Evidence]
+        var validFrom: Date?
+        var validTo: Date?
+        var supersededById: UUID?
+        var confirmCount: Int
+        var confirmedAt: Date?
+        var createdAt: Date
+        var updatedAt: Date
+    }
+
+    struct MemoryFactUpdate: Encodable, Hashable {
+        var area: String??
+        var attribute: String??
+        var statement: String??
+        var importance: Int??
+    }
+
+    struct MemoryFactsResponse: Codable, Hashable {
+        @Lossy var facts: [MemoryFactSchema]
+    }
+
+    enum MemoryKind: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case stated
+        case observed
+        case inferred
+        case corrected
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [MemoryKind] = [.stated, .observed, .inferred, .corrected]
+    }
+
+    enum MemorySensitivity: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case normal
+        case health
+        case money
+        case relationships
+        case `private`
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [MemorySensitivity] = [.normal, .health, .money, .relationships, .`private`]
+    }
+
+    enum MemoryStatus: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case hypothesis
+        case confirmed
+        case rejected
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [MemoryStatus] = [.hypothesis, .confirmed, .rejected]
     }
 
     struct MonthlyFlow: Codable, Hashable {
@@ -5743,6 +5810,38 @@ extension API.EventWriteResponse {
     }
 }
 
+extension API.Evidence {
+    private enum DecodingKeys: String, CodingKey {
+        case source
+        case ref
+        case day
+        case note
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.source = try container.decode(String.self, forKey: .source)
+        self.ref = try container.decodeIfPresent(String.self, forKey: .ref)
+        self.day = try container.decodeIfPresent(Date.self, forKey: .day)
+        self.note = try container.decodeIfPresent(String.self, forKey: .note)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case source
+        case ref
+        case day
+        case note
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.source, forKey: .source)
+        try container.encodeIfPresent(self.ref, forKey: .ref)
+        try container.encodeIfPresent(self.day.map(API.Day.init), forKey: .day)
+        try container.encodeIfPresent(self.note, forKey: .note)
+    }
+}
+
 extension API.GoogleAuthorizeResponse {
     private enum DecodingKeys: String, CodingKey {
         case url
@@ -7455,6 +7554,123 @@ extension API.MeetingBriefPerson {
         try container.encodeIfPresent(self.lastSeen, forKey: .lastSeen)
         try container.encode(self.recent, forKey: .recent)
         try container.encodeIfPresent(self.upcoming, forKey: .upcoming)
+    }
+}
+
+extension API.MemoryFactSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case area
+        case attribute
+        case statement
+        case kind
+        case status
+        case importance
+        case sensitivity
+        case evidence
+        case validFrom
+        case validTo
+        case supersededById
+        case confirmCount
+        case confirmedAt
+        case createdAt
+        case updatedAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.area = try container.decode(String.self, forKey: .area)
+        self.attribute = try container.decode(String.self, forKey: .attribute)
+        self.statement = try container.decode(String.self, forKey: .statement)
+        self.kind = try container.decode(API.MemoryKind.self, forKey: .kind)
+        self.status = try container.decode(API.MemoryStatus.self, forKey: .status)
+        self.importance = try container.decode(Int.self, forKey: .importance)
+        self.sensitivity = try container.decode(API.MemorySensitivity.self, forKey: .sensitivity)
+        self._evidence = try container.decode(Lossy<API.Evidence>.self, forKey: .evidence)
+        self.validFrom = try container.decodeIfPresent(Date.self, forKey: .validFrom)
+        self.validTo = try container.decodeIfPresent(Date.self, forKey: .validTo)
+        self.supersededById = try container.decodeIfPresent(UUID.self, forKey: .supersededById)
+        self.confirmCount = try container.decode(Int.self, forKey: .confirmCount)
+        self.confirmedAt = try container.decodeIfPresent(Date.self, forKey: .confirmedAt)
+        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
+        self.updatedAt = try container.decode(Date.self, forKey: .updatedAt)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case area
+        case attribute
+        case statement
+        case kind
+        case status
+        case importance
+        case sensitivity
+        case evidence
+        case validFrom = "valid_from"
+        case validTo = "valid_to"
+        case supersededById = "superseded_by_id"
+        case confirmCount = "confirm_count"
+        case confirmedAt = "confirmed_at"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.area, forKey: .area)
+        try container.encode(self.attribute, forKey: .attribute)
+        try container.encode(self.statement, forKey: .statement)
+        try container.encode(self.kind, forKey: .kind)
+        try container.encode(self.status, forKey: .status)
+        try container.encode(self.importance, forKey: .importance)
+        try container.encode(self.sensitivity, forKey: .sensitivity)
+        try container.encode(self.evidence, forKey: .evidence)
+        try container.encodeIfPresent(self.validFrom.map(API.Day.init), forKey: .validFrom)
+        try container.encodeIfPresent(self.validTo.map(API.Day.init), forKey: .validTo)
+        try container.encodeIfPresent(self.supersededById, forKey: .supersededById)
+        try container.encode(self.confirmCount, forKey: .confirmCount)
+        try container.encodeIfPresent(self.confirmedAt.map(API.Instant.init), forKey: .confirmedAt)
+        try container.encode(API.Instant(self.createdAt), forKey: .createdAt)
+        try container.encode(API.Instant(self.updatedAt), forKey: .updatedAt)
+    }
+}
+
+extension API.MemoryFactUpdate {
+    private enum EncodingKeys: String, CodingKey {
+        case area
+        case attribute
+        case statement
+        case importance
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.area { try container.encode(value, forKey: .area) }
+        if let value = self.attribute { try container.encode(value, forKey: .attribute) }
+        if let value = self.statement { try container.encode(value, forKey: .statement) }
+        if let value = self.importance { try container.encode(value, forKey: .importance) }
+    }
+}
+
+extension API.MemoryFactsResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case facts
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._facts = try container.decode(Lossy<API.MemoryFactSchema>.self, forKey: .facts)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case facts
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.facts, forKey: .facts)
     }
 }
 

@@ -5161,6 +5161,60 @@ export const EventWriteResponseSchema = {
   title: "EventWriteResponse",
 } as const;
 
+export const EvidenceSchema = {
+  properties: {
+    source: {
+      type: "string",
+      maxLength: 50,
+      title: "Source",
+      description:
+        "Where it came from, e.g. 'user', 'sleep', 'calendar', 'tasks', 'gmail'.",
+    },
+    ref: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Ref",
+      description: "What to look it up by: a date, an id or a link.",
+    },
+    day: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Day",
+      description: "The day it was seen or said.",
+    },
+    note: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 300,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Note",
+      description: "What it showed, in a few words.",
+    },
+  },
+  type: "object",
+  required: ["source", "ref", "day", "note"],
+  title: "Evidence",
+} as const;
+
 export const GoogleAuthorizeResponseSchema = {
   properties: {
     url: {
@@ -7529,6 +7583,233 @@ export const MeetingBriefPersonSchema = {
   type: "object",
   required: ["contact", "sure", "last_seen", "recent", "upcoming"],
   title: "MeetingBriefPerson",
+} as const;
+
+export const MemoryFactSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid",
+      title: "Id",
+    },
+    area: {
+      type: "string",
+      title: "Area",
+    },
+    attribute: {
+      type: "string",
+      title: "Attribute",
+    },
+    statement: {
+      type: "string",
+      title: "Statement",
+    },
+    kind: {
+      $ref: "#/components/schemas/MemoryKind",
+    },
+    status: {
+      $ref: "#/components/schemas/MemoryStatus",
+    },
+    importance: {
+      type: "integer",
+      title: "Importance",
+    },
+    sensitivity: {
+      $ref: "#/components/schemas/MemorySensitivity",
+    },
+    evidence: {
+      items: {
+        $ref: "#/components/schemas/Evidence",
+      },
+      type: "array",
+      title: "Evidence",
+    },
+    valid_from: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Valid From",
+    },
+    valid_to: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Valid To",
+      description:
+        "Set once the fact stopped being true; empty while it holds.",
+    },
+    superseded_by_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Superseded By Id",
+    },
+    confirm_count: {
+      type: "integer",
+      title: "Confirm Count",
+    },
+    confirmed_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Confirmed At",
+    },
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+    },
+    updated_at: {
+      type: "string",
+      format: "date-time",
+      title: "Updated At",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "area",
+    "attribute",
+    "statement",
+    "kind",
+    "status",
+    "importance",
+    "sensitivity",
+    "evidence",
+    "valid_from",
+    "valid_to",
+    "superseded_by_id",
+    "confirm_count",
+    "confirmed_at",
+    "created_at",
+    "updated_at",
+  ],
+  title: "MemoryFactSchema",
+} as const;
+
+export const MemoryFactUpdateSchema = {
+  properties: {
+    area: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+          minLength: 1,
+          pattern: "^[^/\\s][^/]*(/[^/\\s][^/]*)*$",
+          description:
+            "Where the fact belongs, as a path from general to specific, e.g. 'kropp/kläder', 'sömn', 'människor/familj', 'pengar/mål'. Reuse an existing area when one fits; add a deeper one when it doesn't.",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Area",
+    },
+    attribute: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+          minLength: 1,
+          description:
+            "What the fact is about, short and specific, e.g. 'skostorlek', 'insomning vardagar', 'mamma'. One current fact per attribute: a new value for it replaces the old one.",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Attribute",
+    },
+    statement: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 1000,
+          minLength: 1,
+          description: "The fact itself, one or two sentences.",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Statement",
+    },
+    importance: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 5,
+          minimum: 1,
+          description:
+            "5 shapes most days and is always in the profile; 4 is in the profile; 1-3 are found by search.",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Importance",
+    },
+  },
+  type: "object",
+  title: "MemoryFactUpdate",
+  description: "A correction from the user on the web.",
+} as const;
+
+export const MemoryFactsResponseSchema = {
+  properties: {
+    facts: {
+      items: {
+        $ref: "#/components/schemas/MemoryFactSchema",
+      },
+      type: "array",
+      title: "Facts",
+    },
+  },
+  type: "object",
+  required: ["facts"],
+  title: "MemoryFactsResponse",
+} as const;
+
+export const MemoryKindSchema = {
+  type: "string",
+  enum: ["stated", "observed", "inferred", "corrected"],
+  title: "MemoryKind",
+} as const;
+
+export const MemorySensitivitySchema = {
+  type: "string",
+  enum: ["normal", "health", "money", "relationships", "private"],
+  title: "MemorySensitivity",
+} as const;
+
+export const MemoryStatusSchema = {
+  type: "string",
+  enum: ["hypothesis", "confirmed", "rejected"],
+  title: "MemoryStatus",
 } as const;
 
 export const MonthlyFlowSchema = {

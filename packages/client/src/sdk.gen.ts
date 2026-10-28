@@ -16,6 +16,7 @@ import {
   completeMontroseResponseTransformer,
   completeTaskResponseTransformer,
   connectIcloudResponseTransformer,
+  correctMemoryFactResponseTransformer,
   createBankAccountResponseTransformer,
   createCalendarEventResponseTransformer,
   createCategoryRuleResponseTransformer,
@@ -70,6 +71,7 @@ import {
   listHealthkitSleepResponseTransformer,
   listHealthkitWorkoutsResponseTransformer,
   listIngestTokensResponseTransformer,
+  listMemoryFactsResponseTransformer,
   listNotificationsResponseTransformer,
   listPlacesResponseTransformer,
   listProjectsResponseTransformer,
@@ -146,6 +148,9 @@ import type {
   ConnectIcloudData,
   ConnectIcloudErrors,
   ConnectIcloudResponses,
+  CorrectMemoryFactData,
+  CorrectMemoryFactErrors,
+  CorrectMemoryFactResponses,
   CreateBankAccountData,
   CreateBankAccountErrors,
   CreateBankAccountResponses,
@@ -258,6 +263,9 @@ import type {
   DownloadDocumentData,
   DownloadDocumentErrors,
   DownloadDocumentResponses,
+  ForgetMemoryFactData,
+  ForgetMemoryFactErrors,
+  ForgetMemoryFactResponses,
   GetAccountsOverviewData,
   GetAccountsOverviewResponses,
   GetActivitySummaryData,
@@ -419,6 +427,8 @@ import type {
   ListHealthkitWorkoutsResponses,
   ListIngestTokensData,
   ListIngestTokensResponses,
+  ListMemoryFactsData,
+  ListMemoryFactsResponses,
   ListNotificationsData,
   ListNotificationsResponses,
   ListPlacesData,
@@ -878,6 +888,74 @@ export const listAssistantNotes = <ThrowOnError extends boolean = false>(
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/assistant-notes",
     ...options,
+  });
+
+/**
+ * List Memory Facts
+ *
+ * What assistants know about the user now, most important first.
+ */
+export const listMemoryFacts = <ThrowOnError extends boolean = false>(
+  options?: Options<ListMemoryFactsData, ThrowOnError>,
+): RequestResult<ListMemoryFactsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    ListMemoryFactsResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: listMemoryFactsResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/memory/facts",
+    ...options,
+  });
+
+/**
+ * Forget Memory Fact
+ *
+ * Remove a fact assistants should no longer know.
+ */
+export const forgetMemoryFact = <ThrowOnError extends boolean = false>(
+  options: Options<ForgetMemoryFactData, ThrowOnError>,
+): RequestResult<
+  ForgetMemoryFactResponses,
+  ForgetMemoryFactErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    ForgetMemoryFactResponses,
+    ForgetMemoryFactErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/memory/facts/{fact_id}",
+    ...options,
+  });
+
+/**
+ * Correct Memory Fact
+ *
+ * Fix a fact by hand; it then counts as the user's own correction.
+ */
+export const correctMemoryFact = <ThrowOnError extends boolean = false>(
+  options: Options<CorrectMemoryFactData, ThrowOnError>,
+): RequestResult<
+  CorrectMemoryFactResponses,
+  CorrectMemoryFactErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    CorrectMemoryFactResponses,
+    CorrectMemoryFactErrors,
+    ThrowOnError
+  >({
+    responseTransformer: correctMemoryFactResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/memory/facts/{fact_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

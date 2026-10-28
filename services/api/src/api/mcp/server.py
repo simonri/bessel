@@ -13,11 +13,18 @@ from api.mcp.tools import TOOLS
 from api.settings import Environment, settings
 
 INSTRUCTIONS = """\
-The user's Bessel life dashboard: tasks, calendar, contacts, money and investments, recipes, \
-sleep, workouts, lifts from the gym log, daily steps and heart rate, computer activity, \
-and the weather anywhere (from Yr). Tasks and recipes can be created and updated, \
-and calendar events added; contacts and money are read-only, and nothing can be deleted. \
-get_note and save_note keep your own notes between conversations.
+The user's Bessel life dashboard, and what assistants have learned about them. Call \
+get_profile first in every conversation: it says who the user is, so never ask for or guess \
+what it already holds. When you learn something about the user, of any kind, store it with \
+remember; keep it true with revise_memory, merging rather than adding beside what is known.
+
+Data: tasks, calendar, contacts, money and investments, recipes, sleep, workouts, lifts from \
+the gym log, daily steps and heart rate, computer activity, the weather anywhere (from Yr), \
+saved places and location history (stays and trips), time tracked on projects, Claude Code \
+usage, and days-since counters. get_patterns gives the user's own base rates and lagged \
+effects over months. Tasks and recipes can be created and updated, and calendar events \
+added; contacts and money are read-only, and nothing can be deleted. get_note and save_note \
+keep a routine's own working state between runs.
 
 Days can be written as YYYY-MM-DD or relative ("today", "fri", "next week"), and \
 default to the user's own timezone. Durations are in seconds. Money is in currency \

@@ -110,6 +110,21 @@ class LocationSegmentRepository(RepositoryBase[LocationSegment], RepositoryIDMix
     )
     return await self.get_all(statement)
 
+  async def list_stays_and_trips(self, user_id: UUID, start: date, end: date) -> Sequence[LocationSegment]:
+    """Live visits and trips overlapping local days `start`..`end`, without route points."""
+    statement = (
+      self.get_base_statement()
+      .where(
+        LocationSegment.user_id == user_id,
+        LocationSegment.deleted_at.is_(None),
+        LocationSegment.kind != LocationSegmentKind.path,
+        LocationSegment.local_start < datetime.combine(end + timedelta(days=1), time.min),
+        LocationSegment.local_end > datetime.combine(start, time.min),
+      )
+      .order_by(LocationSegment.start_at, LocationSegment.hierarchy_level)
+    )
+    return await self.get_all(statement)
+
   async def local_spans(self, user_id: UUID) -> list[tuple[datetime, datetime]]:
     """Local start and end of every live visit and trip."""
     result = await self.session.execute(

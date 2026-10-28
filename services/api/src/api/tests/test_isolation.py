@@ -25,6 +25,7 @@ from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.calendar_event import CalendarEvent
 from api.models.category import Category
 from api.models.contact import Contact, ContactMethod, ContactMethodKind, ContactSource
+from api.models.memory_fact import MemoryFact, MemoryKind, MemoryStatus
 from api.models.security import AssetType, Security
 from api.models.trade import Trade, TradeType
 from api.models.transaction import Transaction, TransactionDirection
@@ -51,6 +52,9 @@ AUDITED: set[str] = {
   "GET /v1/activity/summary",
   "GET /v1/agent-usage/daily",
   "GET /v1/assistant-notes",
+  "GET /v1/memory/facts",
+  "PATCH /v1/memory/facts/{fact_id}",
+  "DELETE /v1/memory/facts/{fact_id}",
   "GET /v1/agent-usage/status",
   "POST /v1/agent-usage/sync",
   # Avanza's are in test_avanza.py::TestIsolation.
@@ -504,6 +508,21 @@ class TestAssistantNotes:
 
     assert (await other_client.get("/v1/assistant-notes")).json() == {"notes": []}
     assert [n["content"] for n in (await client.get("/v1/assistant-notes")).json()["notes"]] == ["A's streak"]
+
+
+class TestMemoryFacts:
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_read_correct_or_forget_facts(
+    self, client: AsyncClient, other_client: AsyncClient, session: AsyncSession, user: User
+  ) -> None:
+    fact = MemoryFact(user_id=user.id, area="kropp", attribute="skostorlek", statement="44", kind=MemoryKind.stated, status=MemoryStatus.confirmed)
+    session.add(fact)
+    await session.flush()
+
+    assert (await other_client.get("/v1/memory/facts")).json() == {"facts": []}
+    assert (await other_client.patch(f"/v1/memory/facts/{fact.id}", json={"statement": "39"})).status_code == 404
+    assert (await other_client.delete(f"/v1/memory/facts/{fact.id}")).status_code == 404
+    assert [f["statement"] for f in (await client.get("/v1/memory/facts")).json()["facts"]] == ["44"]
 
 
 class TestNotifications:

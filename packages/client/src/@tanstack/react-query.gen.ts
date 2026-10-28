@@ -22,6 +22,7 @@ import {
   completeMontrose,
   completeTask,
   connectIcloud,
+  correctMemoryFact,
   createBankAccount,
   createCalendarEvent,
   createCategoryRule,
@@ -60,6 +61,7 @@ import {
   documentPage,
   documentThumbnail,
   downloadDocument,
+  forgetMemoryFact,
   getAccountsOverview,
   getActivitySummary,
   getAddress,
@@ -121,6 +123,7 @@ import {
   listHealthkitSleep,
   listHealthkitWorkouts,
   listIngestTokens,
+  listMemoryFacts,
   listNotifications,
   listPlaces,
   listProjects,
@@ -221,6 +224,9 @@ import type {
   ConnectIcloudData,
   ConnectIcloudError,
   ConnectIcloudResponse,
+  CorrectMemoryFactData,
+  CorrectMemoryFactError,
+  CorrectMemoryFactResponse,
   CreateBankAccountData,
   CreateBankAccountError,
   CreateBankAccountResponse,
@@ -330,6 +336,9 @@ import type {
   DocumentThumbnailError,
   DownloadDocumentData,
   DownloadDocumentError,
+  ForgetMemoryFactData,
+  ForgetMemoryFactError,
+  ForgetMemoryFactResponse,
   GetAccountsOverviewData,
   GetAccountsOverviewResponse,
   GetActivitySummaryData,
@@ -489,6 +498,8 @@ import type {
   ListHealthkitWorkoutsResponse,
   ListIngestTokensData,
   ListIngestTokensResponse,
+  ListMemoryFactsData,
+  ListMemoryFactsResponse,
   ListNotificationsData,
   ListNotificationsResponse,
   ListPlacesData,
@@ -1094,6 +1105,94 @@ export const listAssistantNotesOptions = (
     },
     queryKey: listAssistantNotesQueryKey(options),
   });
+
+export const listMemoryFactsQueryKey = (
+  options?: Options<ListMemoryFactsData>,
+) => createQueryKey("listMemoryFacts", options);
+
+/**
+ * List Memory Facts
+ *
+ * What assistants know about the user now, most important first.
+ */
+export const listMemoryFactsOptions = (
+  options?: Options<ListMemoryFactsData>,
+) =>
+  queryOptions<
+    ListMemoryFactsResponse,
+    DefaultError,
+    ListMemoryFactsResponse,
+    ReturnType<typeof listMemoryFactsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listMemoryFacts({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listMemoryFactsQueryKey(options),
+  });
+
+/**
+ * Forget Memory Fact
+ *
+ * Remove a fact assistants should no longer know.
+ */
+export const forgetMemoryFactMutation = (
+  options?: Partial<Options<ForgetMemoryFactData>>,
+): UseMutationOptions<
+  ForgetMemoryFactResponse,
+  ForgetMemoryFactError,
+  Options<ForgetMemoryFactData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ForgetMemoryFactResponse,
+    ForgetMemoryFactError,
+    Options<ForgetMemoryFactData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await forgetMemoryFact({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Correct Memory Fact
+ *
+ * Fix a fact by hand; it then counts as the user's own correction.
+ */
+export const correctMemoryFactMutation = (
+  options?: Partial<Options<CorrectMemoryFactData>>,
+): UseMutationOptions<
+  CorrectMemoryFactResponse,
+  CorrectMemoryFactError,
+  Options<CorrectMemoryFactData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CorrectMemoryFactResponse,
+    CorrectMemoryFactError,
+    Options<CorrectMemoryFactData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await correctMemoryFact({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const listBankAccountsQueryKey = (
   options?: Options<ListBankAccountsData>,

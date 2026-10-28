@@ -730,6 +730,132 @@
         ]
       }
     },
+    "/v1/memory/facts": {
+      "get": {
+        "tags": [
+          "memory"
+        ],
+        "summary": "List Memory Facts",
+        "description": "What assistants know about the user now, most important first.",
+        "operationId": "list_memory_facts",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryFactsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/memory/facts/{fact_id}": {
+      "patch": {
+        "tags": [
+          "memory"
+        ],
+        "summary": "Correct Memory Fact",
+        "description": "Fix a fact by hand; it then counts as the user's own correction.",
+        "operationId": "correct_memory_fact",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fact Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemoryFactUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryFactSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "memory"
+        ],
+        "summary": "Forget Memory Fact",
+        "description": "Remove a fact assistants should no longer know.",
+        "operationId": "forget_memory_fact",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fact Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/bank-accounts": {
       "get": {
         "tags": [
@@ -14430,6 +14556,63 @@
         ],
         "title": "EventWriteResponse"
       },
+      "Evidence": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "maxLength": 50,
+            "title": "Source",
+            "description": "Where it came from, e.g. 'user', 'sleep', 'calendar', 'tasks', 'gmail'."
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref",
+            "description": "What to look it up by: a date, an id or a link."
+          },
+          "day": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Day",
+            "description": "The day it was seen or said."
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 300
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note",
+            "description": "What it showed, in a few words."
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "ref",
+          "day",
+          "note"
+        ],
+        "title": "Evidence"
+      },
       "GoogleAuthorizeResponse": {
         "properties": {
           "url": {
@@ -16813,6 +16996,240 @@
           "upcoming"
         ],
         "title": "MeetingBriefPerson"
+      },
+      "MemoryFactSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "area": {
+            "type": "string",
+            "title": "Area"
+          },
+          "attribute": {
+            "type": "string",
+            "title": "Attribute"
+          },
+          "statement": {
+            "type": "string",
+            "title": "Statement"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/MemoryKind"
+          },
+          "status": {
+            "$ref": "#/components/schemas/MemoryStatus"
+          },
+          "importance": {
+            "type": "integer",
+            "title": "Importance"
+          },
+          "sensitivity": {
+            "$ref": "#/components/schemas/MemorySensitivity"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "valid_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid To",
+            "description": "Set once the fact stopped being true; empty while it holds."
+          },
+          "superseded_by_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Superseded By Id"
+          },
+          "confirm_count": {
+            "type": "integer",
+            "title": "Confirm Count"
+          },
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "area",
+          "attribute",
+          "statement",
+          "kind",
+          "status",
+          "importance",
+          "sensitivity",
+          "evidence",
+          "valid_from",
+          "valid_to",
+          "superseded_by_id",
+          "confirm_count",
+          "confirmed_at",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "MemoryFactSchema"
+      },
+      "MemoryFactUpdate": {
+        "properties": {
+          "area": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1,
+                "pattern": "^[^/\\s][^/]*(/[^/\\s][^/]*)*$",
+                "description": "Where the fact belongs, as a path from general to specific, e.g. 'kropp/kl\u00e4der', 's\u00f6mn', 'm\u00e4nniskor/familj', 'pengar/m\u00e5l'. Reuse an existing area when one fits; add a deeper one when it doesn't."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Area"
+          },
+          "attribute": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1,
+                "description": "What the fact is about, short and specific, e.g. 'skostorlek', 'insomning vardagar', 'mamma'. One current fact per attribute: a new value for it replaces the old one."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attribute"
+          },
+          "statement": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000,
+                "minLength": 1,
+                "description": "The fact itself, one or two sentences."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statement"
+          },
+          "importance": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 5.0,
+                "minimum": 1.0,
+                "description": "5 shapes most days and is always in the profile; 4 is in the profile; 1-3 are found by search."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Importance"
+          }
+        },
+        "type": "object",
+        "title": "MemoryFactUpdate",
+        "description": "A correction from the user on the web."
+      },
+      "MemoryFactsResponse": {
+        "properties": {
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/MemoryFactSchema"
+            },
+            "type": "array",
+            "title": "Facts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "facts"
+        ],
+        "title": "MemoryFactsResponse"
+      },
+      "MemoryKind": {
+        "type": "string",
+        "enum": [
+          "stated",
+          "observed",
+          "inferred",
+          "corrected"
+        ],
+        "title": "MemoryKind"
+      },
+      "MemorySensitivity": {
+        "type": "string",
+        "enum": [
+          "normal",
+          "health",
+          "money",
+          "relationships",
+          "private"
+        ],
+        "title": "MemorySensitivity"
+      },
+      "MemoryStatus": {
+        "type": "string",
+        "enum": [
+          "hypothesis",
+          "confirmed",
+          "rejected"
+        ],
+        "title": "MemoryStatus"
       },
       "MonthlyFlow": {
         "properties": {

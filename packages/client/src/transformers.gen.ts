@@ -7,6 +7,7 @@ import type {
   CompleteMontroseResponse,
   CompleteTaskResponse,
   ConnectIcloudResponse,
+  CorrectMemoryFactResponse,
   CreateBankAccountResponse,
   CreateCalendarEventResponse,
   CreateCategoryRuleResponse,
@@ -61,6 +62,7 @@ import type {
   ListHealthkitSleepResponse,
   ListHealthkitWorkoutsResponse,
   ListIngestTokensResponse,
+  ListMemoryFactsResponse,
   ListNotificationsResponse,
   ListPlacesResponse,
   ListProjectsResponse,
@@ -140,6 +142,52 @@ export const listAssistantNotesResponseTransformer = async (
   data: any,
 ): Promise<ListAssistantNotesResponse> => {
   data = assistantNotesResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const evidenceSchemaResponseTransformer = (data: any) => {
+  if (data.day) {
+    data.day = new Date(data.day);
+  }
+  return data;
+};
+
+const memoryFactSchemaSchemaResponseTransformer = (data: any) => {
+  data.evidence = data.evidence.map((item: any) =>
+    evidenceSchemaResponseTransformer(item),
+  );
+  if (data.valid_from) {
+    data.valid_from = new Date(data.valid_from);
+  }
+  if (data.valid_to) {
+    data.valid_to = new Date(data.valid_to);
+  }
+  if (data.confirmed_at) {
+    data.confirmed_at = new Date(data.confirmed_at);
+  }
+  data.created_at = new Date(data.created_at);
+  data.updated_at = new Date(data.updated_at);
+  return data;
+};
+
+const memoryFactsResponseSchemaResponseTransformer = (data: any) => {
+  data.facts = data.facts.map((item: any) =>
+    memoryFactSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listMemoryFactsResponseTransformer = async (
+  data: any,
+): Promise<ListMemoryFactsResponse> => {
+  data = memoryFactsResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const correctMemoryFactResponseTransformer = async (
+  data: any,
+): Promise<CorrectMemoryFactResponse> => {
+  data = memoryFactSchemaSchemaResponseTransformer(data);
   return data;
 };
 

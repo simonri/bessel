@@ -49,6 +49,25 @@ class CounterResetRepository(RepositoryBase[CounterReset], RepositoryIDMixin[Cou
     )
     return await self.get_all(statement)
 
+  async def recent_by_counter(self, counter_ids: Sequence[UUID], *, per_counter: int) -> dict[UUID, list[datetime]]:
+    """The latest `per_counter` reset times of each counter, newest first."""
+    if not counter_ids:
+      return {}
+    rank = func.row_number().over(partition_by=CounterReset.counter_id, order_by=CounterReset.created_at.desc()).label("rank")
+    ranked = (
+      select(CounterReset.counter_id, CounterReset.created_at, rank)
+      .where(CounterReset.counter_id.in_(counter_ids))
+      .where(CounterReset.deleted_at.is_(None))
+      .subquery()
+    )
+    result = await self.session.execute(
+      select(ranked.c.counter_id, ranked.c.created_at).where(ranked.c.rank <= per_counter).order_by(ranked.c.counter_id, ranked.c.created_at.desc())
+    )
+    recent: dict[UUID, list[datetime]] = {}
+    for counter_id, created_at in result.all():
+      recent.setdefault(counter_id, []).append(created_at)
+    return recent
+
   async def get_active(self, counter_id: UUID, reset_id: UUID) -> CounterReset | None:
     statement = select(CounterReset).where(CounterReset.id == reset_id).where(CounterReset.counter_id == counter_id).where(CounterReset.deleted_at.is_(None))
     return await self.get_one_or_none(statement)

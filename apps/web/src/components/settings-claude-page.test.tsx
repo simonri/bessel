@@ -31,6 +31,8 @@ vi.mock("@bessel/client", async (importOriginal) => ({
   }),
 }));
 
+vi.mock("./settings-claude-memory", () => ({ KnownAboutYou: () => null }));
+
 const { ClaudePage } = await import("./settings-claude-page");
 
 const writeText = vi.fn(async (_text: string) => {});

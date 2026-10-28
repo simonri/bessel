@@ -3183,6 +3183,36 @@ export type EventWriteResponse = {
 };
 
 /**
+ * Evidence
+ */
+export type Evidence = {
+  /**
+   * Source
+   *
+   * Where it came from, e.g. 'user', 'sleep', 'calendar', 'tasks', 'gmail'.
+   */
+  source: string;
+  /**
+   * Ref
+   *
+   * What to look it up by: a date, an id or a link.
+   */
+  ref: string | null;
+  /**
+   * Day
+   *
+   * The day it was seen or said.
+   */
+  day: Date | null;
+  /**
+   * Note
+   *
+   * What it showed, in a few words.
+   */
+  note: string | null;
+};
+
+/**
  * GoogleAuthorizeResponse
  */
 export type GoogleAuthorizeResponse = {
@@ -4679,6 +4709,149 @@ export type MeetingBriefPerson = {
    */
   upcoming: ContactDateReminder | null;
 };
+
+/**
+ * MemoryFactSchema
+ */
+export type MemoryFactSchema = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Area
+   */
+  area: string;
+  /**
+   * Attribute
+   */
+  attribute: string;
+  /**
+   * Statement
+   */
+  statement: string;
+  kind: MemoryKind;
+  status: MemoryStatus;
+  /**
+   * Importance
+   */
+  importance: number;
+  sensitivity: MemorySensitivity;
+  /**
+   * Evidence
+   */
+  evidence: Array<Evidence>;
+  /**
+   * Valid From
+   */
+  valid_from: Date | null;
+  /**
+   * Valid To
+   *
+   * Set once the fact stopped being true; empty while it holds.
+   */
+  valid_to: Date | null;
+  /**
+   * Superseded By Id
+   */
+  superseded_by_id: string | null;
+  /**
+   * Confirm Count
+   */
+  confirm_count: number;
+  /**
+   * Confirmed At
+   */
+  confirmed_at: Date | null;
+  /**
+   * Created At
+   */
+  created_at: Date;
+  /**
+   * Updated At
+   */
+  updated_at: Date;
+};
+
+/**
+ * MemoryFactUpdate
+ *
+ * A correction from the user on the web.
+ */
+export type MemoryFactUpdate = {
+  /**
+   * Area
+   */
+  area?: string | null;
+  /**
+   * Attribute
+   */
+  attribute?: string | null;
+  /**
+   * Statement
+   */
+  statement?: string | null;
+  /**
+   * Importance
+   */
+  importance?: number | null;
+};
+
+/**
+ * MemoryFactsResponse
+ */
+export type MemoryFactsResponse = {
+  /**
+   * Facts
+   */
+  facts: Array<MemoryFactSchema>;
+};
+
+/**
+ * MemoryKind
+ */
+export const MemoryKind = {
+  STATED: "stated",
+  OBSERVED: "observed",
+  INFERRED: "inferred",
+  CORRECTED: "corrected",
+} as const;
+
+/**
+ * MemoryKind
+ */
+export type MemoryKind = (typeof MemoryKind)[keyof typeof MemoryKind];
+
+/**
+ * MemorySensitivity
+ */
+export const MemorySensitivity = {
+  NORMAL: "normal",
+  HEALTH: "health",
+  MONEY: "money",
+  RELATIONSHIPS: "relationships",
+  PRIVATE: "private",
+} as const;
+
+/**
+ * MemorySensitivity
+ */
+export type MemorySensitivity =
+  (typeof MemorySensitivity)[keyof typeof MemorySensitivity];
+
+/**
+ * MemoryStatus
+ */
+export const MemoryStatus = {
+  HYPOTHESIS: "hypothesis",
+  CONFIRMED: "confirmed",
+  REJECTED: "rejected",
+} as const;
+
+/**
+ * MemoryStatus
+ */
+export type MemoryStatus = (typeof MemoryStatus)[keyof typeof MemoryStatus];
 
 /**
  * MonthlyFlow
@@ -8542,6 +8715,87 @@ export type ListAssistantNotesResponses = {
 
 export type ListAssistantNotesResponse =
   ListAssistantNotesResponses[keyof ListAssistantNotesResponses];
+
+export type ListMemoryFactsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/memory/facts";
+};
+
+export type ListMemoryFactsResponses = {
+  /**
+   * Successful Response
+   */
+  200: MemoryFactsResponse;
+};
+
+export type ListMemoryFactsResponse =
+  ListMemoryFactsResponses[keyof ListMemoryFactsResponses];
+
+export type ForgetMemoryFactData = {
+  body?: never;
+  path: {
+    /**
+     * Fact Id
+     */
+    fact_id: string;
+  };
+  query?: never;
+  url: "/v1/memory/facts/{fact_id}";
+};
+
+export type ForgetMemoryFactErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ForgetMemoryFactError =
+  ForgetMemoryFactErrors[keyof ForgetMemoryFactErrors];
+
+export type ForgetMemoryFactResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type ForgetMemoryFactResponse =
+  ForgetMemoryFactResponses[keyof ForgetMemoryFactResponses];
+
+export type CorrectMemoryFactData = {
+  body: MemoryFactUpdate;
+  path: {
+    /**
+     * Fact Id
+     */
+    fact_id: string;
+  };
+  query?: never;
+  url: "/v1/memory/facts/{fact_id}";
+};
+
+export type CorrectMemoryFactErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CorrectMemoryFactError =
+  CorrectMemoryFactErrors[keyof CorrectMemoryFactErrors];
+
+export type CorrectMemoryFactResponses = {
+  /**
+   * Successful Response
+   */
+  200: MemoryFactSchema;
+};
+
+export type CorrectMemoryFactResponse =
+  CorrectMemoryFactResponses[keyof CorrectMemoryFactResponses];
 
 export type ListBankAccountsData = {
   body?: never;
