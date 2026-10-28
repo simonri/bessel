@@ -13,6 +13,7 @@ import type {
   ClaudeSessionsSnapshot,
   ClaudeSessionView,
 } from "@/components/claude-sessions/claude-sessions-types";
+import { rememberBoard } from "@/components/claude-sessions/session-boards";
 import { WorkspaceTemplatesProvider } from "@/hooks/use-workspace-templates";
 import { setWindowAgentStatus } from "./canvas-agent-status";
 import { ProjectSessions } from "./project-sessions";
@@ -472,8 +473,65 @@ describe("ProjectSessions", () => {
         projectName: "metron",
       });
       expect(onOpenCanvas).toHaveBeenCalled();
-      // Now shown in a window, it's no longer listed as a background row.
-      expect(screen.queryByTitle(/running in the background/)).toBeNull();
+      // Now shown in a window, it's no longer listed as a row of its own.
+      expect(screen.queryByTitle(/no window open/)).toBeNull();
+    });
+
+    it("reopens a session in the canvas session it was last shown in, not a new one", () => {
+      seed(
+        [
+          { id: "a", name: "Board", windows: [] },
+          {
+            id: "b",
+            name: "Earlier",
+            projectId: "p1",
+            windows: [{ module: "tasks", x: 0, y: 0, w: 4, h: 4 }],
+          },
+        ],
+        "a",
+      );
+      rememberBoard("bg", "b");
+      const { manager } = mount();
+      act(() =>
+        pushSnapshot({
+          sessions: [claudeSession({ key: "bg", projectId: "p1" })],
+          external: [],
+          available: true,
+        }),
+      );
+      const boards = manager().workspaces.length;
+
+      fireEvent.click(
+        screen.getByTitle(/Fix calendar - Working, no window open/),
+      );
+
+      const opened = manager().allWindows.find(
+        (w) => w.module === "claudeCode",
+      );
+      expect(opened?.workspaceId).toBe("b");
+      expect(manager().activeWorkspaceId).toBe("b");
+      expect(manager().workspaces).toHaveLength(boards);
+    });
+
+    it("opens a new canvas session when the one it was in is gone", () => {
+      seed([{ id: "a", windows: [] }], "a");
+      rememberBoard("bg", "deleted");
+      const { manager } = mount();
+      act(() =>
+        pushSnapshot({
+          sessions: [claudeSession({ key: "bg", projectId: "p1" })],
+          external: [],
+          available: true,
+        }),
+      );
+
+      fireEvent.click(screen.getByTitle(/Fix calendar - Working/));
+
+      const opened = manager().allWindows.find(
+        (w) => w.module === "claudeCode",
+      );
+      expect(opened?.workspaceId).not.toBe("deleted");
+      expect(opened?.workspaceId).not.toBe("a");
     });
 
     it("ends a session from its row", () => {

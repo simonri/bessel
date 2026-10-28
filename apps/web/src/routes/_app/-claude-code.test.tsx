@@ -106,3 +106,15 @@ describe("Claude in a folder it doesn't trust yet", () => {
     expect(state.create).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("Claude window", () => {
+  it("remembers the canvas session it shows its Claude session in", async () => {
+    const { lastBoardOf } = await import(
+      "@/components/claude-sessions/session-boards"
+    );
+    state.windowData.claudeSessionKey = "k9";
+    render(<ClaudeCode />);
+
+    await waitFor(() => expect(lastBoardOf("k9")).toBe("ws1"));
+  });
+});

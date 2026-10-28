@@ -109,12 +109,22 @@ export function isRunning(status: ClaudeSessionStatus): boolean {
 export function sessionStatus(
   session: StoredClaudeSession,
   agent: ClaudeAgentEntry | undefined,
-  { checked, pending }: { checked: boolean; pending: boolean },
+  {
+    checked,
+    pending,
+    hasConversation = true,
+  }: {
+    checked: boolean;
+    pending: boolean;
+    /** Whether anything was said yet: a fresh session also reports "blocked". */
+    hasConversation?: boolean;
+  },
 ): ClaudeSessionStatus {
   if (session.endedAt !== undefined) return "ended";
   if (!checked) return "starting";
   const status = agentStatus(agent);
   if (!isRunning(status) && pending) return "starting";
+  if (status === "waiting" && !hasConversation) return "idle";
   return status;
 }
 

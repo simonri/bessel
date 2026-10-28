@@ -714,9 +714,14 @@ class ClaudeSessionManager {
   }
 
   private status(session: StoredClaudeSession): ClaudeSessionStatus {
-    return sessionStatus(session, this.agentFor(session), {
+    const agent = this.agentFor(session);
+    return sessionStatus(session, agent, {
       checked: this.checked,
       pending: this.pending.has(session.key),
+      hasConversation: transcriptExists(
+        session.cwd,
+        agent?.sessionId ?? session.sessionId,
+      ),
     });
   }
 

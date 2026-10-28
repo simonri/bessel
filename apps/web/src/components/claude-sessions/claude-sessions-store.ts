@@ -111,7 +111,7 @@ export function toAgentStatus(status: ClaudeSessionStatus): AgentStatus | null {
 export const STATUS_LABEL: Record<ClaudeSessionStatus, string> = {
   working: "Working",
   waiting: "Needs you",
-  idle: "Idle",
+  idle: "Ready",
   starting: "Starting",
   stopped: "Stopped",
   missing: "Stopped",

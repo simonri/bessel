@@ -2,10 +2,12 @@ import { useCallback, useMemo } from "react";
 import {
   useWindowActions,
   useWindowState,
+  useWorkspaceMeta,
   type WindowEntry,
 } from "@/components/canvas/window-manager";
 import { useProjects } from "@/hooks/use-projects";
 import type { ClaudeSessionView } from "./claude-sessions-types";
+import { lastBoardOf } from "./session-boards";
 
 export const CLAUDE_SESSION_KEY = "claudeSessionKey";
 
@@ -30,12 +32,14 @@ export function useAttachedSessionKeys(): ReadonlySet<string> {
 }
 
 /**
- * Shows a background session: switches to the canvas session that already
- * has it open, or opens it in a new one under its project.
+ * Shows a Claude session: switches to the canvas session that already has it
+ * open, else reopens it in the canvas session it was last shown in, else in a
+ * new one under its project.
  */
 export function useOpenClaudeSession(onShowCanvas: () => void) {
   const { windowsByWorkspace } = useWindowState();
-  const { createSession, switchWorkspace } = useWindowActions();
+  const { workspaces } = useWorkspaceMeta();
+  const { createSession, switchWorkspace, openWindow } = useWindowActions();
   const { data: projects } = useProjects();
 
   return useCallback(
@@ -50,28 +54,34 @@ export function useOpenClaudeSession(onShowCanvas: () => void) {
       const project =
         projects?.find((p) => p.id === session.projectId) ??
         projects?.find((p) => p.path === session.cwd && !p.ssh_host);
+      const data = {
+        [CLAUDE_SESSION_KEY]: session.key,
+        projectPath: session.cwd,
+        ...(project ? { projectName: project.name } : {}),
+      };
+      const board = lastBoardOf(session.key);
+      if (board && workspaces.some((ws) => ws.id === board)) {
+        switchWorkspace(board);
+        if (openWindow("claudeCode", data)) {
+          onShowCanvas();
+          return;
+        }
+      }
       createSession({
         projectId: project?.id,
         name: session.name,
         closeWhenEmpty: true,
-        specs: [
-          {
-            module: "claudeCode",
-            data: {
-              [CLAUDE_SESSION_KEY]: session.key,
-              projectPath: session.cwd,
-              ...(project ? { projectName: project.name } : {}),
-            },
-          },
-        ],
+        specs: [{ module: "claudeCode", data }],
       });
       onShowCanvas();
     },
     [
       windowsByWorkspace,
+      workspaces,
       projects,
       createSession,
       switchWorkspace,
+      openWindow,
       onShowCanvas,
     ],
   );

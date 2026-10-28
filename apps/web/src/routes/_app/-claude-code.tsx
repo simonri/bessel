@@ -14,6 +14,7 @@ import {
   useClaudeSession,
   useClaudeSessionsLoaded,
 } from "@/components/claude-sessions/claude-sessions-store";
+import { rememberBoard } from "@/components/claude-sessions/session-boards";
 import { CLAUDE_SESSION_KEY } from "@/components/claude-sessions/use-open-claude-session";
 import { TerminalWidget } from "@/components/terminal-widget";
 import { sshQuote, sshTerminalArgs } from "@/lib/ssh";
@@ -167,6 +168,11 @@ function BackgroundClaude() {
     if (!sessionKey) start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionKey]);
+
+  const workspaceId = entry?.workspaceId;
+  useEffect(() => {
+    if (sessionKey && workspaceId) rememberBoard(sessionKey, workspaceId);
+  }, [sessionKey, workspaceId]);
 
   const status = session?.status ?? null;
   useEffect(() => {

@@ -320,6 +320,29 @@ describe("sessionStatus", () => {
     ).toBe("starting");
   });
 
+  it("doesn't say a fresh session needs you: it's waiting for its first message", () => {
+    const blocked = agent({ state: "blocked" });
+    expect(sessionStatus(stored(), blocked, checkedNow)).toBe("waiting");
+    expect(
+      sessionStatus(stored(), blocked, {
+        ...checkedNow,
+        hasConversation: false,
+      }),
+    ).toBe("idle");
+    expect(
+      sessionStatus(stored(), blocked, {
+        ...checkedNow,
+        hasConversation: true,
+      }),
+    ).toBe("waiting");
+    expect(
+      sessionStatus(stored(), agent({ status: "busy" }), {
+        ...checkedNow,
+        hasConversation: false,
+      }),
+    ).toBe("working");
+  });
+
   it("keeps an ended session ended", () => {
     expect(
       sessionStatus(stored({ endedAt: 5 }), agent(), {

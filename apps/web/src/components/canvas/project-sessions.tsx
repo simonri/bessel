@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { ClaudeIcon } from "@/components/canvas/brand-icons";
 import { useSessionAgentStatus } from "@/components/canvas/canvas-agent-status";
 import {
   sessionLabel,
@@ -335,6 +336,7 @@ function BackgroundSessionRow({
             className="flex h-full min-w-0 flex-1 items-center gap-2 text-left"
           >
             <StatusDot status={status} />
+            <ClaudeIcon className="size-3 shrink-0 text-white/40" />
             <span className="min-w-0 flex-1 truncate">{session.name}</span>
           </button>
           {/* Out of the layout until needed, so the name gets the full width. */}
