@@ -5,12 +5,15 @@ import {
   unitFileFor,
   unitNameFor,
   withPhoneNotifications,
+  withTrustedFolder,
 } from "./remote-control-core";
 
 describe("unitNameFor", () => {
   it("names the unit after the folder, kept apart from a same-named folder elsewhere", () => {
     const metron = unitNameFor("/home/simon/dev/metron");
-    expect(metron).toMatch(/^bessel-remote-control-metron-[0-9a-f]{8}\.service$/);
+    expect(metron).toMatch(
+      /^bessel-remote-control-metron-[0-9a-f]{8}\.service$/,
+    );
     expect(unitNameFor("/home/simon/dev/metron")).toBe(metron);
     expect(unitNameFor("/srv/metron")).not.toBe(metron);
     expect(unitNameFor("/home/simon/My Project!")).toMatch(
@@ -93,5 +96,41 @@ describe("phone notifications", () => {
       agentPushNotifEnabled: false,
     });
     expect(settings).not.toHaveProperty("inputNeededNotifEnabled");
+  });
+});
+
+describe("withTrustedFolder", () => {
+  it("trusts the folder as Claude's prompt would, leaving every other project and setting alone", () => {
+    const config = {
+      numStartups: 7,
+      projects: {
+        "/home/me/app": {
+          allowedTools: ["Bash"],
+          hasTrustDialogAccepted: false,
+        },
+        "/home/me/other": { hasTrustDialogAccepted: true },
+      },
+    };
+
+    const next = withTrustedFolder(config, "/home/me/app/");
+
+    expect(next).toEqual({
+      numStartups: 7,
+      projects: {
+        "/home/me/app": {
+          allowedTools: ["Bash"],
+          hasTrustDialogAccepted: true,
+        },
+        "/home/me/other": { hasTrustDialogAccepted: true },
+      },
+    });
+    expect(config.projects["/home/me/app"].hasTrustDialogAccepted).toBe(false);
+    expect(isTrustedFolder(next, "/home/me/app")).toBe(true);
+  });
+
+  it("starts the config when there is none", () => {
+    expect(withTrustedFolder(null, "/new")).toEqual({
+      projects: { "/new": { hasTrustDialogAccepted: true } },
+    });
   });
 });

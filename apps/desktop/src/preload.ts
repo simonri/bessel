@@ -190,6 +190,10 @@ const bridge = {
     disable: (folder: string) =>
       ipcRenderer.invoke("remoteControl:disable", folder),
   },
+  claude: {
+    trustFolder: (folder: string): Promise<boolean> =>
+      ipcRenderer.invoke("claude:trustFolder", folder),
+  },
   claudeNotifications: {
     get: () => ipcRenderer.invoke("claudeNotifications:get"),
     set: (patch: { inputNeeded?: boolean; claudeDecides?: boolean }) =>

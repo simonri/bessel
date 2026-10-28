@@ -11,6 +11,7 @@ import {
   unitFileFor,
   unitNameFor,
   withPhoneNotifications,
+  withTrustedFolder,
 } from "./remote-control-core.js";
 
 const execFileAsync = promisify(execFile);
@@ -115,6 +116,29 @@ async function disable(folder: string): Promise<RemoteControlStatus> {
   return status(folder);
 }
 
+function writeJsonAtomically(file: string, value: unknown): void {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  const temp = `${file}.bessel-${process.pid}`;
+  // Keeps the file's own permissions (~/.claude.json is private); new files start private.
+  const mode = fs.statSync(file, { throwIfNoEntry: false })?.mode ?? 0o600;
+  fs.writeFileSync(temp, `${JSON.stringify(value, null, 2)}\n`, { mode });
+  fs.chmodSync(temp, mode & 0o777);
+  fs.renameSync(temp, file);
+}
+
+/** Answers Claude's trust prompt for `folder` with yes, as if it had been asked there. */
+function trustFolder(folder: string): boolean {
+  const current = fs.existsSync(CLAUDE_CONFIG) ? readJson(CLAUDE_CONFIG) : {};
+  // A config Bessel can't read is left alone rather than replaced.
+  if (current === null)
+    throw new Error(
+      `Couldn't read ${CLAUDE_CONFIG}, so the folder wasn't trusted.`,
+    );
+  if (isTrustedFolder(current, folder)) return true;
+  writeJsonAtomically(CLAUDE_CONFIG, withTrustedFolder(current, folder));
+  return isTrustedFolder(readJson(CLAUDE_CONFIG), folder);
+}
+
 function readNotifications(): PhoneNotifications {
   return phoneNotificationsFrom(readJson(CLAUDE_SETTINGS));
 }
@@ -129,10 +153,7 @@ function writeNotifications(
   if (current === null)
     throw new Error(`Couldn't read ${CLAUDE_SETTINGS}, so it wasn't changed.`);
   const next = withPhoneNotifications(current, patch);
-  fs.mkdirSync(path.dirname(CLAUDE_SETTINGS), { recursive: true });
-  const temp = `${CLAUDE_SETTINGS}.bessel-${process.pid}`;
-  fs.writeFileSync(temp, `${JSON.stringify(next, null, 2)}\n`);
-  fs.renameSync(temp, CLAUDE_SETTINGS);
+  writeJsonAtomically(CLAUDE_SETTINGS, next);
   return phoneNotificationsFrom(next);
 }
 
@@ -156,6 +177,10 @@ export function registerRemoteControlHandlers(): void {
   ipcHandle("remoteControl:disable", (_event, folder: unknown) => {
     assertFolder(folder);
     return disable(folder);
+  });
+  ipcHandle("claude:trustFolder", (_event, folder: unknown) => {
+    assertFolder(folder);
+    return trustFolder(folder);
   });
   ipcHandle("claudeNotifications:get", () => readNotifications());
   ipcHandle("claudeNotifications:set", (_event, patch: unknown) => {

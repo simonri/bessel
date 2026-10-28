@@ -21,6 +21,8 @@ import { decodeCommands } from "@/lib/widget-commands";
 
 const PANEL_BUTTON =
   "rounded-md border border-white/10 px-3 py-1.5 text-12 font-medium text-white/75 transition-colors hover:border-white/20 hover:text-white/95";
+const PANEL_PRIMARY_BUTTON =
+  "rounded-md bg-primary-500 px-3 py-1.5 text-12 font-medium text-white transition-colors hover:bg-primary-400";
 
 function Panel({
   title,
@@ -119,6 +121,7 @@ function BackgroundClaude() {
   const session = useClaudeSession(sessionKey);
   const loaded = useClaudeSessionsLoaded();
   const [error, setError] = useState<StartError | null>(null);
+  const [trustFailed, setTrustFailed] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // Queued commands belong to a fresh session; replaying them on every
   // re-attach would re-run them.
@@ -171,14 +174,40 @@ function BackgroundClaude() {
   }, [status, setWindowStatus]);
 
   if (error?.untrusted) {
+    const folder = entry?.data?.projectPath || "";
+    const trustAndStart = () => {
+      setError(null);
+      setTrustFailed(null);
+      setBusy(true);
+      void window.electron?.claude
+        .trustFolder(folder)
+        .then((trusted) => {
+          if (trusted) start();
+          else throw new Error("Claude didn't take the change. Try again.");
+        })
+        .catch((err: unknown) => {
+          setBusy(false);
+          setTrustFailed(err instanceof Error ? err.message : String(err));
+          setError({ untrusted: true, message: "" });
+        });
+    };
     return (
       <Panel
-        title="Trust this folder first"
-        detail={`Claude only runs here in folders you've trusted. Run \`claude\` once in ${entry?.data?.projectPath || "your home folder"} and accept the prompt, then try again.`}
+        title="Trust this folder?"
+        detail={`Claude will be able to read, change and run files in ${folder || "your home folder"}. Only trust folders with code you know.`}
       >
-        <button type="button" className={PANEL_BUTTON} onClick={start}>
-          Try again
-        </button>
+        <div className="flex flex-col items-center gap-2">
+          <button
+            type="button"
+            className={PANEL_PRIMARY_BUTTON}
+            onClick={trustAndStart}
+          >
+            Trust and start
+          </button>
+          {trustFailed && (
+            <p className="max-w-sm text-12 text-red-300">{trustFailed}</p>
+          )}
+        </div>
       </Panel>
     );
   }

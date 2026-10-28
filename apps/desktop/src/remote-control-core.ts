@@ -39,7 +39,8 @@ function systemdQuote(value: string): string {
  * prompts, like the ones Bessel starts itself.
  */
 export function unitFileFor(folder: string, name: string): string {
-  if (/[\r\n]/.test(folder)) throw new Error("A folder path can't hold a line break.");
+  if (/[\r\n]/.test(folder))
+    throw new Error("A folder path can't hold a line break.");
   const server = [
     "claude remote-control",
     "--spawn same-dir",
@@ -87,6 +88,25 @@ export function isTrustedFolder(
     if (entry?.hasTrustDialogAccepted === true) return true;
     if (path.dirname(dir) === dir) return false;
   }
+}
+
+/**
+ * `claudeConfig` with `folder` trusted, as answering yes to Claude's own trust
+ * prompt there would leave it; every other project and setting stays as it was.
+ */
+export function withTrustedFolder(
+  claudeConfig: unknown,
+  folder: string,
+): Record<string, unknown> {
+  const config = { ...((claudeConfig ?? {}) as Record<string, unknown>) };
+  const projects = { ...((config.projects ?? {}) as Record<string, unknown>) };
+  const key = path.resolve(folder);
+  projects[key] = {
+    ...((projects[key] ?? {}) as Record<string, unknown>),
+    hasTrustDialogAccepted: true,
+  };
+  config.projects = projects;
+  return config;
 }
 
 export interface PhoneNotifications {

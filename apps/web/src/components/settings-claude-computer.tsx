@@ -6,6 +6,7 @@ import {
   SettingsSection,
   SettingsToggleRow,
 } from "@/components/settings-ui";
+import { SoftButton } from "@/components/ui-kit";
 import { useProjects } from "@/hooks/use-projects";
 import type { PhoneNotifications, RemoteControlStatus } from "@/types/electron";
 
@@ -15,8 +16,7 @@ const STATE_TEXT: Record<RemoteControlStatus["state"], string> = {
   starting: "Starting…",
   failed:
     "Couldn't start. Check that you're signed in to Claude Code, then turn it off and on.",
-  untrusted:
-    "Run `claude` once in this folder and accept the trust prompt first.",
+  untrusted: "Claude needs you to trust this folder first.",
 };
 
 const statusKey = (folder: string) => ["remote-control", folder];
@@ -43,6 +43,18 @@ function FolderRow({ name, folder }: { name: string; folder: string }) {
         error instanceof Error ? error.message : "Couldn't change that",
       ),
   });
+  const trust = useMutation({
+    mutationFn: async () => {
+      if (!(await window.electron?.claude.trustFolder(folder)))
+        throw new Error("Claude didn't take the change. Try again.");
+    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: statusKey(folder) }),
+    onError: (error) =>
+      toast.error(
+        error instanceof Error ? error.message : "Couldn't trust that folder",
+      ),
+  });
   const state = data?.state ?? "off";
   const on = state === "running" || state === "starting" || state === "failed";
   return (
@@ -57,6 +69,11 @@ function FolderRow({ name, folder }: { name: string; folder: string }) {
         </>
       }
     >
+      {state === "untrusted" && (
+        <SoftButton disabled={trust.isPending} onClick={() => trust.mutate()}>
+          Trust folder
+        </SoftButton>
+      )}
       <Switch
         aria-label={`Start sessions in ${name} from your phone`}
         checked={toggle.isPending ? toggle.variables : on}

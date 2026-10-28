@@ -34,6 +34,7 @@ const remoteControl = {
     return { supported: true, state: "off" };
   }),
 };
+const trustFolder = vi.fn(async (_folder: string) => true);
 const claudeNotifications = {
   get: vi.fn(async () => ({ inputNeeded: false, claudeDecides: true })),
   set: vi.fn(async (patch: object) => ({
@@ -60,6 +61,7 @@ beforeEach(() => {
   for (const fn of [
     ...Object.values(remoteControl),
     ...Object.values(claudeNotifications),
+    trustFolder,
   ])
     fn.mockClear();
   projects.list = [
@@ -68,7 +70,12 @@ beforeEach(() => {
     { id: "p3", name: "Nowhere", path: null, ssh_host: null },
   ];
   Object.defineProperty(window, "electron", {
-    value: { platform: "linux", remoteControl, claudeNotifications },
+    value: {
+      platform: "linux",
+      remoteControl,
+      claudeNotifications,
+      claude: { trustFolder },
+    },
     configurable: true,
   });
 });
@@ -112,15 +119,25 @@ describe("StartFromPhone", () => {
     );
   });
 
-  it("can't be turned on in a folder Claude doesn't trust yet, and says what to do", async () => {
+  it("can't be turned on in a folder Claude doesn't trust yet, but offers to trust it", async () => {
     states["/home/me/metron"] = "untrusted";
+    trustFolder.mockImplementation(async (folder: string) => {
+      states[folder] = "off";
+      return true;
+    });
     mount(<StartFromPhone />);
 
-    expect(
-      await screen.findByText(/accept the trust prompt first/),
-    ).toBeTruthy();
+    expect(await screen.findByText(/trust this folder first/)).toBeTruthy();
     const toggle = screen.getByRole("switch") as HTMLButtonElement;
     expect(toggle.disabled).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Trust folder" }));
+
+    await waitFor(() =>
+      expect(trustFolder).toHaveBeenCalledWith("/home/me/metron"),
+    );
+    await waitFor(() => expect(toggle.disabled).toBe(false));
+    expect(screen.queryByRole("button", { name: "Trust folder" })).toBeNull();
   });
 
   it("says it needs Linux elsewhere", () => {

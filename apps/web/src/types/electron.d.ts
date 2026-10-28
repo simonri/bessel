@@ -232,6 +232,10 @@ declare global {
         enable: (folder: string, name: string) => Promise<RemoteControlStatus>;
         disable: (folder: string) => Promise<RemoteControlStatus>;
       };
+      claude: {
+        /** Says yes to Claude's trust prompt for `folder`, as if it had been asked there. */
+        trustFolder: (folder: string) => Promise<boolean>;
+      };
       /** Claude's own push settings for the Claude app, in ~/.claude/settings.json. */
       claudeNotifications: {
         get: () => Promise<PhoneNotifications>;
