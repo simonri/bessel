@@ -13,6 +13,7 @@ import {
   pruneEnded,
   reconcile,
   sessionStatus,
+  transcriptHasConversation,
   transcriptTitle,
 } from "./claude-sessions-core.js";
 import type {
@@ -226,6 +227,40 @@ describe("transcripts", () => {
     fs.utimesSync(file, mtime, mtime);
     return file;
   }
+
+  it("counts a transcript as a conversation only once it holds a message", () => {
+    const id = "22222222-2222-4222-8222-222222222222";
+    expect(transcriptHasConversation("/repo", id)).toBe(false);
+
+    const meta = [
+      { type: "custom-title", customTitle: "repo" },
+      { type: "mode", mode: "normal" },
+      { type: "system", subtype: "bridge_status" },
+    ];
+    writeTranscript("/repo", id, meta, 1);
+    expect(transcriptHasConversation("/repo", id)).toBe(false);
+
+    writeTranscript("/repo", id, [...meta, { type: "user", message: {} }], 1);
+    expect(transcriptHasConversation("/repo", id)).toBe(true);
+    writeTranscript(
+      "/repo",
+      id,
+      [...meta, { type: "assistant", message: {} }],
+      1,
+    );
+    expect(transcriptHasConversation("/repo", id)).toBe(true);
+  });
+
+  it("takes a transcript too long to scan as a conversation", () => {
+    const id = "33333333-3333-4333-8333-333333333333";
+    writeTranscript(
+      "/repo",
+      id,
+      [{ type: "file-history-snapshot", snapshot: "x".repeat(300 * 1024) }],
+      1,
+    );
+    expect(transcriptHasConversation("/repo", id)).toBe(true);
+  });
 
   it("titles a conversation like Claude's resume picker", () => {
     const file = writeTranscript(

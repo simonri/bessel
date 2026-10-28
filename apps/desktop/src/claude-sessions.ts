@@ -18,6 +18,7 @@ import {
   reconcile,
   sessionStatus,
   transcriptExists,
+  transcriptHasConversation,
 } from "./claude-sessions-core.js";
 import {
   type ClaudeAgentEntry,
@@ -103,6 +104,8 @@ class ClaudeSessionManager {
   private checked = false;
   private readonly pending = new Map<string, number>();
   private wasRunning = new Set<string>();
+  /** Sessions known to have a message in their transcript; it never goes away. */
+  private readonly conversed = new Set<string>();
   private readonly lastStatus = new Map<string, ClaudeSessionStatus>();
   private readonly remoteUrlCheckedAt = new Map<string, number>();
   private lastSnapshot = "";
@@ -713,12 +716,19 @@ class ClaudeSessionManager {
     this.save();
   }
 
+  private hasConversation(cwd: string, sessionId: string): boolean {
+    if (this.conversed.has(sessionId)) return true;
+    const has = transcriptHasConversation(cwd, sessionId);
+    if (has) this.conversed.add(sessionId);
+    return has;
+  }
+
   private status(session: StoredClaudeSession): ClaudeSessionStatus {
     const agent = this.agentFor(session);
     return sessionStatus(session, agent, {
       checked: this.checked,
       pending: this.pending.has(session.key),
-      hasConversation: transcriptExists(
+      hasConversation: this.hasConversation(
         session.cwd,
         agent?.sessionId ?? session.sessionId,
       ),

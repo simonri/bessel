@@ -209,6 +209,32 @@ function readSlice(fd: number, start: number, length: number): string {
   return buf.subarray(0, read).toString("utf8");
 }
 
+/**
+ * Whether the session's transcript holds a message yet. Claude writes the file
+ * as soon as it starts, with only its settings in it, so the file alone says
+ * nothing. One past the scanned head is taken as a conversation without looking.
+ */
+export function transcriptHasConversation(
+  cwd: string,
+  sessionId: string,
+): boolean {
+  let fd: number;
+  try {
+    fd = fs.openSync(
+      path.join(claudeProjectDir(cwd), `${sessionId}.jsonl`),
+      "r",
+    );
+  } catch {
+    return false;
+  }
+  try {
+    if (fs.fstatSync(fd).size > TITLE_SCAN_BYTES) return true;
+    return /"type":"(user|assistant)"/.test(readSlice(fd, 0, TITLE_SCAN_BYTES));
+  } finally {
+    fs.closeSync(fd);
+  }
+}
+
 function lastField(text: string, type: string, field: string): string | null {
   let found: string | null = null;
   for (const line of text.split("\n")) {
