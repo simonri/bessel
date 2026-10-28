@@ -194,6 +194,44 @@ describe("ProjectSessions", () => {
     expect(screen.getAllByText("2")).toHaveLength(2);
   });
 
+  it("leaves out the empty, unnamed session outside a folder until it's on screen", () => {
+    seed(
+      [
+        { id: "a", projectId: "p1", name: "Refactor", windows: [] },
+        { id: "b", windows: [{ module: "tasks", x: 0, y: 0, w: 4, h: 4 }] },
+      ],
+      "a",
+    );
+    const { manager } = mount();
+    act(() => manager().addWorkspace());
+    const blank = manager().activeWorkspaceId;
+    act(() => manager().switchWorkspace("a"));
+    expect(screen.getByText("No folder")).toBeTruthy();
+    expect(screen.queryByText("Session")).toBeNull();
+
+    act(() => manager().removeWorkspace("b"));
+    expect(manager().workspaces.map((ws) => ws.id)).toContain(blank);
+    expect(screen.queryByText("No folder")).toBeNull();
+
+    act(() => manager().switchWorkspace(blank));
+    expect(screen.getByText("No folder")).toBeTruthy();
+  });
+
+  it("lists an unnamed session outside a folder once it has widgets", () => {
+    seed(
+      [
+        { id: "a", projectId: "p1", name: "Refactor", windows: [] },
+        {
+          id: "b",
+          windows: [{ module: "tasks", x: 0, y: 0, w: 4, h: 4 }],
+        },
+      ],
+      "a",
+    );
+    mount();
+    expect(screen.getByText("No folder")).toBeTruthy();
+  });
+
   it("derives a label from what's open and rolls agent status up to the session dot", () => {
     seed(
       [

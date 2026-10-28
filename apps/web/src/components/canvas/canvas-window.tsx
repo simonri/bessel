@@ -444,6 +444,8 @@ export const CanvasWindow = memo(function CanvasWindow({
             closeWindow(entry.id);
             clearFullscreenWindow(entry.id);
           }}
+          title="Close"
+          aria-label="Close"
           className="text-white/40 hover:bg-white/10 hover:text-white/80"
         >
           <X className="size-3" />

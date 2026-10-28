@@ -19,7 +19,7 @@ vi.mock("./claude-sessions-store", () => ({
   useClaudeSession: () => ({ remoteUrl: state.url }),
   claudeSessionsApi: () => ({ remoteUrl: async () => null }),
 }));
-vi.mock("@/components/settings-dialog", () => ({
+vi.mock("@/components/settings-dialog-context", () => ({
   useOpenSettings: () => state.openSettings,
 }));
 

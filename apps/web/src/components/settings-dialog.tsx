@@ -1,27 +1,15 @@
-import { createContext, type ReactNode, useContext, useState } from "react";
+import { type ReactNode, useState } from "react";
+import {
+  type SettingsDialog,
+  SettingsDialogContext,
+} from "@/components/settings-dialog-context";
 import type { IntegrationsTab } from "@/components/settings-integrations-page";
 import { SettingsModal, type SettingsPage } from "@/components/settings-modal";
 
-interface SettingsDialog {
-  /** Opens Settings at `page`; on Integrations, `tab` picks "connected" or "add". */
-  open: (page?: SettingsPage, tab?: IntegrationsTab) => void;
-  close: () => void;
-}
-
-const SettingsDialogContext = createContext<SettingsDialog>({
-  open: () => {},
-  close: () => {},
-});
-
-/** Opens Settings, at a given page when there is one. */
-export function useOpenSettings(): SettingsDialog["open"] {
-  return useContext(SettingsDialogContext).open;
-}
-
-/** Closes Settings, e.g. before sending the user to a page to finish something there. */
-export function useCloseSettings(): SettingsDialog["close"] {
-  return useContext(SettingsDialogContext).close;
-}
+export {
+  useCloseSettings,
+  useOpenSettings,
+} from "@/components/settings-dialog-context";
 
 /** Hosts the one Settings dialog, so any page can open it at the right place. */
 export function SettingsDialogProvider({ children }: { children: ReactNode }) {

@@ -9,7 +9,7 @@ export function TimeSinceDropdown() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <TopbarTooltip label="Time since">
+        <TopbarTooltip label="Counters - days since things happened">
           <button
             type="button"
             aria-label="Time since"

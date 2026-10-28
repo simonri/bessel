@@ -137,7 +137,7 @@ export const CanvasTopBar = memo(function CanvasTopBar({
         </div>
         <div className={TOPBAR_GROUP}>
           {window.electron && (
-            <TopbarTooltip label="Ports">
+            <TopbarTooltip label="Ports in use on this computer">
               <button
                 type="button"
                 onClick={() => setPortsOpen(true)}
@@ -149,7 +149,7 @@ export const CanvasTopBar = memo(function CanvasTopBar({
             </TopbarTooltip>
           )}
           {window.electron && (
-            <TopbarTooltip label="Logs">
+            <TopbarTooltip label="Bessel's logs">
               <button
                 type="button"
                 onClick={() => setLogsOpen(true)}

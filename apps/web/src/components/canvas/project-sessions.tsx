@@ -721,6 +721,14 @@ export function ProjectSessions({
   // live widgets running, not being viewed.
   const shownActiveId = isOnCanvasPage ? activeWorkspaceId : null;
   const canClose = workspaces.length > 1;
+  // An empty, unnamed canvas session outside any folder is just the default
+  // one the canvas starts with: listing it only adds "No folder > Session".
+  const listedUnassigned = unassigned.filter(
+    (ws) =>
+      ws.name ||
+      (windowsByWorkspace.get(ws.id)?.length ?? 0) > 0 ||
+      ws.id === shownActiveId,
+  );
 
   // Code folders open Claude, terminals and git through the desktop app; in a
   // browser the section only stays for someone who already has sessions.
@@ -763,11 +771,11 @@ export function ProjectSessions({
             onEndBackground={requestEnd}
           />
         ))}
-        {unassigned.length + backgroundUnassigned.length > 0 && (
+        {listedUnassigned.length + backgroundUnassigned.length > 0 && (
           <ProjectGroup
             id="__other"
             name={NO_PROJECT_LABEL}
-            sessions={unassigned}
+            sessions={listedUnassigned}
             background={backgroundUnassigned}
             windowsByWorkspace={windowsByWorkspace}
             projects={projectList}

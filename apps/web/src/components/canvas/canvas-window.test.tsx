@@ -91,4 +91,17 @@ describe("CanvasWindow title bar", () => {
     });
     expect(screen.queryByText("Tasks")).toBeNull();
   });
+
+  it("names its close button, so it reads as more than an icon", () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <WindowManager>
+          <Harness />
+        </WindowManager>
+      </QueryClientProvider>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByText("Tasks")).toBeNull();
+  });
 });

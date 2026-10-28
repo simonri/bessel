@@ -148,7 +148,7 @@ export function AgentUsageDropdown() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <TopbarTooltip label="Agent usage">
+        <TopbarTooltip label="Claude plan usage">
           <button
             type="button"
             aria-label="Agent usage"

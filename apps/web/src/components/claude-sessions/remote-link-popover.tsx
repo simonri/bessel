@@ -7,7 +7,7 @@ import { Spinner } from "@bessel/ui/components/spinner";
 import { Check, Copy, ExternalLink, Smartphone } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useOpenSettings } from "@/components/settings-dialog";
+import { useOpenSettings } from "@/components/settings-dialog-context";
 import { cn } from "@/lib/utils";
 import { claudeSessionsApi, useClaudeSession } from "./claude-sessions-store";
 
