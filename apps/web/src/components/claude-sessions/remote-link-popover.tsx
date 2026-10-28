@@ -4,10 +4,10 @@ import {
   PopoverTrigger,
 } from "@bessel/ui/components/popover";
 import { Spinner } from "@bessel/ui/components/spinner";
-import { Check, Copy, ExternalLink } from "lucide-react";
-import { type ReactNode, useEffect, useMemo, useState } from "react";
+import { Check, Copy, ExternalLink, Smartphone } from "lucide-react";
+import { type ReactNode, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { encode } from "uqr";
+import { useOpenSettings } from "@/components/settings-dialog";
 import { cn } from "@/lib/utils";
 import { claudeSessionsApi, useClaudeSession } from "./claude-sessions-store";
 
@@ -15,35 +15,12 @@ const RETRY_MS = 3_000;
 const SLOW_MS = 20_000;
 const COPIED_MS = 1_500;
 
-function QrCode({ value }: { value: string }) {
-  const path = useMemo(() => {
-    const { data } = encode(value, { border: 2 });
-    let d = "";
-    data.forEach((row, y) => {
-      row.forEach((dark, x) => {
-        if (dark) d += `M${x} ${y}h1v1h-1z`;
-      });
-    });
-    return { d, size: data.length };
-  }, [value]);
-  return (
-    <svg
-      viewBox={`0 0 ${path.size} ${path.size}`}
-      shapeRendering="crispEdges"
-      role="img"
-      aria-label="QR code for the session link"
-      className="size-44 rounded-lg bg-white"
-    >
-      <path d={path.d} fill="#000" />
-    </svg>
-  );
-}
-
 function RemoteLink({ sessionKey }: { sessionKey: string }) {
   const session = useClaudeSession(sessionKey);
   const url = session?.remoteUrl ?? null;
   const [copied, setCopied] = useState(false);
   const [slow, setSlow] = useState(false);
+  const openSettings = useOpenSettings();
 
   useEffect(() => {
     if (url) return;
@@ -78,7 +55,7 @@ function RemoteLink({ sessionKey }: { sessionKey: string }) {
 
   if (!url) {
     return (
-      <div className="flex h-56 flex-col items-center justify-center gap-3 px-6 text-center">
+      <div className="flex h-36 flex-col items-center justify-center gap-3 px-6 text-center">
         <Spinner className="size-5 text-white/50" />
         <p className="text-12 text-white/50">
           Waiting for Remote Control to connect…
@@ -94,11 +71,9 @@ function RemoteLink({ sessionKey }: { sessionKey: string }) {
   }
 
   return (
-    <div className="flex flex-col items-center gap-3 p-4">
-      <QrCode value={url} />
-      <p className="text-center text-11 leading-relaxed text-white/50">
-        Scan with your phone, or continue at claude.ai/code. The session keeps
-        running here.
+    <div className="flex flex-col gap-3 p-4">
+      <p className="text-12 leading-relaxed text-white/60">
+        Open it in the Claude app or at claude.ai/code. It keeps running here.
       </p>
       <div className="flex w-full gap-2">
         <button
@@ -127,11 +102,19 @@ function RemoteLink({ sessionKey }: { sessionKey: string }) {
           Open
         </button>
       </div>
+      <button
+        type="button"
+        onClick={() => openSettings("claude")}
+        className="flex items-start gap-2 border-t border-white/[0.07] pt-3 text-left text-11 leading-relaxed text-white/45 transition-colors hover:text-white/80"
+      >
+        <Smartphone className="mt-0.5 size-3.5 shrink-0" />
+        Start new sessions from your phone, and get notified when one needs you
+      </button>
     </div>
   );
 }
 
-/** "Open on phone": the session's Remote Control link as a QR code. */
+/** "Open on phone": the session's Remote Control link, to copy or open. */
 export function RemoteLinkPopover({
   sessionKey,
   children,

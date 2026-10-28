@@ -85,9 +85,11 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       {
         key: "claude",
         label: "Claude",
-        description: "Connect Claude to Bessel and see what it remembers.",
+        description:
+          "Connect Claude to Bessel, start sessions from your phone, and see what it remembers.",
         icon: MessageSquare,
-        keywords: "mcp connector assistant ai memory notes morning report",
+        keywords:
+          "mcp connector assistant ai memory notes morning report claude code phone mobile remote control notifications push trust folder",
       },
     ],
   },

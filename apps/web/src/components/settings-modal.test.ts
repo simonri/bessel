@@ -51,9 +51,11 @@ describe("matchingGroups", () => {
     ]);
   });
 
-  it("finds the Claude page by MCP or what it remembers", () => {
+  it("finds the Claude page by MCP, what it remembers, or the phone", () => {
     expect(labels("mcp")).toEqual(["Claude"]);
     expect(labels("memory")).toEqual(["Claude"]);
+    for (const q of ["phone", "remote", "notifications", "claude code"])
+      expect(labels(q)).toContain("Claude");
   });
 
   it("finds the pages switches by a page's name", () => {
