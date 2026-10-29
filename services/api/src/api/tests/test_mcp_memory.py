@@ -46,11 +46,28 @@ class TestRemember:
   @pytest.mark.asyncio
   async def test_a_different_value_is_a_conflict_and_changes_nothing(self, connect: ConnectFixture) -> None:
     [first] = await remember(connect, fact("skostorlek", "44 (EU)"))
-    [other_area] = await remember(connect, fact("SKOSTORLEK", "45", area="kropp"))
+    [again] = await remember(connect, fact("SKOSTORLEK", "45", area="Kropp/Kläder"))
 
-    assert other_area["outcome"] == "conflict"
-    assert other_area["fact"]["id"] == first["fact"]["id"]
+    assert again["outcome"] == "conflict"
+    assert again["fact"]["id"] == first["fact"]["id"]
     assert [f["statement"] for f in await search(connect, query="skostorlek")] == ["44 (EU)"]
+
+  @pytest.mark.asyncio
+  async def test_the_same_attribute_can_mean_different_things_in_different_areas(self, connect: ConnectFixture) -> None:
+    [voice] = await remember(connect, fact("ton", "Rak och tuff", area="preferenser"))
+    [music] = await remember(connect, fact("Ton", "Gillar moll", area="musik"))
+
+    assert music["outcome"] == "added"
+    assert [s["id"] for s in music["similar"]] == [voice["fact"]["id"]]
+    assert {f["statement"] for f in await search(connect, query="ton")} >= {"Rak och tuff", "Gillar moll"}
+
+  @pytest.mark.asyncio
+  async def test_only_whole_uncommon_words_make_facts_similar(self, connect: ConnectFixture) -> None:
+    await remember(connect, fact("varför du skjuter upp", "Perfektionism", area="arbete"), fact("sömnsteg", "02:00", area="sömn"))
+    [why, sleep] = await remember(connect, fact("varför du jobbar sent", "Tomhet", area="arbete"), fact("sömn", "Dålig", area="hälsa"))
+
+    assert why["similar"] == []
+    assert sleep["similar"] == []
 
   @pytest.mark.asyncio
   async def test_a_conclusion_is_a_hypothesis_until_seen_three_times(self, connect: ConnectFixture) -> None:
@@ -189,6 +206,22 @@ class TestRevise:
     assert shoes["fact"]["id"] in taken["error"]
     assert fixed["error"] is None
     assert (fixed["fact"]["statement"], fixed["fact"]["importance"]) == ("44,5", 4)
+
+  @pytest.mark.asyncio
+  async def test_moving_a_fact_only_clashes_within_its_new_area(self, connect: ConnectFixture) -> None:
+    [shoes, _, boots] = await remember(
+      connect, fact("skostorlek", "44"), fact("skostorlek", "45 i kängor", area="friluftsliv"), fact("kängor", "Lundhags", area="friluftsliv")
+    )
+
+    renamed, moved = await revise(
+      connect,
+      {"fact_id": boots["fact"]["id"], "action": "update", "attribute": "Skostorlek"},
+      {"fact_id": shoes["fact"]["id"], "action": "update", "area": "kropp"},
+    )
+
+    assert renamed["fact"] is None
+    assert "friluftsliv" in renamed["error"]
+    assert (moved["error"], moved["fact"]["area"]) == (None, "kropp")
 
   @pytest.mark.asyncio
   async def test_an_ended_fact_cannot_change_again(self, connect: ConnectFixture) -> None:

@@ -59,7 +59,7 @@ async def remember(
 ) -> RememberResponse:
   """Store what you learned about the user: anything, from their shoe size to what comes before their late nights.
 
-  One fact per attribute: the same fact again only confirms it, and a different value for an attribute already known
+  One fact per attribute in an area: the same fact again only confirms it, and a different value for an attribute already known
   comes back as a conflict for you to settle with revise_memory. Look at `similar` on what was added and merge where
   two facts say the same. Store observations with their evidence, not judgements of the user; what the user says
   wins over what you inferred. About other people keep only what matters for the user's relationship with them,

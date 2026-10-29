@@ -7736,7 +7736,7 @@ export const MemoryFactUpdateSchema = {
           maxLength: 200,
           minLength: 1,
           description:
-            "What the fact is about, short and specific, e.g. 'skostorlek', 'insomning vardagar', 'mamma'. One current fact per attribute: a new value for it replaces the old one.",
+            "What the fact is about, short and specific, e.g. 'skostorlek', 'insomning vardagar', 'mamma'. One current fact per attribute within an area: a new value for it replaces the old one.",
         },
         {
           type: "null",

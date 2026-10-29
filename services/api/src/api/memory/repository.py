@@ -35,19 +35,20 @@ class MemoryFactRepository(
     )
     return await self.get_all(statement)
 
-  async def get_current_for_attribute(self, user_id: UUID, attribute: str) -> Sequence[MemoryFact]:
-    """Current facts about `attribute` in any area, compared without case."""
-    return await self.list_for_user(
-      user_id,
-      order_by=MemoryFact.created_at,
-      extra_filters=(_current(), func.lower(MemoryFact.attribute) == attribute.lower()),
-    )
+  async def get_current_for_attribute(self, user_id: UUID, attribute: str, *, area: str | None = None) -> Sequence[MemoryFact]:
+    """Current facts about `attribute`, in `area` or in any area, compared without case."""
+    filters = [_current(), func.lower(MemoryFact.attribute) == attribute.strip().lower()]
+    if area is not None:
+      filters.append(func.lower(MemoryFact.area) == area.strip().lower())
+    return await self.list_for_user(user_id, order_by=MemoryFact.created_at, extra_filters=filters)
 
   async def list_current_matching_words(self, user_id: UUID, words: Sequence[str], *, limit: int) -> Sequence[MemoryFact]:
-    """Current facts whose attribute contains any of `words`: candidates to merge with instead of adding beside."""
+    """Current facts with any of `words` as a whole word in their attribute: candidates to merge with instead of adding
+    beside."""
     if not words:
       return []
-    matches = [MemoryFact.attribute.ilike(f"%{_escape_like(word)}%", escape="\\") for word in words]
+    # `words` are plain \w+ runs, so they need no escaping inside the pattern.
+    matches = [MemoryFact.attribute.op("~*")(rf"\m{word}\M") for word in words]
     return await self.list_for_user(
       user_id,
       order_by=MemoryFact.importance.desc(),

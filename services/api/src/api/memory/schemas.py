@@ -27,7 +27,7 @@ Attribute = Annotated[
     max_length=200,
     description=(
       "What the fact is about, short and specific, e.g. 'skostorlek', 'insomning vardagar', 'mamma'. "
-      + "One current fact per attribute: a new value for it replaces the old one."
+      + "One current fact per attribute within an area: a new value for it replaces the old one."
     ),
   ),
 ]

@@ -46,8 +46,14 @@ def _normalize(text: str) -> str:
   return re.sub(r"\s+", " ", text).strip().casefold()
 
 
+# Words too common in attributes to say two facts are about the same thing.
+COMMON_WORDS = frozenset(
+  {"varför", "vill", "inte", "eller", "från", "till", "efter", "före", "under", "över", "utan", "mest", "andra", "annat", "nya", "nytt", "sista"}
+)
+
+
 def _words(text: str) -> list[str]:
-  return [word for word in re.findall(r"\w+", text.casefold()) if len(word) >= MIN_WORD_LENGTH]
+  return [word for word in re.findall(r"\w+", text.casefold()) if len(word) >= MIN_WORD_LENGTH and word not in COMMON_WORDS]
 
 
 def _default_status(kind: MemoryKind) -> MemoryStatus:
@@ -145,11 +151,8 @@ class MemoryService:
     repository = MemoryFactRepository.from_session(session)
     results: list[RememberResult] = []
     for item in items:
-      existing = await repository.get_current_for_attribute(user.id, item.attribute)
-      same = next(
-        (fact for fact in existing if _normalize(fact.area) == _normalize(item.area) and _normalize(fact.statement) == _normalize(item.statement)),
-        None,
-      )
+      existing = await repository.get_current_for_attribute(user.id, item.attribute, area=item.area)
+      same = next((fact for fact in existing if _normalize(fact.statement) == _normalize(item.statement)), None)
       if same is not None:
         # A conclusion seen a third time, on its own evidence, stops being a guess.
         _confirm(same, item.evidence, promote=item.kind != MemoryKind.inferred or same.confirm_count + 1 >= INFERRED_CONFIRMATIONS)
@@ -175,14 +178,11 @@ class MemoryService:
         confirm_count=1,
       )
       await repository.create(fact, flush=True)
-      similar = await repository.list_current_matching_words(user.id, _words(item.attribute), limit=SIMILAR_MAX + 1)
-      results.append(
-        RememberResult(
-          outcome="added",
-          fact=to_schema(fact),
-          similar=[_brief(other) for other in similar if other.id != fact.id][:SIMILAR_MAX],
-        )
-      )
+      # The same attribute in another area first: the likeliest duplicate.
+      elsewhere = await repository.get_current_for_attribute(user.id, item.attribute)
+      by_words = await repository.list_current_matching_words(user.id, _words(item.attribute), limit=SIMILAR_MAX + 1)
+      similar = list({other.id: other for other in [*elsewhere, *by_words] if other.id != fact.id}.values())
+      results.append(RememberResult(outcome="added", fact=to_schema(fact), similar=[_brief(other) for other in similar[:SIMILAR_MAX]]))
     return results
 
   async def revise(self, session: AsyncSession, user: User, changes: Sequence[FactChange], *, today: date) -> list[ReviseResult]:
@@ -202,10 +202,12 @@ class MemoryService:
       raise ValidationError(f"Fact {fact_id} already ended; change the fact that replaced it instead")
     return fact
 
-  async def _ensure_free(self, repository: MemoryFactRepository, user: User, attribute: str, *, keep: UUID) -> None:
-    taken = [fact for fact in await repository.get_current_for_attribute(user.id, attribute) if fact.id != keep]
+  async def _ensure_free(self, repository: MemoryFactRepository, user: User, fact: MemoryFact, area: str | None, attribute: str | None) -> None:
+    """Moving `fact` to `area`/`attribute` must not give that area two current facts about one attribute."""
+    area, attribute = (area or fact.area).strip(), (attribute or fact.attribute).strip()
+    taken = [other for other in await repository.get_current_for_attribute(user.id, attribute, area=area) if other.id != fact.id]
     if taken:
-      raise ValidationError(f"'{attribute}' is already known as fact {taken[0].id}; merge into it instead")
+      raise ValidationError(f"'{attribute}' in {area} is already known as fact {taken[0].id}; merge into it instead")
 
   async def _revise_one(self, session: AsyncSession, user: User, change: FactChange, *, today: date) -> MemoryFact:
     repository = MemoryFactRepository.from_session(session)
@@ -218,8 +220,7 @@ class MemoryService:
       return fact
 
     if change.action == "update":
-      if change.attribute is not None and _normalize(change.attribute) != _normalize(fact.attribute):
-        await self._ensure_free(repository, user, change.attribute, keep=fact.id)
+      await self._ensure_free(repository, user, fact, change.area, change.attribute)
       for field in ("statement", "area", "attribute", "importance", "sensitivity", "kind"):
         value = getattr(change, field)
         if value is not None:
@@ -232,16 +233,14 @@ class MemoryService:
     if change.action == "supersede":
       if change.statement is None:
         raise ValidationError("supersede needs the new statement")
-      attribute = (change.attribute or fact.attribute).strip()
-      if _normalize(attribute) != _normalize(fact.attribute):
-        await self._ensure_free(repository, user, attribute, keep=fact.id)
+      await self._ensure_free(repository, user, fact, change.area, change.attribute)
       fact.valid_to = ended_on
       await session.flush()
       kind = change.kind or fact.kind
       replacement = MemoryFact(
         user_id=user.id,
         area=(change.area or fact.area).strip(),
-        attribute=attribute,
+        attribute=(change.attribute or fact.attribute).strip(),
         statement=change.statement.strip(),
         kind=kind,
         status=_default_status(kind),
@@ -286,8 +285,7 @@ class MemoryService:
     """The user fixed a fact by hand: it counts as theirs from now on."""
     repository = MemoryFactRepository.from_session(session)
     fact = await repository.get_owned_or_404(fact_id, user.id, not_found_message="Fact not found")
-    if update.attribute is not None and _normalize(update.attribute) != _normalize(fact.attribute):
-      await self._ensure_free(repository, user, update.attribute, keep=fact.id)
+    await self._ensure_free(repository, user, fact, update.area, update.attribute)
     for field in ("area", "attribute", "statement", "importance"):
       value = getattr(update, field)
       if value is not None:
