@@ -21,9 +21,8 @@ class TestGetCounters:
     await save_owned(Counter(name="Gone", deleted_at=utc_now()))
     # Seven resets, a day apart, the newest 2 days and 1 hour ago, plus a reset that was undone.
     for days_ago in range(2, 9):
-      await save_owned(CounterReset(counter_id=coffee.id, created_at=NOW - timedelta(days=days_ago, hours=1)))
-    await save_owned(CounterReset(counter_id=coffee.id, created_at=NOW - timedelta(hours=1), deleted_at=utc_now()))
-
+      await save_owned(CounterReset(counter_id=coffee.id, occurred_at=NOW - timedelta(days=days_ago, hours=1)))
+    await save_owned(CounterReset(counter_id=coffee.id, occurred_at=NOW - timedelta(hours=1), deleted_at=utc_now()))
     counters = (await mcp_call(connect, "get_counters", {"timezone": "Europe/Stockholm"}))["counters"]
 
     assert [c["name"] for c in counters] == ["Coffee", "Snoozed alarm"]

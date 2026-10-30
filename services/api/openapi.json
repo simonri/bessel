@@ -3687,6 +3687,7 @@
           "counters"
         ],
         "summary": "Record Reset",
+        "description": "Records that it happened, now or on an earlier day.",
         "operationId": "create_reset",
         "security": [
           {
@@ -3705,6 +3706,23 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CounterResetCreate"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Body"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": "Successful Response",
@@ -13682,6 +13700,25 @@
         ],
         "title": "CounterCreate"
       },
+      "CounterResetCreate": {
+        "properties": {
+          "occurred_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred At",
+            "description": "When it happened, if not now. Can't be in the future."
+          }
+        },
+        "type": "object",
+        "title": "CounterResetCreate"
+      },
       "CounterResetSchema": {
         "properties": {
           "created_at": {
@@ -13713,6 +13750,12 @@
             "type": "string",
             "format": "uuid4",
             "title": "Counter Id"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At",
+            "description": "When it happened; can be earlier than created_at."
           }
         },
         "type": "object",
@@ -13720,7 +13763,8 @@
           "created_at",
           "modified_at",
           "id",
-          "counter_id"
+          "counter_id",
+          "occurred_at"
         ],
         "title": "CounterResetSchema"
       },

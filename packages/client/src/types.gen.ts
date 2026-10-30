@@ -2660,6 +2660,18 @@ export type CounterCreate = {
 };
 
 /**
+ * CounterResetCreate
+ */
+export type CounterResetCreate = {
+  /**
+   * Occurred At
+   *
+   * When it happened, if not now. Can't be in the future.
+   */
+  occurred_at?: Date | null;
+};
+
+/**
  * CounterResetSchema
  */
 export type CounterResetSchema = {
@@ -2685,6 +2697,12 @@ export type CounterResetSchema = {
    * Counter Id
    */
   counter_id: string;
+  /**
+   * Occurred At
+   *
+   * When it happened; can be earlier than created_at.
+   */
+  occurred_at: Date;
 };
 
 /**
@@ -10574,7 +10592,10 @@ export type ListResetsResponses = {
 export type ListResetsResponse = ListResetsResponses[keyof ListResetsResponses];
 
 export type CreateResetData = {
-  body?: never;
+  /**
+   * Body
+   */
+  body?: CounterResetCreate | null;
   path: {
     /**
      * Counter Id

@@ -1,11 +1,12 @@
+from datetime import timedelta
 from uuid import UUID
 
 from fastapi import APIRouter
 
 from api.common.utils import utc_now
 from api.counters.repository import CounterRepository, CounterResetRepository, CounterResetStats
-from api.counters.schemas import CounterCreate, CounterResetSchema, CounterSchema, CounterUpdate
-from api.exceptions import ResourceNotFound
+from api.counters.schemas import CounterCreate, CounterResetCreate, CounterResetSchema, CounterSchema, CounterUpdate
+from api.exceptions import ResourceNotFound, ValidationError
 from api.models.counter import Counter, CounterReset
 from api.postgres import DBSession
 from api.users.dependencies import CurrentDBUser
@@ -13,6 +14,8 @@ from api.users.dependencies import CurrentDBUser
 router = APIRouter(prefix="/counters", tags=["counters"])
 
 _NO_RESETS = CounterResetStats(last_reset_at=None, reset_count=0)
+# Allows for a client clock that runs a little ahead.
+FUTURE_LEEWAY = timedelta(minutes=5)
 
 
 def _to_schema(counter: Counter, stats: CounterResetStats) -> CounterSchema:
@@ -86,10 +89,16 @@ async def create_reset(
   session: DBSession,
   current_user: CurrentDBUser,
   counter_id: UUID,
+  body: CounterResetCreate | None = None,
 ) -> CounterResetSchema:
+  """Records that it happened, now or on an earlier day."""
   await CounterRepository.from_session(session).get_owned_or_404(counter_id, current_user.id, not_found_message="Counter not found.")
+  now = utc_now()
+  occurred_at = body.occurred_at if body and body.occurred_at else now
+  if occurred_at > now + FUTURE_LEEWAY:
+    raise ValidationError("A reset can't be in the future.")
   repo = CounterResetRepository.from_session(session)
-  reset = await repo.create(CounterReset(counter_id=counter_id, user_id=current_user.id), flush=True)
+  reset = await repo.create(CounterReset(counter_id=counter_id, user_id=current_user.id, occurred_at=occurred_at), flush=True)
   return CounterResetSchema.model_validate(reset)
 
 

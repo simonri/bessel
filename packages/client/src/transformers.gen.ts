@@ -818,6 +818,7 @@ const counterResetSchemaSchemaResponseTransformer = (data: any) => {
   if (data.modified_at) {
     data.modified_at = new Date(data.modified_at);
   }
+  data.occurred_at = new Date(data.occurred_at);
   return data;
 };
 

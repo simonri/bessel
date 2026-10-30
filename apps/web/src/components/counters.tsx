@@ -46,6 +46,35 @@ function formatTimeSince(date: Date | null | undefined): string {
   return `${Math.floor(d / 30)}mo`;
 }
 
+const EARLIER_DAYS = [
+  { days: 1, label: "Yesterday" },
+  { days: 2, label: "2 days ago" },
+  { days: 3, label: "3 days ago" },
+  { days: 4, label: "4 days ago" },
+  { days: 7, label: "A week ago" },
+];
+
+/** `days` before now, at the same time of day. */
+export function daysAgo(days: number, now = new Date()): Date {
+  const date = new Date(now);
+  date.setDate(date.getDate() - days);
+  return date;
+}
+
+/** A picked yyyy-mm-dd day at the current time of day, never later than now. */
+export function onPickedDay(value: string, now = new Date()): Date | null {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  const date = new Date(now);
+  date.setFullYear(year, month - 1, day);
+  return date > now ? now : date;
+}
+
+function toDateInputValue(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 function formatDateTime(date: Date): string {
   return date.toLocaleString("en-US", {
     month: "short",
@@ -105,7 +134,7 @@ export function Counters() {
           path: { counter_id: variables.path.counter_id },
         }),
       });
-      toast.success("Done!", {
+      toast.success(variables.body?.occurred_at ? "Added" : "Done!", {
         action: {
           label: "Undo",
           onClick: () =>
@@ -245,6 +274,13 @@ export function Counters() {
               path: { counter_id: selected.id },
             })
           }
+          onDoneEarlier={(occurredAt) =>
+            resetMutation.mutate({
+              client,
+              path: { counter_id: selected.id },
+              body: { occurred_at: occurredAt },
+            })
+          }
           onUndo={(resetId) =>
             undoMutation.mutate({
               client,
@@ -296,15 +332,18 @@ function CounterDetailDialog({
   onClose,
   onRename,
   onDelete,
+  onDoneEarlier,
   onUndo,
 }: {
   counter: CounterSchema;
   onClose: () => void;
   onRename: (name: string) => void;
   onDelete: () => void;
+  onDoneEarlier: (occurredAt: Date) => void;
   onUndo: (resetId: string) => void;
 }) {
   const [name, setName] = useState(counter.name);
+  const [pickedDay, setPickedDay] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { data: resets = [] } = useQuery(
@@ -363,6 +402,49 @@ function CounterDetailDialog({
             </span>
           </div>
 
+          {/* Done on an earlier day */}
+          <div className="space-y-2 border-b border-white/10 pb-4">
+            <p className="text-12 text-white/60">Done earlier</p>
+            <div className="flex flex-wrap gap-1.5">
+              {EARLIER_DAYS.map(({ days, label }) => (
+                <button
+                  key={days}
+                  type="button"
+                  className="rounded-md bg-white/[0.06] px-2 py-1 text-12 text-white/70 transition-colors hover:bg-white/[0.1] hover:text-white/90"
+                  onClick={() => onDoneEarlier(daysAgo(days))}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <form
+              className="flex items-center gap-1.5"
+              onSubmit={(e) => {
+                e.preventDefault();
+                const occurredAt = onPickedDay(pickedDay);
+                if (!occurredAt) return;
+                onDoneEarlier(occurredAt);
+                setPickedDay("");
+              }}
+            >
+              <input
+                type="date"
+                aria-label="Day it was done"
+                value={pickedDay}
+                max={toDateInputValue(new Date())}
+                onChange={(e) => setPickedDay(e.target.value)}
+                className="h-7 rounded-md border border-white/10 bg-white/[0.04] px-2 text-12 text-white/80 outline-none [color-scheme:dark]"
+              />
+              <button
+                type="submit"
+                disabled={!pickedDay}
+                className="h-7 rounded-md bg-white/[0.06] px-2 text-12 text-white/70 transition-colors hover:bg-white/[0.1] hover:text-white/90 disabled:opacity-40"
+              >
+                Add
+              </button>
+            </form>
+          </div>
+
           {/* Reset history */}
           <div className="max-h-56 overflow-y-auto">
             {resets.length === 0 ? (
@@ -378,7 +460,7 @@ function CounterDetailDialog({
                   >
                     <Clock className="size-3 shrink-0 text-white/20" />
                     <span className="flex-1 text-12 text-white/55">
-                      {formatDateTime(reset.created_at)}
+                      {formatDateTime(reset.occurred_at)}
                     </span>
                     <button
                       type="button"

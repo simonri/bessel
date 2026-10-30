@@ -2286,6 +2286,8 @@ export const listResets = <ThrowOnError extends boolean = false>(
 
 /**
  * Record Reset
+ *
+ * Records that it happened, now or on an earlier day.
  */
 export const createReset = <ThrowOnError extends boolean = false>(
   options: Options<CreateResetData, ThrowOnError>,
@@ -2299,6 +2301,10 @@ export const createReset = <ThrowOnError extends boolean = false>(
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters/{counter_id}/resets",
     ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

@@ -623,6 +623,7 @@ export {
   type CorrectMemoryFactResponse,
   type CorrectMemoryFactResponses,
   type CounterCreate,
+  type CounterResetCreate,
   type CounterResetSchema,
   type CounterSchema,
   type CounterUpdate,

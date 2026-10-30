@@ -4307,6 +4307,26 @@ export const CounterCreateSchema = {
   title: "CounterCreate",
 } as const;
 
+export const CounterResetCreateSchema = {
+  properties: {
+    occurred_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Occurred At",
+      description: "When it happened, if not now. Can't be in the future.",
+    },
+  },
+  type: "object",
+  title: "CounterResetCreate",
+} as const;
+
 export const CounterResetSchemaSchema = {
   properties: {
     created_at: {
@@ -4339,9 +4359,15 @@ export const CounterResetSchemaSchema = {
       format: "uuid4",
       title: "Counter Id",
     },
+    occurred_at: {
+      type: "string",
+      format: "date-time",
+      title: "Occurred At",
+      description: "When it happened; can be earlier than created_at.",
+    },
   },
   type: "object",
-  required: ["created_at", "modified_at", "id", "counter_id"],
+  required: ["created_at", "modified_at", "id", "counter_id", "occurred_at"],
   title: "CounterResetSchema",
 } as const;
 

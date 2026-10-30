@@ -803,11 +803,16 @@ enum API {
         var name: String
     }
 
+    struct CounterResetCreate: Codable, Hashable {
+        var occurredAt: Date?
+    }
+
     struct CounterResetSchema: Codable, Hashable {
         var createdAt: Date
         var modifiedAt: Date?
         var id: UUID
         var counterId: UUID
+        var occurredAt: Date
     }
 
     struct CounterSchema: Codable, Hashable {
@@ -5273,12 +5278,33 @@ extension API.CounterCreate {
     }
 }
 
+extension API.CounterResetCreate {
+    private enum DecodingKeys: String, CodingKey {
+        case occurredAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.occurredAt = try container.decodeIfPresent(Date.self, forKey: .occurredAt)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case occurredAt = "occurred_at"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.occurredAt.map(API.Instant.init), forKey: .occurredAt)
+    }
+}
+
 extension API.CounterResetSchema {
     private enum DecodingKeys: String, CodingKey {
         case createdAt
         case modifiedAt
         case id
         case counterId
+        case occurredAt
     }
 
     init(from decoder: Decoder) throws {
@@ -5287,6 +5313,7 @@ extension API.CounterResetSchema {
         self.modifiedAt = try container.decodeIfPresent(Date.self, forKey: .modifiedAt)
         self.id = try container.decode(UUID.self, forKey: .id)
         self.counterId = try container.decode(UUID.self, forKey: .counterId)
+        self.occurredAt = try container.decode(Date.self, forKey: .occurredAt)
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -5294,6 +5321,7 @@ extension API.CounterResetSchema {
         case modifiedAt = "modified_at"
         case id
         case counterId = "counter_id"
+        case occurredAt = "occurred_at"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -5302,6 +5330,7 @@ extension API.CounterResetSchema {
         try container.encodeIfPresent(self.modifiedAt.map(API.Instant.init), forKey: .modifiedAt)
         try container.encode(self.id, forKey: .id)
         try container.encode(self.counterId, forKey: .counterId)
+        try container.encode(API.Instant(self.occurredAt), forKey: .occurredAt)
     }
 }
 

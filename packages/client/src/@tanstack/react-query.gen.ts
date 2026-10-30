@@ -3137,6 +3137,8 @@ export const listResetsOptions = (options: Options<ListResetsData>) =>
 
 /**
  * Record Reset
+ *
+ * Records that it happened, now or on an earlier day.
  */
 export const createResetMutation = (
   options?: Partial<Options<CreateResetData>>,

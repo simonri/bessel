@@ -30,7 +30,7 @@ class CounterResetRepository(RepositoryBase[CounterReset], RepositoryIDMixin[Cou
     result = await self.session.execute(
       select(
         CounterReset.counter_id,
-        func.max(CounterReset.created_at).label("last_reset_at"),
+        func.max(CounterReset.occurred_at).label("last_reset_at"),
         func.count(CounterReset.id).label("reset_count"),
       )
       .where(CounterReset.counter_id.in_(counter_ids))
@@ -44,7 +44,7 @@ class CounterResetRepository(RepositoryBase[CounterReset], RepositoryIDMixin[Cou
       select(CounterReset)
       .where(CounterReset.counter_id == counter_id)
       .where(CounterReset.deleted_at.is_(None))
-      .order_by(CounterReset.created_at.desc())
+      .order_by(CounterReset.occurred_at.desc())
       .limit(limit)
     )
     return await self.get_all(statement)
@@ -53,19 +53,19 @@ class CounterResetRepository(RepositoryBase[CounterReset], RepositoryIDMixin[Cou
     """The latest `per_counter` reset times of each counter, newest first."""
     if not counter_ids:
       return {}
-    rank = func.row_number().over(partition_by=CounterReset.counter_id, order_by=CounterReset.created_at.desc()).label("rank")
+    rank = func.row_number().over(partition_by=CounterReset.counter_id, order_by=CounterReset.occurred_at.desc()).label("rank")
     ranked = (
-      select(CounterReset.counter_id, CounterReset.created_at, rank)
+      select(CounterReset.counter_id, CounterReset.occurred_at, rank)
       .where(CounterReset.counter_id.in_(counter_ids))
       .where(CounterReset.deleted_at.is_(None))
       .subquery()
     )
     result = await self.session.execute(
-      select(ranked.c.counter_id, ranked.c.created_at).where(ranked.c.rank <= per_counter).order_by(ranked.c.counter_id, ranked.c.created_at.desc())
+      select(ranked.c.counter_id, ranked.c.occurred_at).where(ranked.c.rank <= per_counter).order_by(ranked.c.counter_id, ranked.c.occurred_at.desc())
     )
     recent: dict[UUID, list[datetime]] = {}
-    for counter_id, created_at in result.all():
-      recent.setdefault(counter_id, []).append(created_at)
+    for counter_id, occurred_at in result.all():
+      recent.setdefault(counter_id, []).append(occurred_at)
     return recent
 
   async def get_active(self, counter_id: UUID, reset_id: UUID) -> CounterReset | None:
