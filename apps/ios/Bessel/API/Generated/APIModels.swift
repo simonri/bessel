@@ -178,7 +178,7 @@ enum API {
         @Lossy var apps: [ActivityAppSummary]
     }
 
-    struct AddressParts-Input: Codable, Hashable {
+    struct AddressPartsInput: Codable, Hashable {
         var formatted: String
         var streetAddress: String?
         var postalCode: String?
@@ -190,7 +190,7 @@ enum API {
         var longitude: Double?
     }
 
-    struct AddressParts-Output: Codable, Hashable {
+    struct AddressPartsOutput: Codable, Hashable {
         var formatted: String
         var streetAddress: String?
         var postalCode: String?
@@ -714,7 +714,7 @@ enum API {
     struct ContactMethodInput: Codable, Hashable {
         var label: String?
         var value: String
-        var address: AddressParts-Input?
+        var address: AddressPartsInput?
     }
 
     struct ContactMethodSchema: Codable, Hashable {
@@ -2766,7 +2766,7 @@ extension API.ActivitySummaryResponse {
     }
 }
 
-extension API.AddressParts-Input {
+extension API.AddressPartsInput {
     private enum DecodingKeys: String, CodingKey {
         case formatted
         case streetAddress
@@ -2818,7 +2818,7 @@ extension API.AddressParts-Input {
     }
 }
 
-extension API.AddressParts-Output {
+extension API.AddressPartsOutput {
     private enum DecodingKeys: String, CodingKey {
         case formatted
         case streetAddress
@@ -4912,7 +4912,7 @@ extension API.ContactMethodInput {
         let container = try decoder.container(keyedBy: DecodingKeys.self)
         self.label = try container.decodeIfPresent(String.self, forKey: .label)
         self.value = try container.decode(String.self, forKey: .value)
-        self.address = try container.decodeIfPresent(AddressParts-Input.self, forKey: .address)
+        self.address = try container.decodeIfPresent(API.AddressPartsInput.self, forKey: .address)
     }
 
     private enum EncodingKeys: String, CodingKey {

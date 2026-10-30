@@ -80,14 +80,26 @@ class Field:
   is_list: bool
 
 
+def type_name(schema_name: str) -> str:
+  """A Swift type name for an OpenAPI schema name, e.g. Pydantic's split `AddressParts-Input` -> `AddressPartsInput`."""
+  return re.sub(r"[^A-Za-z0-9_]", "", schema_name)
+
+
 def ref_name(node: dict) -> str | None:
   ref = node.get("$ref")
-  return ref.rsplit("/", 1)[-1] if ref else None
+  return type_name(ref.rsplit("/", 1)[-1]) if ref else None
 
 
 class Generator:
   def __init__(self, spec: dict) -> None:
-    self.schemas: dict[str, dict] = spec["components"]["schemas"]
+    self.schemas: dict[str, dict] = {}
+    sources: dict[str, str] = {}
+    for name, schema in spec["components"]["schemas"].items():
+      swift = type_name(name)
+      if swift in sources:
+        raise SystemExit(f"Schemas {sources[swift]!r} and {name!r} both become the Swift type {swift!r}")
+      sources[swift] = name
+      self.schemas[swift] = schema
     self.patch_bodies = self._patch_bodies(spec)
     self.uses_json_value = False
 
