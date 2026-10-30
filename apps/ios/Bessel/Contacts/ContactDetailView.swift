@@ -71,7 +71,11 @@ struct ContactDetailView: View {
             }
             if !contact.addresses.isEmpty {
                 section("Address") {
-                    methodRows(contact.addresses, systemImage: "map", url: ContactText.mapsURL)
+                    methodRows(
+                        contact.addresses.map { ContactMethod(label: $0.label, value: $0.value, display: $0.display) },
+                        systemImage: "map",
+                        url: ContactText.mapsURL
+                    )
                 }
             }
             if contact.birthday != nil || !contact.dates.isEmpty {
