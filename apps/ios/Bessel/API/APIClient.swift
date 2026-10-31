@@ -31,6 +31,18 @@ extension URLSession {
         configuration.urlCache = nil
         return URLSession(configuration: configuration)
     }()
+
+    /// For files: a large one takes a while to send, and longer for the
+    /// server to read, before a single byte comes back.
+    static let besselUpload: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = APIClient.uploadTimeout
+        configuration.timeoutIntervalForResource = 15 * 60
+        configuration.waitsForConnectivity = false
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        configuration.urlCache = nil
+        return URLSession(configuration: configuration)
+    }()
 }
 
 /// URLSession client for the Bessel API. Attaches the Auth0 bearer token and
@@ -40,9 +52,11 @@ extension URLSession {
 final class APIClient {
     nonisolated static let requestTimeout: TimeInterval = 20
     nonisolated static let slowRequestTimeout: TimeInterval = 90
+    nonisolated static let uploadTimeout: TimeInterval = 5 * 60
 
     private let auth: AuthSession
     private let session: URLSession
+    private let uploadSession: URLSession
     private let baseURL: URL
     private let retryPolicy: RetryPolicy
 
@@ -52,11 +66,13 @@ final class APIClient {
     init(
         auth: AuthSession,
         session: URLSession = .bessel,
+        uploadSession: URLSession = .besselUpload,
         baseURL: URL = AppConfig.apiBaseURL,
         retryPolicy: RetryPolicy = .standard
     ) {
         self.auth = auth
         self.session = session
+        self.uploadSession = uploadSession
         self.baseURL = baseURL
         self.retryPolicy = retryPolicy
     }
@@ -110,6 +126,23 @@ final class APIClient {
         return try await send(request)
     }
 
+    /// Sends a file as the multipart form field `field`, streamed from disk so
+    /// a large one never has to fit in memory.
+    func upload<T: Decodable>(
+        _ path: String,
+        query: [URLQueryItem] = [],
+        file: URL,
+        field: String = "file",
+        contentType: String,
+        timeout: TimeInterval = uploadTimeout
+    ) async throws -> T {
+        let form = try MultipartForm(file: file, field: field, contentType: contentType)
+        defer { form.remove() }
+        var request = Request(method: "POST", path: path, query: query, timeout: timeout)
+        request.form = form
+        return try await send(request)
+    }
+
     /// For a body that's JSON already, like a report the OS produced.
     func postNoContent(_ path: String, json: Data) async throws {
         _ = try await sendRaw(Request(method: "POST", path: path, body: json))
@@ -143,6 +176,8 @@ final class APIClient {
         let path: String
         var query: [URLQueryItem] = []
         var body: Data?
+        /// Sent from its file in place of `body`.
+        var form: MultipartForm?
         var timeout: TimeInterval = APIClient.requestTimeout
         /// Same for every attempt, so the server can tie retries together and
         /// return the first result instead of applying a change twice.
@@ -208,7 +243,7 @@ final class APIClient {
 
         var urlRequest = URLRequest(url: components.url!, timeoutInterval: request.timeout)
         urlRequest.httpMethod = request.method
-        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        urlRequest.setValue(request.form?.contentType ?? "application/json", forHTTPHeaderField: "Content-Type")
         for (name, value) in ClientInfo.headers {
             urlRequest.setValue(value, forHTTPHeaderField: name)
         }
@@ -218,9 +253,14 @@ final class APIClient {
         }
         let token = try await auth.validAccessToken(forceRefresh: forceRefresh)
         urlRequest.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        urlRequest.httpBody = request.body
-
-        let (data, response) = try await session.data(for: urlRequest)
+        let data: Data
+        let response: URLResponse
+        if let form = request.form {
+            (data, response) = try await uploadSession.upload(for: urlRequest, fromFile: form.body)
+        } else {
+            urlRequest.httpBody = request.body
+            (data, response) = try await session.data(for: urlRequest)
+        }
         guard let http = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
         return (data, http)
     }

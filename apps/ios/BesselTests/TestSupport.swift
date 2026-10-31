@@ -48,9 +48,11 @@ func makeTestClient(retryPolicy: RetryPolicy = RetryPolicy(maxAttempts: 3, baseD
     configuration.protocolClasses = [MockURLProtocol.self]
     let auth = AuthSession()
     auth.useStaticToken("test-token")
+    let session = URLSession(configuration: configuration)
     return APIClient(
         auth: auth,
-        session: URLSession(configuration: configuration),
+        session: session,
+        uploadSession: session,
         baseURL: URL(string: "https://api.test")!,
         retryPolicy: retryPolicy
     )
