@@ -6,11 +6,13 @@ import type {
 import L from "leaflet";
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
-import { addDarkBasemap } from "@/lib/map-tiles";
+import { addBasemap } from "@/lib/map-tiles";
+import { type TripLine, tripLines } from "./location-day-lines";
 
 const ROUTE = "#60a5fa";
 const VISIT = "#a78bfa";
 const SELECTED = "#f5f5f5";
+const CASING = "#0b1324";
 
 export type MapSelection = { kind: "visit" | "activity"; id: string } | null;
 
@@ -24,33 +26,33 @@ function visitStyle(selected: boolean): L.CircleMarkerOptions {
   };
 }
 
-/** Route points recorded during the trip, or a straight line between its
- *  ends when the phone recorded none. */
-function tripLine(
-  activity: LocationActivity,
-  path: LocationPoint[],
-): { points: L.LatLngTuple[]; recorded: boolean } {
-  const from = activity.start_at.getTime() / 1000;
-  const to = activity.end_at.getTime() / 1000;
-  const recorded = path
-    .filter((p) => p.ts >= from && p.ts <= to)
-    .map((p): L.LatLngTuple => [p.latitude, p.longitude]);
-  const start =
-    activity.start_latitude != null && activity.start_longitude != null
-      ? ([activity.start_latitude, activity.start_longitude] as L.LatLngTuple)
-      : null;
-  const end =
-    activity.end_latitude != null && activity.end_longitude != null
-      ? ([activity.end_latitude, activity.end_longitude] as L.LatLngTuple)
-      : null;
-  const ends = [start, end].filter((p): p is L.LatLngTuple => p !== null);
-  if (recorded.length > 0) {
-    return {
-      points: [...(start ? [start] : []), ...recorded, ...(end ? [end] : [])],
-      recorded: true,
-    };
-  }
-  return { points: ends, recorded: false };
+/** Google Maps draws walks as dots, rides as solid lines, flights dashed. */
+function lineStyle(line: TripLine, selected: boolean): L.PolylineOptions {
+  const walk = line.mode === "walk";
+  return {
+    color: selected ? SELECTED : ROUTE,
+    weight: walk ? (selected ? 7 : 5) : selected ? 6 : 4,
+    opacity: line.recorded ? 1 : 0.6,
+    lineCap: "round",
+    lineJoin: "round",
+    dashArray: walk
+      ? "0 9"
+      : line.mode === "flight" || !line.recorded
+        ? "8 8"
+        : undefined,
+  };
+}
+
+function casingStyle(line: TripLine): L.PolylineOptions {
+  return {
+    color: CASING,
+    weight: line.mode === "walk" ? 0 : 7,
+    opacity: line.recorded ? 0.9 : 0.5,
+    lineCap: "round",
+    lineJoin: "round",
+    dashArray: line.mode === "flight" || !line.recorded ? "8 8" : undefined,
+    interactive: false,
+  };
 }
 
 export function LocationDayMap({
@@ -70,7 +72,9 @@ export function LocationDayMap({
   const mapRef = useRef<L.Map | null>(null);
   const layerRef = useRef<L.LayerGroup | null>(null);
   const visitMarkers = useRef(new Map<string, L.CircleMarker>());
-  const tripLines = useRef(new Map<string, L.Polyline>());
+  const drawnLines = useRef(
+    new Map<string, { line: TripLine; polyline: L.Polyline }>(),
+  );
   const pendingFit = useRef<(() => void) | null>(null);
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
@@ -82,7 +86,7 @@ export function LocationDayMap({
       minZoom: 2,
       worldCopyJump: true,
     });
-    addDarkBasemap(map);
+    addBasemap(map);
     map.setView([20, 0], 2);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
@@ -112,24 +116,18 @@ export function LocationDayMap({
     if (!map || !layer) return;
     layer.clearLayers();
     visitMarkers.current.clear();
-    tripLines.current.clear();
+    drawnLines.current.clear();
     const bounds: L.LatLngTuple[] = [];
 
-    for (const activity of activities) {
-      const { points, recorded } = tripLine(activity, path);
-      if (points.length < 2) continue;
-      bounds.push(...points);
-      const line = L.polyline(points, {
-        color: ROUTE,
-        weight: 3,
-        opacity: 0.85,
-        dashArray: recorded ? undefined : "4 6",
-      })
+    for (const line of tripLines(visits, activities, path)) {
+      bounds.push(...line.points);
+      L.polyline(line.points, casingStyle(line)).addTo(layer);
+      const polyline = L.polyline(line.points, lineStyle(line, false))
         .on("click", () =>
-          onSelectRef.current({ kind: "activity", id: activity.id }),
+          onSelectRef.current({ kind: "activity", id: line.id }),
         )
         .addTo(layer);
-      tripLines.current.set(activity.id, line);
+      drawnLines.current.set(line.id, { line, polyline });
     }
 
     for (const visit of visits) {
@@ -162,15 +160,12 @@ export function LocationDayMap({
         map.panTo(marker.getLatLng(), { animate: true });
       }
     }
-    for (const [id, line] of tripLines.current) {
+    for (const [id, { line, polyline }] of drawnLines.current) {
       const selected = selection?.kind === "activity" && selection.id === id;
-      line.setStyle({
-        color: selected ? SELECTED : ROUTE,
-        weight: selected ? 5 : 3,
-      });
+      polyline.setStyle(lineStyle(line, selected));
       if (selected) {
-        line.bringToFront();
-        map.fitBounds(line.getBounds(), {
+        polyline.bringToFront();
+        map.fitBounds(polyline.getBounds(), {
           padding: [60, 60],
           maxZoom: 16,
           animate: true,
@@ -190,6 +185,16 @@ export function LocationDayMap({
           border-color: rgba(255,255,255,.08) !important;
         }
         .location-day-map .leaflet-control-zoom a:hover { background: rgba(40,40,40,.95) !important; color: #fff !important; }
+        .location-day-map .leaflet-control-layers {
+          background: rgba(18,18,18,.9) !important;
+          color: rgba(255,255,255,.75) !important;
+          border: 1px solid rgba(255,255,255,.1) !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,.5) !important;
+          font-size: 12px;
+          padding: 4px 8px 4px 6px;
+        }
+        .location-day-map .leaflet-control-layers-base label { cursor: pointer; margin: 2px 0; }
+        .location-day-map .leaflet-control-layers-selector { accent-color: #60a5fa; margin-right: 4px; }
         .location-day-map .leaflet-control-attribution {
           font-size: 10px;
           background: rgba(0,0,0,.45) !important;

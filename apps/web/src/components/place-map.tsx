@@ -2,7 +2,7 @@ import L from "leaflet";
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
 import type { PlaceSchema } from "@bessel/client";
-import { addDarkBasemap } from "@/lib/map-tiles";
+import { addBasemap } from "@/lib/map-tiles";
 
 function createDotIcon(color: string, selected = false) {
   const r = selected ? 6 : 4.5;
@@ -71,7 +71,7 @@ export function PlaceMap({
 
     // Dark basemap to match the app (the satellite imagery read as a foreign
     // element in an otherwise dark UI, and place dots got lost on it).
-    addDarkBasemap(map);
+    addBasemap(map);
 
     mapInstanceRef.current = map;
 
@@ -178,6 +178,16 @@ export function PlaceMap({
           border-color: rgba(255,255,255,.08) !important;
         }
         .leaflet-control-zoom a:hover { background: rgba(40,40,40,.95) !important; color: #fff !important; }
+        .leaflet-control-layers {
+          background: rgba(18,18,18,.9) !important;
+          color: rgba(255,255,255,.75) !important;
+          border: 1px solid rgba(255,255,255,.1) !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,.5) !important;
+          font-size: 12px;
+          padding: 4px 8px 4px 6px;
+        }
+        .leaflet-control-layers-base label { cursor: pointer; margin: 2px 0; }
+        .leaflet-control-layers-selector { accent-color: #60a5fa; margin-right: 4px; }
         .leaflet-control-attribution {
           background: rgba(0,0,0,.45) !important;
           color: rgba(255,255,255,.3) !important;
