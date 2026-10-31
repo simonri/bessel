@@ -1,5 +1,6 @@
 import type {
   ClaudeConversation,
+  ClaudeConversationPreview,
   ClaudeSessionsSnapshot,
   ClaudeSessionView,
   CreateClaudeSessionInput,
@@ -205,6 +206,10 @@ declare global {
         adopt: (bgId: string, projectId?: string) => Promise<ClaudeSessionView>;
         remoteUrl: (key: string) => Promise<string | null>;
         conversations: (cwd: string) => Promise<ClaudeConversation[]>;
+        conversationPreview: (
+          cwd: string,
+          sessionId: string,
+        ) => Promise<ClaudeConversationPreview | null>;
         onChanged: (
           callback: (snapshot: ClaudeSessionsSnapshot) => void,
         ) => () => void;

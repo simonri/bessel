@@ -15,6 +15,7 @@ import {
   sessionStatus,
   transcriptExists,
   transcriptHasConversation,
+  transcriptPreview,
   transcriptTitle,
 } from "./claude-sessions-core.js";
 import type {
@@ -278,16 +279,17 @@ describe("transcripts", () => {
   });
 
   it("lists a project's conversations newest first, skipping empty ones", () => {
+    const said = { type: "user", message: { content: "hi" } };
     writeTranscript(
       "/repo",
       "11111111-1111-4111-8111-111111111111",
-      [{ type: "last-prompt", lastPrompt: "older" }],
+      [said, { type: "last-prompt", lastPrompt: "older" }],
       100,
     );
     writeTranscript(
       "/repo",
       "22222222-2222-4222-8222-222222222222",
-      [{ type: "ai-title", aiTitle: "Newer" }],
+      [said, { type: "ai-title", aiTitle: "Newer" }],
       200,
     );
     writeTranscript(
@@ -295,6 +297,13 @@ describe("transcripts", () => {
       "33333333-3333-4333-8333-333333333333",
       [{ type: "mode" }],
       300,
+    );
+    // Named when it started, but nothing was ever said in it.
+    writeTranscript(
+      "/repo",
+      "99999999-9999-4999-8999-999999999999",
+      [{ type: "custom-title", customTitle: "Newer" }, { type: "mode" }],
+      400,
     );
 
     expect(listConversations("/repo", 10)).toEqual([
@@ -317,13 +326,19 @@ describe("transcripts", () => {
     writeTranscript(
       "/repo",
       "11111111-1111-4111-8111-111111111111",
-      [{ type: "user", message: {} }, { type: "ai-title", aiTitle: "Here" }],
+      [
+        { type: "user", message: {} },
+        { type: "ai-title", aiTitle: "Here" },
+      ],
       100,
     );
     writeTranscript(
       "/repo/.claude/worktrees/gone",
       moved,
-      [{ type: "user", message: {} }, { type: "ai-title", aiTitle: "Moved" }],
+      [
+        { type: "user", message: {} },
+        { type: "ai-title", aiTitle: "Moved" },
+      ],
       200,
     );
     // Another project whose name merely starts with this one's.
@@ -343,6 +358,99 @@ describe("transcripts", () => {
     expect(transcriptExists("/repo", moved)).toBe(true);
     expect(transcriptHasConversation("/repo", moved)).toBe(true);
     expect(transcriptExists("/repo-other", moved)).toBe(false);
+    expect(listConversations("/repo", 10)[0]?.worktree).toBe("gone");
+  });
+
+  const user = (content: unknown, extra: object = {}) => ({
+    type: "user",
+    timestamp: "2026-10-31T01:00:00.000Z",
+    message: { content },
+    ...extra,
+  });
+  const assistant = (content: unknown) => ({
+    type: "assistant",
+    timestamp: "2026-10-31T01:00:05.000Z",
+    message: { content },
+  });
+  const text = (t: string) => [{ type: "text", text: t }];
+
+  it("previews what was asked and Claude's last word on it", () => {
+    const id = "66666666-6666-4666-8666-666666666666";
+    writeTranscript(
+      "/repo",
+      id,
+      [
+        user("Fix the **login** bug"),
+        assistant([{ type: "tool_use", id: "t1" }]),
+        user([{ type: "tool_result", tool_use_id: "t1", content: "ok" }]),
+        assistant(text("Looking into it.")),
+        assistant(text("## Fixed\n\nThe `token` was stale.")),
+        user("<system-reminder>ignore</system-reminder>", { isMeta: true }),
+        user("<task-notification>done</task-notification>"),
+        user(
+          "<command-name>/review</command-name>\n<command-args>high</command-args>",
+        ),
+        assistant(text("No response requested.")),
+        user(text("thanks <system-reminder>x</system-reminder>")),
+      ],
+      1,
+    );
+
+    expect(transcriptPreview("/repo", id)).toEqual({
+      opening: null,
+      exchanges: [
+        {
+          prompt: "Fix the login bug",
+          reply: "Fixed The token was stale.",
+          at: Date.parse("2026-10-31T01:00:00.000Z"),
+        },
+        {
+          prompt: "/review high",
+          reply: null,
+          at: Date.parse("2026-10-31T01:00:00.000Z"),
+        },
+        {
+          prompt: "thanks",
+          reply: null,
+          at: Date.parse("2026-10-31T01:00:00.000Z"),
+        },
+      ],
+    });
+  });
+
+  it("reads back past bulky tool output, and names how it started", () => {
+    const id = "77777777-7777-4777-8777-777777777777";
+    const bulk = user([
+      { type: "tool_result", tool_use_id: "t", content: "x".repeat(700_000) },
+    ]);
+    writeTranscript(
+      "/repo",
+      id,
+      [
+        user("<command-name>/model</command-name>"),
+        user("first"),
+        assistant(text("one")),
+        user("second"),
+        bulk,
+        user("third"),
+        bulk,
+        user("fourth"),
+        bulk,
+        assistant(text("four")),
+      ],
+      1,
+    );
+
+    const preview = transcriptPreview("/repo", id);
+    expect(preview?.opening).toBe("first");
+    expect(preview?.exchanges.map((e) => [e.prompt, e.reply])).toEqual([
+      ["second", null],
+      ["third", null],
+      ["fourth", "four"],
+    ]);
+    expect(
+      transcriptPreview("/repo", "88888888-8888-4888-8888-888888888888"),
+    ).toBeNull();
   });
 });
 

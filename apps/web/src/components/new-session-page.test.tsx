@@ -49,6 +49,7 @@ const CONVERSATIONS = [
     sessionId: "c-old",
     title: "Widget icons",
     updatedAt: Date.now() - 3 * 86_400_000,
+    worktree: "icons",
   },
 ];
 const RUNNING = {
@@ -73,6 +74,12 @@ const claudeSessions = {
   })),
   onChanged: vi.fn(() => () => {}),
   conversations: vi.fn(async () => CONVERSATIONS),
+  conversationPreview: vi.fn(async () => ({
+    opening: "Redraw the widget icons",
+    exchanges: [
+      { prompt: "make them thinner", reply: "Done, 1.5px strokes.", at: 1 },
+    ],
+  })),
   create: vi.fn(async () => RUNNING),
 };
 Object.defineProperty(window, "electron", {
@@ -258,6 +265,22 @@ describe("NewSessionPage", () => {
         projectName: "metron",
       },
     ]);
+  });
+
+  it("previews a past conversation when its row is hovered", async () => {
+    mount("p1");
+    const row = (await screen.findByRole("radio", { name: /Widget icons/ }))
+      .parentElement as HTMLElement;
+    fireEvent.pointerEnter(row, { pointerType: "mouse" });
+
+    expect(await screen.findByText("make them thinner")).toBeTruthy();
+    expect(screen.getByText("Done, 1.5px strokes.")).toBeTruthy();
+    expect(screen.getByText("Redraw the widget icons")).toBeTruthy();
+    expect(screen.getByText("icons")).toBeTruthy();
+    expect(claudeSessions.conversationPreview).toHaveBeenCalledWith(
+      "/home/me/metron",
+      "c-old",
+    );
   });
 
   it("doesn't list past conversations for an SSH project", () => {

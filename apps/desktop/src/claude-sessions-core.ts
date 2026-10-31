@@ -22,6 +22,8 @@ import path from "node:path";
 import type {
   ClaudeAgentEntry,
   ClaudeConversation,
+  ClaudeConversationPreview,
+  ClaudeExchange,
   ClaudeSessionStatus,
   StoredClaudeSession,
 } from "./claude-sessions-types.js";
@@ -202,7 +204,9 @@ export function claudeProjectDir(cwd: string): string {
  * there after the worktree is removed. `claude --resume` run in the project
  * still finds it there.
  */
-export function projectTranscriptDirs(cwd: string): string[] {
+export function projectTranscriptDirs(
+  cwd: string,
+): { dir: string; worktree?: string }[] {
   const projects = path.join(os.homedir(), ".claude", "projects");
   const worktreePrefix = `${encodeProjectDir(cwd)}--claude-worktrees-`;
   let names: string[];
@@ -212,16 +216,20 @@ export function projectTranscriptDirs(cwd: string): string[] {
     names = [];
   }
   return [
-    claudeProjectDir(cwd),
+    { dir: claudeProjectDir(cwd) },
     ...names
       .filter((name) => name.startsWith(worktreePrefix))
       .sort()
-      .map((name) => path.join(projects, name)),
+      .map((name) => ({
+        dir: path.join(projects, name),
+        // As encoded: a name's dots and slashes read back as dashes.
+        worktree: name.slice(worktreePrefix.length),
+      })),
   ];
 }
 
 function findTranscript(cwd: string, sessionId: string): string | null {
-  for (const dir of projectTranscriptDirs(cwd)) {
+  for (const { dir } of projectTranscriptDirs(cwd)) {
     const file = path.join(dir, `${sessionId}.jsonl`);
     if (fs.existsSync(file)) return file;
   }
@@ -251,7 +259,10 @@ export function transcriptHasConversation(
   sessionId: string,
 ): boolean {
   const file = findTranscript(cwd, sessionId);
-  if (!file) return false;
+  return file !== null && fileHasConversation(file);
+}
+
+function fileHasConversation(file: string): boolean {
   let fd: number;
   try {
     fd = fs.openSync(file, "r");
@@ -321,7 +332,7 @@ export function listConversations(
   cwd: string,
   limit: number,
 ): ClaudeConversation[] {
-  const files = projectTranscriptDirs(cwd).flatMap((dir) => {
+  const files = projectTranscriptDirs(cwd).flatMap(({ dir, worktree }) => {
     let names: string[];
     try {
       names = fs.readdirSync(dir);
@@ -334,7 +345,12 @@ export function listConversations(
       try {
         const stat = fs.statSync(path.join(dir, name));
         return [
-          { sessionId, file: path.join(dir, name), updatedAt: stat.mtimeMs },
+          {
+            sessionId,
+            file: path.join(dir, name),
+            updatedAt: stat.mtimeMs,
+            worktree,
+          },
         ];
       } catch {
         return [];
@@ -348,14 +364,163 @@ export function listConversations(
     seen.add(sessionId);
     return true;
   });
-  return newest.slice(0, limit).flatMap(({ sessionId, file, updatedAt }) => {
-    let title: string | null;
+  return newest
+    .slice(0, limit)
+    .flatMap(({ sessionId, file, updatedAt, worktree }) => {
+      let title: string | null;
+      try {
+        title = transcriptTitle(file);
+      } catch {
+        return [];
+      }
+      // Transcripts without a single message are aborted starts, not
+      // conversations, even once a name was given to them.
+      if (!title || !fileHasConversation(file)) return [];
+      return [
+        { sessionId, title, updatedAt, ...(worktree ? { worktree } : {}) },
+      ];
+    });
+}
+
+const PREVIEW_EXCHANGES = 3;
+const PREVIEW_TEXT_LENGTH = 400;
+const PREVIEW_CHUNK_BYTES = 512 * 1024;
+// Tool output can bury the last prompts under megabytes; past this, show what
+// was found rather than read on.
+const PREVIEW_MAX_BYTES = 8 * 1024 * 1024;
+
+interface TranscriptMessage {
+  type?: string;
+  isMeta?: boolean;
+  isSidechain?: boolean;
+  isCompactSummary?: boolean;
+  timestamp?: string;
+  message?: { content?: unknown };
+}
+
+function textBlocks(content: unknown): string[] | null {
+  if (typeof content === "string") return [content];
+  if (!Array.isArray(content)) return null;
+  // A tool's result rides in as a user message; it isn't something typed.
+  if (content.some((b) => b?.type === "tool_result")) return null;
+  return content.flatMap((b) =>
+    b?.type === "text" && typeof b.text === "string" ? [b.text] : [],
+  );
+}
+
+/** Markdown and whitespace flattened, as the preview shows it in a few lines. */
+function plainText(text: string): string {
+  const flat = text
+    .replace(/^```.*$/gm, "")
+    .replace(/^\s*\|?[\s:-]+\|[\s|:-]*$/gm, "")
+    .replace(/^\s{0,3}(#{1,6}|>)\s+/gm, "")
+    .replace(/\*\*|__|`/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return flat.length > PREVIEW_TEXT_LENGTH
+    ? `${flat.slice(0, PREVIEW_TEXT_LENGTH - 1)}…`
+    : flat;
+}
+
+/** What the user typed, or null for anything Claude Code wrote on their behalf. */
+function promptText(msg: TranscriptMessage): string | null {
+  if (msg.type !== "user" || msg.isMeta || msg.isCompactSummary) return null;
+  const blocks = textBlocks(msg.message?.content);
+  if (!blocks) return null;
+  const text = blocks
+    .join("\n")
+    .replace(/<system-reminder>[\s\S]*?<\/system-reminder>/g, "")
+    .trim();
+  const command = /<command-name>([^<]*)<\/command-name>/.exec(text);
+  if (command) {
+    const args = /<command-args>([\s\S]*?)<\/command-args>/.exec(text)?.[1];
+    return plainText(`${command[1]} ${args ?? ""}`);
+  }
+  const shell = /^<bash-input>([\s\S]*?)<\/bash-input>/.exec(text);
+  if (shell) return plainText(`! ${shell[1]}`);
+  // Task notifications, command output and the like.
+  if (!text || text.startsWith("<") || text.startsWith("[Request interrupted"))
+    return null;
+  return plainText(text);
+}
+
+function replyText(msg: TranscriptMessage): string | null {
+  if (msg.type !== "assistant") return null;
+  const blocks = textBlocks(msg.message?.content);
+  const text = blocks?.join("\n").trim();
+  if (!text || text === "No response requested." || text === "(no content)")
+    return null;
+  return plainText(text);
+}
+
+/** The exchanges in a stretch of transcript, oldest first. */
+function exchangesIn(text: string, fromStart: boolean): ClaudeExchange[] {
+  const lines = text.split("\n");
+  // A read that starts mid-file starts mid-line.
+  if (!fromStart) lines.shift();
+  const exchanges: ClaudeExchange[] = [];
+  for (const line of lines) {
+    if (!/"type":"(user|assistant)"/.test(line)) continue;
+    let msg: TranscriptMessage;
     try {
-      title = transcriptTitle(file);
+      msg = JSON.parse(line) as TranscriptMessage;
     } catch {
-      return [];
+      continue;
     }
-    // Transcripts without a single prompt are aborted starts, not conversations.
-    return title ? [{ sessionId, title, updatedAt }] : [];
-  });
+    if (msg.isSidechain) continue;
+    const at = Date.parse(msg.timestamp ?? "") || 0;
+    const prompt = promptText(msg);
+    if (prompt) {
+      exchanges.push({ prompt, reply: null, at });
+      continue;
+    }
+    const reply = replyText(msg);
+    if (!reply) continue;
+    const current = exchanges.at(-1);
+    if (current) current.reply = reply;
+    else exchanges.push({ prompt: null, reply, at });
+  }
+  return exchanges;
+}
+
+/**
+ * The opening prompt and last few exchanges of a past conversation, read from
+ * the end of its transcript back only as far as they reach.
+ */
+export function transcriptPreview(
+  cwd: string,
+  sessionId: string,
+): ClaudeConversationPreview | null {
+  const file = findTranscript(cwd, sessionId);
+  if (!file) return null;
+  const fd = fs.openSync(file, "r");
+  try {
+    const size = fs.fstatSync(fd).size;
+    let start = size;
+    let exchanges: ClaudeExchange[] = [];
+    for (
+      let length = PREVIEW_CHUNK_BYTES;
+      start > 0;
+      length = Math.min(length * 2, PREVIEW_MAX_BYTES)
+    ) {
+      start = Math.max(0, size - length);
+      exchanges = exchangesIn(readSlice(fd, start, size - start), start === 0);
+      const prompts = exchanges.filter((e) => e.prompt).length;
+      if (prompts >= PREVIEW_EXCHANGES || length >= PREVIEW_MAX_BYTES) break;
+    }
+    const shown = exchanges.slice(-PREVIEW_EXCHANGES);
+    const firstShown = start === 0 && exchanges.length === shown.length;
+    let opening: string | null = null;
+    if (!firstShown) {
+      const prompts = exchangesIn(
+        readSlice(fd, 0, Math.min(size, TITLE_SCAN_BYTES)),
+        true,
+      ).flatMap((e) => (e.prompt ? [e.prompt] : []));
+      // A slash command like /model says little about what was being done.
+      opening = prompts.find((p) => !p.startsWith("/")) ?? prompts[0] ?? null;
+    }
+    return { opening, exchanges: shown };
+  } finally {
+    fs.closeSync(fd);
+  }
 }

@@ -19,6 +19,7 @@ import {
   useClaudeSessions,
 } from "@/components/claude-sessions/claude-sessions-store";
 import type { ClaudeConversation } from "@/components/claude-sessions/claude-sessions-types";
+import { ConversationPreview } from "@/components/claude-sessions/conversation-preview";
 import { useShowCanvas } from "@/components/claude-sessions/show-canvas-context";
 import { useOpenClaudeSession } from "@/components/claude-sessions/use-open-claude-session";
 import { isDesktop } from "@/lib/environment";
@@ -242,19 +243,21 @@ function useConversations(path: string | null): ClaudeConversation[] | null {
 
 function ConversationOption({
   name,
+  cwd,
   conversation,
   running,
   selected,
   onSelect,
 }: {
   name: string;
+  cwd: string;
   conversation: ClaudeConversation | null;
   running: boolean;
   selected: boolean;
   onSelect: () => void;
 }) {
   const id = useId();
-  return (
+  const option = (
     <div className="relative">
       <input
         id={id}
@@ -285,6 +288,13 @@ function ConversationOption({
         <Check className="size-3.5 shrink-0 text-primary-400 opacity-0 transition-opacity" />
       </label>
     </div>
+  );
+  return conversation ? (
+    <ConversationPreview cwd={cwd} conversation={conversation}>
+      {option}
+    </ConversationPreview>
+  ) : (
+    option
   );
 }
 
@@ -497,6 +507,7 @@ export function NewSessionPage({
             <legend className="sr-only">Conversation</legend>
             <ConversationOption
               name={`${formId}-conversation`}
+              cwd={conversationPath}
               conversation={null}
               running={false}
               selected={conversation === null}
@@ -506,6 +517,7 @@ export function NewSessionPage({
               <ConversationOption
                 key={c.sessionId}
                 name={`${formId}-conversation`}
+                cwd={conversationPath}
                 conversation={c}
                 running={sessions.some(
                   (s) =>

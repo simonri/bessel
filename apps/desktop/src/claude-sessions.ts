@@ -19,10 +19,12 @@ import {
   sessionStatus,
   transcriptExists,
   transcriptHasConversation,
+  transcriptPreview,
 } from "./claude-sessions-core.js";
 import {
   type ClaudeAgentEntry,
   type ClaudeConversation,
+  type ClaudeConversationPreview,
   type ClaudeSessionStatus,
   type ClaudeSessionsSnapshot,
   type ClaudeSessionView,
@@ -405,6 +407,15 @@ class ClaudeSessionManager {
   conversations(cwd: string): ClaudeConversation[] {
     assertDirectory(cwd);
     return listConversations(cwd, CONVERSATION_LIMIT);
+  }
+
+  conversationPreview(
+    cwd: string,
+    sessionId: string,
+  ): ClaudeConversationPreview | null {
+    assertDirectory(cwd);
+    if (!isSessionId(sessionId)) throw new Error("Invalid Claude session id");
+    return transcriptPreview(cwd, sessionId);
   }
 
   // --- polling ---------------------------------------------------------
@@ -851,6 +862,11 @@ export function registerClaudeSessionHandlers(deps: ClaudeSessionDeps): void {
   );
   ipcHandle("claudeSessions:conversations", (_, cwd: string) =>
     requireManager().conversations(cwd),
+  );
+  ipcHandle(
+    "claudeSessions:conversationPreview",
+    (_, cwd: string, sessionId: string) =>
+      requireManager().conversationPreview(cwd, sessionId),
   );
 }
 

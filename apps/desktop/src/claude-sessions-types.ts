@@ -87,6 +87,24 @@ export interface ClaudeConversation {
   sessionId: string;
   title: string;
   updatedAt: number;
+  /** The worktree the conversation moved into, if it did. */
+  worktree?: string;
+}
+
+/** One turn of a past conversation: what was asked, and Claude's last word on it. */
+export interface ClaudeExchange {
+  /** Null when the turn began before the part of the transcript that was read. */
+  prompt: string | null;
+  reply: string | null;
+  at: number;
+}
+
+/** Enough of a past conversation to tell it apart from others named alike. */
+export interface ClaudeConversationPreview {
+  /** The first prompt, unless it is already among `exchanges`. */
+  opening: string | null;
+  /** The last few exchanges, oldest first. */
+  exchanges: ClaudeExchange[];
 }
 
 export interface CreateClaudeSessionInput {

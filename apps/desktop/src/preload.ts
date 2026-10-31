@@ -7,6 +7,7 @@ import type {
 } from "./avanza-core.js";
 import type {
   ClaudeConversation,
+  ClaudeConversationPreview,
   ClaudeSessionsSnapshot,
   ClaudeSessionView,
   CreateClaudeSessionInput,
@@ -168,6 +169,11 @@ const bridge = {
       ipcRenderer.invoke("claudeSessions:remoteUrl", key),
     conversations: (cwd: string): Promise<ClaudeConversation[]> =>
       ipcRenderer.invoke("claudeSessions:conversations", cwd),
+    conversationPreview: (
+      cwd: string,
+      sessionId: string,
+    ): Promise<ClaudeConversationPreview | null> =>
+      ipcRenderer.invoke("claudeSessions:conversationPreview", cwd, sessionId),
     onChanged: (callback: (snapshot: ClaudeSessionsSnapshot) => void) =>
       subscribe<[ClaudeSessionsSnapshot]>("claudeSessions:changed", callback),
     onOpenRequested: (callback: (key: string) => void) =>
