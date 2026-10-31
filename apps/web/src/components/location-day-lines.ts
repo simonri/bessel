@@ -17,6 +17,9 @@ export type TripLine = {
 /** A stay or trip this close to a trip's ends is where it starts or stops. */
 const JOIN_SECONDS = 15 * 60;
 
+/** How far either side of a trip's times a route point still belongs to it. */
+const EDGE_SECONDS = 3 * 60;
+
 const WALKING = new Set(["walking", "running", "hiking", "on foot"]);
 
 function mode(activityType: string | null): TripLine["mode"] {
@@ -77,9 +80,19 @@ export function tripLines(
   for (const trip of trips) {
     const start = seconds(trip.start_at);
     const end = seconds(trip.end_at);
-    const route = path
-      .filter((p) => p.ts >= start && p.ts <= end)
-      .map((p): LatLng => [p.latitude, p.longitude]);
+    // Google's trip times are cut at the moment it decides you've left or
+    // arrived, but the phone's point a minute either side is often still on
+    // the road; Google Maps draws through it, and so do we.
+    const leading = path.filter(
+      (p) => p.ts < start && p.ts >= start - EDGE_SECONDS,
+    );
+    const before = leading[leading.length - 1];
+    const after = path.find((p) => p.ts > end && p.ts <= end + EDGE_SECONDS);
+    const route = [
+      ...(before ? [before] : []),
+      ...path.filter((p) => p.ts >= start && p.ts <= end),
+      ...(after ? [after] : []),
+    ].map((p): LatLng => [p.latitude, p.longitude]);
 
     // Picks up where the trip before ended: a walk straight into a bus, or a
     // trip that ended at the stay this one leaves from.
