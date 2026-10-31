@@ -876,6 +876,13 @@ export function stopClaudeSessions(): void {
   manager?.stop();
 }
 
+let closeUnconfirmed = false;
+
+/** A restart to update keeps the sessions running, as "Keep running" would; asking would only hold it up. */
+export function skipCloseConfirmation(): void {
+  closeUnconfirmed = true;
+}
+
 /**
  * Closing the window no longer ends Claude sessions, which is easy to miss
  * the first time — say so once, with a way to end them instead.
@@ -884,7 +891,13 @@ export function confirmCloseWithClaudeSessions(win: BrowserWindow): void {
   let confirmed = false;
   win.on("close", (event) => {
     const current = manager;
-    if (confirmed || !current || current.quitPromptDismissed) return;
+    if (
+      confirmed ||
+      closeUnconfirmed ||
+      !current ||
+      current.quitPromptDismissed
+    )
+      return;
     const running = current.runningCount();
     if (running === 0) return;
     event.preventDefault();

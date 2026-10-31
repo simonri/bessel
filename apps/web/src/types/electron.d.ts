@@ -97,10 +97,15 @@ declare global {
       };
       getVersion: () => Promise<string>;
       checkForUpdate: () => Promise<{
-        status: "dev" | "available" | "up-to-date" | "error";
+        status: "dev" | "available" | "ready" | "up-to-date" | "error";
         version?: string;
         message?: string;
       }>;
+      update: {
+        ready: () => Promise<string | null>;
+        onReady: (callback: (version: string) => void) => () => void;
+        install: () => Promise<void>;
+      };
       device: {
         getInfo: () => Promise<{ key: string; name: string }>;
       };

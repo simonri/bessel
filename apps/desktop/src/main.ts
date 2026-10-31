@@ -26,6 +26,7 @@ import { registerAvanzaHandlers } from "./avanza.js";
 import {
   confirmCloseWithClaudeSessions,
   registerClaudeSessionHandlers,
+  skipCloseConfirmation,
   stopClaudeSessions,
 } from "./claude-sessions.js";
 import { isSessionId, transcriptExists } from "./claude-sessions-core.js";
@@ -879,14 +880,36 @@ function createWindow() {
   }
 }
 
+// Updates download while the app runs, so one restart installs them.
+const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
+let downloadedUpdate: string | null = null;
+
+function checkForUpdates(): void {
+  if (downloadedUpdate) return;
+  autoUpdater
+    .checkForUpdates()
+    .catch((err: Error) => appendLog(`update check failed: ${err.message}`));
+}
+
+function installUpdate(): void {
+  skipCloseConfirmation();
+  // The updater starts the new version while this one is still quitting; a
+  // held single-instance lock would make it exit at once.
+  app.releaseSingleInstanceLock();
+  autoUpdater.quitAndInstall(false, true);
+}
+
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
   initLogging();
 
   if (app.isPackaged) {
-    autoUpdater
-      .checkForUpdatesAndNotify()
-      .catch((err: Error) => appendLog(`update check failed: ${err.message}`));
+    autoUpdater.on("update-downloaded", (info: { version: string }) => {
+      downloadedUpdate = info.version;
+      broadcast("app:update-ready", info.version);
+    });
+    checkForUpdates();
+    setInterval(checkForUpdates, UPDATE_CHECK_INTERVAL_MS);
   }
 
   authCachePath = path.join(app.getPath("userData"), "auth-cache.bin");
@@ -1041,8 +1064,16 @@ app.whenReady().then(() => {
 
   ipcHandle("device:get-info", (): DeviceInfo => deviceInfo!);
 
+  ipcHandle("app:update-ready", () => downloadedUpdate);
+
+  ipcHandle("app:install-update", () => {
+    if (downloadedUpdate) installUpdate();
+  });
+
   ipcHandle("app:check-update", () => {
     if (!app.isPackaged) return Promise.resolve({ status: "dev" });
+    if (downloadedUpdate)
+      return Promise.resolve({ status: "ready", version: downloadedUpdate });
     return new Promise((resolve) => {
       const cleanup = () => {
         autoUpdater.removeListener("update-available", onAvailable);

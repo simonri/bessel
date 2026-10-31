@@ -75,6 +75,13 @@ const bridge = {
   },
   getVersion: () => ipcRenderer.invoke("app:version"),
   checkForUpdate: () => ipcRenderer.invoke("app:check-update"),
+  update: {
+    /** The version downloaded and waiting for a restart, if any. */
+    ready: (): Promise<string | null> => ipcRenderer.invoke("app:update-ready"),
+    onReady: (callback: (version: string) => void) =>
+      subscribe<[string]>("app:update-ready", callback),
+    install: (): Promise<void> => ipcRenderer.invoke("app:install-update"),
+  },
   device: {
     getInfo: (): Promise<{ key: string; name: string }> =>
       ipcRenderer.invoke("device:get-info"),

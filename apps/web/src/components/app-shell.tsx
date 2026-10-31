@@ -16,6 +16,7 @@ import { isPageKey, PAGE_REGISTRY, type PageKey } from "@/components/pages";
 import { SettingsDialogProvider } from "@/components/settings-dialog";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
+import { UpdateNotice } from "@/components/update-notice";
 import { useHiddenPageFallback } from "@/components/use-page-visibility";
 import { WINDOW_FRAME, WindowTitleBar } from "@/components/window-chrome";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -207,6 +208,7 @@ export function AppShell() {
             {isDesktop && <ClaudeSessionsBridge />}
             {isDesktop && <AgentUsageReporter />}
             {isDesktop && <AvanzaReporter />}
+            {isDesktop && <UpdateNotice />}
 
             <div className="relative flex h-full flex-col">
               <CanvasTopBar nav={topBarNav} onSearch={openPalette} />
