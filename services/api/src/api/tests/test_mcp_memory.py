@@ -1,8 +1,41 @@
+from collections.abc import Sequence
 from typing import Any
 
 import pytest
 from api.memory import service
 from api.tests.fixtures.mcp import ConnectFixture, mcp_call
+
+
+class FakeEmbedder:
+  """Meaning as a set of concepts: a text means a concept when it holds any of its cues."""
+
+  model = "fake"
+
+  def __init__(self, **concepts: tuple[str, ...]) -> None:
+    self.concepts = list(concepts.values())
+    self.embedded = 0
+    self.broken = False
+
+  def _vector(self, text: str) -> list[float]:
+    if self.broken:
+      raise RuntimeError("model unavailable")
+    folded = text.casefold()
+    return [1.0 if any(cue in folded for cue in cues) else 0.0 for cues in self.concepts]
+
+  async def documents(self, texts: Sequence[str]) -> list[list[float]]:
+    vectors = [self._vector(text) for text in texts]
+    self.embedded += len(texts)
+    return vectors
+
+  async def query(self, text: str) -> list[float]:
+    return self._vector(text)
+
+
+@pytest.fixture
+def meaning(monkeypatch: pytest.MonkeyPatch) -> FakeEmbedder:
+  embedder = FakeEmbedder(home=("huset", "hyra", "boende"), money=("kostar", "billig", "pengar"), shoes=("skor", "sko"))
+  monkeypatch.setattr(service, "get_embedder", lambda: embedder)
+  return embedder
 
 
 def fact(attribute: str, statement: str, **extra: Any) -> dict[str, Any]:
@@ -133,19 +166,19 @@ class TestRemember:
     assert unrelated["similar"] == []
 
   @pytest.mark.asyncio
-  async def test_facts_about_the_same_things_are_offered_to_check_against(self, connect: ConnectFixture) -> None:
-    [home] = await remember(connect, fact("ekonomi hemma", "Mamma äger huset och betalar maten; du betalar bredbandet", area="hem"))
+  async def test_facts_close_in_meaning_are_offered_to_check_against(self, connect: ConnectFixture, meaning: FakeEmbedder) -> None:
+    [home] = await remember(connect, fact("ekonomi hemma", "Mamma äger huset och står för det mesta", area="hem"))
     await remember(connect, fact("skostorlek", "44"), fact("mammas jobb", "Mamma är revisor", area="människor"))
 
-    [added] = await remember(connect, fact("kostnad utomlands", "Huset och maten kostar mer i Asien", area="resor"))
+    [added] = await remember(connect, fact("kostnad utomlands", "Hyran i Asien", area="resor"))
 
     assert [s["id"] for s in added["similar"]] == [home["fact"]["id"]]
 
   @pytest.mark.asyncio
-  async def test_facts_already_checked_are_not_offered_again(self, connect: ConnectFixture) -> None:
-    [home] = await remember(connect, fact("ekonomi hemma", "Mamma äger huset och betalar maten", area="hem"))
+  async def test_facts_already_checked_are_not_offered_again(self, connect: ConnectFixture, meaning: FakeEmbedder) -> None:
+    [home] = await remember(connect, fact("ekonomi hemma", "Mamma äger huset och står för det mesta", area="hem"))
 
-    [added] = await remember(connect, guess("kostnad utomlands", "Huset och maten kostar mer i Asien", [home["fact"]["id"]], area="resor"))
+    [added] = await remember(connect, guess("kostnad utomlands", "Hyran i Asien", [home["fact"]["id"]], area="resor"))
 
     assert added["similar"] == []
 
@@ -349,16 +382,31 @@ class TestRevise:
 
 class TestSearch:
   @pytest.mark.asyncio
-  async def test_any_word_finds_and_the_most_words_come_first(self, connect: ConnectFixture) -> None:
+  async def test_facts_holding_every_word_are_all_that_is_found(self, connect: ConnectFixture) -> None:
     await remember(
       connect,
-      fact("bror", "Bor i Göteborg", area="människor/familj", importance=5),
-      fact("mamma", "Födelsedag 3 maj", area="människor/familj", importance=1),
+      fact("födelsedag", "Mamma fyller år 3 maj", area="människor/familj"),
+      fact("mamma", "Mamma bor i Västerås", area="människor/familj", importance=5),
       fact("människokännare", "Läser folk bra", area="människorelationer"),
     )
 
-    assert [f["attribute"] for f in await search(connect, query="mamma födelsedag göteborg")] == ["mamma", "bror"]
-    assert {f["attribute"] for f in await search(connect, area="människor")} == {"mamma", "bror"}
+    assert [f["attribute"] for f in await search(connect, query="mamma maj")] == ["födelsedag"]
+    assert {f["attribute"] for f in await search(connect, area="människor")} == {"födelsedag", "mamma"}
+
+  @pytest.mark.asyncio
+  async def test_without_one_holding_every_word_the_rarest_words_count_most(self, connect: ConnectFixture) -> None:
+    await remember(
+      connect,
+      fact("ekonomi", "Mamma äger huset", area="hem", importance=5),
+      fact("städning", "Mamma städar huset", area="hem", importance=5),
+      fact("renovering", "Mamma målar huset", area="hem", importance=5),
+      fact("golf", "Spelar golf", area="fritid", importance=1),
+    )
+
+    found = [f["attribute"] for f in await search(connect, query="mamma huset golf")]
+
+    assert found[0] == "golf"
+    assert set(found) == {"golf", "ekonomi", "städning", "renovering"}
 
   @pytest.mark.asyncio
   async def test_word_forms_and_compounds_match_but_not_lookalikes(self, connect: ConnectFixture) -> None:
@@ -385,3 +433,50 @@ class TestSearch:
 
     assert [f["attribute"] for f in await search(connect, query="10%")] == ["rabatt"]
     assert await search(connect, query="_") == []
+
+
+class TestSearchByMeaning:
+  @pytest.mark.asyncio
+  async def test_finds_what_shares_no_word_with_the_query(self, connect: ConnectFixture, meaning: FakeEmbedder) -> None:
+    await remember(connect, fact("ekonomi hemma", "Mamma äger huset och står för det mesta", area="hem"), fact("skostorlek", "44"))
+
+    assert [f["attribute"] for f in await search(connect, query="hyra")] == ["ekonomi hemma"]
+
+  @pytest.mark.asyncio
+  async def test_loose_word_matches_give_way_to_meaning(self, connect: ConnectFixture, meaning: FakeEmbedder) -> None:
+    await remember(connect, fact("ekonomi hemma", "Mamma äger huset", area="hem"), fact("golf", "Spelar golf med Rasmus", area="fritid"))
+
+    assert [f["attribute"] for f in await search(connect, query="hyra golf")] == ["ekonomi hemma"]
+    meaning.broken = True
+    assert [f["attribute"] for f in await search(connect, query="hyra golf")] == ["golf"]
+
+  @pytest.mark.asyncio
+  async def test_facts_matching_both_ways_come_first(self, connect: ConnectFixture, meaning: FakeEmbedder) -> None:
+    await remember(
+      connect,
+      fact("ekonomi hemma", "Mamma äger huset", area="hem", importance=5),
+      fact("hyra utomlands", "Hyran i Bangkok är 6 000", area="resor", importance=1),
+    )
+
+    assert [f["attribute"] for f in await search(connect, query="hyra")] == ["hyra utomlands", "ekonomi hemma"]
+
+  @pytest.mark.asyncio
+  async def test_meaning_is_computed_once_and_again_when_the_fact_changes(self, connect: ConnectFixture, meaning: FakeEmbedder) -> None:
+    [home] = await remember(connect, fact("ekonomi hemma", "Mamma äger huset", area="hem"))
+
+    await search(connect, query="hyra")
+    await search(connect, query="boende")
+    assert meaning.embedded == 1
+    [found] = await search(connect, query="hyra")
+    assert found["updated_at"] == found["created_at"]
+
+    await revise(connect, {"fact_id": home["fact"]["id"], "action": "update", "statement": "Mamma äger huset och betalar maten"})
+    await search(connect, query="hyra")
+    assert meaning.embedded == 2
+
+  @pytest.mark.asyncio
+  async def test_a_model_that_fails_leaves_search_by_words(self, connect: ConnectFixture, meaning: FakeEmbedder) -> None:
+    meaning.broken = True
+    await remember(connect, fact("ekonomi hemma", "Mamma äger huset", area="hem"), fact("skostorlek", "44"))
+
+    assert [f["attribute"] for f in await search(connect, query="huset")] == ["ekonomi hemma"]

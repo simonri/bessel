@@ -124,6 +124,11 @@ services:
       BESSEL_STORAGE_BUCKET: ${BESSEL_STORAGE_BUCKET:-}
       BESSEL_STORAGE_ACCESS_KEY_ID: ${BESSEL_STORAGE_ACCESS_KEY_ID:-}
       BESSEL_STORAGE_SECRET_ACCESS_KEY: ${BESSEL_STORAGE_SECRET_ACCESS_KEY:-}
+      # Memory search by meaning runs on this server; the model is fetched once into the volume below.
+      BESSEL_MEMORY_EMBEDDING_MODEL: ${BESSEL_MEMORY_EMBEDDING_MODEL:-sentence-transformers/paraphrase-multilingual-mpnet-base-v2}
+      BESSEL_MEMORY_EMBEDDING_CACHE_DIR: /models
+    volumes:
+      - metron_models:/models
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
@@ -224,6 +229,7 @@ services:
 volumes:
   metron_postgres_data:
   metron_redis_data:
+  metron_models:
 
 networks:
   metron-internal:

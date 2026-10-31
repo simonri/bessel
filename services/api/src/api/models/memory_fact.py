@@ -3,8 +3,8 @@ from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import TIMESTAMP, Date, Enum, ForeignKey, Index, Integer, SmallInteger, String, Text, Uuid, text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import REAL, TIMESTAMP, Date, Enum, ForeignKey, Index, Integer, SmallInteger, String, Text, Uuid, text
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from api.models.base import RecordModel
@@ -57,6 +57,9 @@ class MemoryFact(RecordModel):
   superseded_by_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("memory_facts.id", ondelete="SET NULL"), nullable=True)
   confirmed_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)
   confirm_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default=text("0"))
+  # What the fact means, for search by meaning; recomputed when the text or the model changes (see embedding_key).
+  embedding: Mapped[list[float] | None] = mapped_column(ARRAY(REAL), nullable=True)
+  embedding_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
   __table_args__ = (
     Index(

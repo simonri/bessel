@@ -13,8 +13,12 @@ from datetime import date, timedelta
 from typing import Any
 from uuid import UUID
 
+import structlog
+
 from api.common.utils import utc_now
 from api.exceptions import ResourceNotFound, ValidationError
+from api.memory import ranking
+from api.memory.embeddings import Embedder, embedding_key, get_embedder
 from api.memory.repository import MemoryFactRepository
 from api.memory.schemas import (
   AreaCount,
@@ -34,6 +38,8 @@ from api.models.memory_fact import MemoryFact, MemoryKind, MemorySensitivity, Me
 from api.models.user import User
 from api.postgres import AsyncSession
 
+log = structlog.get_logger()
+
 PROFILE_MIN_IMPORTANCE = 4
 # About 2k tokens: past that a profile crowds out the task and pulls answers towards agreeing with the user.
 PROFILE_MAX_CHARS = 8000
@@ -43,8 +49,9 @@ MAX_EVIDENCE = 20
 SIMILAR_MAX = 5
 MIN_WORD_LENGTH = 4
 INFERRED_CONFIRMATIONS = 3
-RELATED_MAX_WORDS = 30
-RELATED_MIN_HITS = 2
+# How close in meaning another fact must be to be shown next to a new one, to merge with or check against: the
+# closest 1% of pairs among the user's real facts with paraphrase-multilingual-mpnet-base-v2 (Oct 2026).
+RELATED_MIN_SIMILARITY = 0.62
 # Content other people wrote. What is seen only there stays an unimportant hypothesis, out of the profile, until the
 # user raises it, so a line planted in an email can't become part of who they are.
 EXTERNAL_SOURCES = frozenset({"gmail", "email", "slack", "web"})
@@ -67,6 +74,11 @@ def _words(text: str) -> list[str]:
 
 def _query_words(query: str) -> list[str]:
   return re.findall(r"\w+", query.casefold())
+
+
+def _document(fact: MemoryFact) -> str:
+  """What a fact's meaning is computed from: its place in memory as context for the statement."""
+  return f"{fact.area} / {fact.attribute}: {fact.statement}"
 
 
 def _external_only(evidence: Sequence[Evidence]) -> bool:
@@ -172,11 +184,61 @@ class MemoryService:
     include_past: bool,
     limit: int,
   ) -> list[MemoryFactSchema]:
-    words = _query_words(query) if query else None
-    facts = await MemoryFactRepository.from_session(session).search(
-      user.id, words=words, area=area, status=status, as_of=as_of, include_past=include_past, limit=limit
-    )
-    return [to_schema(fact) for fact in facts]
+    repository = MemoryFactRepository.from_session(session)
+    filters = {"area": area, "status": status, "as_of": as_of, "include_past": include_past}
+    if not query:
+      return [to_schema(fact) for fact in await repository.search(user.id, **filters, limit=limit)]
+    words = _query_words(query)
+    candidates = await repository.list_with_mentions(user.id, words, **filters)
+    by_words, loose = ranking.by_words(candidates)
+    facts = [fact for fact, _ in candidates]
+    similarity: dict[UUID, float] = {}
+    embedder = get_embedder()
+    if embedder is not None:
+      vectors = await self._vectors(repository, facts, embedder)
+      try:
+        similarity = ranking.cosines(vectors, await embedder.query(query)) if vectors else {}
+      except Exception:
+        log.exception("Memory search by meaning failed; searching by words only")
+    found = ranking.fuse(by_words, loose, ranking.by_meaning(facts, similarity), similarity)
+    return [to_schema(fact) for fact in found[:limit]]
+
+  async def embed_current_facts(self, session: AsyncSession) -> None:
+    """Computes the meaning of every user's current facts that lack an up-to-date one."""
+    embedder = get_embedder()
+    if embedder is None:
+      return
+    repository = MemoryFactRepository.from_session(session)
+    await self._vectors(repository, await repository.list_current_for_everyone(), embedder)
+
+  async def _vectors(self, repository: MemoryFactRepository, facts: Sequence[MemoryFact], embedder: Embedder) -> dict[UUID, list[float]]:
+    """Each fact's meaning, computing what is missing or out of date first. Empty if the model can't run."""
+    keys = {fact.id: embedding_key(embedder.model, _document(fact)) for fact in facts}
+    stale = [fact for fact in facts if fact.embedding is None or fact.embedding_key != keys[fact.id]]
+    if stale:
+      try:
+        embeddings = await embedder.documents([_document(fact) for fact in stale])
+      except Exception:
+        log.exception("Embedding memory facts failed; searching by words only", facts=len(stale))
+        return {}
+      for fact, embedding in zip(stale, embeddings, strict=True):
+        await repository.store_embedding(fact, embedding, keys[fact.id])
+    return {fact.id: fact.embedding for fact in facts if fact.embedding is not None}
+
+  async def _near(self, repository: MemoryFactRepository, user: User, fact: MemoryFact) -> list[MemoryFact]:
+    """Current facts close in meaning to `fact`, nearest first: the same thing said differently, or something that
+    bears on it."""
+    embedder = get_embedder()
+    if embedder is None:
+      return []
+    facts = await repository.list_current(user.id)
+    vectors = await self._vectors(repository, facts, embedder)
+    if fact.id not in vectors:
+      return []
+    others = {id_: vector for id_, vector in vectors.items() if id_ != fact.id}
+    similarity = ranking.cosines(others, vectors[fact.id])
+    near = sorted((other for other in facts if similarity.get(other.id, 0.0) >= RELATED_MIN_SIMILARITY), key=lambda other: -similarity[other.id])
+    return near[: SIMILAR_MAX + 1]
 
   async def remember(self, session: AsyncSession, user: User, items: Sequence[NewFact], *, today: date) -> list[RememberResult]:
     repository = MemoryFactRepository.from_session(session)
@@ -213,14 +275,13 @@ class MemoryService:
         confirm_count=1,
       )
       await repository.create(fact, flush=True)
-      # The same attribute in another area first: the likeliest duplicate. Then facts about the same things, which
-      # may contradict it.
+      # The same attribute in another area first: the likeliest duplicate. Then facts close in meaning, which may say
+      # the same or contradict it.
       elsewhere = await repository.get_current_for_attribute(user.id, item.attribute)
       by_words = await repository.list_current_matching_words(user.id, _words(item.attribute), limit=SIMILAR_MAX + 1)
-      statement_words = list(dict.fromkeys(_words(item.statement)))[:RELATED_MAX_WORDS]
-      related = await repository.list_current_related(user.id, statement_words, min_hits=RELATED_MIN_HITS, limit=SIMILAR_MAX + 1)
+      near = await self._near(repository, user, fact)
       seen = {fact.id, *(other.id for other in checked)}
-      similar = list({other.id: other for other in [*elsewhere, *by_words, *related] if other.id not in seen}.values())
+      similar = list({other.id: other for other in [*elsewhere, *by_words, *near] if other.id not in seen}.values())
       results.append(RememberResult(outcome="added", fact=to_schema(fact), similar=[_brief(other) for other in similar[:SIMILAR_MAX]]))
     return results
 

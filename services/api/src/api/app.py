@@ -1,3 +1,4 @@
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, nullcontext
 from typing import TypedDict
@@ -21,6 +22,7 @@ from api.logging import Logger
 from api.logging import configure as configure_logging
 from api.mcp.server import build_routes as build_mcp_routes
 from api.mcp.server import build_server as build_mcp_server
+from api.memory.service import memory_service
 from api.middlewares import FlushEnqueuedWorkerJobsMiddleware, MinimumClientVersionMiddleware, RequestContextMiddleware
 from api.openapi import OPENAPI_PARAMETERS, set_openapi_generator
 from api.postgres import AsyncSessionMiddleware, create_async_engine, create_sync_engine
@@ -70,6 +72,17 @@ class State(TypedDict):
   redis: Redis
 
 
+async def _warm_up_memory_search(sessionmaker: AsyncSessionMaker) -> None:
+  """Loads the embedding model and brings every fact's meaning up to date, so the first search after a deploy or a
+  model change doesn't wait for either."""
+  try:
+    async with sessionmaker() as session:
+      await memory_service.embed_current_facts(session)
+      await session.commit()
+  except Exception:
+    log.exception("Warming up memory search failed; it will catch up on the first search")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[State]:
   log.info("Starting Bessel API")
@@ -83,6 +96,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
 
   log.info("Bessel API started")
 
+  warm_up = asyncio.create_task(_warm_up_memory_search(async_sessionmaker)) if settings.MEMORY_EMBEDDING_MODEL else None
   mcp_server: MCPServer | None = app.state.mcp_server
   async with mcp_server.session_manager.run() if mcp_server else nullcontext():
     yield {
@@ -91,6 +105,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
       "sync_engine": sync_engine,
       "redis": redis,
     }
+  if warm_up is not None:
+    warm_up.cancel()
 
   await redis.close(True)
   await rate_limit.dispose_redis()
