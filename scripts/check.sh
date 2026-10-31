@@ -106,6 +106,8 @@ fi
 
 if $FULL; then
   if has '^services/api/'; then
+    # As CI does: master can carry a lint error the changed files don't show.
+    run "ruff, whole API" bash -c 'cd services/api && uv run --quiet ruff check . && uv run --quiet ruff format --check .'
     run "api tests" bash -c 'cd services/api && BESSEL_ENV=testing uv run --quiet python -m pytest . -q -n auto --maxprocesses=15 -p no:cacheprovider'
   fi
   if has '^(apps/web|packages)/' && need_node "web tests"; then
