@@ -1,8 +1,10 @@
 name: Release Desktop
 
-# A v* tag builds all three platforms side by side into a draft release, which
-# is published once every build has uploaded, so the updater never sees a
-# half-finished release. Run it by hand for a dry run that publishes nothing.
+# A v* tag builds the Linux AppImage and releases it from the same job: the
+# release is created as a draft with its files, then published, so the updater
+# never sees a half-finished one. Run it by hand for a dry run that publishes
+# nothing. The Mac and Windows builds are paused; they were matrix entries here
+# up to 2d06f1c.
 on:
   push:
     tags: ["v*"]
@@ -11,47 +13,10 @@ on:
 permissions:
   contents: write
 
-env:
-  IS_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
-
 jobs:
-  draft:
-    name: Create draft release
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create draft
-        run: gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --title "${GITHUB_REF_NAME#v}" --notes ""
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   build:
-    name: Build ${{ matrix.name }}
-    needs: draft
-    if: ${{ !cancelled() && needs.draft.result != 'failure' }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: true
-      matrix:
-        include:
-          - name: Linux AppImage
-            os: ubuntu-latest
-            target: --linux
-            app: release/linux-unpacked/bessel
-            resources: release/linux-unpacked/resources
-            artifacts: release/Bessel-linux-x86_64.AppImage release/latest-linux.yml
-          - name: Mac DMG (arm64)
-            os: macos-latest
-            target: --mac
-            app: release/mac-arm64/Bessel.app/Contents/MacOS/Bessel
-            resources: release/mac-arm64/Bessel.app/Contents/Resources
-            artifacts: release/Bessel-mac-arm64.dmg release/Bessel-mac-arm64.dmg.blockmap release/latest-mac.yml
-          - name: Windows Installer (x64)
-            os: windows-latest
-            target: --win
-            app: release/win-unpacked/bessel.exe
-            resources: release/win-unpacked/resources
-            artifacts: release/Bessel-win-x64.exe release/Bessel-win-x64.exe.blockmap release/latest.yml
+    name: Build Linux AppImage
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -61,12 +26,6 @@ jobs:
       - uses: actions/checkout@v7
 
       - uses: ./.github/actions/setup-pnpm
-
-      - name: Install Linux build dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libarchive-tools
 
       - name: Compile
         run: pnpm run compile
@@ -78,28 +37,16 @@ jobs:
           VITE_FRONTEND_URL: app://localhost
 
       - name: Package
-        run: pnpm exec electron-builder ${{ matrix.target }} --publish never --config electron-builder.config.ts
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-          CSC_LINK: ""
-          CSC_KEY_PASSWORD: ""
+        run: pnpm exec electron-builder --linux --publish never --config electron-builder.config.ts
 
       - name: Check node-pty in the packaged app
-        run: ELECTRON_RUN_AS_NODE=1 "${{ matrix.app }}" scripts/smoke-pty.cjs "${{ matrix.resources }}"
+        run: ELECTRON_RUN_AS_NODE=1 release/linux-unpacked/bessel scripts/smoke-pty.cjs release/linux-unpacked/resources
 
-      - name: Upload to the draft release
-        if: env.IS_RELEASE == 'true'
-        run: gh release upload "$GITHUB_REF_NAME" ${{ matrix.artifacts }} --repo "$GITHUB_REPOSITORY" --clobber
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish:
-    name: Publish release
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publish
-        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/Bessel-linux-x86_64.AppImage release/latest-linux.yml \
+            --repo "$GITHUB_REPOSITORY" --draft --title "${GITHUB_REF_NAME#v}" --notes ""
+          gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false --latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
