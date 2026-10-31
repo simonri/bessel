@@ -1,8 +1,8 @@
 """location import safety
 
 Revision ID: 4c1d8e2a7b90
-Revises: 119bb42952e7
-Create Date: 2026-10-31 12:00:00.000000
+Revises: 8b2f4c7d1e05
+Create Date: 2026-10-31 14:00:00.000000
 
 """
 
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '4c1d8e2a7b90'
-down_revision: str | Sequence[str] | None = '119bb42952e7'
+down_revision: str | Sequence[str] | None = '8b2f4c7d1e05'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
