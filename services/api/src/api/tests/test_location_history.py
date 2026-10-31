@@ -485,7 +485,7 @@ class TestDay:
         _visit(f"2026-09-01T19:00:00.000{STOCKHOLM}", f"2026-09-01T20:15:00.000{STOCKHOLM}", place="earlier-id"),
         _visit(f"2026-09-01T17:00:00.000{STOCKHOLM}", f"2026-09-01T20:22:00.000{STOCKHOLM}", place="home-id"),
         _visit(f"2026-09-01T18:00:00.000{STOCKHOLM}", f"2026-09-01T20:24:00.000{STOCKHOLM}", place="area-id", level="1"),
-        _path(f"2026-09-01T18:24:00.000Z", f"2026-09-01T18:24:00.000Z", [(OFFICE, 0)]),
+        _path("2026-09-01T18:24:00.000Z", "2026-09-01T18:24:00.000Z", [(OFFICE, 0)]),
         _trip(f"2026-09-01T20:24:00.000{STOCKHOLM}", f"2026-09-02T14:33:00.000{STOCKHOLM}", kind="in passenger vehicle"),
         _visit(f"2026-09-02T14:35:00.000{STOCKHOLM}", f"2026-09-02T17:00:00.000{STOCKHOLM}", place="museum-id", location=OFFICE),
       ],
