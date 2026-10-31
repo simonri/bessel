@@ -7,6 +7,9 @@ os.environ["BESSEL_ENV"] = "testing"
 # A placeholder tenant so the MCP server (which needs an issuer) is mounted the
 # same way in CI, where no env file is present, as locally.
 os.environ["BESSEL_AUTH0_DOMAIN"] = "bessel-test.example.com"
+# Each xdist worker gets a Redis database of its own (as it does a Postgres one), and none uses the
+# developer's database 0. Redis has 16, so at most 15 workers.
+os.environ["BESSEL_REDIS_DB"] = str(1 + int(os.environ.get("PYTEST_XDIST_WORKER", "gw0").removeprefix("gw")))
 
 
 from collections.abc import Iterator
