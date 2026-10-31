@@ -26,3 +26,6 @@ venv
 node_modules
 .vite-hooks
 .turbo
+
+# Tests stay out of the API image
+services/api/src/api/tests
