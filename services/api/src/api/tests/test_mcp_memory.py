@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 from api.memory import service
-from api.tests.fixtures.mcp import ConnectFixture, mcp_call, mcp_call_error
+from api.tests.fixtures.mcp import ConnectFixture, mcp_call
 
 
 def fact(attribute: str, statement: str, **extra: Any) -> dict[str, Any]:
@@ -92,10 +92,19 @@ class TestRemember:
 
   @pytest.mark.asyncio
   async def test_a_conclusion_must_name_the_facts_it_was_checked_against(self, connect: ConnectFixture) -> None:
-    error = await mcp_call_error(connect, "remember", {"facts": [fact("kostnad utomlands", "Billigare att bo i Asien", kind="inferred")]})
+    [theirs] = await remember(connect, fact("hyra", "Betalar 9 000 i månaden"), token="token-b")
 
-    assert "based_on" in error
-    assert await search(connect) == []
+    unchecked, elsewhere, alongside = await remember(
+      connect,
+      fact("kostnad utomlands", "Billigare att bo i Asien", kind="inferred"),
+      guess("kronotyp", "Kvällsmänniska", [theirs["fact"]["id"]], area="rytm"),
+      fact("skostorlek", "44"),
+    )
+
+    assert (unchecked["outcome"], unchecked["fact"]) == ("unchecked", None)
+    assert (elsewhere["outcome"], elsewhere["fact"]) == ("unchecked", None)
+    assert alongside["outcome"] == "added"
+    assert [f["attribute"] for f in await search(connect)] == ["skostorlek"]
 
   @pytest.mark.asyncio
   async def test_a_conclusion_keeps_the_facts_it_rests_on_as_evidence(self, connect: ConnectFixture) -> None:
@@ -141,14 +150,16 @@ class TestRemember:
     assert added["similar"] == []
 
   @pytest.mark.asyncio
-  async def test_what_only_others_wrote_stays_a_hypothesis(self, connect: ConnectFixture) -> None:
+  async def test_what_only_others_wrote_stays_an_unimportant_hypothesis(self, connect: ConnectFixture) -> None:
     [mailed, seen] = await remember(
       connect,
-      fact("favoritbutik", "Handlar på Hoka", kind="observed", evidence=[{"source": "gmail", "ref": "nyhetsbrev"}]),
-      fact("läggdags", "Släcker 02", area="sömn", kind="observed", evidence=[{"source": "gmail"}, {"source": "sleep", "ref": "90 nätter"}]),
+      fact("favoritbutik", "Handlar på Hoka", kind="observed", importance=5, evidence=[{"source": "gmail", "ref": "nyhetsbrev"}]),
+      fact("läggdags", "Släcker 02", area="sömn", kind="observed", importance=5, evidence=[{"source": "gmail"}, {"source": "sleep", "ref": "90 nätter"}]),
     )
 
-    assert (mailed["fact"]["status"], seen["fact"]["status"]) == ("hypothesis", "confirmed")
+    assert (mailed["fact"]["status"], mailed["fact"]["importance"]) == ("hypothesis", 3)
+    assert (seen["fact"]["status"], seen["fact"]["importance"]) == ("confirmed", 5)
+    assert [f["attribute"] for a in (await mcp_call(connect, "get_profile"))["profile"] for f in a["facts"]] == ["läggdags"]
 
 
 class TestProfile:
@@ -160,27 +171,21 @@ class TestProfile:
 
   @pytest.mark.asyncio
   async def test_holds_what_matters_most_by_area_and_counts_the_rest(self, connect: ConnectFixture) -> None:
+    [shoes] = await remember(connect, fact("skostorlek", "44", importance=2))
     await remember(
       connect,
       fact("sömnmål", "Släckt 02:00, upp 10:15", area="sömn", importance=5),
-      fact("rutin", "Läser före sängen", area="sömn", importance=4),
-      fact("skostorlek", "44", importance=2),
+      guess("kronotyp", "Kvällsmänniska", [shoes["fact"]["id"]], area="sömn", importance=4),
     )
 
     profile = await mcp_call(connect, "get_profile")
 
-    assert [(a["area"], [f["attribute"] for f in a["facts"]]) for a in profile["profile"]] == [("sömn", ["sömnmål", "rutin"])]
+    assert [(a["area"], [(f["attribute"], f["status"]) for f in a["facts"]]) for a in profile["profile"]] == [
+      ("sömn", [("sömnmål", "confirmed"), ("kronotyp", "hypothesis")]),
+    ]
     assert profile["areas"] == [{"area": "kropp/kläder", "facts": 1}, {"area": "sömn", "facts": 2}]
     assert profile["total_facts"] == 3
-    assert {f["attribute"] for f in profile["recently_changed"]} == {"sömnmål", "rutin", "skostorlek"}
-
-  @pytest.mark.asyncio
-  async def test_a_hypothesis_stays_out_until_confirmed(self, connect: ConnectFixture) -> None:
-    [conclusion] = await remember(connect, guess("kronotyp", "Kvällsmänniska", [await known(connect)], area="sömn", importance=5))
-
-    assert (await mcp_call(connect, "get_profile"))["profile"] == []
-    await revise(connect, {"fact_id": conclusion["fact"]["id"], "action": "confirm", "evidence": [{"source": "user"}]})
-    assert [f["attribute"] for a in (await mcp_call(connect, "get_profile"))["profile"] for f in a["facts"]] == ["kronotyp"]
+    assert {f["attribute"] for f in profile["recently_changed"]} == {"sömnmål", "kronotyp", "skostorlek"}
 
   @pytest.mark.asyncio
   async def test_sensitive_facts_come_only_when_asked_for(self, connect: ConnectFixture) -> None:

@@ -1,8 +1,8 @@
 from datetime import date, datetime
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import Field, model_validator
+from pydantic import Field
 
 from api.common.schemas import Schema
 from api.models.memory_fact import MemoryKind, MemorySensitivity, MemoryStatus
@@ -87,7 +87,7 @@ class SensitivityCount(Schema):
 
 
 class MemoryProfile(Schema):
-  profile: list[ProfileArea] = Field(description="What matters most (importance 4-5), by area: confirmed facts only, hypotheses are found by search.")
+  profile: list[ProfileArea] = Field(description="What matters most (importance 4-5), by area. Hypotheses are marked.")
   areas: list[AreaCount] = Field(description="Every area known about, with how many current facts each holds.")
   recently_changed: list[ProfileFact] = Field(description="Facts added or changed in the last 7 days, newest first.")
   withheld: list[SensitivityCount] = Field(
@@ -122,24 +122,19 @@ class NewFact(Schema):
     ),
   )
 
-  @model_validator(mode="after")
-  def _inference_is_checked(self) -> Self:
-    if self.kind == MemoryKind.inferred and not self.based_on:
-      raise ValueError("An inferred fact needs based_on: search memory for what bears on it, then list the facts you checked")
-    return self
 
-
-RememberOutcome = Literal["added", "known", "conflict"]
+RememberOutcome = Literal["added", "known", "conflict", "unchecked"]
 
 
 class RememberResult(Schema):
   outcome: RememberOutcome = Field(
     description=(
       "added: stored. known: the same fact was already there, so it was confirmed and its evidence merged. "
-      + "conflict: another fact about this attribute is current; nothing was stored, use revise_memory on it."
+      + "conflict: another fact about this attribute is current; nothing was stored, use revise_memory on it. "
+      + "unchecked: an inference without based_on naming current facts; nothing was stored, search memory and try again."
     ),
   )
-  fact: MemoryFactSchema
+  fact: MemoryFactSchema | None = Field(description="What was stored or confirmed, or the fact in conflict; empty when unchecked.")
   similar: list[ProfileFact] = Field(
     default_factory=list,
     description="Current facts that look related. Merge into one of them with revise_memory instead of keeping both.",

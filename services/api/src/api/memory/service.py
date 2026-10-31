@@ -45,9 +45,10 @@ MIN_WORD_LENGTH = 4
 INFERRED_CONFIRMATIONS = 3
 RELATED_MAX_WORDS = 30
 RELATED_MIN_HITS = 2
-# Content other people wrote. What is seen only there stays a hypothesis until the user or their own data confirms
-# it, so a line planted in an email can't become part of who they are.
+# Content other people wrote. What is seen only there stays an unimportant hypothesis, out of the profile, until the
+# user raises it, so a line planted in an email can't become part of who they are.
 EXTERNAL_SOURCES = frozenset({"gmail", "email", "slack", "web"})
+EXTERNAL_MAX_IMPORTANCE = 3
 
 
 def _normalize(text: str) -> str:
@@ -68,9 +69,12 @@ def _query_words(query: str) -> list[str]:
   return re.findall(r"\w+", query.casefold())
 
 
+def _external_only(evidence: Sequence[Evidence]) -> bool:
+  return bool(evidence) and all(item.source.casefold() in EXTERNAL_SOURCES for item in evidence)
+
+
 def _default_status(kind: MemoryKind, evidence: Sequence[Evidence] = ()) -> MemoryStatus:
-  external_only = bool(evidence) and all(item.source.casefold() in EXTERNAL_SOURCES for item in evidence)
-  if kind == MemoryKind.inferred or (kind == MemoryKind.observed and external_only):
+  if kind == MemoryKind.inferred or (kind == MemoryKind.observed and _external_only(evidence)):
     return MemoryStatus.hypothesis
   return MemoryStatus.confirmed
 
@@ -122,7 +126,7 @@ class MemoryService:
     facts = await MemoryFactRepository.from_session(session).list_current(user.id)
     shown = {MemorySensitivity.normal, *sensitive}
     core = sorted(
-      (fact for fact in facts if fact.importance >= PROFILE_MIN_IMPORTANCE and fact.status == MemoryStatus.confirmed),
+      (fact for fact in facts if fact.importance >= PROFILE_MIN_IMPORTANCE),
       key=lambda fact: (-fact.importance, -(fact.confirmed_at or fact.created_at).timestamp()),
     )
     withheld = Counter(fact.sensitivity for fact in core if fact.sensitivity not in shown)
@@ -178,6 +182,10 @@ class MemoryService:
     repository = MemoryFactRepository.from_session(session)
     results: list[RememberResult] = []
     for item in items:
+      checked = await repository.list_current_by_ids(user.id, item.based_on)
+      if item.kind == MemoryKind.inferred and not checked:
+        results.append(RememberResult(outcome="unchecked", fact=None))
+        continue
       existing = await repository.get_current_for_attribute(user.id, item.attribute, area=item.area)
       same = next((fact for fact in existing if _normalize(fact.statement) == _normalize(item.statement)), None)
       if same is not None:
@@ -190,7 +198,6 @@ class MemoryService:
         results.append(RememberResult(outcome="conflict", fact=to_schema(existing[0])))
         continue
 
-      checked = await repository.list_current_by_ids(user.id, item.based_on)
       fact = MemoryFact(
         user_id=user.id,
         area=item.area.strip(),
@@ -198,7 +205,7 @@ class MemoryService:
         statement=item.statement.strip(),
         kind=item.kind,
         status=item.status or _default_status(item.kind, item.evidence),
-        importance=item.importance,
+        importance=min(item.importance, EXTERNAL_MAX_IMPORTANCE) if _external_only(item.evidence) else item.importance,
         sensitivity=item.sensitivity,
         evidence=_merged_evidence([], [*item.evidence, *(Evidence(source="memory", ref=str(other.id)) for other in checked)]),
         valid_from=item.valid_from or today,
