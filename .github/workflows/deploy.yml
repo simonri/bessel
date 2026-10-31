@@ -120,7 +120,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: metron
+          POSTGRES_DB: bessel
         ports:
           - 5432:5432
         options: >-
@@ -142,7 +142,7 @@ jobs:
       BESSEL_POSTGRES_PORT: 5432
       BESSEL_POSTGRES_USER: postgres
       BESSEL_POSTGRES_PASSWORD: postgres
-      BESSEL_POSTGRES_DB: metron
+      BESSEL_POSTGRES_DB: bessel
       BESSEL_REDIS_HOST: localhost
       BESSEL_REDIS_PORT: 6379
     steps:

@@ -20,17 +20,17 @@ x-db-env: &db_env
   BESSEL_POSTGRES_PASSWORD: ${BESSEL_POSTGRES_PASSWORD}
   BESSEL_POSTGRES_DB: ${BESSEL_POSTGRES_DB}
   BESSEL_POSTGRES_PORT: 5432
-  BESSEL_POSTGRES_HOST: metron-postgres
+  BESSEL_POSTGRES_HOST: bessel-postgres
 
 x-redis-env: &redis_env
-  BESSEL_REDIS_HOST: metron-redis
+  BESSEL_REDIS_HOST: bessel-redis
   BESSEL_REDIS_PORT: 6379
 
 services:
   # ============================================================================
   # Database
   # ============================================================================
-  metron-postgres:
+  bessel-postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -38,7 +38,7 @@ services:
       POSTGRES_PASSWORD: ${BESSEL_POSTGRES_PASSWORD}
       POSTGRES_DB: ${BESSEL_POSTGRES_DB}
     volumes:
-      - metron_postgres_data:/var/lib/postgresql/data
+      - bessel_postgres_data:/var/lib/postgresql/data
     command:
       - "postgres"
       - "-c"
@@ -61,12 +61,12 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - metron-internal
+      - bessel-internal
 
   # ============================================================================
   # Cache & Job Queue
   # ============================================================================
-  metron-redis:
+  bessel-redis:
     image: redis:7-alpine
     restart: unless-stopped
     command: >
@@ -75,14 +75,14 @@ services:
       --maxmemory 128mb
       --maxmemory-policy allkeys-lru
     volumes:
-      - metron_redis_data:/data
+      - bessel_redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
       retries: 10
     networks:
-      - metron-internal
+      - bessel-internal
 
   # ============================================================================
   # API
@@ -93,9 +93,9 @@ services:
     # Longer than uvicorn's --timeout-graceful-shutdown, so lifespan shutdown runs.
     stop_grace_period: 20s
     depends_on:
-      metron-postgres:
+      bessel-postgres:
         condition: service_healthy
-      metron-redis:
+      bessel-redis:
         condition: service_healthy
     environment:
       <<: [*db_env, *redis_env]
@@ -128,18 +128,18 @@ services:
       BESSEL_MEMORY_EMBEDDING_MODEL: ${BESSEL_MEMORY_EMBEDDING_MODEL:-sentence-transformers/paraphrase-multilingual-mpnet-base-v2}
       BESSEL_MEMORY_EMBEDDING_CACHE_DIR: /models
     volumes:
-      - metron_models:/models
+      - bessel_models:/models
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
       # API routes (Tailscale-only). Legacy: kept until desktop installs that
       # still point at the tailnet host have updated to api.getbessel.com.
-      - "traefik.http.routers.metron-api.rule=Host(`vps.tailca3fd9.ts.net`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`))"
-      - "traefik.http.routers.metron-api.entrypoints=websecure"
-      - "traefik.http.routers.metron-api.middlewares=metron-tailscale@docker"
-      - "traefik.http.services.metron-api.loadbalancer.server.port=8000"
+      - "traefik.http.routers.bessel-api-tailnet.rule=Host(`vps.tailca3fd9.ts.net`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`))"
+      - "traefik.http.routers.bessel-api-tailnet.entrypoints=websecure"
+      - "traefik.http.routers.bessel-api-tailnet.middlewares=bessel-tailscale@docker"
+      - "traefik.http.services.bessel-api.loadbalancer.server.port=8000"
       # Tailscale-only access
-      - "traefik.http.middlewares.metron-tailscale.ipallowlist.sourcerange=100.64.0.0/10"
+      - "traefik.http.middlewares.bessel-tailscale.ipallowlist.sourcerange=100.64.0.0/10"
       # Public API access (api.getbessel.com, app.getbessel.com/v1) - both reach
       # Traefik through the Cloudflare Tunnel in /home/infra/cloudflared. Separate
       # cert resolver since the default DNS-01 Cloudflare token on this box isn't
@@ -148,16 +148,16 @@ services:
       - "traefik.http.routers.bessel-api-public.rule=Host(`api.getbessel.com`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`) || Path(`/mcp`) || Path(`/.well-known/oauth-protected-resource/mcp`) || Path(`/favicon.ico`))"
       - "traefik.http.routers.bessel-api-public.entrypoints=websecure"
       - "traefik.http.routers.bessel-api-public.tls.certresolver=letsencrypt-http"
-      - "traefik.http.routers.bessel-api-public.service=metron-api"
+      - "traefik.http.routers.bessel-api-public.service=bessel-api"
       - "traefik.http.routers.bessel-api-public.middlewares=security-headers@file,rate-limit@file"
       # The web app calls the API on its own origin (VITE_API_BASE_URL=/)
       - "traefik.http.routers.bessel-app-api.rule=Host(`app.getbessel.com`) && (PathPrefix(`/v1`) || Path(`/healthz`) || Path(`/openapi.json`))"
       - "traefik.http.routers.bessel-app-api.entrypoints=websecure"
       - "traefik.http.routers.bessel-app-api.tls.certresolver=letsencrypt-http"
-      - "traefik.http.routers.bessel-app-api.service=metron-api"
+      - "traefik.http.routers.bessel-app-api.service=bessel-api"
       - "traefik.http.routers.bessel-app-api.middlewares=rate-limit@file"
     networks:
-      - metron-internal
+      - bessel-internal
       - web
 
   # ============================================================================
@@ -174,9 +174,9 @@ services:
       start_period: 30s
     restart: unless-stopped
     depends_on:
-      metron-postgres:
+      bessel-postgres:
         condition: service_healthy
-      metron-redis:
+      bessel-redis:
         condition: service_healthy
     environment:
       <<: [*db_env, *redis_env]
@@ -199,7 +199,7 @@ services:
       BESSEL_STORAGE_ACCESS_KEY_ID: ${BESSEL_STORAGE_ACCESS_KEY_ID:-}
       BESSEL_STORAGE_SECRET_ACCESS_KEY: ${BESSEL_STORAGE_SECRET_ACCESS_KEY:-}
     networks:
-      - metron-internal
+      - bessel-internal
 
   # ============================================================================
   # Web Frontend
@@ -212,27 +212,31 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=web"
-      - "traefik.http.routers.metron-web.rule=Host(`vps.tailca3fd9.ts.net`)"
-      - "traefik.http.routers.metron-web.entrypoints=websecure"
-      - "traefik.http.routers.metron-web.middlewares=metron-tailscale@docker"
-      - "traefik.http.routers.metron-web.priority=1"
+      - "traefik.http.routers.bessel-web-tailnet.rule=Host(`vps.tailca3fd9.ts.net`)"
+      - "traefik.http.routers.bessel-web-tailnet.entrypoints=websecure"
+      - "traefik.http.routers.bessel-web-tailnet.middlewares=bessel-tailscale@docker"
+      - "traefik.http.routers.bessel-web-tailnet.priority=1"
       - "traefik.http.routers.bessel-web-public.rule=Host(`app.getbessel.com`)"
       - "traefik.http.routers.bessel-web-public.entrypoints=websecure"
       - "traefik.http.routers.bessel-web-public.tls.certresolver=letsencrypt-http"
-      - "traefik.http.routers.bessel-web-public.service=metron-web"
+      - "traefik.http.routers.bessel-web-public.service=bessel-web"
       - "traefik.http.routers.bessel-web-public.priority=1"
-      - "traefik.http.services.metron-web.loadbalancer.server.port=3000"
+      - "traefik.http.services.bessel-web.loadbalancer.server.port=3000"
     networks:
-      - metron-internal
+      - bessel-internal
       - web
 
+# The volumes were created under the old project-scoped names; pinning them keeps the same data.
 volumes:
-  metron_postgres_data:
-  metron_redis_data:
-  metron_models:
+  bessel_postgres_data:
+    name: metron_metron_postgres_data
+  bessel_redis_data:
+    name: metron_metron_redis_data
+  bessel_models:
+    name: metron_metron_models
 
 networks:
-  metron-internal:
+  bessel-internal:
     driver: bridge
   web:
     external: true
