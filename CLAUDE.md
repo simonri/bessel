@@ -64,7 +64,7 @@ docker compose up -d       # Start PostgreSQL, Redis
 Several Claude sessions work on this repo at once, each in its own git worktree under `.claude/worktrees/` on its own branch off `origin/master`.
 
 - **Start**: in a fresh worktree, run `scripts/worktree-setup.sh` (env files from the main checkout, `pnpm install`, `uv sync`).
-- **Stay in your worktree.** Never run commands in `/home/simon/dev/metron` itself: that is the user's checkout. Branches and the stash are shared by all worktrees; a hook refuses a bare `git stash`/`git stash pop`, force pushes and pushes to master.
+- **Stay in your worktree.** Make changes in a worktree; from one, never touch the main checkout (`/home/simon/dev/metron`), which is the user's. Branches and the stash are shared by all worktrees; a hook refuses a bare `git stash`/`git stash pop`, force pushes and pushes to master.
 - **One task per branch**, kept small. Commit as you go.
 - **Done means checked.** `scripts/check.sh` lints, formats and type-checks what the branch changed (the Stop hook runs it and won't let you stop while it fails). Also run the tests covering your change, and the app for UI changes when you can. Report the commands you ran and their results.
 - **Tests must fail when the code is broken**: break the code a new test covers, watch it go red, restore.

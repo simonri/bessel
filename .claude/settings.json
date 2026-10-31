@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_git.py\""
+            "command": "f=\"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_git.py\"; [ ! -f \"$f\" ] || python3 \"$f\""
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop_check.py\"",
+            "command": "f=\"$CLAUDE_PROJECT_DIR/.claude/hooks/stop_check.py\"; [ ! -f \"$f\" ] || python3 \"$f\"",
             "timeout": 300
           }
         ]
