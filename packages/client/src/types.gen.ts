@@ -4429,6 +4429,12 @@ export type LocationActivity = {
    */
   utc_offset_minutes: number | null;
   /**
+   * End Utc Offset Minutes
+   *
+   * UTC offset where the trip ended; differs from the start's across time zones.
+   */
+  end_utc_offset_minutes: number | null;
+  /**
    * Activity Type
    *
    * How Google thinks you moved, e.g. walking, in passenger vehicle, flying.
@@ -4569,6 +4575,12 @@ export type LocationImportSchema = {
    * Segments skipped because a newer export already decided them.
    */
   stale: number;
+  /**
+   * Unreadable
+   *
+   * Visits, trips and routes in the file that couldn't be read. While there are any, the import removes nothing.
+   */
+  unreadable: number;
 };
 
 /**
@@ -4613,6 +4625,12 @@ export type LocationVisit = {
    * UTC offset where the visit happened.
    */
   utc_offset_minutes: number | null;
+  /**
+   * End Utc Offset Minutes
+   *
+   * UTC offset where the visit ended.
+   */
+  end_utc_offset_minutes: number | null;
   /**
    * Place Id
    *

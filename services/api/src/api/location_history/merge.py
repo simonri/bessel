@@ -11,6 +11,8 @@ An export is the phone's full knowledge as of its latest recorded moment
   (or edited into a different segment) on the phone, and is soft-deleted.
 - Outside the span nothing is touched: a phone that only keeps recent
   months must not wipe older history.
+- A file with segments that couldn't be read removes nothing: what looks
+  missing may only be unreadable.
 
 Two different exports with the same `as_of` can't be ordered; the later
 upload wins.
@@ -54,6 +56,8 @@ def plan_merge(
   as_of: datetime,
   range_start: datetime,
   range_end: datetime,
+  *,
+  remove_missing: bool = True,
 ) -> MergePlan:
   plan = MergePlan()
   for segment in segments:
@@ -69,6 +73,8 @@ def plan_merge(
     else:
       plan.confirmed.append(segment.key)
 
+  if not remove_missing:
+    return plan
   in_file = {s.key for s in segments}
   plan.removed = [
     row.key

@@ -1284,6 +1284,7 @@ enum API {
         var startAt: Date
         var endAt: Date
         var utcOffsetMinutes: Int?
+        var endUtcOffsetMinutes: Int?
         var activityType: String?
         var distanceMeters: Double?
         var startLatitude: Double?
@@ -1319,6 +1320,7 @@ enum API {
         var removed: Int
         var unchanged: Int
         var stale: Int
+        var unreadable: Int
     }
 
     struct LocationPoint: Codable, Hashable {
@@ -1332,6 +1334,7 @@ enum API {
         var startAt: Date
         var endAt: Date
         var utcOffsetMinutes: Int?
+        var endUtcOffsetMinutes: Int?
         var placeId: String?
         var name: String?
         var address: String?
@@ -7201,6 +7204,7 @@ extension API.LocationActivity {
         case startAt
         case endAt
         case utcOffsetMinutes
+        case endUtcOffsetMinutes
         case activityType
         case distanceMeters
         case startLatitude
@@ -7215,6 +7219,7 @@ extension API.LocationActivity {
         self.startAt = try container.decode(Date.self, forKey: .startAt)
         self.endAt = try container.decode(Date.self, forKey: .endAt)
         self.utcOffsetMinutes = try container.decodeIfPresent(Int.self, forKey: .utcOffsetMinutes)
+        self.endUtcOffsetMinutes = try container.decodeIfPresent(Int.self, forKey: .endUtcOffsetMinutes)
         self.activityType = try container.decodeIfPresent(String.self, forKey: .activityType)
         self.distanceMeters = try container.decodeIfPresent(Double.self, forKey: .distanceMeters)
         self.startLatitude = try container.decodeIfPresent(Double.self, forKey: .startLatitude)
@@ -7228,6 +7233,7 @@ extension API.LocationActivity {
         case startAt = "start_at"
         case endAt = "end_at"
         case utcOffsetMinutes = "utc_offset_minutes"
+        case endUtcOffsetMinutes = "end_utc_offset_minutes"
         case activityType = "activity_type"
         case distanceMeters = "distance_meters"
         case startLatitude = "start_latitude"
@@ -7242,6 +7248,7 @@ extension API.LocationActivity {
         try container.encode(API.Instant(self.startAt), forKey: .startAt)
         try container.encode(API.Instant(self.endAt), forKey: .endAt)
         try container.encodeIfPresent(self.utcOffsetMinutes, forKey: .utcOffsetMinutes)
+        try container.encodeIfPresent(self.endUtcOffsetMinutes, forKey: .endUtcOffsetMinutes)
         try container.encodeIfPresent(self.activityType, forKey: .activityType)
         try container.encodeIfPresent(self.distanceMeters, forKey: .distanceMeters)
         try container.encodeIfPresent(self.startLatitude, forKey: .startLatitude)
@@ -7326,6 +7333,7 @@ extension API.LocationImportSchema {
         case removed
         case unchanged
         case stale
+        case unreadable
     }
 
     init(from decoder: Decoder) throws {
@@ -7343,6 +7351,7 @@ extension API.LocationImportSchema {
         self.removed = try container.decode(Int.self, forKey: .removed)
         self.unchanged = try container.decode(Int.self, forKey: .unchanged)
         self.stale = try container.decode(Int.self, forKey: .stale)
+        self.unreadable = try container.decode(Int.self, forKey: .unreadable)
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -7359,6 +7368,7 @@ extension API.LocationImportSchema {
         case removed
         case unchanged
         case stale
+        case unreadable
     }
 
     func encode(to encoder: Encoder) throws {
@@ -7376,6 +7386,7 @@ extension API.LocationImportSchema {
         try container.encode(self.removed, forKey: .removed)
         try container.encode(self.unchanged, forKey: .unchanged)
         try container.encode(self.stale, forKey: .stale)
+        try container.encode(self.unreadable, forKey: .unreadable)
     }
 }
 
@@ -7413,6 +7424,7 @@ extension API.LocationVisit {
         case startAt
         case endAt
         case utcOffsetMinutes
+        case endUtcOffsetMinutes
         case placeId
         case name
         case address
@@ -7428,6 +7440,7 @@ extension API.LocationVisit {
         self.startAt = try container.decode(Date.self, forKey: .startAt)
         self.endAt = try container.decode(Date.self, forKey: .endAt)
         self.utcOffsetMinutes = try container.decodeIfPresent(Int.self, forKey: .utcOffsetMinutes)
+        self.endUtcOffsetMinutes = try container.decodeIfPresent(Int.self, forKey: .endUtcOffsetMinutes)
         self.placeId = try container.decodeIfPresent(String.self, forKey: .placeId)
         self.name = try container.decodeIfPresent(String.self, forKey: .name)
         self.address = try container.decodeIfPresent(String.self, forKey: .address)
@@ -7442,6 +7455,7 @@ extension API.LocationVisit {
         case startAt = "start_at"
         case endAt = "end_at"
         case utcOffsetMinutes = "utc_offset_minutes"
+        case endUtcOffsetMinutes = "end_utc_offset_minutes"
         case placeId = "place_id"
         case name
         case address
@@ -7457,6 +7471,7 @@ extension API.LocationVisit {
         try container.encode(API.Instant(self.startAt), forKey: .startAt)
         try container.encode(API.Instant(self.endAt), forKey: .endAt)
         try container.encodeIfPresent(self.utcOffsetMinutes, forKey: .utcOffsetMinutes)
+        try container.encodeIfPresent(self.endUtcOffsetMinutes, forKey: .endUtcOffsetMinutes)
         try container.encodeIfPresent(self.placeId, forKey: .placeId)
         try container.encodeIfPresent(self.name, forKey: .name)
         try container.encodeIfPresent(self.address, forKey: .address)

@@ -37,6 +37,9 @@ class LocationSegment(RecordModel):
   start_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
   end_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
   utc_offset_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
+  # Differs from the start's when a trip crosses time zones. Null on rows
+  # imported before end offsets were read: the start's applies.
+  end_utc_offset_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
   # Wall-clock time where the segment happened, so days follow the trip's
   # time zone rather than the viewer's.
   local_start: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=False), nullable=False)
