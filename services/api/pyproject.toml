@@ -50,6 +50,8 @@ dependencies = [
   "pillow>=13.0.0",
   "pillow-heif>=1.8.1",
   "phonenumbers>=9.0.41",
+  "numpy>=2.0",
+  "fastembed>=0.7",
 ]
 
 [dependency-groups]

@@ -7,13 +7,18 @@ deleted from here; changed facts close and keep their history.
 """
 
 import re
+from collections import Counter
 from collections.abc import Sequence
 from datetime import date, timedelta
 from typing import Any
 from uuid import UUID
 
+import structlog
+
 from api.common.utils import utc_now
 from api.exceptions import ResourceNotFound, ValidationError
+from api.memory import ranking
+from api.memory.embeddings import Embedder, embedding_key, get_embedder
 from api.memory.repository import MemoryFactRepository
 from api.memory.schemas import (
   AreaCount,
@@ -27,19 +32,30 @@ from api.memory.schemas import (
   ProfileFact,
   RememberResult,
   ReviseResult,
+  SensitivityCount,
 )
-from api.models.memory_fact import MemoryFact, MemoryKind, MemoryStatus
+from api.models.memory_fact import MemoryFact, MemoryKind, MemorySensitivity, MemoryStatus
 from api.models.user import User
 from api.postgres import AsyncSession
 
+log = structlog.get_logger()
+
 PROFILE_MIN_IMPORTANCE = 4
-PROFILE_MAX_FACTS = 150
+# About 2k tokens: past that a profile crowds out the task and pulls answers towards agreeing with the user.
+PROFILE_MAX_CHARS = 8000
 RECENT_DAYS = 7
 RECENT_MAX = 30
 MAX_EVIDENCE = 20
 SIMILAR_MAX = 5
 MIN_WORD_LENGTH = 4
 INFERRED_CONFIRMATIONS = 3
+# How close in meaning another fact must be to be shown next to a new one, to merge with or check against: the
+# closest 1% of pairs among the user's real facts with paraphrase-multilingual-mpnet-base-v2 (Oct 2026).
+RELATED_MIN_SIMILARITY = 0.62
+# Content other people wrote. What is seen only there stays an unimportant hypothesis, out of the profile, until the
+# user raises it, so a line planted in an email can't become part of who they are.
+EXTERNAL_SOURCES = frozenset({"gmail", "email", "icloud", "icloud_mail", "mail", "imap", "slack", "web"})
+EXTERNAL_MAX_IMPORTANCE = 3
 
 
 def _normalize(text: str) -> str:
@@ -56,8 +72,23 @@ def _words(text: str) -> list[str]:
   return [word for word in re.findall(r"\w+", text.casefold()) if len(word) >= MIN_WORD_LENGTH and word not in COMMON_WORDS]
 
 
-def _default_status(kind: MemoryKind) -> MemoryStatus:
-  return MemoryStatus.hypothesis if kind == MemoryKind.inferred else MemoryStatus.confirmed
+def _query_words(query: str) -> list[str]:
+  return re.findall(r"\w+", query.casefold())
+
+
+def _document(fact: MemoryFact) -> str:
+  """What a fact's meaning is computed from: its place in memory as context for the statement."""
+  return f"{fact.area} / {fact.attribute}: {fact.statement}"
+
+
+def _external_only(evidence: Sequence[Evidence]) -> bool:
+  return bool(evidence) and all(item.source.casefold() in EXTERNAL_SOURCES for item in evidence)
+
+
+def _default_status(kind: MemoryKind, evidence: Sequence[Evidence] = ()) -> MemoryStatus:
+  if kind == MemoryKind.inferred or (kind == MemoryKind.observed and _external_only(evidence)):
+    return MemoryStatus.hypothesis
+  return MemoryStatus.confirmed
 
 
 def _merged_evidence(existing: Sequence[dict[str, Any]], added: Sequence[Evidence]) -> list[dict[str, Any]]:
@@ -103,12 +134,23 @@ def _confirm(fact: MemoryFact, evidence: Sequence[Evidence], *, promote: bool) -
 
 
 class MemoryService:
-  async def profile(self, session: AsyncSession, user: User, *, today: date) -> MemoryProfile:
+  async def profile(self, session: AsyncSession, user: User, *, today: date, sensitive: Sequence[MemorySensitivity] = ()) -> MemoryProfile:
     facts = await MemoryFactRepository.from_session(session).list_current(user.id)
-    core = [fact for fact in facts if fact.importance >= PROFILE_MIN_IMPORTANCE]
-    truncated = len(core) > PROFILE_MAX_FACTS
+    shown = {MemorySensitivity.normal, *sensitive}
+    core = sorted(
+      (fact for fact in facts if fact.importance >= PROFILE_MIN_IMPORTANCE),
+      key=lambda fact: (-fact.importance, -(fact.confirmed_at or fact.created_at).timestamp()),
+    )
+    withheld = Counter(fact.sensitivity for fact in core if fact.sensitivity not in shown)
+
     by_area: dict[str, list[ProfileFact]] = {}
-    for fact in core[:PROFILE_MAX_FACTS]:
+    size = 0
+    truncated = False
+    for fact in (fact for fact in core if fact.sensitivity in shown):
+      size += len(fact.statement)
+      if size > PROFILE_MAX_CHARS:
+        truncated = True
+        break
       by_area.setdefault(fact.area, []).append(_brief(fact))
 
     counts: dict[str, int] = {}
@@ -117,7 +159,7 @@ class MemoryService:
 
     since = today - timedelta(days=RECENT_DAYS)
     recent = sorted(
-      (fact for fact in facts if (fact.modified_at or fact.created_at).date() >= since),
+      (fact for fact in facts if fact.sensitivity in shown and (fact.modified_at or fact.created_at).date() >= since),
       key=lambda fact: fact.modified_at or fact.created_at,
       reverse=True,
     )
@@ -125,6 +167,7 @@ class MemoryService:
       profile=[ProfileArea(area=area, facts=items) for area, items in sorted(by_area.items())],
       areas=[AreaCount(area=area, facts=count) for area, count in sorted(counts.items())],
       recently_changed=[_brief(fact) for fact in recent[:RECENT_MAX]],
+      withheld=[SensitivityCount(sensitivity=kind, facts=count) for kind, count in sorted(withheld.items())],
       total_facts=len(facts),
       truncated=truncated,
     )
@@ -141,16 +184,70 @@ class MemoryService:
     include_past: bool,
     limit: int,
   ) -> list[MemoryFactSchema]:
-    terms = query.split() if query else []
-    facts = await MemoryFactRepository.from_session(session).search(
-      user.id, terms=terms, area=area, status=status, as_of=as_of, include_past=include_past, limit=limit
-    )
-    return [to_schema(fact) for fact in facts]
+    repository = MemoryFactRepository.from_session(session)
+    filters = {"area": area, "status": status, "as_of": as_of, "include_past": include_past}
+    if not query:
+      return [to_schema(fact) for fact in await repository.search(user.id, **filters, limit=limit)]
+    words = _query_words(query)
+    candidates = await repository.list_with_mentions(user.id, words, **filters)
+    by_words, loose = ranking.by_words(candidates)
+    facts = [fact for fact, _ in candidates]
+    similarity: dict[UUID, float] = {}
+    embedder = get_embedder()
+    if embedder is not None:
+      vectors = await self._vectors(repository, facts, embedder)
+      try:
+        similarity = ranking.cosines(vectors, await embedder.query(query)) if vectors else {}
+      except Exception:
+        log.exception("Memory search by meaning failed; searching by words only")
+    found = ranking.fuse(by_words, loose, ranking.by_meaning(facts, similarity), similarity)
+    return [to_schema(fact) for fact in found[:limit]]
+
+  async def embed_current_facts(self, session: AsyncSession) -> None:
+    """Computes the meaning of every user's current facts that lack an up-to-date one."""
+    embedder = get_embedder()
+    if embedder is None:
+      return
+    repository = MemoryFactRepository.from_session(session)
+    await self._vectors(repository, await repository.list_current_for_everyone(), embedder)
+
+  async def _vectors(self, repository: MemoryFactRepository, facts: Sequence[MemoryFact], embedder: Embedder) -> dict[UUID, list[float]]:
+    """Each fact's meaning, computing what is missing or out of date first. Empty if the model can't run."""
+    keys = {fact.id: embedding_key(embedder.model, _document(fact)) for fact in facts}
+    stale = [fact for fact in facts if fact.embedding is None or fact.embedding_key != keys[fact.id]]
+    if stale:
+      try:
+        embeddings = await embedder.documents([_document(fact) for fact in stale])
+      except Exception:
+        log.exception("Embedding memory facts failed; searching by words only", facts=len(stale))
+        return {}
+      for fact, embedding in zip(stale, embeddings, strict=True):
+        await repository.store_embedding(fact, embedding, keys[fact.id])
+    return {fact.id: fact.embedding for fact in facts if fact.embedding is not None}
+
+  async def _near(self, repository: MemoryFactRepository, user: User, fact: MemoryFact) -> list[MemoryFact]:
+    """Current facts close in meaning to `fact`, nearest first: the same thing said differently, or something that
+    bears on it."""
+    embedder = get_embedder()
+    if embedder is None:
+      return []
+    facts = await repository.list_current(user.id)
+    vectors = await self._vectors(repository, facts, embedder)
+    if fact.id not in vectors:
+      return []
+    others = {id_: vector for id_, vector in vectors.items() if id_ != fact.id}
+    similarity = ranking.cosines(others, vectors[fact.id])
+    near = sorted((other for other in facts if similarity.get(other.id, 0.0) >= RELATED_MIN_SIMILARITY), key=lambda other: -similarity[other.id])
+    return near[: SIMILAR_MAX + 1]
 
   async def remember(self, session: AsyncSession, user: User, items: Sequence[NewFact], *, today: date) -> list[RememberResult]:
     repository = MemoryFactRepository.from_session(session)
     results: list[RememberResult] = []
     for item in items:
+      checked = await repository.list_current_by_ids(user.id, item.based_on)
+      if item.kind == MemoryKind.inferred and not checked:
+        results.append(RememberResult(outcome="unchecked", fact=None))
+        continue
       existing = await repository.get_current_for_attribute(user.id, item.attribute, area=item.area)
       same = next((fact for fact in existing if _normalize(fact.statement) == _normalize(item.statement)), None)
       if same is not None:
@@ -169,19 +266,22 @@ class MemoryService:
         attribute=item.attribute.strip(),
         statement=item.statement.strip(),
         kind=item.kind,
-        status=item.status or _default_status(item.kind),
-        importance=item.importance,
+        status=item.status or _default_status(item.kind, item.evidence),
+        importance=min(item.importance, EXTERNAL_MAX_IMPORTANCE) if _external_only(item.evidence) else item.importance,
         sensitivity=item.sensitivity,
-        evidence=_merged_evidence([], item.evidence),
+        evidence=_merged_evidence([], [*item.evidence, *(Evidence(source="memory", ref=str(other.id)) for other in checked)]),
         valid_from=item.valid_from or today,
         confirmed_at=utc_now(),
         confirm_count=1,
       )
       await repository.create(fact, flush=True)
-      # The same attribute in another area first: the likeliest duplicate.
+      # The same attribute in another area first: the likeliest duplicate. Then facts close in meaning, which may say
+      # the same or contradict it.
       elsewhere = await repository.get_current_for_attribute(user.id, item.attribute)
       by_words = await repository.list_current_matching_words(user.id, _words(item.attribute), limit=SIMILAR_MAX + 1)
-      similar = list({other.id: other for other in [*elsewhere, *by_words] if other.id != fact.id}.values())
+      near = await self._near(repository, user, fact)
+      seen = {fact.id, *(other.id for other in checked)}
+      similar = list({other.id: other for other in [*elsewhere, *by_words, *near] if other.id not in seen}.values())
       results.append(RememberResult(outcome="added", fact=to_schema(fact), similar=[_brief(other) for other in similar[:SIMILAR_MAX]]))
     return results
 
@@ -243,7 +343,7 @@ class MemoryService:
         attribute=(change.attribute or fact.attribute).strip(),
         statement=change.statement.strip(),
         kind=kind,
-        status=_default_status(kind),
+        status=_default_status(kind, change.evidence),
         importance=change.importance or fact.importance,
         sensitivity=change.sensitivity or fact.sensitivity,
         evidence=_merged_evidence([], change.evidence),

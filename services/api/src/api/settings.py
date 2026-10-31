@@ -97,6 +97,10 @@ class Settings(BaseSettings):
   OPENROUTER_API_KEY: str = ""
   RECIPE_IMPORT_MODEL: str = "google/gemini-3.1-flash-lite"
 
+  # Memory search by meaning: a fastembed model run on this server, downloaded on first use. Empty: words only.
+  MEMORY_EMBEDDING_MODEL: str = ""
+  MEMORY_EMBEDDING_CACHE_DIR: Path | None = None
+
   # Enable Banking (open banking account data). The free, restricted mode only
   # reaches accounts linked in the Enable Banking control panel, so only the
   # users listed here may connect a bank.

@@ -50,6 +50,9 @@ COPY --chown=appuser:appgroup services/api/alembic.ini ./services/api/
 COPY --chown=appuser:appgroup services/api/migrations/ ./services/api/migrations/
 COPY --chown=appuser:appgroup services/api/db.py ./services/api/
 
+# The memory embedding model is downloaded here on first use; production mounts a volume so it survives deploys.
+RUN mkdir -p /models && chown appuser:appgroup /models
+
 USER appuser
 WORKDIR /app/services/api
 

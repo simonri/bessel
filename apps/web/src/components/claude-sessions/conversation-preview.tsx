@@ -6,6 +6,7 @@ import {
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { GitBranch } from "lucide-react";
 import {
+  type ComponentProps,
   type ReactNode,
   useEffect,
   useLayoutEffect,
@@ -31,7 +32,13 @@ type PreviewState =
   | { status: "ready"; preview: ClaudeConversationPreview | null }
   | { status: "error" };
 
-function usePreview(cwd: string, conversation: ClaudeConversation) {
+// A running conversation moves on without its key changing, so it is read
+// again on every open, showing the last copy meanwhile.
+function usePreview(
+  cwd: string,
+  conversation: ClaudeConversation,
+  live: boolean,
+) {
   const key = cacheKey(conversation);
   const [state, setState] = useState<PreviewState>(() =>
     cache.has(key)
@@ -41,10 +48,11 @@ function usePreview(cwd: string, conversation: ClaudeConversation) {
   useEffect(() => {
     if (cache.has(key)) {
       setState({ status: "ready", preview: cache.get(key) ?? null });
-      return;
+      if (!live) return;
+    } else {
+      setState({ status: "loading" });
     }
     let cancelled = false;
-    setState({ status: "loading" });
     Promise.resolve()
       .then(() =>
         claudeSessionsApi().conversationPreview(cwd, conversation.sessionId),
@@ -55,13 +63,13 @@ function usePreview(cwd: string, conversation: ClaudeConversation) {
           if (!cancelled) setState({ status: "ready", preview });
         },
         () => {
-          if (!cancelled) setState({ status: "error" });
+          if (!cancelled && !cache.has(key)) setState({ status: "error" });
         },
       );
     return () => {
       cancelled = true;
     };
-  }, [cwd, conversation.sessionId, key]);
+  }, [cwd, conversation.sessionId, key, live]);
   return state;
 }
 
@@ -158,11 +166,15 @@ function PreviewBody({ state }: { state: PreviewState }) {
 function PreviewCard({
   cwd,
   conversation,
+  live,
 }: {
   cwd: string;
   conversation: ClaudeConversation;
+  live: boolean;
 }) {
-  const state = usePreview(cwd, conversation);
+  const state = usePreview(cwd, conversation, live);
+  const latest =
+    state.status === "ready" ? state.preview?.exchanges.at(-1) : undefined;
   const body = useRef<HTMLDivElement>(null);
   const [clipped, setClipped] = useState(false);
   useLayoutEffect(() => {
@@ -186,7 +198,7 @@ function PreviewCard({
         </p>
         <div className="flex items-center gap-1.5 text-11 text-white/40">
           <span className="tabular-nums">
-            {new Date(conversation.updatedAt).toLocaleString(
+            {new Date(latest?.at ?? conversation.updatedAt).toLocaleString(
               undefined,
               DATE_FORMAT,
             )}
@@ -220,30 +232,40 @@ function PreviewCard({
 }
 
 /**
- * Shows the last few exchanges of a past conversation beside its row, to tell
- * apart conversations that share a name.
+ * Shows the last few exchanges of a conversation beside its row, to tell
+ * apart conversations that share a name. `live` for one still running, which
+ * is read afresh each time. Other props go to the trigger, so it can sit
+ * inside another trigger such as a context menu's.
  */
 export function ConversationPreview({
   cwd,
   conversation,
+  live = false,
   children,
+  ...triggerProps
 }: {
   cwd: string;
-  conversation: ClaudeConversation;
+  /** Null: no card, the child renders as it is. */
+  conversation: ClaudeConversation | null;
+  live?: boolean;
   children: ReactNode;
-}) {
+} & Omit<ComponentProps<typeof HoverCardTrigger>, "asChild" | "children">) {
   return (
     <HoverCard openDelay={350} closeDelay={80}>
-      <HoverCardTrigger asChild>{children}</HoverCardTrigger>
-      <HoverCardContent
-        side="right"
-        align="start"
-        sideOffset={12}
-        collisionPadding={16}
-        className="w-[22rem] overflow-hidden rounded-xl border-white/10 p-0 shadow-2xl"
-      >
-        <PreviewCard cwd={cwd} conversation={conversation} />
-      </HoverCardContent>
+      <HoverCardTrigger asChild {...triggerProps}>
+        {children}
+      </HoverCardTrigger>
+      {conversation && (
+        <HoverCardContent
+          side="right"
+          align="start"
+          sideOffset={12}
+          collisionPadding={16}
+          className="w-[22rem] overflow-hidden rounded-xl border-white/10 p-0 shadow-2xl"
+        >
+          <PreviewCard cwd={cwd} conversation={conversation} live={live} />
+        </HoverCardContent>
+      )}
     </HoverCard>
   );
 }

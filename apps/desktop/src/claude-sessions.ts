@@ -16,6 +16,7 @@ import {
   parseRemoteUrl,
   pruneEnded,
   reconcile,
+  sessionContinuing,
   sessionStatus,
   transcriptExists,
   transcriptHasConversation,
@@ -164,9 +165,8 @@ class ClaudeSessionManager {
     if (resumeId && !isSessionId(resumeId))
       throw new Error("Invalid Claude session id");
     if (resumeId) {
-      const known = this.store.sessions.find(
-        (s) =>
-          s.sessionId === resumeId || s.previousSessionIds?.includes(resumeId),
+      const known = sessionContinuing(this.store.sessions, resumeId, (s) =>
+        this.hasConversation(s.cwd, s.sessionId),
       );
       if (known) return this.resume(known.key);
     }
@@ -253,7 +253,9 @@ class ClaudeSessionManager {
         session.name,
         resume,
       );
-      if (session.sessionId)
+      // Only a resumed conversation carries the old one on; a fresh start
+      // leaves it behind, to be found in the list of past conversations.
+      if (resume)
         session.previousSessionIds = [
           session.sessionId,
           ...(session.previousSessionIds ?? []),

@@ -81,10 +81,19 @@ class AreaCount(Schema):
   facts: int
 
 
+class SensitivityCount(Schema):
+  sensitivity: MemorySensitivity
+  facts: int
+
+
 class MemoryProfile(Schema):
   profile: list[ProfileArea] = Field(description="What matters most (importance 4-5), by area. Hypotheses are marked.")
   areas: list[AreaCount] = Field(description="Every area known about, with how many current facts each holds.")
   recently_changed: list[ProfileFact] = Field(description="Facts added or changed in the last 7 days, newest first.")
+  withheld: list[SensitivityCount] = Field(
+    default_factory=list,
+    description="Profile facts left out because they are sensitive; ask for a kind with `sensitive` when the task needs it.",
+  )
   total_facts: int
   truncated: bool = Field(description="True when the profile hit its size limit; search_memory finds the rest.")
 
@@ -104,19 +113,28 @@ class NewFact(Schema):
   sensitivity: MemorySensitivity = MemorySensitivity.normal
   evidence: list[Evidence] = Field(default_factory=list, max_length=10)
   valid_from: date | None = Field(default=None, description="Since when it has been true, if known.")
+  based_on: list[UUID] = Field(
+    default_factory=list,
+    max_length=20,
+    description=(
+      "The current facts you checked this against. Required for an inferred fact: search memory for everything that "
+      + "bears on the conclusion (where they live, what they pay, what they said) before drawing it."
+    ),
+  )
 
 
-RememberOutcome = Literal["added", "known", "conflict"]
+RememberOutcome = Literal["added", "known", "conflict", "unchecked"]
 
 
 class RememberResult(Schema):
   outcome: RememberOutcome = Field(
     description=(
       "added: stored. known: the same fact was already there, so it was confirmed and its evidence merged. "
-      + "conflict: another fact about this attribute is current; nothing was stored, use revise_memory on it."
+      + "conflict: another fact about this attribute is current; nothing was stored, use revise_memory on it. "
+      + "unchecked: an inference without based_on naming current facts; nothing was stored, search memory and try again."
     ),
   )
-  fact: MemoryFactSchema
+  fact: MemoryFactSchema | None = Field(description="What was stored or confirmed, or the fact in conflict; empty when unchecked.")
   similar: list[ProfileFact] = Field(
     default_factory=list,
     description="Current facts that look related. Merge into one of them with revise_memory instead of keeping both.",
