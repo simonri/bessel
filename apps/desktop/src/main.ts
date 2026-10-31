@@ -28,7 +28,7 @@ import {
   registerClaudeSessionHandlers,
   stopClaudeSessions,
 } from "./claude-sessions.js";
-import { isSessionId } from "./claude-sessions-core.js";
+import { isSessionId, transcriptExists } from "./claude-sessions-core.js";
 import { contentSecurityPolicyFor, withContentSecurityPolicy } from "./csp.js";
 import { SENTRY_DSN } from "./env.js";
 import {
@@ -641,23 +641,14 @@ async function childProcessEnv(): Promise<NodeJS.ProcessEnv> {
 // message was sent, that transcript file never existed and `--resume` would
 // hard-fail ("No conversation found"), permanently stranding the widget on a
 // dead session id. Downgrading to `--session-id` (same id, fresh start) when
-// the file is missing makes that self-healing instead.
-function claudeProjectDir(cwd: string): string {
-  return path.join(
-    os.homedir(),
-    ".claude",
-    "projects",
-    cwd.replace(/[^A-Za-z0-9]/g, "-"),
-  );
-}
-
+// the file is missing makes that self-healing instead. The transcript may sit
+// under one of the project's worktrees, if the session moved into one.
 function downgradeStaleClaudeResume(args: string[], cwd: string): void {
   const resumeIdx = args.indexOf("--resume");
   if (resumeIdx === -1) return;
   const sessionId = args[resumeIdx + 1];
   if (!isSessionId(sessionId)) return;
-  const transcript = path.join(claudeProjectDir(cwd), `${sessionId}.jsonl`);
-  if (!fs.existsSync(transcript)) {
+  if (!transcriptExists(cwd, sessionId)) {
     args[resumeIdx] = "--session-id";
   }
 }

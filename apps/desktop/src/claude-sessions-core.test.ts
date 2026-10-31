@@ -13,6 +13,7 @@ import {
   pruneEnded,
   reconcile,
   sessionStatus,
+  transcriptExists,
   transcriptHasConversation,
   transcriptTitle,
 } from "./claude-sessions-core.js";
@@ -309,6 +310,39 @@ describe("transcripts", () => {
       },
     ]);
     expect(listConversations("/elsewhere", 10)).toEqual([]);
+  });
+
+  it("keeps conversations that moved into one of the project's worktrees", () => {
+    const moved = "44444444-4444-4444-8444-444444444444";
+    writeTranscript(
+      "/repo",
+      "11111111-1111-4111-8111-111111111111",
+      [{ type: "user", message: {} }, { type: "ai-title", aiTitle: "Here" }],
+      100,
+    );
+    writeTranscript(
+      "/repo/.claude/worktrees/gone",
+      moved,
+      [{ type: "user", message: {} }, { type: "ai-title", aiTitle: "Moved" }],
+      200,
+    );
+    // Another project whose name merely starts with this one's.
+    writeTranscript(
+      "/repo-other",
+      "55555555-5555-4555-8555-555555555555",
+      [{ type: "ai-title", aiTitle: "Not ours" }],
+      300,
+    );
+
+    expect(
+      listConversations("/repo", 10).map((c) => [c.sessionId, c.title]),
+    ).toEqual([
+      [moved, "Moved"],
+      ["11111111-1111-4111-8111-111111111111", "Here"],
+    ]);
+    expect(transcriptExists("/repo", moved)).toBe(true);
+    expect(transcriptHasConversation("/repo", moved)).toBe(true);
+    expect(transcriptExists("/repo-other", moved)).toBe(false);
   });
 });
 

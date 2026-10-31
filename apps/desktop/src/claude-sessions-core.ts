@@ -187,17 +187,49 @@ export function pruneEnded(
   return sessions.filter((s) => s.endedAt === undefined || keep.has(s.key));
 }
 
+function encodeProjectDir(cwd: string): string {
+  return cwd.replace(/[^A-Za-z0-9]/g, "-");
+}
+
 export function claudeProjectDir(cwd: string): string {
-  return path.join(
-    os.homedir(),
-    ".claude",
-    "projects",
-    cwd.replace(/[^A-Za-z0-9]/g, "-"),
-  );
+  return path.join(os.homedir(), ".claude", "projects", encodeProjectDir(cwd));
+}
+
+/**
+ * Where the project's transcripts live: its own directory, then those of its
+ * worktrees. A session that moves itself into `<cwd>/.claude/worktrees/<name>`
+ * carries its transcript along to that worktree's directory, and keeps it
+ * there after the worktree is removed. `claude --resume` run in the project
+ * still finds it there.
+ */
+export function projectTranscriptDirs(cwd: string): string[] {
+  const projects = path.join(os.homedir(), ".claude", "projects");
+  const worktreePrefix = `${encodeProjectDir(cwd)}--claude-worktrees-`;
+  let names: string[];
+  try {
+    names = fs.readdirSync(projects);
+  } catch {
+    names = [];
+  }
+  return [
+    claudeProjectDir(cwd),
+    ...names
+      .filter((name) => name.startsWith(worktreePrefix))
+      .sort()
+      .map((name) => path.join(projects, name)),
+  ];
+}
+
+function findTranscript(cwd: string, sessionId: string): string | null {
+  for (const dir of projectTranscriptDirs(cwd)) {
+    const file = path.join(dir, `${sessionId}.jsonl`);
+    if (fs.existsSync(file)) return file;
+  }
+  return null;
 }
 
 export function transcriptExists(cwd: string, sessionId: string): boolean {
-  return fs.existsSync(path.join(claudeProjectDir(cwd), `${sessionId}.jsonl`));
+  return findTranscript(cwd, sessionId) !== null;
 }
 
 const TITLE_SCAN_BYTES = 256 * 1024;
@@ -218,12 +250,11 @@ export function transcriptHasConversation(
   cwd: string,
   sessionId: string,
 ): boolean {
+  const file = findTranscript(cwd, sessionId);
+  if (!file) return false;
   let fd: number;
   try {
-    fd = fs.openSync(
-      path.join(claudeProjectDir(cwd), `${sessionId}.jsonl`),
-      "r",
-    );
+    fd = fs.openSync(file, "r");
   } catch {
     return false;
   }
@@ -285,32 +316,39 @@ export function transcriptTitle(file: string): string | null {
 const UUID_JSONL_RE =
   /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.jsonl$/;
 
-/** The project's past conversations, newest first. */
+/** The project's past conversations, its worktrees' included, newest first. */
 export function listConversations(
   cwd: string,
   limit: number,
 ): ClaudeConversation[] {
-  const dir = claudeProjectDir(cwd);
-  let names: string[];
-  try {
-    names = fs.readdirSync(dir);
-  } catch {
-    return [];
-  }
-  const files = names.flatMap((name) => {
-    const sessionId = UUID_JSONL_RE.exec(name)?.[1];
-    if (!sessionId) return [];
+  const files = projectTranscriptDirs(cwd).flatMap((dir) => {
+    let names: string[];
     try {
-      const stat = fs.statSync(path.join(dir, name));
-      return [
-        { sessionId, file: path.join(dir, name), updatedAt: stat.mtimeMs },
-      ];
+      names = fs.readdirSync(dir);
     } catch {
       return [];
     }
+    return names.flatMap((name) => {
+      const sessionId = UUID_JSONL_RE.exec(name)?.[1];
+      if (!sessionId) return [];
+      try {
+        const stat = fs.statSync(path.join(dir, name));
+        return [
+          { sessionId, file: path.join(dir, name), updatedAt: stat.mtimeMs },
+        ];
+      } catch {
+        return [];
+      }
+    });
   });
   files.sort((a, b) => b.updatedAt - a.updatedAt);
-  return files.slice(0, limit).flatMap(({ sessionId, file, updatedAt }) => {
+  const seen = new Set<string>();
+  const newest = files.filter(({ sessionId }) => {
+    if (seen.has(sessionId)) return false;
+    seen.add(sessionId);
+    return true;
+  });
+  return newest.slice(0, limit).flatMap(({ sessionId, file, updatedAt }) => {
     let title: string | null;
     try {
       title = transcriptTitle(file);
