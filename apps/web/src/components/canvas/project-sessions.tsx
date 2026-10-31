@@ -21,7 +21,14 @@ import {
   Smartphone,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type ComponentProps,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { ClaudeIcon } from "@/components/canvas/brand-icons";
 import { useSessionAgentStatus } from "@/components/canvas/canvas-agent-status";
@@ -39,13 +46,16 @@ import {
   isLive,
   STATUS_LABEL,
   toAgentStatus,
+  useClaudeSession,
   useClaudeSessions,
 } from "@/components/claude-sessions/claude-sessions-store";
 import type { ClaudeSessionView } from "@/components/claude-sessions/claude-sessions-types";
+import { ConversationPreview } from "@/components/claude-sessions/conversation-preview";
 import { RemoteLinkPopover } from "@/components/claude-sessions/remote-link-popover";
 import { StatusDot } from "@/components/claude-sessions/status-dot";
 import { useEndClaudeSession } from "@/components/claude-sessions/use-end-session";
 import {
+  CLAUDE_SESSION_KEY,
   useAttachedSessionKeys,
   useOpenClaudeSession,
 } from "@/components/claude-sessions/use-open-claude-session";
@@ -192,6 +202,35 @@ function RenameInput({
   );
 }
 
+// The same card the New session page shows for a past conversation, here for
+// the one a row runs, read afresh on each hover. Sits inside a context menu
+// trigger, so its props pass through to the row either way.
+function SessionPreview({
+  session,
+  children,
+  ...triggerProps
+}: { session: ClaudeSessionView | null } & Omit<
+  ComponentProps<typeof ConversationPreview>,
+  "cwd" | "conversation" | "live"
+>) {
+  return (
+    <ConversationPreview
+      cwd={session?.cwd ?? ""}
+      conversation={
+        session && {
+          sessionId: session.sessionId,
+          title: session.name,
+          updatedAt: session.createdAt,
+        }
+      }
+      live
+      {...triggerProps}
+    >
+      {children}
+    </ConversationPreview>
+  );
+}
+
 function SessionRow({
   workspace,
   windows,
@@ -214,6 +253,11 @@ function SessionRow({
   const pendingRenameRef = useRef(false);
   const windowIds = useMemo(() => windows.map((w) => w.id), [windows]);
   const status = useSessionAgentStatus(windowIds);
+  const claude = useClaudeSession(
+    windows.find((w) => w.data?.[CLAUDE_SESSION_KEY])?.data?.[
+      CLAUDE_SESSION_KEY
+    ] || undefined,
+  );
   const label = sessionLabel(workspace, windows);
   const rowClass = cn(
     ROW,
@@ -235,18 +279,20 @@ function SessionRow({
             />
           </div>
         ) : (
-          <button
-            type="button"
-            onClick={() => onOpen(workspace.id)}
-            onDoubleClick={() => setEditing(true)}
-            aria-current={isActive ? "page" : undefined}
-            title={label}
-            className={cn(rowClass, isFlashing && "animate-workspace-flash")}
-          >
-            <StatusDot status={status} />
-            <span className="min-w-0 flex-1 truncate">{label}</span>
-            <CountBadge count={windows.length} />
-          </button>
+          <SessionPreview session={claude}>
+            <button
+              type="button"
+              onClick={() => onOpen(workspace.id)}
+              onDoubleClick={() => setEditing(true)}
+              aria-current={isActive ? "page" : undefined}
+              title={label}
+              className={cn(rowClass, isFlashing && "animate-workspace-flash")}
+            >
+              <StatusDot status={status} />
+              <span className="min-w-0 flex-1 truncate">{label}</span>
+              <CountBadge count={windows.length} />
+            </button>
+          </SessionPreview>
         )}
       </ContextMenuTrigger>
       <ContextMenuContent
@@ -321,47 +367,49 @@ function BackgroundSessionRow({
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
-        <div
-          className={cn(
-            "group/bg",
-            ROW,
-            "gap-1 pl-7.5 pr-1",
-            "text-white/45 hover:bg-white/[0.06] hover:text-white/75",
-          )}
-        >
-          <button
-            type="button"
-            onClick={() => onOpen(session)}
-            title={`${session.name} - ${STATUS_LABEL[session.status]}, no window open`}
-            className="flex h-full min-w-0 flex-1 items-center gap-2 text-left"
+        <SessionPreview session={session}>
+          <div
+            className={cn(
+              "group/bg",
+              ROW,
+              "gap-1 pl-7.5 pr-1",
+              "text-white/45 hover:bg-white/[0.06] hover:text-white/75",
+            )}
           >
-            <StatusDot status={status} />
-            <ClaudeIcon className="size-3 shrink-0 text-white/40" />
-            <span className="min-w-0 flex-1 truncate">{session.name}</span>
-          </button>
-          {/* Out of the layout until needed, so the name gets the full width. */}
-          <div className="hidden shrink-0 items-center group-focus-within/bg:flex group-hover/bg:flex has-[[data-state=open]]:flex">
-            <RemoteLinkPopover sessionKey={session.key}>
-              <button
-                type="button"
-                title="Open on phone"
-                aria-label={`Open ${session.name} on phone`}
-                className={ICON_BUTTON}
-              >
-                <Smartphone className="size-3" />
-              </button>
-            </RemoteLinkPopover>
             <button
               type="button"
-              onClick={() => onEnd(session)}
-              title="End session"
-              aria-label={`End ${session.name}`}
-              className={ICON_BUTTON}
+              onClick={() => onOpen(session)}
+              title={`${session.name} - ${STATUS_LABEL[session.status]}, no window open`}
+              className="flex h-full min-w-0 flex-1 items-center gap-2 text-left"
             >
-              <X className="size-3" />
+              <StatusDot status={status} />
+              <ClaudeIcon className="size-3 shrink-0 text-white/40" />
+              <span className="min-w-0 flex-1 truncate">{session.name}</span>
             </button>
+            {/* Out of the layout until needed, so the name gets the full width. */}
+            <div className="hidden shrink-0 items-center group-focus-within/bg:flex group-hover/bg:flex has-[[data-state=open]]:flex">
+              <RemoteLinkPopover sessionKey={session.key}>
+                <button
+                  type="button"
+                  title="Open on phone"
+                  aria-label={`Open ${session.name} on phone`}
+                  className={ICON_BUTTON}
+                >
+                  <Smartphone className="size-3" />
+                </button>
+              </RemoteLinkPopover>
+              <button
+                type="button"
+                onClick={() => onEnd(session)}
+                title="End session"
+                aria-label={`End ${session.name}`}
+                className={ICON_BUTTON}
+              >
+                <X className="size-3" />
+              </button>
+            </div>
           </div>
-        </div>
+        </SessionPreview>
       </ContextMenuTrigger>
       <ContextMenuContent className={MENU_SURFACE}>
         <ContextMenuItem onSelect={() => onOpen(session)}>

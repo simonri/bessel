@@ -7,6 +7,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type {
@@ -72,6 +73,14 @@ const claude = vi.hoisted(() => {
       }),
       end: vi.fn(() => Promise.resolve()),
       remoteUrl: vi.fn(() => Promise.resolve(null)),
+      conversationPreview: vi.fn((_cwd: string, sessionId: string) =>
+        Promise.resolve({
+          opening: null,
+          exchanges: [
+            { prompt: `latest ask in ${sessionId}`, reply: "On it.", at: 1 },
+          ],
+        }),
+      ),
     },
   };
   Object.defineProperty(window, "electron", {
@@ -442,6 +451,117 @@ describe("ProjectSessions", () => {
       unknown: undefined,
     });
   });
+  describe("previews on hover", () => {
+    function seedCanvas() {
+      seed(
+        [
+          {
+            id: "a",
+            projectId: "p1",
+            name: "With Claude",
+            windows: [
+              {
+                module: "claudeCode",
+                x: 0,
+                y: 0,
+                w: 8,
+                h: 8,
+                data: { claudeSessionKey: "shown" },
+              },
+            ],
+          },
+          {
+            id: "b",
+            projectId: "p1",
+            name: "Just tasks",
+            windows: [{ module: "tasks", x: 0, y: 0, w: 4, h: 4 }],
+          },
+        ],
+        "a",
+      );
+      mount();
+      act(() =>
+        pushSnapshot({
+          sessions: [
+            claudeSession({ key: "shown", sessionId: "in-window" }),
+            claudeSession({
+              key: "bg",
+              name: "Fix calendar",
+              sessionId: "in-background",
+              cwd: "/home/me/other",
+            }),
+          ],
+          external: [],
+          available: true,
+        }),
+      );
+    }
+
+    it("shows the conversation a canvas session runs", async () => {
+      seedCanvas();
+
+      fireEvent.pointerEnter(screen.getByTitle("With Claude"), {
+        pointerType: "mouse",
+      });
+
+      expect(await screen.findByText("latest ask in in-window")).toBeTruthy();
+      expect(claudeSessions.conversationPreview).toHaveBeenLastCalledWith(
+        "/home/me/metron",
+        "in-window",
+      );
+    });
+
+    it("shows the conversation of a session running in the background", async () => {
+      seedCanvas();
+
+      fireEvent.pointerEnter(
+        screen.getByTitle(/Fix calendar - Working/)
+          .parentElement as HTMLElement,
+        { pointerType: "mouse" },
+      );
+
+      expect(
+        await screen.findByText("latest ask in in-background"),
+      ).toBeTruthy();
+      expect(claudeSessions.conversationPreview).toHaveBeenLastCalledWith(
+        "/home/me/other",
+        "in-background",
+      );
+    });
+
+    it("shows nothing for a canvas session without Claude", async () => {
+      seedCanvas();
+      claudeSessions.conversationPreview.mockClear();
+
+      fireEvent.pointerEnter(screen.getByTitle("Just tasks"), {
+        pointerType: "mouse",
+      });
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      expect(screen.queryByText(/latest ask/)).toBeNull();
+      expect(claudeSessions.conversationPreview).not.toHaveBeenCalled();
+    });
+
+    it("reads a running conversation again on each hover", async () => {
+      seedCanvas();
+      const row = screen.getByTitle("With Claude");
+
+      fireEvent.pointerEnter(row, { pointerType: "mouse" });
+      await screen.findByText("latest ask in in-window");
+      fireEvent.pointerLeave(row, { pointerType: "mouse" });
+      await waitFor(() =>
+        expect(screen.queryByText("latest ask in in-window")).toBeNull(),
+      );
+      const calls = claudeSessions.conversationPreview.mock.calls.length;
+      fireEvent.pointerEnter(row, { pointerType: "mouse" });
+      await screen.findByText("latest ask in in-window");
+
+      expect(claudeSessions.conversationPreview.mock.calls.length).toBe(
+        calls + 1,
+      );
+    });
+  });
+
   describe("background Claude sessions", () => {
     it("lists running sessions no window shows under their project", () => {
       seed(
