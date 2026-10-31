@@ -1,3 +1,4 @@
+import json
 import time
 from typing import Any
 
@@ -166,10 +167,76 @@ class TestTools:
     }
     for tool in tools:
       assert tool.annotations is not None
-      assert tool.annotations.destructive_hint is False, tool.name
       assert not any(word in tool.name for word in ("delete", "remove", "trash")), tool.name
       if tool.name not in writes and not tool.name.startswith("add_"):
         assert tool.annotations.read_only_hint is True, tool.name
+
+  @pytest.mark.asyncio
+  async def test_only_tools_that_change_existing_data_are_destructive(self, connect: ConnectFixture) -> None:
+    # The protocol counts any update that isn't purely additive as destructive; clients confirm those first.
+    async with connect() as client:
+      tools = (await client.list_tools()).tools
+    destructive = {t.name for t in tools if t.annotations and t.annotations.destructive_hint is not False}
+    assert destructive == {
+      "update_tasks",
+      "complete_tasks",
+      "undo_complete_tasks",
+      "start_task",
+      "update_recipe",
+      "revise_memory",
+      "save_note",
+    }
+
+  @pytest.mark.asyncio
+  async def test_tools_reading_what_others_wrote_are_open_world(self, connect: ConnectFixture) -> None:
+    # Mail from strangers and a weather service are untrusted input; everything else is the user's own data.
+    async with connect() as client:
+      tools = (await client.list_tools()).tools
+    open_world = {t.name for t in tools if t.annotations and t.annotations.open_world_hint is not False}
+    assert open_world == {"search_emails", "read_email", "read_thread", "owed_replies", "get_weather"}
+
+  @pytest.mark.asyncio
+  async def test_lists_may_be_cached_by_anyone_for_an_hour(self, connect: ConnectFixture) -> None:
+    async with connect() as client:
+      tools = await client.list_tools()
+      prompts = await client.list_prompts()
+    for result in (tools, prompts):
+      assert (result.ttl_ms, result.cache_scope) == (3_600_000, "public")
+
+  @pytest.mark.asyncio
+  async def test_schemas_carry_no_generated_titles(self, connect: ConnectFixture) -> None:
+    async with connect() as client:
+      tools = (await client.list_tools()).tools
+
+    def titles(schema: Any, path: str) -> list[str]:
+      if isinstance(schema, list):
+        return [found for i, item in enumerate(schema) for found in titles(item, f"{path}[{i}]")]
+      if not isinstance(schema, dict):
+        return []
+      found = [path] if "title" in schema else []
+      for key, value in schema.items():
+        if key in ("properties", "$defs") and isinstance(value, dict):
+          found += [hit for name, sub in value.items() for hit in titles(sub, f"{path}.{key}.{name}")]
+        elif key not in ("default", "const", "enum", "examples"):
+          found += titles(value, f"{path}.{key}")
+      return found
+
+    for tool in tools:
+      assert titles(tool.input_schema, tool.name) == []
+      assert titles(tool.output_schema, tool.name) == []
+    add_tasks = next(t for t in tools if t.name == "add_tasks")
+    assert "title" in add_tasks.input_schema["$defs"]["NewTask"]["properties"]
+
+  @pytest.mark.asyncio
+  async def test_tool_definitions_stay_within_budget(self, connect: ConnectFixture) -> None:
+    # Clients send the tool list to the model; past a few percent of its context they stop loading it whole.
+    # Raise the budget on purpose, not by drift.
+    async with connect() as client:
+      tools = (await client.list_tools()).tools
+    seen_by_model = sum(len(t.description or "") + len(json.dumps(t.input_schema)) for t in tools)
+    whole = sum(len(t.model_dump_json(exclude_none=True, by_alias=True)) for t in tools)
+    assert seen_by_model <= 60_000, seen_by_model
+    assert whole <= 165_000, whole
 
   @pytest.mark.asyncio
   async def test_money_is_only_ever_read(self, connect: ConnectFixture) -> None:

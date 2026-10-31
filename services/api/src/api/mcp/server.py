@@ -1,9 +1,12 @@
+from typing import Any
 from urllib.parse import urlsplit
 
 from mcp.server.auth.settings import AuthSettings
+from mcp.server.caching import CacheHint
 from mcp.server.mcpserver import MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import Icon
+from mcp.types import Tool as MCPTool
 from pydantic import AnyHttpUrl
 from starlette.routing import Route
 
@@ -37,12 +40,51 @@ conversation with get_task_overview, and a money one with get_finances_overview.
 """
 
 
+# The tools, prompts and server description are the same for every user and change only with a deploy, so clients and
+# gateways may keep them for an hour instead of asking again before every conversation.
+LISTS_CACHE_HINT = CacheHint(ttl_ms=60 * 60 * 1000, scope="public")
+
+
+# Keys whose values are data, not schema: a `title` inside them is the data's own.
+_DATA_KEYWORDS = frozenset({"default", "const", "enum", "examples"})
+# Keys whose values map names to schemas: a property may itself be called `title`.
+_NAMED_SCHEMAS = frozenset({"properties", "$defs", "patternProperties"})
+
+
+def without_generated_titles(schema: Any) -> Any:
+  """Drops the `title` pydantic gives every model and field ("Task Id" for `task_id`): it repeats the name, and the
+  tool list is sent to the model before every conversation. Descriptions stay."""
+  if isinstance(schema, list):
+    return [without_generated_titles(item) for item in schema]
+  if not isinstance(schema, dict):
+    return schema
+  return {
+    key: value
+    if key in _DATA_KEYWORDS
+    else {name: without_generated_titles(sub) for name, sub in value.items()}
+    if key in _NAMED_SCHEMAS and isinstance(value, dict)
+    else without_generated_titles(value)
+    for key, value in schema.items()
+    if key != "title"
+  }
+
+
+class BesselMCPServer(MCPServer):
+  async def list_tools(self) -> list[MCPTool]:
+    return [
+      tool.model_copy(update={"input_schema": without_generated_titles(tool.input_schema), "output_schema": without_generated_titles(tool.output_schema)})
+      for tool in await super().list_tools()
+    ]
+
+
 def build_server() -> MCPServer:
   if settings.ENV == Environment.production and not settings.MCP_RESOURCE_URL.startswith("https://"):
     raise ValueError("MCP_RESOURCE_URL must be the public https:// URL of /mcp in production")
-  server = MCPServer(
+  server = BesselMCPServer(
     name="bessel",
     title="Bessel",
+    version=settings.RELEASE[:12] or "dev",
+    cache_hints=dict.fromkeys(("server/discover", "tools/list", "prompts/list"), LISTS_CACHE_HINT),
     instructions=INSTRUCTIONS,
     website_url=settings.FRONTEND_BASE_URL,
     # A full square: clients round it themselves, and transparent corners show as a light edge.

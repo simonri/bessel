@@ -209,5 +209,5 @@ TOOLS: list[ToolSpec] = [
   read(search_recipes, "Search recipes"),
   read(get_recipe, "Get recipe"),
   write(add_recipe, "Add recipe"),
-  write(update_recipe, "Update recipe", idempotent=True),
+  write(update_recipe, "Update recipe", idempotent=True, overwrites=True),
 ]

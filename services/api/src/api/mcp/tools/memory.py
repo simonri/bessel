@@ -109,5 +109,5 @@ TOOLS: list[ToolSpec] = [
   read(get_profile, "Profile"),
   read(search_memory, "Search memory"),
   write(remember, "Remember"),
-  write(revise_memory, "Revise memory"),
+  write(revise_memory, "Revise memory", overwrites=True),
 ]

@@ -56,5 +56,5 @@ async def save_note(
 
 TOOLS: list[ToolSpec] = [
   read(get_note, "Note"),
-  write(save_note, "Save note", idempotent=True),
+  write(save_note, "Save note", idempotent=True, overwrites=True),
 ]
