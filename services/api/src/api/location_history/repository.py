@@ -23,6 +23,7 @@ UPSERT_COLUMNS = [
   "start_at",
   "end_at",
   "utc_offset_minutes",
+  "end_utc_offset_minutes",
   "local_start",
   "local_end",
   "place_id",
@@ -126,12 +127,12 @@ class LocationSegmentRepository(RepositoryBase[LocationSegment], RepositoryIDMix
     return await self.get_all(statement)
 
   async def local_spans(self, user_id: UUID) -> list[tuple[datetime, datetime]]:
-    """Local start and end of every live visit and trip."""
+    """Local start and end of every live segment, routes included: a day
+    with only a recorded route is still a day to show."""
     result = await self.session.execute(
       select(LocationSegment.local_start, LocationSegment.local_end).where(
         LocationSegment.user_id == user_id,
         LocationSegment.deleted_at.is_(None),
-        LocationSegment.kind != LocationSegmentKind.path,
       )
     )
     return [(start, end) for start, end in result.all()]

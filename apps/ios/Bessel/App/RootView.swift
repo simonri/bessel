@@ -2,6 +2,7 @@ import SwiftUI
 
 struct RootView: View {
     let auth: AuthSession
+    let timelineImporter: TimelineImporter
 
     @State private var updateRequired = false
 
@@ -18,10 +19,12 @@ struct RootView: View {
                 case .signedOut:
                     LoginView(auth: auth)
                 case .signedIn:
-                    MainTabView(auth: auth)
+                    MainTabView(auth: auth, timelineImporter: timelineImporter)
                 }
             }
         }
+        // A file shared while signed out waits here until sign-in.
+        .onOpenURL { timelineImporter.receive($0) }
         .onAppear {
             // A background task may have restored it already.
             if auth.state == .restoring { auth.restore() }

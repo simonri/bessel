@@ -32,14 +32,16 @@ enum AppTab: String, CaseIterable, Identifiable {
 
 struct MainTabView: View {
     let auth: AuthSession
+    let timelineImporter: TimelineImporter
 
     @State private var services: AppServices
     @State private var selection: AppTab = .tasks
     @State private var toasts = ToastCenter()
     @Environment(\.scenePhase) private var scenePhase
 
-    init(auth: AuthSession) {
+    init(auth: AuthSession, timelineImporter: TimelineImporter) {
         self.auth = auth
+        self.timelineImporter = timelineImporter
         _services = State(initialValue: AppServices(auth: auth))
     }
 
@@ -79,6 +81,13 @@ struct MainTabView: View {
         }
         .onAppear(perform: applyLaunchTab)
         .task { await services.outbox.retry() }
+        .task { timelineImporter.resumeLeftover() }
+        .sheet(isPresented: Binding(
+            get: { timelineImporter.file != nil },
+            set: { if !$0 { timelineImporter.close() } }
+        )) {
+            TimelineImportSheet(importer: timelineImporter, client: services.client)
+        }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             // Deletes waiting out Undo go now, while there's still time to send them.

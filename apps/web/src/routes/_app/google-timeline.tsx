@@ -115,9 +115,15 @@ function useTimelineImport(onImported: () => void) {
           (query.queryKey[0] as { _id?: string } | undefined)?._id ===
           DAY_QUERY_ID,
       });
-      toast.success("Timeline imported", {
-        description: importSummary(result),
-      });
+      if (result.unreadable) {
+        toast.warning("Timeline imported, but not all of it", {
+          description: `${importSummary(result)}. ${result.unreadable.toLocaleString()} couldn't be read, so nothing was removed this time. The file is kept, so they can be read later.`,
+        });
+      } else {
+        toast.success("Timeline imported", {
+          description: importSummary(result),
+        });
+      }
       onImported();
     },
     onError: (error) =>
@@ -395,19 +401,18 @@ function EntryRow({
 }
 
 function TimeRange({
-  start,
-  end,
-  offset,
+  segment,
   day,
 }: {
-  start: Date;
-  end: Date;
-  offset: number | null;
+  segment: LocationVisit | LocationActivity;
   day: IsoDay;
 }) {
+  const endOffset =
+    segment.end_utc_offset_minutes ?? segment.utc_offset_minutes;
   return (
     <span className="tabular-nums">
-      {localTime(start, offset, day)} – {localTime(end, offset, day)}
+      {localTime(segment.start_at, segment.utc_offset_minutes, day)} –{" "}
+      {localTime(segment.end_at, endOffset, day)}
     </span>
   );
 }
@@ -457,12 +462,7 @@ function VisitContent({
           </span>
         )}
         <span className="mt-0.5 block text-11 text-white/50">
-          <TimeRange
-            start={visit.start_at}
-            end={visit.end_at}
-            offset={visit.utc_offset_minutes}
-            day={day}
-          />
+          <TimeRange segment={visit} day={day} />
           <span className="text-white/30">
             {" · "}
             {formatDuration(visit.end_at.getTime() - visit.start_at.getTime())}
@@ -511,12 +511,7 @@ function ActivityContent({
           <span className="text-white/40"> · {details.join(" · ")}</span>
         </span>
         <span className="block text-11 text-white/40">
-          <TimeRange
-            start={activity.start_at}
-            end={activity.end_at}
-            offset={activity.utc_offset_minutes}
-            day={day}
-          />
+          <TimeRange segment={activity} day={day} />
         </span>
       </span>
     </>

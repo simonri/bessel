@@ -1,13 +1,18 @@
+import gzip
+import hashlib
 import json
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
+from api.common.file_storage import file_storage
 from api.location_history import place_names
 from api.location_history.merge import StoredSegment, plan_merge
 from api.location_history.parser import TimelineFormatError, parse_timeline
+from api.models.location_import import LocationImport
 from api.models.location_segment import LocationSegment
 from api.postgres import AsyncSession
+from api.settings import Environment, settings
 from httpx import AsyncClient
 from sqlalchemy import select
 
@@ -157,11 +162,55 @@ class TestParser:
   def test_duplicates_in_one_file_collapse(self) -> None:
     assert len(parse_timeline(_bytes(_export(1) + _export(1))).segments) == 4
 
-  def test_skips_unreadable_segments(self) -> None:
+  def test_counts_unreadable_segments_but_not_kinds_without_places(self) -> None:
     unreadable = {"startTime": "nope", "endTime": "nope", "visit": {}}
+    backwards = _visit("2026-09-01T12:00:00.000+02:00", "2026-09-01T11:00:00.000+02:00")
     memory = {"startTime": "2026-09-01T10:00:00Z", "endTime": "2026-09-01T11:00:00Z", "timelineMemory": {}}
-    data = [*_export(1), unreadable, memory]
-    assert len(parse_timeline(_bytes(data)).segments) == 4
+    timeline = parse_timeline(_bytes([*_export(1), unreadable, backwards, memory]))
+    assert (len(timeline.segments), timeline.unreadable) == (4, 2)
+
+  def test_route_with_an_unreadable_point_is_unreadable(self) -> None:
+    broken = _path("2026-09-01T06:00:00.000Z", "2026-09-01T08:00:00.000Z", [(HOME, 1)])
+    broken["timelinePath"].append({"point": "somewhere", "durationMinutesOffsetFromStartTime": "5"})
+    timeline = parse_timeline(_bytes([*_export(1), broken]))
+    assert timeline.unreadable == 1
+    assert len([s for s in timeline.segments if s.kind == "path"]) == 1
+
+  def test_empty_route_is_neither_a_segment_nor_unreadable(self) -> None:
+    timeline = parse_timeline(_bytes([*_export(1), _path("2026-09-01T10:00:00.000Z", "2026-09-01T12:00:00.000Z", [])]))
+    assert (len(timeline.segments), timeline.unreadable) == (4, 0)
+
+  def test_reads_the_end_offset_of_a_trip_across_time_zones(self) -> None:
+    flight = _trip("2026-09-01T23:00:00.000+09:00", "2026-09-01T22:00:00.000-07:00", kind="flying")
+    android = {
+      "semanticSegments": [
+        {
+          "startTime": "2026-09-01T10:00:00.000+02:00",
+          "endTime": "2026-09-01T10:30:00.000+01:00",
+          "startTimeTimezoneUtcOffsetMinutes": 120,
+          "endTimeTimezoneUtcOffsetMinutes": 60,
+          "activity": {"topCandidate": {"type": "FLYING"}},
+        }
+      ]
+    }
+    (ios,) = parse_timeline(_bytes([flight])).segments
+    (andr,) = parse_timeline(_bytes(android)).segments
+    assert (ios.utc_offset_minutes, ios.end_utc_offset_minutes) == (540, -420)
+    assert (andr.utc_offset_minutes, andr.end_utc_offset_minutes) == (120, 60)
+
+  def test_end_offset_leaves_fingerprints_alone_within_one_time_zone(self) -> None:
+    """Rows stored before end offsets were read must not all count as edited."""
+    (visit,) = parse_timeline(_bytes([_visit("2026-09-01T10:00:00.000+02:00", "2026-09-01T11:00:00.000+02:00")])).segments
+    before = [120, "home-id", "Unknown", [59.334591, 18.06324], None, None, None, None, None]
+    assert visit.content_hash == hashlib.sha256(json.dumps(before, separators=(",", ":")).encode()).hexdigest()
+
+  def test_different_segments_with_the_same_times_are_both_kept(self) -> None:
+    first = _visit("2026-09-01T10:00:00.000+02:00", "2026-09-01T11:00:00.000+02:00", place="cafe")
+    second = _visit("2026-09-01T10:00:00.000+02:00", "2026-09-01T11:00:00.000+02:00", place="shop")
+    a = parse_timeline(_bytes([first, second])).segments
+    b = parse_timeline(_bytes([second, first])).segments
+    assert sorted(s.place_id or "" for s in a) == ["cafe", "shop"]
+    assert {(s.key, s.place_id) for s in a} == {(s.key, s.place_id) for s in b}
 
   @pytest.mark.parametrize(
     ("content", "message"),
@@ -260,6 +309,13 @@ class TestPlanMerge:
     stored[extra.key] = _stored(extra, newer_as_of)
     assert self._plan(old, stored).removed == []
 
+  def test_removes_nothing_when_told_not_to(self) -> None:
+    old = self._timeline(1, 2, 3)
+    stored = {s.key: _stored(s, old.range_end) for s in old.segments}
+    new = self._timeline(1, 3)
+    plan = plan_merge(new.segments, stored, new.range_end, new.range_start, new.range_end, remove_missing=False)
+    assert (plan.removed, plan.unchanged) == ([], 8)
+
 
 class TestImport:
   @pytest.mark.asyncio
@@ -332,6 +388,36 @@ class TestImport:
     assert (await _day_view(client, "2026-09-01"))["visits"][0]["place_id"] == "home-id"
 
   @pytest.mark.asyncio
+  async def test_old_backup_copied_recently_hides_nothing(self, client: AsyncClient) -> None:
+    """A download or AirDrop resets the file's modified time, which the browser sends as its export time."""
+    await _import(client, _export(1, 2, 3), exported_at="2026-09-03T20:00:00Z")
+    backup = await _import(client, _export(1), exported_at="2026-10-01T09:00:00Z")
+    assert _counts(backup) == (0, 0, 0, 0, 4)
+    assert backup["as_of"].startswith("2026-09-01T15:00:00")
+    assert len((await _day_view(client, "2026-09-03"))["visits"]) == 2
+
+  @pytest.mark.asyncio
+  async def test_unreadable_segment_removes_nothing(self, client: AsyncClient) -> None:
+    await _import(client, _export(1, 2, 3))
+    garbled = {"startTime": "2026-09-02 10:00", "endTime": "2026-09-02T11:00:00.000+02:00", "visit": {}}
+    result = await _import(client, [*_export(1, 3), garbled])
+    assert (_counts(result), result["unreadable"]) == ((0, 0, 0, 8, 0), 1)
+    assert len((await _day_view(client, "2026-09-02"))["visits"]) == 2
+
+  @pytest.mark.asyncio
+  async def test_keeps_the_uploaded_file(self, client: AsyncClient, session: AsyncSession) -> None:
+    await _import(client, _export(1))
+    record = (await session.execute(select(LocationImport))).scalar_one()
+    assert record.archive_key is not None
+    archived = await file_storage().get(record.archive_key)
+    assert archived is not None and gzip.decompress(archived) == _bytes(_export(1))
+
+  @pytest.mark.asyncio
+  async def test_refuses_to_import_without_somewhere_to_keep_the_file(self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "ENV", Environment.production)
+    await _import(client, _export(1), status=503)
+
+  @pytest.mark.asyncio
   async def test_export_time_in_the_future_is_capped(self, client: AsyncClient) -> None:
     result = await _import(client, _export(1), exported_at="2999-01-01T00:00:00Z")
     assert result["as_of"] < "2999"
@@ -374,6 +460,15 @@ class TestDay:
     assert first["visits"][0]["utc_offset_minutes"] == 420
 
   @pytest.mark.asyncio
+  async def test_trip_across_time_zones_ends_on_its_own_local_day(self, client: AsyncClient) -> None:
+    # Tokyo 23:00 on the 1st to San Francisco 22:00 on the 1st: 14:00 to 05:00 UTC.
+    await _import(client, [_trip("2026-09-01T23:00:00.000+09:00", "2026-09-01T22:00:00.000-07:00", kind="flying")])
+    summary = (await client.get("/v1/location-history/summary")).json()
+    assert summary["days"] == ["2026-09-01"]
+    (flight,) = (await _day_view(client, "2026-09-01"))["activities"]
+    assert (flight["utc_offset_minutes"], flight["end_utc_offset_minutes"]) == (540, -420)
+
+  @pytest.mark.asyncio
   async def test_returns_trips_and_route_points(self, client: AsyncClient) -> None:
     await _import(client, _export(1, 2))
     day = await _day_view(client, "2026-09-01")
@@ -412,3 +507,9 @@ class TestSummary:
     summary = (await client.get("/v1/location-history/summary")).json()
     assert summary["days"] == ["2026-09-01", "2026-09-03", "2026-09-05", "2026-09-06"]
     assert summary["last_import"]["added"] == 9
+
+  @pytest.mark.asyncio
+  async def test_lists_a_day_with_only_a_route(self, client: AsyncClient) -> None:
+    await _import(client, [*_export(1), _path("2026-09-04T06:00:00.000Z", "2026-09-04T08:00:00.000Z", [(HOME, 1)])])
+    summary = (await client.get("/v1/location-history/summary")).json()
+    assert summary["days"] == ["2026-09-01", "2026-09-04"]

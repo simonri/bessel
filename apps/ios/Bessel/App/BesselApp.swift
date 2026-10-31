@@ -4,6 +4,7 @@ import UIKit
 @main
 struct BesselApp: App {
     @State private var auth = AuthSession.shared
+    @State private var timelineImporter = TimelineImporter()
     @AppStorage(Preferences.appearanceKey) private var appearance: AppearancePreference = .system
 
     init() {
@@ -17,7 +18,7 @@ struct BesselApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView(auth: auth)
+            RootView(auth: auth, timelineImporter: timelineImporter)
                 .tint(Theme.primary)
                 .fontDesign(.rounded)
                 .background(Theme.background)

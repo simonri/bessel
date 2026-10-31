@@ -43,6 +43,16 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         ITSAppUsesNonExemptEncryption: false
+        # Puts Bessel in the share sheet for a Google Maps Timeline export.
+        # Alternate: never the default app for JSON, only one to share to.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: Google Timeline export
+            CFBundleTypeRole: Viewer
+            LSHandlerRank: Alternate
+            LSItemContentTypes:
+              - public.json
+        # Shared files are copied into Documents/Inbox, which the app owns.
+        LSSupportsOpeningDocumentsInPlace: false
         CFBundleURLTypes:
           - CFBundleURLName: $(PRODUCT_BUNDLE_IDENTIFIER)
             CFBundleURLSchemes:

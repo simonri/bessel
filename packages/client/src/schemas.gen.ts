@@ -7094,6 +7094,19 @@ export const LocationActivitySchema = {
       ],
       title: "Utc Offset Minutes",
     },
+    end_utc_offset_minutes: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End Utc Offset Minutes",
+      description:
+        "UTC offset where the trip ended; differs from the start's across time zones.",
+    },
     activity_type: {
       anyOf: [
         {
@@ -7169,6 +7182,7 @@ export const LocationActivitySchema = {
     "start_at",
     "end_at",
     "utc_offset_minutes",
+    "end_utc_offset_minutes",
     "activity_type",
     "distance_meters",
     "start_latitude",
@@ -7321,6 +7335,12 @@ export const LocationImportSchemaSchema = {
       description:
         "Segments skipped because a newer export already decided them.",
     },
+    unreadable: {
+      type: "integer",
+      title: "Unreadable",
+      description:
+        "Visits, trips and routes in the file that couldn't be read. While there are any, the import removes nothing.",
+    },
   },
   type: "object",
   required: [
@@ -7337,6 +7357,7 @@ export const LocationImportSchemaSchema = {
     "removed",
     "unchanged",
     "stale",
+    "unreadable",
   ],
   title: "LocationImportSchema",
 } as const;
@@ -7390,6 +7411,18 @@ export const LocationVisitSchema = {
       ],
       title: "Utc Offset Minutes",
       description: "UTC offset where the visit happened.",
+    },
+    end_utc_offset_minutes: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End Utc Offset Minutes",
+      description: "UTC offset where the visit ended.",
     },
     place_id: {
       anyOf: [
@@ -7474,6 +7507,7 @@ export const LocationVisitSchema = {
     "start_at",
     "end_at",
     "utc_offset_minutes",
+    "end_utc_offset_minutes",
     "place_id",
     "name",
     "address",

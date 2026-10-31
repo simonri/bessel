@@ -20,6 +20,7 @@ class LocationImportSchema(Schema):
   removed: int = Field(description="Segments the phone no longer has, within the export's span.")
   unchanged: int
   stale: int = Field(description="Segments skipped because a newer export already decided them.")
+  unreadable: int = Field(description="Visits, trips and routes in the file that couldn't be read. While there are any, the import removes nothing.")
 
 
 class LocationHistorySummary(Schema):
@@ -33,6 +34,7 @@ class LocationVisit(Schema):
   start_at: datetime
   end_at: datetime
   utc_offset_minutes: int | None = Field(description="UTC offset where the visit happened.")
+  end_utc_offset_minutes: int | None = Field(description="UTC offset where the visit ended.")
   place_id: str | None = Field(description="Google place ID.")
   name: str | None = Field(description="The place's name, when it could be looked up.")
   address: str | None
@@ -47,6 +49,7 @@ class LocationActivity(Schema):
   start_at: datetime
   end_at: datetime
   utc_offset_minutes: int | None
+  end_utc_offset_minutes: int | None = Field(description="UTC offset where the trip ended; differs from the start's across time zones.")
   activity_type: str | None = Field(description="How Google thinks you moved, e.g. walking, in passenger vehicle, flying.")
   distance_meters: float | None
   start_latitude: float | None

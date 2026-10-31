@@ -1,9 +1,11 @@
 import asyncio
+import gzip
 from datetime import UTC, date, datetime, time, timedelta
 from typing import Any
 from uuid import UUID
 
-from api.common.utils import utc_now
+from api.common.file_storage import file_storage
+from api.common.utils import generate_uuid, utc_now
 from api.location_history import place_names
 from api.location_history.merge import plan_merge
 from api.location_history.parser import ParsedSegment, TimelineFormatError, parse_timeline
@@ -12,9 +14,27 @@ from api.location_history.schemas import LocationActivity, LocationDay, Location
 from api.models.location_import import LocationImport
 from api.models.location_segment import LocationSegment, LocationSegmentKind
 
+EXPORT_TIME_TRUST = timedelta(days=1)
+
 
 def _local(at: datetime, offset_minutes: int | None) -> datetime:
   return (at.astimezone(UTC) + timedelta(minutes=offset_minutes or 0)).replace(tzinfo=None)
+
+
+def _as_of(range_end: datetime, exported_at: datetime | None) -> datetime:
+  """How new the export's knowledge is.
+
+  The file doesn't say when it was exported, so its latest moment is the
+  floor. The export time the browser sends is the file's modified time,
+  which a download, copy or AirDrop resets: trusted only when it's close to
+  the file's end, as a fresh export's is, it lets a fresh export with its
+  last trip deleted remove that trip. Trusted further, an old backup copied
+  today would claim to know today, and hide everything since it was made.
+  """
+  if exported_at is None:
+    return range_end
+  exported_at = min(exported_at, utc_now())
+  return exported_at if range_end < exported_at <= range_end + EXPORT_TIME_TRUST else range_end
 
 
 def _row(user_id: UUID, segment: ParsedSegment, as_of: datetime) -> dict[str, Any]:
@@ -33,8 +53,9 @@ def _row(user_id: UUID, segment: ParsedSegment, as_of: datetime) -> dict[str, An
     "start_at": segment.start_at,
     "end_at": segment.end_at,
     "utc_offset_minutes": segment.utc_offset_minutes,
+    "end_utc_offset_minutes": segment.end_utc_offset_minutes,
     "local_start": _local(segment.start_at, segment.utc_offset_minutes),
-    "local_end": _local(segment.end_at, segment.utc_offset_minutes),
+    "local_end": _local(segment.end_at, segment.end_utc_offset_minutes),
     "place_id": segment.place_id,
     "semantic_type": segment.semantic_type,
     "hierarchy_level": segment.hierarchy_level,
@@ -48,6 +69,10 @@ def _row(user_id: UUID, segment: ParsedSegment, as_of: datetime) -> dict[str, An
     "end_longitude": end_longitude,
     "points": segment.points,
   }
+
+
+def _end_offset(segment: LocationSegment) -> int | None:
+  return segment.utc_offset_minutes if segment.end_utc_offset_minutes is None else segment.end_utc_offset_minutes
 
 
 def covered_days(spans: list[tuple[datetime, datetime]]) -> list[date]:
@@ -77,20 +102,25 @@ class LocationHistoryService:
     range_start, range_end = timeline.range_start, timeline.range_end
     if range_start is None or range_end is None:
       raise TimelineFormatError("The export is empty: there's no Timeline data on the phone it came from.")
-    # The file doesn't say when it was exported. Its latest moment is a lower
-    # bound; the export time, when known, also tells a fresh export with its
-    # last trip deleted apart from an old backup, and covers everything up to it.
-    as_of = max(range_end, min(exported_at, utc_now())) if exported_at else range_end
+    as_of = _as_of(range_end, exported_at)
 
     await segment_repo.lock_for_import(user_id)
     stored = await segment_repo.stored_for_merge(user_id)
-    plan = plan_merge(timeline.segments, stored, as_of, range_start, as_of)
+    plan = plan_merge(timeline.segments, stored, as_of, range_start, as_of, remove_missing=timeline.unreadable == 0)
 
     await segment_repo.upsert([_row(user_id, s, as_of) for s in plan.upserts])
     await segment_repo.confirm(user_id, plan.confirmed, as_of)
     await segment_repo.soft_delete(user_id, plan.removed, as_of)
 
+    import_id = generate_uuid()
+    archive_key = f"location_imports/{user_id}/{import_id}.json.gz"
+    # Kept before the import commits, so no import exists without its file.
+    await file_storage().put(archive_key, await asyncio.to_thread(gzip.compress, content), "application/gzip")
+
     record = LocationImport(
+      id=import_id,
+      archive_key=archive_key,
+      unreadable=timeline.unreadable,
       user_id=user_id,
       filename=filename,
       format=timeline.format,
@@ -137,6 +167,7 @@ class LocationHistoryService:
       start_at=segment.start_at,
       end_at=segment.end_at,
       utc_offset_minutes=segment.utc_offset_minutes,
+      end_utc_offset_minutes=_end_offset(segment),
       place_id=segment.place_id,
       name=name.name if name else None,
       address=name.address if name else None,
@@ -153,6 +184,7 @@ class LocationHistoryService:
       start_at=segment.start_at,
       end_at=segment.end_at,
       utc_offset_minutes=segment.utc_offset_minutes,
+      end_utc_offset_minutes=_end_offset(segment),
       activity_type=segment.activity_type,
       distance_meters=segment.distance_meters,
       start_latitude=segment.start_latitude,

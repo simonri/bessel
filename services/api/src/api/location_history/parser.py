@@ -19,6 +19,7 @@ from api.models.location_segment import LocationSegmentKind
 
 _GEO = re.compile(r"^\s*(?:geo:)?\s*(-?\d+(?:\.\d+)?)°?\s*,\s*(-?\d+(?:\.\d+)?)°?\s*$")
 _COORD_DIGITS = 6
+_KINDS = ("visit", "activity", "timelinePath")
 
 type LatLng = tuple[float, float]
 
@@ -28,12 +29,17 @@ class TimelineFormatError(ValidationError):
     super().__init__(message, status_code=422)
 
 
+class _UnreadableSegmentError(Exception):
+  """A visit, trip or route whose times or points can't be read."""
+
+
 @dataclass(slots=True)
 class ParsedSegment:
   kind: LocationSegmentKind
   start_at: datetime
   end_at: datetime
   utc_offset_minutes: int | None
+  end_utc_offset_minutes: int | None
   place_id: str | None = None
   semantic_type: str | None = None
   hierarchy_level: int | None = None
@@ -51,11 +57,14 @@ class ParsedSegment:
     self.key = _digest([self.kind.value, _ms(self.start_at), _ms(self.end_at), self.hierarchy_level])
 
   def seal(self) -> None:
-    """Fingerprints what the segment says, once its offset is final.
+    """Fingerprints what the segment says, once its offsets are final.
 
     Confidence scores are left out: Google recomputes them freely, and a
-    re-scored but otherwise identical segment is not an edit.
+    re-scored but otherwise identical segment is not an edit. The end offset
+    only counts when it differs from the start's, so a segment within one
+    time zone keeps the fingerprint it had before end offsets were read.
     """
+    end_offset = [] if self.end_utc_offset_minutes == self.utc_offset_minutes else [self.end_utc_offset_minutes]
     self.content_hash = _digest(
       [
         self.utc_offset_minutes,
@@ -67,6 +76,7 @@ class ParsedSegment:
         self.start_location,
         self.end_location,
         self.points,
+        *end_offset,
       ]
     )
 
@@ -75,6 +85,9 @@ class ParsedSegment:
 class ParsedTimeline:
   format: str
   segments: list[ParsedSegment]
+  # Visits, trips and routes in the file that couldn't be read. While there
+  # are any, the file can't be trusted to say what was deleted.
+  unreadable: int = 0
 
   @property
   def range_start(self) -> datetime | None:
@@ -127,15 +140,15 @@ def _time(value: Any) -> datetime | None:
   return parsed if parsed.tzinfo is not None else None
 
 
-def _offset_minutes(raw: dict[str, Any], start: datetime) -> int | None:
-  explicit = _number(raw.get("startTimeTimezoneUtcOffsetMinutes"))
+def _offset_minutes(raw: dict[str, Any], edge: str, at: datetime) -> int | None:
+  explicit = _number(raw.get(f"{edge}TimezoneUtcOffsetMinutes"))
   if explicit is not None:
     return int(explicit)
   # iOS writes timeline paths in UTC ("Z"), which says nothing about where
   # they happened; a real +00:00 place is written as "+00:00".
-  if str(raw.get("startTime", "")).endswith("Z"):
+  if str(raw.get(edge, "")).endswith("Z"):
     return None
-  offset = start.utcoffset()
+  offset = at.utcoffset()
   return None if offset is None else int(offset.total_seconds() // 60)
 
 
@@ -143,16 +156,14 @@ def _path_points(raw: list[Any], start: datetime) -> list[list[float]]:
   points: list[list[float]] = []
   for item in raw:
     if not isinstance(item, dict):
-      continue
+      raise _UnreadableSegmentError
     location = _geo(item.get("point"))
-    if location is None:
-      continue
     at = _time(item.get("time"))
-    if at is None:
-      minutes = _number(item.get("durationMinutesOffsetFromStartTime"))
-      if minutes is None:
-        continue
+    if at is None and (minutes := _number(item.get("durationMinutesOffsetFromStartTime"))) is not None:
       at = start + timedelta(minutes=minutes)
+    # One lost point would quietly shorten the stored route.
+    if location is None or at is None:
+      raise _UnreadableSegmentError
     points.append([location[0], location[1], int(at.timestamp())])
   points.sort(key=lambda p: p[2])
   return points
@@ -164,13 +175,19 @@ def _candidate(container: dict[str, Any]) -> dict[str, Any]:
 
 
 def _segment(raw: Any) -> ParsedSegment | None:
-  if not isinstance(raw, dict):
+  """None for kinds that carry no places: memories, trip summaries and
+  whatever Google adds later."""
+  if not isinstance(raw, dict) or not any(kind in raw for kind in _KINDS):
     return None
   start, end = _time(raw.get("startTime")), _time(raw.get("endTime"))
   if start is None or end is None or end < start:
-    return None
-  offset = _offset_minutes(raw, start)
-  base = {"start_at": start.astimezone(UTC), "end_at": end.astimezone(UTC), "utc_offset_minutes": offset}
+    raise _UnreadableSegmentError
+  base = {
+    "start_at": start.astimezone(UTC),
+    "end_at": end.astimezone(UTC),
+    "utc_offset_minutes": _offset_minutes(raw, "startTime", start),
+    "end_utc_offset_minutes": _offset_minutes(raw, "endTime", end),
+  }
 
   if isinstance(visit := raw.get("visit"), dict):
     candidate = _candidate(visit)
@@ -192,11 +209,11 @@ def _segment(raw: Any) -> ParsedSegment | None:
       start_location=_geo(activity.get("start")),
       end_location=_geo(activity.get("end")),
     )
-  if isinstance(path := raw.get("timelinePath"), list):
-    points = _path_points(path, start)
-    return ParsedSegment(kind=LocationSegmentKind.path, **base, points=points) if points else None
-  # Memories, trip summaries and kinds Google adds later carry no places.
-  return None
+  if not isinstance(path := raw.get("timelinePath"), list):
+    raise _UnreadableSegmentError
+  points = _path_points(path, start)
+  # An empty route says nothing, so it neither adds nor replaces anything.
+  return ParsedSegment(kind=LocationSegmentKind.path, **base, points=points) if points else None
 
 
 def _fill_offsets(segments: list[ParsedSegment]) -> None:
@@ -205,11 +222,24 @@ def _fill_offsets(segments: list[ParsedSegment]) -> None:
   known = sorted((s.start_at, s.utc_offset_minutes) for s in segments if s.utc_offset_minutes is not None)
   starts = [at for at, _ in known]
   for segment in segments:
-    if segment.utc_offset_minutes is not None or not known:
-      continue
-    i = bisect.bisect_left(starts, segment.start_at)
-    nearby = [known[j] for j in (i - 1, i) if 0 <= j < len(known)]
-    segment.utc_offset_minutes = min(nearby, key=lambda k: abs(k[0] - segment.start_at))[1]
+    if segment.utc_offset_minutes is None and known:
+      i = bisect.bisect_left(starts, segment.start_at)
+      nearby = [known[j] for j in (i - 1, i) if 0 <= j < len(known)]
+      segment.utc_offset_minutes = min(nearby, key=lambda k: abs(k[0] - segment.start_at))[1]
+    if segment.end_utc_offset_minutes is None:
+      segment.end_utc_offset_minutes = segment.utc_offset_minutes
+
+
+def _dedupe(segments: list[ParsedSegment]) -> list[ParsedSegment]:
+  """Collapses a segment the file lists twice. Two different segments with
+  the same times are both kept, the second keyed by its content as well."""
+  by_key: dict[str, ParsedSegment] = {}
+  for segment in sorted(segments, key=lambda s: s.content_hash):
+    existing = by_key.get(segment.key)
+    if existing is not None and existing.content_hash != segment.content_hash:
+      segment.key = _digest([segment.key, segment.content_hash])
+    by_key.setdefault(segment.key, segment)
+  return list(by_key.values())
 
 
 def _raw_segments(data: Any) -> tuple[str, list[Any]]:
@@ -230,15 +260,21 @@ def parse_timeline(content: bytes) -> ParsedTimeline:
     raise TimelineFormatError("The file isn't valid JSON.") from e
   format_, raw = _raw_segments(data)
 
-  # A segment that appears twice in one file is the same segment.
-  by_key: dict[str, ParsedSegment] = {}
-  for segment in filter(None, map(_segment, raw)):
-    by_key.setdefault(segment.key, segment)
-  segments = list(by_key.values())
+  segments: list[ParsedSegment] = []
+  unreadable = 0
+  for item in raw:
+    try:
+      segment = _segment(item)
+    except _UnreadableSegmentError:
+      unreadable += 1
+      continue
+    if segment is not None:
+      segments.append(segment)
   if raw and not segments:
     raise TimelineFormatError("The file has no visits, trips or routes that could be read.")
 
   _fill_offsets(segments)
   for segment in segments:
     segment.seal()
-  return ParsedTimeline(format=format_, segments=sorted(segments, key=lambda s: (s.start_at, s.kind.value)))
+  segments = _dedupe(segments)
+  return ParsedTimeline(format=format_, segments=sorted(segments, key=lambda s: (s.start_at, s.kind.value)), unreadable=unreadable)

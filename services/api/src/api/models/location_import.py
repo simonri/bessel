@@ -25,3 +25,7 @@ class LocationImport(RecordModel):
   removed: Mapped[int] = mapped_column(Integer, nullable=False)
   unchanged: Mapped[int] = mapped_column(Integer, nullable=False)
   stale: Mapped[int] = mapped_column(Integer, nullable=False)
+  unreadable: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+  # The uploaded file as it was, gzipped, so it can be read again later.
+  # Null for imports from before files were kept.
+  archive_key: Mapped[str | None] = mapped_column(String(255), nullable=True)
