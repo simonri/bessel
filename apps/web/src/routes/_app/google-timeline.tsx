@@ -34,6 +34,7 @@ import {
   StatTile,
 } from "@/components/ui-kit";
 import { client } from "@/lib/client";
+import { setSelectedDay, useSelectedDay } from "@/lib/selected-day";
 import { cn } from "@/lib/utils";
 import {
   activityInfo,
@@ -161,11 +162,13 @@ function GoogleTimelinePage() {
     getLocationHistorySummaryOptions({ client }),
   );
   const days = useMemo(() => summary?.days.map(isoDay) ?? [], [summary]);
-  const [picked, setPicked] = useState<IsoDay | null>(null);
-  const day = picked ?? days.at(-1) ?? null;
+  // The day picked here or on Timeline, when it has places; else the newest.
+  const selected = useSelectedDay();
+  const day =
+    (selected && days.includes(selected) ? selected : days.at(-1)) ?? null;
 
   // After an import, show the newest day it brought.
-  const upload = useTimelineImport(() => setPicked(null));
+  const upload = useTimelineImport(() => setSelectedDay(null));
 
   if (isLoading) {
     return (
@@ -216,7 +219,7 @@ function GoogleTimelinePage() {
     <TimelineDay
       day={day}
       days={days}
-      onPick={setPicked}
+      onPick={setSelectedDay}
       lastImport={summary?.last_import ?? null}
       importInput={upload.input}
       importButton={importButton}

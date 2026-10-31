@@ -16,8 +16,7 @@ import {
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { addDays, format, isSameDay, subDays } from "date-fns";
-import { useState } from "react";
+import { addDays, format, isSameDay, parseISO, subDays } from "date-fns";
 import { ActivityCards } from "@/components/activity/activity-cards";
 import {
   activitySentence,
@@ -39,6 +38,12 @@ import { PageHeader } from "@/components/ui-kit";
 import { useSettings } from "@/hooks/use-settings";
 import { client } from "@/lib/client";
 import { isDesktop } from "@/lib/environment";
+import {
+  setSelectedDay,
+  setSelectedSource,
+  useSelectedDay,
+  useSelectedSource,
+} from "@/lib/selected-day";
 import { localDayBounds } from "./-activity-utils";
 import { YearGrid, yearGridRange } from "./-year-grid";
 
@@ -56,8 +61,11 @@ export const Route = createFileRoute("/_app/activity")({
 
 function ActivityPage() {
   const today = new Date();
-  const [date, setDate] = useState(today);
-  const [source, setSource] = useState<string | null>(null);
+  const selectedDay = useSelectedDay();
+  const date = selectedDay ? parseISO(selectedDay) : today;
+  const setDate = (d: Date) =>
+    setSelectedDay(isSameDay(d, today) ? null : format(d, "yyyy-MM-dd"));
+  const source = useSelectedSource();
   const { settings } = useSettings();
 
   const mapName = (name: string) => {
@@ -171,7 +179,7 @@ function ActivityPage() {
             {sources.length > 1 && (
               <Select
                 value={activeSource ?? ""}
-                onValueChange={(v) => setSource(v)}
+                onValueChange={(v) => setSelectedSource(v)}
               >
                 <SelectTrigger
                   size="default"
@@ -190,8 +198,8 @@ function ActivityPage() {
             )}
             <DayNav
               label={isCurrentDay ? "Today" : format(date, "EEE, MMM d")}
-              onPrev={() => setDate((d) => subDays(d, 1))}
-              onNext={() => setDate((d) => addDays(d, 1))}
+              onPrev={() => setDate(subDays(date, 1))}
+              onNext={() => setDate(addDays(date, 1))}
               nextDisabled={isCurrentDay}
               onToday={isCurrentDay ? undefined : () => setDate(today)}
             />
