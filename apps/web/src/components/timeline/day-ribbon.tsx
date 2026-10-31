@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Dumbbell, MapPin, Monitor, Moon } from "lucide-react";
+import { ChevronRight, Dumbbell, MapPin, Monitor, Moon } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { fmtDur } from "@/routes/_app/-activity-utils";
@@ -97,11 +97,17 @@ function Block({
   );
 }
 
-function LaneLabel({ lane }: { lane: RibbonLane }) {
+function LaneLabel({
+  lane,
+  onOpen,
+}: {
+  lane: RibbonLane;
+  onOpen?: () => void;
+}) {
   const Icon = LANE_ICONS[lane.key];
   const { hue } = LANE_META[lane.key];
-  return (
-    <div className="flex min-w-0 items-center gap-2">
+  const content = (
+    <>
       <span
         className="flex size-6 shrink-0 items-center justify-center rounded-full"
         style={{ backgroundColor: pastel(hue, 0.16), color: pastel(hue) }}
@@ -120,7 +126,23 @@ function LaneLabel({ lane }: { lane: RibbonLane }) {
               : fmtDur(lane.totalSecs)}
         </span>
       </div>
-    </div>
+      {onOpen && (
+        <ChevronRight className="size-3.5 shrink-0 text-white/30 transition-colors group-hover:text-white/70" />
+      )}
+    </>
+  );
+  if (!onOpen) {
+    return <div className="flex min-w-0 items-center gap-2">{content}</div>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      title={`Open ${lane.title}`}
+      className="group -mx-1.5 flex min-w-0 items-center gap-2 rounded-lg px-1.5 py-1 text-left transition-colors hover:bg-white/[0.05]"
+    >
+      {content}
+    </button>
   );
 }
 
@@ -131,12 +153,15 @@ export function DayRibbon({
   startTs,
   endTs,
   nowTs,
+  onOpenLane,
 }: {
   date: Date;
   lanes: RibbonLane[];
   startTs: number;
   endTs: number;
   nowTs: number | null;
+  /** Lanes with a page of their own open it from their label. */
+  onOpenLane?: Partial<Record<RibbonLaneKey, () => void>>;
 }) {
   const [hovered, setHovered] = useState<RibbonBlock | null>(null);
   const nowPct =
@@ -199,6 +224,7 @@ export function DayRibbon({
           nightStartPct={nightStartPct}
           hovered={hovered}
           onHover={setHovered}
+          onOpen={onOpenLane?.[lane.key]}
         />
       ))}
     </div>
@@ -214,6 +240,7 @@ function LaneRow({
   nightStartPct,
   hovered,
   onHover,
+  onOpen,
 }: {
   lane: RibbonLane;
   startTs: number;
@@ -223,11 +250,12 @@ function LaneRow({
   nightStartPct: number;
   hovered: RibbonBlock | null;
   onHover: (block: RibbonBlock | null) => void;
+  onOpen?: () => void;
 }) {
   const hoveredHere = hovered && lane.blocks.includes(hovered) ? hovered : null;
   return (
     <>
-      <LaneLabel lane={lane} />
+      <LaneLabel lane={lane} onOpen={onOpen} />
       <div className={cn("relative", hoveredHere && "z-20")}>
         <div
           data-lane-bar

@@ -13,8 +13,16 @@ import {
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { addDays, format, isSameDay, subDays, subHours } from "date-fns";
-import { useMemo, useState } from "react";
+import {
+  addDays,
+  format,
+  isSameDay,
+  parseISO,
+  subDays,
+  subHours,
+} from "date-fns";
+import { useMemo } from "react";
+import { useOpenPage } from "@/components/open-page-context";
 import { DayNav } from "@/components/timeline/day-nav";
 import { DayRibbon } from "@/components/timeline/day-ribbon";
 import {
@@ -27,6 +35,12 @@ import { MomentsList } from "@/components/timeline/moments-list";
 import { SummaryCards } from "@/components/timeline/summary-cards";
 import { PageHeader, SectionLabel } from "@/components/ui-kit";
 import { client } from "@/lib/client";
+import {
+  setSelectedDay,
+  setSelectedSource,
+  useSelectedDay,
+  useSelectedSource,
+} from "@/lib/selected-day";
 import { fmtDur, localDayBounds } from "./-activity-utils";
 import { dayParam } from "./-google-timeline-utils";
 
@@ -40,9 +54,13 @@ export const Route = createFileRoute("/_app/timeline")({
 
 function TimelinePage() {
   const today = subHours(new Date(), DAY_START_HOUR);
-  const [date, setDate] = useState(today);
-  const [source, setSource] = useState<string | null>(null);
+  const selectedDay = useSelectedDay();
+  const date = selectedDay ? parseISO(selectedDay) : today;
+  const setDate = (d: Date) =>
+    setSelectedDay(isSameDay(d, today) ? null : format(d, "yyyy-MM-dd"));
+  const source = useSelectedSource();
   const isToday = isSameDay(date, today);
+  const openPage = useOpenPage();
 
   const { data: sourcesData } = useQuery({
     ...listActivitySourcesOptions({ client }),
@@ -121,7 +139,7 @@ function TimelinePage() {
           {sources.length > 1 && (
             <Select
               value={source ?? timeline?.source ?? ""}
-              onValueChange={(v) => setSource(v)}
+              onValueChange={(v) => setSelectedSource(v)}
             >
               <SelectTrigger
                 size="default"
@@ -140,8 +158,8 @@ function TimelinePage() {
           )}
           <DayNav
             label={isToday ? "Today" : format(date, "EEE, MMM d")}
-            onPrev={() => setDate((d) => subDays(d, 1))}
-            onNext={() => setDate((d) => addDays(d, 1))}
+            onPrev={() => setDate(subDays(date, 1))}
+            onNext={() => setDate(addDays(date, 1))}
             nextDisabled={isToday}
             onToday={isToday ? undefined : () => setDate(today)}
           />
@@ -180,6 +198,18 @@ function TimelinePage() {
             startTs={startTs}
             endTs={endTs}
             nowTs={isToday ? nowTs : null}
+            onOpenLane={{
+              // Named outright: before 6am this day isn't the calendar's
+              // today, which is what the other pages take null to mean.
+              pc: () => {
+                setSelectedDay(dayKey);
+                openPage("activity");
+              },
+              places: () => {
+                setSelectedDay(dayKey);
+                openPage("googleTimeline");
+              },
+            }}
           />
         )}
       </section>
