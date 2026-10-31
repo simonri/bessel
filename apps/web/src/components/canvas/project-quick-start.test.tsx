@@ -43,6 +43,12 @@ const claude = vi.hoisted(() => {
         { sessionId: "c-1", title: "Widget icons", updatedAt: Date.now() },
       ],
     ),
+    conversationPreview: vi.fn(async () => ({
+      opening: "Redraw the widget icons",
+      exchanges: [
+        { prompt: "make them thinner", reply: "Done, 1.5px strokes.", at: 1 },
+      ],
+    })),
   };
   Object.defineProperty(window, "electron", {
     value: { claudeSessions: api },
@@ -112,6 +118,17 @@ function claudeWindows(manager: ReturnType<typeof useWindowManager>) {
   return manager.allWindows.filter((w) => w.module === "claudeCode");
 }
 
+// The menu puts focus on its first item a frame after opening; wait for that,
+// or it can land after the submenu opened and take focus back from it.
+async function openConversations() {
+  const claudeItem = await screen.findByRole("menuitem", { name: /^Claude/ });
+  await waitFor(() => expect(document.activeElement).toBe(claudeItem));
+  const sub = screen.getByRole("menuitem", { name: /Continue a conversation/ });
+  act(() => sub.focus());
+  fireEvent.keyDown(sub, { key: "ArrowRight" });
+  return sub;
+}
+
 describe("ProjectQuickStart", () => {
   it("starts Claude on Enter in a session that closes when emptied", async () => {
     const { manager, onShowCanvas } = mount();
@@ -146,17 +163,9 @@ describe("ProjectQuickStart", () => {
 
   it("continues a past conversation", async () => {
     const { manager } = mount();
-    const sub = await screen.findByRole("menuitem", {
-      name: /Continue a conversation/,
-    });
-    act(() => sub.focus());
-    fireEvent.keyDown(sub, { key: "ArrowRight" });
-    await screen.findByRole("menuitem", { name: /^Widget icons/ });
-    fireEvent.keyDown(sub, { key: "ArrowRight" });
-    await waitFor(() =>
-      expect(document.activeElement?.textContent).toContain("Widget icons"),
-    );
-    fireEvent.keyDown(document.activeElement as Element, { key: "Enter" });
+    await openConversations();
+    const item = await screen.findByRole("menuitem", { name: /^Widget icons/ });
+    fireEvent.keyDown(item, { key: "Enter" });
 
     expect(claude.conversations).toHaveBeenCalledWith("/home/me/metron");
     expect(claudeWindows(manager())[0].data).toMatchObject({
@@ -165,13 +174,30 @@ describe("ProjectQuickStart", () => {
     });
   });
 
+  it("previews the conversation an item highlights", async () => {
+    mount();
+    const sub = await openConversations();
+    const item = await screen.findByRole("menuitem", { name: /^Widget icons/ });
+    expect(screen.queryByText("make them thinner")).toBeNull();
+
+    fireEvent.pointerMove(item, { pointerType: "mouse" });
+
+    expect(await screen.findByText("make them thinner")).toBeTruthy();
+    expect(screen.getByText("Done, 1.5px strokes.")).toBeTruthy();
+    expect(claude.conversationPreview).toHaveBeenCalledWith(
+      "/home/me/metron",
+      "c-1",
+    );
+
+    act(() => sub.focus());
+    await waitFor(() =>
+      expect(screen.queryByText("make them thinner")).toBeNull(),
+    );
+  });
+
   it("offers no second way to continue a conversation", async () => {
     mount();
-    const sub = await screen.findByRole("menuitem", {
-      name: /Continue a conversation/,
-    });
-    act(() => sub.focus());
-    fireEvent.keyDown(sub, { key: "ArrowRight" });
+    await openConversations();
     await screen.findByRole("menuitem", { name: /^Widget icons/ });
 
     expect(screen.queryByRole("menuitem", { name: /background/i })).toBeNull();

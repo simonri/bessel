@@ -22,6 +22,7 @@ import {
   useClaudeSessions,
 } from "@/components/claude-sessions/claude-sessions-store";
 import type { ClaudeConversation } from "@/components/claude-sessions/claude-sessions-types";
+import { ConversationPreview } from "@/components/claude-sessions/conversation-preview";
 import { useOpenClaudeSession } from "@/components/claude-sessions/use-open-claude-session";
 import {
   templateToWindowSpecs,
@@ -69,6 +70,37 @@ function ModuleIcon({ module }: { module: ModuleKey }) {
   return <Icon className="size-3.5" />;
 }
 
+// Hovering an item, or reaching it with the arrow keys, shows the card the
+// New session page shows, to tell apart conversations that share a name.
+function ConversationItem({
+  cwd,
+  conversation,
+  running,
+  onSelect,
+}: {
+  cwd: string;
+  conversation: ClaudeConversation;
+  running: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <ConversationPreview cwd={cwd} conversation={conversation} live={running}>
+      <DropdownMenuItem onSelect={onSelect}>
+        <span className="min-w-0 flex-1 truncate">{conversation.title}</span>
+        {running ? (
+          <span className="shrink-0 rounded bg-emerald-400/15 px-1.5 py-px text-10 font-medium text-emerald-300">
+            Running
+          </span>
+        ) : (
+          <span className="shrink-0 text-11 tabular-nums text-white/35">
+            {timeAgo(conversation.updatedAt)}
+          </span>
+        )}
+      </DropdownMenuItem>
+    </ConversationPreview>
+  );
+}
+
 function ConversationsSubmenu({
   project,
   onResume,
@@ -104,26 +136,18 @@ function ConversationsSubmenu({
             No conversations yet
           </p>
         ) : (
-          conversations.map((c) => {
-            const running = sessions.some(
-              (s) =>
-                isLive(s.status) && s.conversationIds.includes(c.sessionId),
-            );
-            return (
-              <DropdownMenuItem key={c.sessionId} onSelect={() => onResume(c)}>
-                <span className="min-w-0 flex-1 truncate">{c.title}</span>
-                {running ? (
-                  <span className="shrink-0 rounded bg-emerald-400/15 px-1.5 py-px text-10 font-medium text-emerald-300">
-                    Running
-                  </span>
-                ) : (
-                  <span className="shrink-0 text-11 tabular-nums text-white/35">
-                    {timeAgo(c.updatedAt)}
-                  </span>
-                )}
-              </DropdownMenuItem>
-            );
-          })
+          conversations.map((c) => (
+            <ConversationItem
+              key={c.sessionId}
+              cwd={project.path}
+              conversation={c}
+              running={sessions.some(
+                (s) =>
+                  isLive(s.status) && s.conversationIds.includes(c.sessionId),
+              )}
+              onSelect={() => onResume(c)}
+            />
+          ))
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={onMoreOptions}>
