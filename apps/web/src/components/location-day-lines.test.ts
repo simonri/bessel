@@ -148,6 +148,60 @@ describe("tripLines", () => {
     ]);
   });
 
+  it("draws through the phone's point just before a trip starts and just after it ends, as Google Maps does", () => {
+    // Google calls the drive over at 17:09, but the phone's 17:10 point is
+    // still out on the road.
+    const [line] = tripLines(
+      [
+        stay("office", "08:30", "17:02", OFFICE),
+        stay("home", "17:09", "20:00", HOME),
+      ],
+      [trip("home-again", "17:02", "17:09")],
+      [
+        point("16:57", 59.36, 18.1),
+        {
+          latitude: 59.338,
+          longitude: 18.059,
+          ts: at("17:00").getTime() / 1000 + 30,
+        },
+        {
+          latitude: 59.337,
+          longitude: 18.055,
+          ts: at("17:01").getTime() / 1000 + 45,
+        },
+        point("17:07", 59.32, 18.03),
+        point("17:10", 59.305, 18.01),
+        point("17:13", 59.29, 17.98),
+      ],
+    );
+
+    expect(line.points).toEqual([
+      OFFICE,
+      [59.337, 18.055],
+      [59.32, 18.03],
+      [59.305, 18.01],
+      HOME,
+    ]);
+  });
+
+  it("leaves out points more than 3 minutes either side of a trip", () => {
+    const [line] = tripLines(
+      [],
+      [trip("drive", "08:00", "08:10")],
+      [
+        point("07:56", 59.2, 17.9),
+        point("08:05", 59.31, 18.02),
+        point("08:08", 59.33, 18.05),
+        point("08:14", 59.4, 18.2),
+      ],
+    );
+
+    expect(line.points).toEqual([
+      [59.31, 18.02],
+      [59.33, 18.05],
+    ]);
+  });
+
   it("skips a trip with nothing to draw", () => {
     const lines = tripLines(
       [],
