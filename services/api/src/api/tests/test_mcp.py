@@ -161,6 +161,8 @@ class TestTools:
       "save_note",
       "remember",
       "revise_memory",
+      "draft_email",
+      "draft_reply",
     }
     for tool in tools:
       assert tool.annotations is not None
@@ -232,6 +234,13 @@ ISOLATION_TESTED = {
   "get_time_tracking",
   "get_agent_usage",
   "get_counters",
+  "list_mail_folders",
+  "search_emails",
+  "read_email",
+  "read_thread",
+  "owed_replies",
+  "draft_email",
+  "draft_reply",
 }
 
 

@@ -22,10 +22,11 @@ revise_memory, merging rather than adding beside what is known.
 Data: tasks, calendar, contacts, money and investments, recipes, sleep, workouts, lifts from \
 the gym log, daily steps and heart rate, computer activity, the weather anywhere (from Yr), \
 saved places and location history (stays and trips), time tracked on projects, Claude Code \
-usage, and days-since counters. get_patterns gives the user's own base rates and lagged \
-effects over months. Tasks and recipes can be created and updated, and calendar events \
-added; contacts and money are read-only, and nothing can be deleted. get_note and save_note \
-keep a routine's own working state between runs.
+usage, days-since counters, and iCloud Mail. get_patterns gives the user's own base rates \
+and lagged effects over months. Tasks and recipes can be created and updated, and calendar \
+events added; mail is read without marking it read, and replies are only saved as drafts, \
+never sent; contacts and money are read-only, and nothing can be deleted. get_note and \
+save_note keep a routine's own working state between runs.
 
 Days can be written as YYYY-MM-DD or relative ("today", "fri", "next week"), and \
 default to the user's own timezone. Durations are in seconds. Money is in currency \
