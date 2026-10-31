@@ -9,7 +9,7 @@ COPY . ./dist
 
 USER node
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --start-interval=1s --retries=3 \
     CMD curl --fail http://localhost:3000 || exit 1
 
 EXPOSE 3000
