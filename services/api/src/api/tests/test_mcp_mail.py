@@ -15,8 +15,10 @@ from api.mail.mailbox import Criterion, Folder, ImapMailbox, _meta
 from api.mail.messages import imap_utf7_decode, imap_utf7_encode, without_quotes
 from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.user import User
+from api.settings import settings
 from api.tests.fixtures.database import SaveFixture
 from api.tests.fixtures.mcp import ConnectFixture, mcp_call, mcp_call_error
+from cryptography.fernet import Fernet
 
 ME = "simon@example.se"
 NOW = datetime.now(UTC)
@@ -105,6 +107,11 @@ class FakeMailbox:
 
   def append(self, folder: str, flags: Sequence[str], raw: bytes) -> None:
     self.appended.append((folder, list(flags), raw))
+
+
+@pytest.fixture(autouse=True)
+def encryption_key(monkeypatch: pytest.MonkeyPatch) -> None:
+  monkeypatch.setattr(settings, "CREDENTIALS_ENCRYPTION_KEY", Fernet.generate_key().decode())
 
 
 @pytest.fixture
