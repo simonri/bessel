@@ -12,6 +12,7 @@ import {
   parseRemoteUrl,
   pruneEnded,
   reconcile,
+  sessionContinuing,
   sessionStatus,
   transcriptExists,
   transcriptHasConversation,
@@ -129,6 +130,36 @@ describe("CLI output parsing", () => {
     [agent({ state: "done" }), "idle"],
   ] as const)("maps %o to %s", (entry, status) => {
     expect(agentStatus(entry)).toBe(status);
+  });
+});
+
+describe("sessionContinuing", () => {
+  const old = "eebe754f-caf1-4f54-adbf-7baba79e48b1";
+  const resumed = stored({
+    key: "resumed",
+    sessionId: "11111111-1111-4111-8111-111111111111",
+    previousSessionIds: [old],
+  });
+  // Restarted without the old transcript in sight, so it began anew.
+  const restarted = stored({
+    key: "restarted",
+    sessionId: "24d167e9-980f-4d05-a31e-742163a2bf72",
+    previousSessionIds: [old],
+  });
+
+  it("reopens the session that carries the conversation on", () => {
+    expect(sessionContinuing([resumed], old, () => true)?.key).toBe("resumed");
+    expect(
+      sessionContinuing([stored({ sessionId: old })], old, () => false)?.key,
+    ).toBe("k1");
+  });
+
+  it("passes over a session that started over empty", () => {
+    expect(
+      sessionContinuing([restarted, resumed], old, (s) => s.key !== "restarted")
+        ?.key,
+    ).toBe("resumed");
+    expect(sessionContinuing([restarted], old, () => false)).toBeUndefined();
   });
 });
 

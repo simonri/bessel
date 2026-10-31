@@ -175,6 +175,24 @@ export function reconcile(
   return actions;
 }
 
+/**
+ * The stored session that carries a past conversation on, if one does. A
+ * session that had to start over, because its transcript couldn't be found,
+ * may still list the lost conversation among its previous ids; reopening it
+ * would show an empty conversation, so it only counts once it holds one.
+ */
+export function sessionContinuing(
+  sessions: readonly StoredClaudeSession[],
+  conversationId: string,
+  hasConversation: (session: StoredClaudeSession) => boolean,
+): StoredClaudeSession | undefined {
+  return sessions.find(
+    (s) =>
+      s.sessionId === conversationId ||
+      (s.previousSessionIds?.includes(conversationId) && hasConversation(s)),
+  );
+}
+
 /** Ended sessions are kept around to be resumed, but not forever. */
 export function pruneEnded(
   sessions: readonly StoredClaudeSession[],
