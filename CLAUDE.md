@@ -19,7 +19,8 @@ uv sync                    # Install dependencies
 uv run task api            # Start API server (http://127.0.0.1:8100)
 uv run task db_migrate     # Apply database migrations
 uv run task worker         # Start background worker
-uv run task test           # Run tests with coverage
+uv run task test           # All tests, in parallel, with coverage
+BESSEL_ENV=testing uv run python -m pytest src/api/tests/test_places.py -q   # One file
 uv run task lint           # Format + lint with autofix (ruff)
 
 uv run alembic revision --autogenerate -m "<description>"  # Generate migration
@@ -33,7 +34,11 @@ cd apps/web
 pnpm install               # Install dependencies
 pnpm dev                   # Start dev server (http://127.0.0.1:3001)
 pnpm build                 # Build production bundle
+pnpm test                  # Tests (vitest); one file: node_modules/.bin/vitest run <path>
+node_modules/.bin/tsc --noEmit   # Types
 ```
+
+If `pnpm` fails with a mise "No version is set" error, use `corepack pnpm`.
 
 ### Client Generation
 
@@ -53,6 +58,21 @@ Deploys are also blocked by changes that break clients already installed (old de
 cd services/api
 docker compose up -d       # Start PostgreSQL, Redis
 ```
+
+## How work flows
+
+Several Claude sessions work on this repo at once, each in its own git worktree under `.claude/worktrees/` on its own branch off `origin/master`.
+
+- **Start**: in a fresh worktree, run `scripts/worktree-setup.sh` (env files from the main checkout, `pnpm install`, `uv sync`).
+- **Stay in your worktree.** Never run commands in `/home/simon/dev/metron` itself: that is the user's checkout. Branches and the stash are shared by all worktrees; a hook refuses a bare `git stash`/`git stash pop`, force pushes and pushes to master.
+- **One task per branch**, kept small. Commit as you go.
+- **Done means checked.** `scripts/check.sh` lints, formats and type-checks what the branch changed (the Stop hook runs it and won't let you stop while it fails). Also run the tests covering your change, and the app for UI changes when you can. Report the commands you ran and their results.
+- **Tests must fail when the code is broken**: break the code a new test covers, watch it go red, restore.
+- **Merging happens only when the user asks.** Then run `scripts/land.sh`: it merges `origin/master` in, runs `scripts/check.sh --full`, pushes, opens the pull request if needed, waits for CI, merges and waits for the deploy. Never rebase or force-push a pushed branch. If a deploy fails, rerun it (`gh run rerun <id> --failed`) rather than fixing forward: a later push only deploys what it changed.
+- **Migrations**: master must have one Alembic head. If master gained a migration since you branched, point yours at master's head (`down_revision`) instead of adding a merge revision.
+- **Generated files** (`services/api/openapi.json`, `packages/client/src`, `apps/ios/Bessel/API/Generated`): never resolve conflicts by hand; take either side and run `make clients`.
+- **Shared local services**: the dev database belongs to master. Don't run a branch's migrations against it, or start a worker from a branch (it would take the main checkout's jobs). Tests are safe: each run gets databases of its own. If you run the API or web dev server, use a port other than 8100/3001. Only one session at a time builds or runs the desktop app or the iOS app.
+- **Handing back**: say what changed, the branch or PR, and how you verified it.
 
 ## Architecture
 
@@ -105,4 +125,4 @@ Never call `session.commit()` directly in business logic. The API backend automa
 - Use existing fixtures and avoid redundant setup
 - Mock external services appropriately
 
-IMPORTANT: Write code at a level that would be accepted to OpenAI or Anthropic's internal production monorepos.
+Write code at the level of a well-run production monorepo.

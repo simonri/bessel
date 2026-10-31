@@ -1,3 +1,4 @@
+import os
 from collections.abc import AsyncIterator, Callable, Coroutine
 
 import pytest
@@ -15,6 +16,9 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 
 
 def get_database_url(worker_id: str, driver: str = "asyncpg") -> str:
+  # Slot 0 keeps the plain names; see the slots in services/api/conftest.py.
+  slot = int(os.environ.get("BESSEL_TEST_SLOT", "0"))
+  name = f"{settings.POSTGRES_DB}_{worker_id}" if slot == 0 else f"{settings.POSTGRES_DB}_s{slot}_{worker_id}"
   return str(
     Url.build(
       scheme=f"postgresql+{driver}",
@@ -22,7 +26,7 @@ def get_database_url(worker_id: str, driver: str = "asyncpg") -> str:
       password=settings.POSTGRES_PASSWORD,
       host=settings.POSTGRES_HOST,
       port=settings.POSTGRES_PORT,
-      path=f"{settings.POSTGRES_DB}_{worker_id}",
+      path=name,
     )
   )
 

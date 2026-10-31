@@ -98,7 +98,11 @@ __pycache__
 .pytest_cache
 .ruff_cache
 
-.claude
+# Claude Code: worktrees and personal settings stay local; the shared settings and hooks are versioned.
+.claude/*
+!.claude/settings.json
+!.claude/hooks/
+*/**/.claude/
 htmlcov
 .coverage
 /bin/

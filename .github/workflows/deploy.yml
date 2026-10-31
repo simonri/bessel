@@ -153,6 +153,9 @@ jobs:
       - run: uv sync
       - run: uv run ruff check .
       - run: uv run ruff format --check .
+      # Two pull requests can each add a migration on the same parent and pass CI alone.
+      - name: One Alembic head
+        run: test "$(uv run alembic heads | grep -c .)" -eq 1 || { uv run alembic heads; echo "::error::More than one Alembic head."; exit 1; }
       - run: uv run task test
 
   # ============================================================================
