@@ -28,7 +28,8 @@ struct TimelineImportSheet: View {
         .presentationDetents([.medium])
         .presentationCornerRadius(28)
         .interactiveDismissDisabled(importer.phase == .importing)
-        .task { await importer.start(client: client) }
+        // Again for each file, should another be shared while this one shows.
+        .task(id: importer.file) { await importer.start(client: client) }
     }
 
     @ViewBuilder

@@ -10,73 +10,84 @@ final class TimelineImportTests: XCTestCase {
     """
 
     private var inbox: URL!
+    private var store: URL!
 
     override func setUp() {
         super.setUp()
         MockURLProtocol.reset()
         APIClient.idempotencySupported = false
-        inbox = temporaryURL("Inbox")
+        let root = temporaryURL("timeline")
+        inbox = root.appending(path: "Inbox")
+        store = root.appending(path: "TimelineImports")
         try? FileManager.default.createDirectory(at: inbox, withIntermediateDirectories: true)
     }
 
-    private func export(_ name: String = "Timeline.json", contents: String = #"[{"visit":{}}]"#) throws -> URL {
+    private func makeImporter() -> TimelineImporter {
+        TimelineImporter(inbox: inbox, store: store)
+    }
+
+    /// A file as iOS leaves it in the Inbox when one is shared to the app.
+    private func shared(_ name: String = "Timeline.json", contents: String = #"[{"visit":{}}]"#) throws -> URL {
         let url = inbox.appending(path: name)
         try Data(contents.utf8).write(to: url)
         return url
     }
 
-    private func exists(_ url: URL) -> Bool {
-        FileManager.default.fileExists(atPath: url.path(percentEncoded: false))
+    private func exists(_ url: URL?) -> Bool {
+        guard let url else { return false }
+        return FileManager.default.fileExists(atPath: url.path(percentEncoded: false))
     }
 
-    private func body(of request: URLRequest) -> Data {
-        if let body = request.httpBody { return body }
-        guard let stream = request.httpBodyStream else { return Data() }
-        stream.open()
-        defer { stream.close() }
-        var data = Data()
-        var buffer = [UInt8](repeating: 0, count: 4096)
-        while stream.hasBytesAvailable {
-            let read = stream.read(&buffer, maxLength: buffer.count)
-            guard read > 0 else { break }
-            data.append(buffer, count: read)
-        }
-        return data
+    private var keptFiles: [URL] {
+        let folders = (try? FileManager.default.contentsOfDirectory(at: store, includingPropertiesForKeys: nil)) ?? []
+        return folders.flatMap { (try? FileManager.default.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil)) ?? [] }
     }
 
-    func testUploadSendsTheFileAsAMultipartForm() async throws {
-        MockURLProtocol.respond(with: [(200, [:], "{}")])
-        let file = try export(contents: #"{"semanticSegments":[]}"#)
+    func testMultipartFormHoldsTheFileBetweenItsBoundaries() throws {
+        let file = try shared(contents: #"{"semanticSegments":[]}"#)
 
-        let _: [String: String] = try await makeTestClient().upload("/v1/files", file: file, contentType: "application/json")
+        let form = try MultipartForm(file: file, field: "file", contentType: "application/json")
+        defer { form.remove() }
 
-        let request = try XCTUnwrap(MockURLProtocol.requests.first)
-        let contentType = try XCTUnwrap(request.value(forHTTPHeaderField: "Content-Type"))
-        XCTAssertTrue(contentType.hasPrefix("multipart/form-data; boundary="))
-        let boundary = String(contentType.split(separator: "=", maxSplits: 1)[1])
-        let sent = String(decoding: body(of: request), as: UTF8.self)
+        XCTAssertTrue(form.contentType.hasPrefix("multipart/form-data; boundary="))
+        let boundary = String(form.contentType.split(separator: "=", maxSplits: 1)[1])
         XCTAssertEqual(
-            sent,
+            String(decoding: try Data(contentsOf: form.body), as: UTF8.self),
             "--\(boundary)\r\n"
                 + "Content-Disposition: form-data; name=\"file\"; filename=\"Timeline.json\"\r\n"
                 + "Content-Type: application/json\r\n\r\n"
                 + #"{"semanticSegments":[]}"#
                 + "\r\n--\(boundary)--\r\n"
         )
+        form.remove()
+        XCTAssertFalse(exists(form.body))
+    }
+
+    func testUploadSendsAMultipartFormWithAToken() async throws {
+        MockURLProtocol.respond(with: [(200, [:], "{}")])
+        let file = try shared()
+
+        let _: [String: String] = try await makeTestClient().upload("/v1/files", file: file, contentType: "application/json")
+
+        let request = try XCTUnwrap(MockURLProtocol.requests.first)
+        XCTAssertEqual(request.httpMethod, "POST")
+        XCTAssertTrue(request.value(forHTTPHeaderField: "Content-Type")?.hasPrefix("multipart/form-data; boundary=") == true)
         XCTAssertEqual(request.value(forHTTPHeaderField: "Authorization"), "Bearer test-token")
     }
 
     func testImportsTheSharedFileAndThenDeletesIt() async throws {
         MockURLProtocol.respond(with: [(200, [:], Self.imported)])
-        let importer = TimelineImporter(inbox: inbox)
-        let file = try export()
+        let importer = makeImporter()
+        let file = try shared()
         XCTAssertTrue(importer.receive(file))
+        XCTAssertFalse(exists(file), "Moved out of the Inbox")
+        XCTAssertEqual(importer.file?.lastPathComponent, "Timeline.json")
 
         await importer.start(client: makeTestClient())
 
         guard case let .imported(result) = importer.phase else { return XCTFail("Expected imported, got \(importer.phase)") }
         XCTAssertEqual(result.added, 3)
-        XCTAssertFalse(exists(file))
+        XCTAssertEqual(keptFiles, [])
         let request = try XCTUnwrap(MockURLProtocol.requests.first)
         XCTAssertEqual(request.url?.path(), "/v1/location-history/import")
         let query = URLComponents(url: try XCTUnwrap(request.url), resolvingAgainstBaseURL: false)?.queryItems ?? []
@@ -85,61 +96,88 @@ final class TimelineImportTests: XCTestCase {
 
     func testAFileTheServerTurnsDownIsDeleted() async throws {
         MockURLProtocol.respond(with: [(422, [:], #"{"detail":"Not a Google Timeline export."}"#)])
-        let importer = TimelineImporter(inbox: inbox)
-        let file = try export()
-        importer.receive(file)
+        let importer = makeImporter()
+        importer.receive(try shared())
 
         await importer.start(client: makeTestClient())
 
         XCTAssertEqual(importer.phase, .failed("Not a Google Timeline export."))
-        XCTAssertFalse(exists(file))
+        XCTAssertEqual(keptFiles, [])
     }
 
     func testAFileThatCouldNotBeSentIsKeptForLater() async throws {
         for status in [429, 503] {
             MockURLProtocol.respond(with: [(status, [:], "{}")])
-            let importer = TimelineImporter(inbox: inbox)
-            let file = try export()
-            importer.receive(file)
+            let importer = makeImporter()
+            importer.receive(try shared())
 
             await importer.start(client: makeTestClient())
 
             guard case .failed = importer.phase else { return XCTFail("Expected failed for \(status)") }
-            XCTAssertTrue(exists(file), "Kept after \(status)")
+            XCTAssertTrue(exists(importer.file), "Kept after \(status)")
+            importer.discard()
         }
     }
 
     func testClosingKeepsTheFileAndDiscardingDeletesIt() throws {
-        let importer = TimelineImporter(inbox: inbox)
-        let file = try export()
-        importer.receive(file)
+        let importer = makeImporter()
+        importer.receive(try shared())
 
         importer.close()
         XCTAssertNil(importer.file)
-        XCTAssertTrue(exists(file))
+        XCTAssertEqual(keptFiles.count, 1)
 
-        importer.receive(file)
+        importer.resumeLeftover()
+        XCTAssertNotNil(importer.file)
         importer.discard()
         XCTAssertNil(importer.file)
-        XCTAssertFalse(exists(file))
+        XCTAssertEqual(keptFiles, [])
     }
 
-    func testOffersTheNewestLeftoverExport() throws {
-        let older = try export("Timeline-1.json")
+    func testOffersTheNewestExportLeftInTheInbox() throws {
+        let older = try shared("Timeline-1.json")
         try FileManager.default.setAttributes([.creationDate: Date(timeIntervalSinceNow: -3600)], ofItemAtPath: older.path(percentEncoded: false))
-        let newer = try export("Timeline-2.json")
-        _ = try export("notes.txt")
-        let importer = TimelineImporter(inbox: inbox)
+        _ = try shared("Timeline-2.json")
+        _ = try shared("notes.txt")
+        let importer = makeImporter()
 
         importer.resumeLeftover()
 
-        XCTAssertEqual(importer.file?.lastPathComponent, newer.lastPathComponent)
+        XCTAssertEqual(importer.file?.lastPathComponent, "Timeline-2.json")
+        XCTAssertEqual(keptFiles.count, 2)
+    }
+
+    func testTheSameShareArrivingTwiceDuringAnImportChangesNothing() async throws {
+        let release = DispatchSemaphore(value: 0)
+        MockURLProtocol.responder = { _ in
+            release.wait()
+            return (200, [:], Data(Self.imported.utf8))
+        }
+        let importer = makeImporter()
+        let file = try shared()
+        importer.receive(file)
+        let importing = Task { await importer.start(client: makeTestClient()) }
+        while importer.phase != .importing { await Task.yield() }
+        let current = importer.file
+
+        // A cold launch: the leftover scan took it, then iOS delivers it again.
+        XCTAssertFalse(importer.receive(file))
+        XCTAssertTrue(importer.receive(try shared("Another.json")))
+        XCTAssertEqual(importer.phase, .importing)
+        XCTAssertEqual(importer.file, current)
+
+        release.signal()
+        await importing.value
+        guard case .imported = importer.phase else { return XCTFail("Expected imported, got \(importer.phase)") }
+        importer.close()
+        importer.resumeLeftover()
+        XCTAssertEqual(importer.file?.lastPathComponent, "Another.json", "Offered once the first is done")
     }
 
     func testIgnoresLinksAndOtherFiles() throws {
-        let importer = TimelineImporter(inbox: inbox)
+        let importer = makeImporter()
         XCTAssertFalse(importer.receive(URL(string: "com.simonri.bessel.dev://callback?code=1")!))
-        XCTAssertFalse(importer.receive(try export("photo.jpg")))
+        XCTAssertFalse(importer.receive(try shared("photo.jpg")))
         XCTAssertNil(importer.file)
     }
 
