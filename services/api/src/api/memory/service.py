@@ -54,7 +54,7 @@ INFERRED_CONFIRMATIONS = 3
 RELATED_MIN_SIMILARITY = 0.62
 # Content other people wrote. What is seen only there stays an unimportant hypothesis, out of the profile, until the
 # user raises it, so a line planted in an email can't become part of who they are.
-EXTERNAL_SOURCES = frozenset({"gmail", "email", "slack", "web"})
+EXTERNAL_SOURCES = frozenset({"gmail", "email", "icloud", "icloud_mail", "mail", "imap", "slack", "web"})
 EXTERNAL_MAX_IMPORTANCE = 3
 
 

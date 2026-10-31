@@ -184,13 +184,15 @@ class TestRemember:
 
   @pytest.mark.asyncio
   async def test_what_only_others_wrote_stays_an_unimportant_hypothesis(self, connect: ConnectFixture) -> None:
-    [mailed, seen] = await remember(
+    [mailed, icloud_mailed, seen] = await remember(
       connect,
       fact("favoritbutik", "Handlar på Hoka", kind="observed", importance=5, evidence=[{"source": "gmail", "ref": "nyhetsbrev"}]),
+      fact("frisör", "Klipps hos Salong X", kind="observed", importance=4, evidence=[{"source": "icloud", "ref": "bokning"}]),
       fact("läggdags", "Släcker 02", area="sömn", kind="observed", importance=5, evidence=[{"source": "gmail"}, {"source": "sleep", "ref": "90 nätter"}]),
     )
 
     assert (mailed["fact"]["status"], mailed["fact"]["importance"]) == ("hypothesis", 3)
+    assert (icloud_mailed["fact"]["status"], icloud_mailed["fact"]["importance"]) == ("hypothesis", 3)
     assert (seen["fact"]["status"], seen["fact"]["importance"]) == ("confirmed", 5)
     assert [f["attribute"] for a in (await mcp_call(connect, "get_profile"))["profile"] for f in a["facts"]] == ["läggdags"]
 
