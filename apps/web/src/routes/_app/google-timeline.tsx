@@ -261,6 +261,14 @@ function TimelineDay({
     () => dayEntries(data?.visits ?? [], data?.activities ?? []),
     [data],
   );
+  // The map also shows where a trip logged the evening before set off from.
+  const mapVisits = useMemo(
+    () =>
+      data?.departed_from
+        ? [data.departed_from, ...data.visits]
+        : (data?.visits ?? []),
+    [data],
+  );
   const stats = dayStats(visits, activities, day);
   const offset = dayOffset(visits, activities);
   const viewerOffset = -date.getTimezoneOffset();
@@ -351,7 +359,7 @@ function TimelineDay({
             fallback={<Skeleton className="h-full w-full bg-white/[0.04]" />}
           >
             <LocationDayMap
-              visits={visits}
+              visits={mapVisits}
               activities={activities}
               path={data?.path ?? []}
               selection={selection}

@@ -152,11 +152,18 @@ class LocationHistoryService:
   async def day(self, segment_repo: LocationSegmentRepository, user_id: UUID, day: date) -> LocationDay:
     segments = await segment_repo.list_for_local_day(user_id, day)
     visits = [s for s in segments if s.kind == LocationSegmentKind.visit]
-    names = await place_names.look_up({v.place_id for v in visits if v.place_id})
+    activities = [s for s in segments if s.kind == LocationSegmentKind.activity]
+    # Google can log a trip as setting off the evening before; without the
+    # place it left, the day's map would start mid-route.
+    departed_from = None
+    if activities and activities[0].local_start < datetime.combine(day, time.min):
+      departed_from = await segment_repo.get_stay_left_at(user_id, activities[0].start_at)
+    names = await place_names.look_up({v.place_id for v in [*visits, departed_from] if v and v.place_id})
     return LocationDay(
       date=day,
       visits=[self._visit(v, names.get(v.place_id) if v.place_id else None) for v in visits],
-      activities=[self._activity(s) for s in segments if s.kind == LocationSegmentKind.activity],
+      activities=[self._activity(s) for s in activities],
+      departed_from=self._visit(departed_from, names.get(departed_from.place_id) if departed_from.place_id else None) if departed_from else None,
       path=self._path(day, [s for s in segments if s.kind == LocationSegmentKind.path]),
     )
 

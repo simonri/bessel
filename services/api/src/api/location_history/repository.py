@@ -3,7 +3,7 @@ from datetime import date, datetime, time, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select, text, update
+from sqlalchemy import func, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
@@ -15,6 +15,9 @@ from api.models.location_segment import LocationSegment, LocationSegmentKind
 # Postgres caps a statement at 32767 bind parameters; a segment row has ~25.
 _UPSERT_CHUNK = 1000
 _KEY_CHUNK = 5000
+
+# A stay that ended this close to when a trip began is the place it left.
+STAY_JOIN = timedelta(minutes=15)
 
 UPSERT_COLUMNS = [
   "content_hash",
@@ -110,6 +113,22 @@ class LocationSegmentRepository(RepositoryBase[LocationSegment], RepositoryIDMix
       .order_by(LocationSegment.start_at, LocationSegment.hierarchy_level)
     )
     return await self.get_all(statement)
+
+  async def get_stay_left_at(self, user_id: UUID, at: datetime) -> LocationSegment | None:
+    """The top-level visit that ended as a trip began at `at`."""
+    statement = (
+      self.get_base_statement()
+      .where(
+        LocationSegment.user_id == user_id,
+        LocationSegment.deleted_at.is_(None),
+        LocationSegment.kind == LocationSegmentKind.visit,
+        func.coalesce(LocationSegment.hierarchy_level, 0) == 0,
+        LocationSegment.end_at.between(at - STAY_JOIN, at + STAY_JOIN),
+      )
+      .order_by(func.abs(func.extract("epoch", LocationSegment.end_at - at)))
+      .limit(1)
+    )
+    return await self.get_one_or_none(statement)
 
   async def list_stays_and_trips(self, user_id: UUID, start: date, end: date) -> Sequence[LocationSegment]:
     """Live visits and trips overlapping local days `start`..`end`, without route points."""

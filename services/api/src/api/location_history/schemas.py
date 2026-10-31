@@ -68,4 +68,8 @@ class LocationDay(Schema):
   date: date
   visits: list[LocationVisit] = Field(description="Visits overlapping the day, by start time.")
   activities: list[LocationActivity] = Field(description="Trips overlapping the day, by start time.")
+  departed_from: LocationVisit | None = Field(
+    default=None,
+    description="Where the day's first trip set off from, when that was before the day began and isn't among `visits`.",
+  )
   path: list[LocationPoint] = Field(description="Recorded route points within the day, by time.")

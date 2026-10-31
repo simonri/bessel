@@ -4483,6 +4483,10 @@ export type LocationDay = {
    */
   activities: Array<LocationActivity>;
   /**
+   * Where the day's first trip set off from, when that was before the day began and isn't among `visits`.
+   */
+  departed_from: LocationVisit | null;
+  /**
    * Path
    *
    * Recorded route points within the day, by time.

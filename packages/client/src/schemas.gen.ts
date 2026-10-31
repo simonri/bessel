@@ -7216,6 +7216,18 @@ export const LocationDaySchema = {
       title: "Activities",
       description: "Trips overlapping the day, by start time.",
     },
+    departed_from: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/LocationVisit",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description:
+        "Where the day's first trip set off from, when that was before the day began and isn't among `visits`.",
+    },
     path: {
       items: {
         $ref: "#/components/schemas/LocationPoint",
@@ -7226,7 +7238,7 @@ export const LocationDaySchema = {
     },
   },
   type: "object",
-  required: ["date", "visits", "activities", "path"],
+  required: ["date", "visits", "activities", "departed_from", "path"],
   title: "LocationDay",
 } as const;
 

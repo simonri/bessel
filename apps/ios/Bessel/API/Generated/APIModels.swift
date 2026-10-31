@@ -1297,6 +1297,7 @@ enum API {
         var date: Date
         @Lossy var visits: [LocationVisit]
         @Lossy var activities: [LocationActivity]
+        var departedFrom: LocationVisit?
         @Lossy var path: [LocationPoint]
     }
 
@@ -7263,6 +7264,7 @@ extension API.LocationDay {
         case date
         case visits
         case activities
+        case departedFrom
         case path
     }
 
@@ -7271,6 +7273,7 @@ extension API.LocationDay {
         self.date = try container.decode(Date.self, forKey: .date)
         self._visits = try container.decode(Lossy<API.LocationVisit>.self, forKey: .visits)
         self._activities = try container.decode(Lossy<API.LocationActivity>.self, forKey: .activities)
+        self.departedFrom = try container.decodeIfPresent(API.LocationVisit.self, forKey: .departedFrom)
         self._path = try container.decode(Lossy<API.LocationPoint>.self, forKey: .path)
     }
 
@@ -7278,6 +7281,7 @@ extension API.LocationDay {
         case date
         case visits
         case activities
+        case departedFrom = "departed_from"
         case path
     }
 
@@ -7286,6 +7290,7 @@ extension API.LocationDay {
         try container.encode(API.Day(self.date), forKey: .date)
         try container.encode(self.visits, forKey: .visits)
         try container.encode(self.activities, forKey: .activities)
+        try container.encodeIfPresent(self.departedFrom, forKey: .departedFrom)
         try container.encode(self.path, forKey: .path)
     }
 }

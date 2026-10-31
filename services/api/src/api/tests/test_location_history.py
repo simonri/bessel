@@ -478,6 +478,37 @@ class TestDay:
     assert all(v["name"] is None for v in day["visits"])
 
   @pytest.mark.asyncio
+  async def test_a_trip_logged_as_starting_the_evening_before_brings_the_place_it_left(self, client: AsyncClient) -> None:
+    await _import(
+      client,
+      [
+        _visit(f"2026-09-01T19:00:00.000{STOCKHOLM}", f"2026-09-01T20:15:00.000{STOCKHOLM}", place="earlier-id"),
+        _visit(f"2026-09-01T17:00:00.000{STOCKHOLM}", f"2026-09-01T20:22:00.000{STOCKHOLM}", place="home-id"),
+        _visit(f"2026-09-01T18:00:00.000{STOCKHOLM}", f"2026-09-01T20:24:00.000{STOCKHOLM}", place="area-id", level="1"),
+        _path(f"2026-09-01T18:24:00.000Z", f"2026-09-01T18:24:00.000Z", [(OFFICE, 0)]),
+        _trip(f"2026-09-01T20:24:00.000{STOCKHOLM}", f"2026-09-02T14:33:00.000{STOCKHOLM}", kind="in passenger vehicle"),
+        _visit(f"2026-09-02T14:35:00.000{STOCKHOLM}", f"2026-09-02T17:00:00.000{STOCKHOLM}", place="museum-id", location=OFFICE),
+      ],
+    )
+    day = await _day_view(client, "2026-09-02")
+    assert [v["place_id"] for v in day["visits"]] == ["museum-id"]
+    assert day["departed_from"]["place_id"] == "home-id"
+    assert (day["departed_from"]["latitude"], day["departed_from"]["longitude"]) == (59.334591, 18.06324)
+
+  @pytest.mark.asyncio
+  async def test_no_place_left_when_the_first_trip_starts_that_day_or_none_ended_then(self, client: AsyncClient) -> None:
+    await _import(
+      client,
+      [
+        *_export(1),
+        _visit(f"2026-09-03T18:00:00.000{STOCKHOLM}", f"2026-09-03T19:00:00.000{STOCKHOLM}", place="long-before-id"),
+        _trip(f"2026-09-03T21:00:00.000{STOCKHOLM}", f"2026-09-04T09:00:00.000{STOCKHOLM}"),
+      ],
+    )
+    assert (await _day_view(client, "2026-09-01"))["departed_from"] is None
+    assert (await _day_view(client, "2026-09-04"))["departed_from"] is None
+
+  @pytest.mark.asyncio
   async def test_names_places_when_lookups_are_configured(self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
     await _import(client, _export(1))
     monkeypatch.setattr(place_names.settings, "GOOGLE_PLACES_API_KEY", "key")

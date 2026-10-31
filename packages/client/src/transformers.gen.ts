@@ -1145,6 +1145,11 @@ const locationDaySchemaResponseTransformer = (data: any) => {
   data.activities = data.activities.map((item: any) =>
     locationActivitySchemaResponseTransformer(item),
   );
+  if (data.departed_from) {
+    data.departed_from = locationVisitSchemaResponseTransformer(
+      data.departed_from,
+    );
+  }
   return data;
 };
 
