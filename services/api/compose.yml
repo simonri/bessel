@@ -1,6 +1,8 @@
 services:
   redis:
     image: redis
+    # Room for 8 parallel test runs of 16 databases each (see services/api/conftest.py).
+    command: ["redis-server", "--databases", "128"]
     ports:
       - "${BESSEL_REDIS_PORT}:6379"
 

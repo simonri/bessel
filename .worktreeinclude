@@ -1,0 +1,5 @@
+# Gitignored files Claude Code copies from the main checkout into each new worktree (scripts/worktree-setup.sh
+# copies them too, for worktrees made some other way). Plain paths only: the setup script reads them literally.
+services/api/.env
+services/api/.env.testing
+apps/web/.env

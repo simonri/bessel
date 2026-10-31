@@ -8,7 +8,7 @@ echo "Exporting the OpenAPI spec..."
 (cd "$ROOT/services/api" && uv run --frozen python export_openapi.py)
 
 echo "Generating the TypeScript client..."
-(cd "$ROOT/packages/client" && pnpm exec openapi-ts)
+(cd "$ROOT/packages/client" && PATH="$PWD/node_modules/.bin:$ROOT/node_modules/.bin:$PATH" openapi-ts)
 
 echo "Generating the iOS app's Swift models..."
 python3 "$ROOT/scripts/generate_swift_models.py"
