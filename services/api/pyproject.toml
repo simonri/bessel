@@ -78,7 +78,7 @@ test = { cmd = "BESSEL_ENV=testing python -m pytest . --cov=src --cov-report=ter
 lint = { cmd = "ruff format . && ruff check --fix .", help = "run linters with autofix" }
 
 [build-system]
-requires = ["uv_build>=0.11.18,<0.12.0"]
+requires = ["uv_build>=0.12.21,<0.13.0"]
 build-backend = "uv_build"
 
 [tool.uv.sources]
