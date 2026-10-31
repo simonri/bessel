@@ -218,10 +218,10 @@ def _reply(box: Mailbox, own: str, *, folder: str, uid: int, body: str, reply_al
 
 TOOLS: list[ToolSpec] = [
   read(list_mail_folders, "Mail folders"),
-  read(search_emails, "Search mail"),
-  read(read_email, "Read email"),
-  read(read_thread, "Read conversation"),
-  read(owed_replies, "Owed replies"),
+  read(search_emails, "Search mail", open_world=True),
+  read(read_email, "Read email", open_world=True),
+  read(read_thread, "Read conversation", open_world=True),
+  read(owed_replies, "Owed replies", open_world=True),
   write(draft_email, "Draft email"),
   write(draft_reply, "Draft reply"),
 ]

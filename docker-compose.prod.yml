@@ -100,6 +100,7 @@ services:
     environment:
       <<: [*db_env, *redis_env]
       BESSEL_ENV: production
+      BESSEL_RELEASE: ${TAG:-}
       BESSEL_LOG_LEVEL: INFO
       BESSEL_CORS_ORIGINS: ${BESSEL_CORS_ORIGINS}
       BESSEL_FRONTEND_BASE_URL: ${BESSEL_FRONTEND_BASE_URL:-https://app.getbessel.com}

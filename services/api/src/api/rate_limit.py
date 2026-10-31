@@ -1,3 +1,4 @@
+import hashlib
 import ipaddress
 from collections.abc import Sequence
 
@@ -46,6 +47,11 @@ def client_ip(scope: Scope) -> str | None:
 
 
 async def _authenticate(scope: Scope) -> tuple[str, RateLimitGroup]:
+  # Every Claude user's MCP calls come from Anthropic's addresses, so they are counted per access token instead: one
+  # user's burst then can't use up everyone's budget. A hash, so no token is kept, and one can't be forged to drain another's.
+  authorization = _header(scope, b"authorization")
+  if scope.get("path") == "/mcp" and authorization and authorization.lower().startswith("bearer "):
+    return "token:" + hashlib.sha256(authorization[7:].strip().encode()).hexdigest()[:32], RateLimitGroup.default
   return client_ip(scope) or "unknown", RateLimitGroup.default
 
 
@@ -66,9 +72,8 @@ _PRODUCTION_RULES: dict[str, Sequence[Rule]] = {
   r"^/v1/client-diagnostics$": [Rule(group=RateLimitGroup.default, minute=10, zone="diagnostics")],
   r"^/v1/ingest-tokens": [Rule(group=RateLimitGroup.default, minute=10, zone="ingest-tokens")],
   r"^/v1/calendars/(google/authorize|icloud|accounts/[^/]+/sync)": [Rule(group=RateLimitGroup.default, minute=10, zone="calendar-connect")],
-  # Claude's connector traffic all arrives from Anthropic's egress range, so this
-  # per-IP budget is shared by every user's MCP calls.
-  r"^/mcp$": [Rule(group=RateLimitGroup.default, minute=600, zone="mcp")],
+  # Per access token (see _authenticate): a conversation's tool calls come in bursts.
+  r"^/mcp$": [Rule(group=RateLimitGroup.default, minute=120, hour=2000, zone="mcp")],
   "^/v1": [
     Rule(group=RateLimitGroup.restricted, minute=60, zone="api"),
     Rule(group=RateLimitGroup.default, minute=500, zone="api"),

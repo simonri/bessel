@@ -46,4 +46,4 @@ async def get_weather(
     raise ToolError(e.message) from e
 
 
-TOOLS: list[ToolSpec] = [read(get_weather, "Weather")]
+TOOLS: list[ToolSpec] = [read(get_weather, "Weather", open_world=True)]

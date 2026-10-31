@@ -30,6 +30,8 @@ file_extension = ".exe" if os.name == "nt" else ""
 
 class Settings(BaseSettings):
   ENV: Environment = env
+  # The deployed commit; empty outside a deploy.
+  RELEASE: str = ""
   LOG_LEVEL: str = "DEBUG"
 
   CORS_ORIGINS: list[str] = Field(

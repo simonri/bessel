@@ -686,8 +686,8 @@ TOOLS: list[ToolSpec] = [
   read(find_completed_tasks, "Completed tasks"),
   read(get_task, "Get task"),
   write(add_tasks, "Add tasks", idempotent=True),
-  write(update_tasks, "Update tasks"),
-  write(complete_tasks, "Complete tasks", idempotent=True),
-  write(undo_complete_tasks, "Undo completing tasks", idempotent=True),
-  write(start_task, "Start a task"),
+  write(update_tasks, "Update tasks", overwrites=True),
+  write(complete_tasks, "Complete tasks", idempotent=True, overwrites=True),
+  write(undo_complete_tasks, "Undo completing tasks", idempotent=True, overwrites=True),
+  write(start_task, "Start a task", overwrites=True),
 ]
