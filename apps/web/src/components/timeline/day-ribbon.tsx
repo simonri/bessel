@@ -67,11 +67,17 @@ function Block({
 }) {
   const left = pctOf(block.startTs, startTs, endTs);
   const width = pctOf(block.endTs, startTs, endTs) - left;
+  const labelled = showName && width >= LABEL_MIN_PCT;
   return (
     <div
       onMouseEnter={() => onHover(block)}
       onMouseLeave={() => onHover(null)}
-      className="absolute inset-y-0.5 flex min-w-[3px] items-center overflow-hidden px-2 shadow-[inset_-1px_0_0_rgb(0_0_0/0.45)] transition-[opacity,filter] duration-200 hover:brightness-110"
+      // Padding only where there's a label: a box can't be narrower than its
+      // padding, so a short session would be drawn ~16 min wide over the next.
+      className={cn(
+        "absolute inset-y-0.5 flex min-w-[3px] items-center overflow-hidden shadow-[inset_-1px_0_0_rgb(0_0_0/0.45)] transition-[opacity,filter] duration-200 hover:brightness-110",
+        labelled && "px-2",
+      )}
       style={{
         left: `${left}%`,
         width: `${width}%`,
@@ -79,7 +85,7 @@ function Block({
         opacity: dimmed ? 0.4 : 1,
       }}
     >
-      {showName && width >= LABEL_MIN_PCT && (
+      {labelled && (
         <span
           className="truncate type-badge"
           style={{ color: `oklch(0.3 0.06 ${block.hue})` }}
