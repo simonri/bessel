@@ -6,7 +6,7 @@ import type {
 import L from "leaflet";
 import { useEffect, useRef } from "react";
 import "leaflet/dist/leaflet.css";
-import { addDarkBasemap } from "@/lib/map-tiles";
+import { addBasemap } from "@/lib/map-tiles";
 import { type TripLine, tripLines } from "./location-day-lines";
 
 const ROUTE = "#60a5fa";
@@ -86,7 +86,7 @@ export function LocationDayMap({
       minZoom: 2,
       worldCopyJump: true,
     });
-    addDarkBasemap(map);
+    addBasemap(map);
     map.setView([20, 0], 2);
     layerRef.current = L.layerGroup().addTo(map);
     mapRef.current = map;
@@ -185,6 +185,16 @@ export function LocationDayMap({
           border-color: rgba(255,255,255,.08) !important;
         }
         .location-day-map .leaflet-control-zoom a:hover { background: rgba(40,40,40,.95) !important; color: #fff !important; }
+        .location-day-map .leaflet-control-layers {
+          background: rgba(18,18,18,.9) !important;
+          color: rgba(255,255,255,.75) !important;
+          border: 1px solid rgba(255,255,255,.1) !important;
+          box-shadow: 0 2px 8px rgba(0,0,0,.5) !important;
+          font-size: 12px;
+          padding: 4px 8px 4px 6px;
+        }
+        .location-day-map .leaflet-control-layers-base label { cursor: pointer; margin: 2px 0; }
+        .location-day-map .leaflet-control-layers-selector { accent-color: #60a5fa; margin-right: 4px; }
         .location-day-map .leaflet-control-attribution {
           font-size: 10px;
           background: rgba(0,0,0,.45) !important;
