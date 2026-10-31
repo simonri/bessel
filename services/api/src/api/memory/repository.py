@@ -1,8 +1,9 @@
 from collections.abc import Sequence
 from datetime import date
+from typing import Any
 from uuid import UUID
 
-from sqlalchemy import ColumnElement, Select, and_, func, or_
+from sqlalchemy import ColumnElement, Select, and_, case, func, literal_column, or_
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin, RepositoryUserMixin
 from api.models.memory_fact import MemoryFact, MemoryStatus
@@ -12,8 +13,27 @@ def _escape_like(text: str) -> str:
   return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
+SWEDISH: ColumnElement[Any] = literal_column("'swedish'::regconfig")
+# pg_trgm word similarity at which a word counts as found: 'hyra' in 'månadshyra' is 0.6, 'mat' in 'mamma' 0.5.
+WORD_SIMILARITY = 0.6
+
+
 def _current() -> ColumnElement[bool]:
   return MemoryFact.valid_to.is_(None)
+
+
+def _hits(words: Sequence[str]) -> ColumnElement[int]:
+  """How many of `words` a fact mentions: as a Swedish stem or the start of a compound ('hyra' finds 'hyror' and
+  'hyresfritt'), or spelled closely enough ('månadshyra', 'gymet')."""
+  haystack = func.concat_ws(" ", MemoryFact.area, MemoryFact.attribute, MemoryFact.statement)
+  document = func.to_tsvector(SWEDISH, haystack)
+  hits = []
+  for word in words:
+    query = func.to_tsquery(SWEDISH, f"{word}:*")
+    # Stop words drop out of the query, and are too common to count by spelling either.
+    spelled = and_(func.numnode(query) > 0, func.word_similarity(word, haystack) >= WORD_SIMILARITY)
+    hits.append(case((or_(document.op("@@")(query), spelled), 1), else_=0))
+  return sum(hits[1:], hits[0])
 
 
 class MemoryFactRepository(
@@ -34,6 +54,11 @@ class MemoryFactRepository(
       .order_by(MemoryFact.importance.desc(), MemoryFact.area, MemoryFact.attribute)
     )
     return await self.get_all(statement)
+
+  async def list_current_by_ids(self, user_id: UUID, ids: Sequence[UUID]) -> Sequence[MemoryFact]:
+    if not ids:
+      return []
+    return await self.list_for_user(user_id, order_by=MemoryFact.created_at, extra_filters=(_current(), MemoryFact.id.in_(ids)))
 
   async def get_current_for_attribute(self, user_id: UUID, attribute: str, *, area: str | None = None) -> Sequence[MemoryFact]:
     """Current facts about `attribute`, in `area` or in any area, compared without case."""
@@ -56,21 +81,39 @@ class MemoryFactRepository(
       limit=limit,
     )
 
+  async def list_current_related(self, user_id: UUID, words: Sequence[str], *, min_hits: int, limit: int) -> Sequence[MemoryFact]:
+    """Current facts mentioning at least `min_hits` of `words`, those mentioning most first."""
+    if not words:
+      return []
+    hits = _hits(words)
+    statement = (
+      self._owned(user_id)
+      .where(_current(), MemoryFact.status != MemoryStatus.rejected, hits >= min_hits)
+      .order_by(hits.desc(), MemoryFact.importance.desc())
+      .limit(limit)
+    )
+    return await self.get_all(statement)
+
   async def search(
     self,
     user_id: UUID,
     *,
-    terms: Sequence[str],
+    words: Sequence[str] | None,
     area: str | None,
     status: MemoryStatus | None,
     as_of: date | None,
     include_past: bool,
     limit: int,
   ) -> Sequence[MemoryFact]:
+    """Facts mentioning any of `words` (None: all), those mentioning most first, then the most important."""
+    if words is not None and not words:
+      return []
     filters: list[ColumnElement[bool]] = []
-    haystack = func.concat_ws(" ", MemoryFact.area, MemoryFact.attribute, MemoryFact.statement)
-    for term in terms:
-      filters.append(haystack.ilike(f"%{_escape_like(term)}%", escape="\\"))
+    order_by: list[ColumnElement[Any]] = []
+    if words:
+      hits = _hits(words)
+      filters.append(hits > 0)
+      order_by.append(hits.desc())
     if area:
       prefix = _escape_like(area.rstrip("/"))
       filters.append(or_(MemoryFact.area.ilike(prefix, escape="\\"), MemoryFact.area.ilike(f"{prefix}/%", escape="\\")))
@@ -84,7 +127,7 @@ class MemoryFactRepository(
     statement = (
       self._owned(user_id)
       .where(*filters)
-      .order_by(MemoryFact.importance.desc(), func.coalesce(MemoryFact.modified_at, MemoryFact.created_at).desc())
+      .order_by(*order_by, MemoryFact.importance.desc(), func.coalesce(MemoryFact.modified_at, MemoryFact.created_at).desc())
       .limit(limit)
     )
     return await self.get_all(statement)

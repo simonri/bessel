@@ -15,8 +15,9 @@ from api.settings import Environment, settings
 INSTRUCTIONS = """\
 The user's Bessel life dashboard, and what assistants have learned about them. Call \
 get_profile first in every conversation: it says who the user is, so never ask for or guess \
-what it already holds. When you learn something about the user, of any kind, store it with \
-remember; keep it true with revise_memory, merging rather than adding beside what is known.
+what it already holds, and search_memory before asking them anything about themselves. When \
+you learn something about the user, of any kind, store it with remember; keep it true with \
+revise_memory, merging rather than adding beside what is known.
 
 Data: tasks, calendar, contacts, money and investments, recipes, sleep, workouts, lifts from \
 the gym log, daily steps and heart rate, computer activity, the weather anywhere (from Yr), \

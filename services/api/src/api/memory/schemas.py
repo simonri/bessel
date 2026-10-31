@@ -1,8 +1,8 @@
 from datetime import date, datetime
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from api.common.schemas import Schema
 from api.models.memory_fact import MemoryKind, MemorySensitivity, MemoryStatus
@@ -81,10 +81,19 @@ class AreaCount(Schema):
   facts: int
 
 
+class SensitivityCount(Schema):
+  sensitivity: MemorySensitivity
+  facts: int
+
+
 class MemoryProfile(Schema):
-  profile: list[ProfileArea] = Field(description="What matters most (importance 4-5), by area. Hypotheses are marked.")
+  profile: list[ProfileArea] = Field(description="What matters most (importance 4-5), by area: confirmed facts only, hypotheses are found by search.")
   areas: list[AreaCount] = Field(description="Every area known about, with how many current facts each holds.")
   recently_changed: list[ProfileFact] = Field(description="Facts added or changed in the last 7 days, newest first.")
+  withheld: list[SensitivityCount] = Field(
+    default_factory=list,
+    description="Profile facts left out because they are sensitive; ask for a kind with `sensitive` when the task needs it.",
+  )
   total_facts: int
   truncated: bool = Field(description="True when the profile hit its size limit; search_memory finds the rest.")
 
@@ -104,6 +113,20 @@ class NewFact(Schema):
   sensitivity: MemorySensitivity = MemorySensitivity.normal
   evidence: list[Evidence] = Field(default_factory=list, max_length=10)
   valid_from: date | None = Field(default=None, description="Since when it has been true, if known.")
+  based_on: list[UUID] = Field(
+    default_factory=list,
+    max_length=20,
+    description=(
+      "The current facts you checked this against. Required for an inferred fact: search memory for everything that "
+      + "bears on the conclusion (where they live, what they pay, what they said) before drawing it."
+    ),
+  )
+
+  @model_validator(mode="after")
+  def _inference_is_checked(self) -> Self:
+    if self.kind == MemoryKind.inferred and not self.based_on:
+      raise ValueError("An inferred fact needs based_on: search memory for what bears on it, then list the facts you checked")
+    return self
 
 
 RememberOutcome = Literal["added", "known", "conflict"]

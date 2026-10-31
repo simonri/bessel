@@ -11,7 +11,7 @@ from api.mcp.dates import today_in
 from api.mcp.tools.common import ToolSpec, read, write
 from api.memory.schemas import FactChange, MemoryFactSchema, MemoryProfile, NewFact, RememberResponse, ReviseResponse
 from api.memory.service import memory_service
-from api.models.memory_fact import MemoryStatus
+from api.models.memory_fact import MemorySensitivity, MemoryStatus
 from api.models.user import User
 
 
@@ -24,14 +24,26 @@ def _today(user: User) -> date:
   return today_in(zone)
 
 
-async def get_profile(ctx: Context) -> MemoryProfile:
+async def get_profile(
+  ctx: Context,
+  sensitive: Annotated[
+    list[MemorySensitivity] | None,
+    Field(
+      description=(
+        "Sensitive kinds this task needs, e.g. ['health'] for sleep or training, ['money'] for spending. "
+        + "Leave out what the task doesn't touch: it stays out of answers that have nothing to do with it."
+      ),
+    ),
+  ] = None,
+) -> MemoryProfile:
   """Who the user is: what matters most about them, by area, plus every area known about and what changed this week.
 
   Read it before anything else in a conversation, so you never ask for or guess what is already known, and never
-  bring up what they declined. search_memory finds the rest.
+  bring up what they declined. Before asking the user anything, search_memory for it first: they have answered
+  hundreds of questions already.
   """
   async with user_session(ctx) as (session, user):
-    return await memory_service.profile(session, user, today=_today(user))
+    return await memory_service.profile(session, user, today=_today(user), sensitive=sensitive or ())
 
 
 class MemorySearch(Schema):
@@ -40,7 +52,16 @@ class MemorySearch(Schema):
 
 async def search_memory(
   ctx: Context,
-  query: Annotated[str | None, Field(description="Words that must all appear in the area, attribute or fact, e.g. 'sko' or 'mamma födelsedag'.")] = None,
+  query: Annotated[
+    str | None,
+    Field(
+      description=(
+        "Words to look for, any of them, e.g. 'hyra boende mat' or 'mamma födelsedag'; facts mentioning most come first. "
+        + "Word forms and compounds match ('hyra' finds 'hyresfritt'), but not other words for the same thing, so "
+        + "include a few."
+      ),
+    ),
+  ] = None,
   area: Annotated[str | None, Field(description="Only this area and the ones under it, e.g. 'kropp'.")] = None,
   status: Annotated[MemoryStatus | None, Field(description="e.g. 'hypothesis' for the guesses still to test.")] = None,
   as_of: Annotated[date | None, Field(description="What was true on this day, including facts that have since changed.")] = None,
@@ -60,9 +81,10 @@ async def remember(
   """Store what you learned about the user: anything, from their shoe size to what comes before their late nights.
 
   One fact per attribute in an area: the same fact again only confirms it, and a different value for an attribute already known
-  comes back as a conflict for you to settle with revise_memory. Look at `similar` on what was added and merge where
-  two facts say the same. Store observations with their evidence, not judgements of the user; what the user says
-  wins over what you inferred. About other people keep only what matters for the user's relationship with them,
+  comes back as a conflict for you to settle with revise_memory. Look at `similar` on what was added: merge where two
+  facts say the same, and fix whichever is wrong where they disagree. Store observations with their evidence, not
+  judgements of the user; what the user says wins over what you inferred, and an inference must name the facts it was
+  checked against in based_on. About other people keep only what matters for the user's relationship with them,
   never message contents.
   """
   async with user_session(ctx) as (session, user):

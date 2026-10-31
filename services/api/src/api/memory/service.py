@@ -7,6 +7,7 @@ deleted from here; changed facts close and keep their history.
 """
 
 import re
+from collections import Counter
 from collections.abc import Sequence
 from datetime import date, timedelta
 from typing import Any
@@ -27,19 +28,26 @@ from api.memory.schemas import (
   ProfileFact,
   RememberResult,
   ReviseResult,
+  SensitivityCount,
 )
-from api.models.memory_fact import MemoryFact, MemoryKind, MemoryStatus
+from api.models.memory_fact import MemoryFact, MemoryKind, MemorySensitivity, MemoryStatus
 from api.models.user import User
 from api.postgres import AsyncSession
 
 PROFILE_MIN_IMPORTANCE = 4
-PROFILE_MAX_FACTS = 150
+# About 2k tokens: past that a profile crowds out the task and pulls answers towards agreeing with the user.
+PROFILE_MAX_CHARS = 8000
 RECENT_DAYS = 7
 RECENT_MAX = 30
 MAX_EVIDENCE = 20
 SIMILAR_MAX = 5
 MIN_WORD_LENGTH = 4
 INFERRED_CONFIRMATIONS = 3
+RELATED_MAX_WORDS = 30
+RELATED_MIN_HITS = 2
+# Content other people wrote. What is seen only there stays a hypothesis until the user or their own data confirms
+# it, so a line planted in an email can't become part of who they are.
+EXTERNAL_SOURCES = frozenset({"gmail", "email", "slack", "web"})
 
 
 def _normalize(text: str) -> str:
@@ -56,8 +64,15 @@ def _words(text: str) -> list[str]:
   return [word for word in re.findall(r"\w+", text.casefold()) if len(word) >= MIN_WORD_LENGTH and word not in COMMON_WORDS]
 
 
-def _default_status(kind: MemoryKind) -> MemoryStatus:
-  return MemoryStatus.hypothesis if kind == MemoryKind.inferred else MemoryStatus.confirmed
+def _query_words(query: str) -> list[str]:
+  return re.findall(r"\w+", query.casefold())
+
+
+def _default_status(kind: MemoryKind, evidence: Sequence[Evidence] = ()) -> MemoryStatus:
+  external_only = bool(evidence) and all(item.source.casefold() in EXTERNAL_SOURCES for item in evidence)
+  if kind == MemoryKind.inferred or (kind == MemoryKind.observed and external_only):
+    return MemoryStatus.hypothesis
+  return MemoryStatus.confirmed
 
 
 def _merged_evidence(existing: Sequence[dict[str, Any]], added: Sequence[Evidence]) -> list[dict[str, Any]]:
@@ -103,12 +118,23 @@ def _confirm(fact: MemoryFact, evidence: Sequence[Evidence], *, promote: bool) -
 
 
 class MemoryService:
-  async def profile(self, session: AsyncSession, user: User, *, today: date) -> MemoryProfile:
+  async def profile(self, session: AsyncSession, user: User, *, today: date, sensitive: Sequence[MemorySensitivity] = ()) -> MemoryProfile:
     facts = await MemoryFactRepository.from_session(session).list_current(user.id)
-    core = [fact for fact in facts if fact.importance >= PROFILE_MIN_IMPORTANCE]
-    truncated = len(core) > PROFILE_MAX_FACTS
+    shown = {MemorySensitivity.normal, *sensitive}
+    core = sorted(
+      (fact for fact in facts if fact.importance >= PROFILE_MIN_IMPORTANCE and fact.status == MemoryStatus.confirmed),
+      key=lambda fact: (-fact.importance, -(fact.confirmed_at or fact.created_at).timestamp()),
+    )
+    withheld = Counter(fact.sensitivity for fact in core if fact.sensitivity not in shown)
+
     by_area: dict[str, list[ProfileFact]] = {}
-    for fact in core[:PROFILE_MAX_FACTS]:
+    size = 0
+    truncated = False
+    for fact in (fact for fact in core if fact.sensitivity in shown):
+      size += len(fact.statement)
+      if size > PROFILE_MAX_CHARS:
+        truncated = True
+        break
       by_area.setdefault(fact.area, []).append(_brief(fact))
 
     counts: dict[str, int] = {}
@@ -117,7 +143,7 @@ class MemoryService:
 
     since = today - timedelta(days=RECENT_DAYS)
     recent = sorted(
-      (fact for fact in facts if (fact.modified_at or fact.created_at).date() >= since),
+      (fact for fact in facts if fact.sensitivity in shown and (fact.modified_at or fact.created_at).date() >= since),
       key=lambda fact: fact.modified_at or fact.created_at,
       reverse=True,
     )
@@ -125,6 +151,7 @@ class MemoryService:
       profile=[ProfileArea(area=area, facts=items) for area, items in sorted(by_area.items())],
       areas=[AreaCount(area=area, facts=count) for area, count in sorted(counts.items())],
       recently_changed=[_brief(fact) for fact in recent[:RECENT_MAX]],
+      withheld=[SensitivityCount(sensitivity=kind, facts=count) for kind, count in sorted(withheld.items())],
       total_facts=len(facts),
       truncated=truncated,
     )
@@ -141,9 +168,9 @@ class MemoryService:
     include_past: bool,
     limit: int,
   ) -> list[MemoryFactSchema]:
-    terms = query.split() if query else []
+    words = _query_words(query) if query else None
     facts = await MemoryFactRepository.from_session(session).search(
-      user.id, terms=terms, area=area, status=status, as_of=as_of, include_past=include_past, limit=limit
+      user.id, words=words, area=area, status=status, as_of=as_of, include_past=include_past, limit=limit
     )
     return [to_schema(fact) for fact in facts]
 
@@ -163,25 +190,30 @@ class MemoryService:
         results.append(RememberResult(outcome="conflict", fact=to_schema(existing[0])))
         continue
 
+      checked = await repository.list_current_by_ids(user.id, item.based_on)
       fact = MemoryFact(
         user_id=user.id,
         area=item.area.strip(),
         attribute=item.attribute.strip(),
         statement=item.statement.strip(),
         kind=item.kind,
-        status=item.status or _default_status(item.kind),
+        status=item.status or _default_status(item.kind, item.evidence),
         importance=item.importance,
         sensitivity=item.sensitivity,
-        evidence=_merged_evidence([], item.evidence),
+        evidence=_merged_evidence([], [*item.evidence, *(Evidence(source="memory", ref=str(other.id)) for other in checked)]),
         valid_from=item.valid_from or today,
         confirmed_at=utc_now(),
         confirm_count=1,
       )
       await repository.create(fact, flush=True)
-      # The same attribute in another area first: the likeliest duplicate.
+      # The same attribute in another area first: the likeliest duplicate. Then facts about the same things, which
+      # may contradict it.
       elsewhere = await repository.get_current_for_attribute(user.id, item.attribute)
       by_words = await repository.list_current_matching_words(user.id, _words(item.attribute), limit=SIMILAR_MAX + 1)
-      similar = list({other.id: other for other in [*elsewhere, *by_words] if other.id != fact.id}.values())
+      statement_words = list(dict.fromkeys(_words(item.statement)))[:RELATED_MAX_WORDS]
+      related = await repository.list_current_related(user.id, statement_words, min_hits=RELATED_MIN_HITS, limit=SIMILAR_MAX + 1)
+      seen = {fact.id, *(other.id for other in checked)}
+      similar = list({other.id: other for other in [*elsewhere, *by_words, *related] if other.id not in seen}.values())
       results.append(RememberResult(outcome="added", fact=to_schema(fact), similar=[_brief(other) for other in similar[:SIMILAR_MAX]]))
     return results
 
@@ -243,7 +275,7 @@ class MemoryService:
         attribute=(change.attribute or fact.attribute).strip(),
         statement=change.statement.strip(),
         kind=kind,
-        status=_default_status(kind),
+        status=_default_status(kind, change.evidence),
         importance=change.importance or fact.importance,
         sensitivity=change.sensitivity or fact.sensitivity,
         evidence=_merged_evidence([], change.evidence),

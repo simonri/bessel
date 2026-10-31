@@ -1,15 +1,26 @@
 from typing import Any
 
 import pytest
-from api.tests.fixtures.mcp import ConnectFixture, mcp_call
+from api.memory import service
+from api.tests.fixtures.mcp import ConnectFixture, mcp_call, mcp_call_error
 
 
 def fact(attribute: str, statement: str, **extra: Any) -> dict[str, Any]:
   return {"area": "kropp/kläder", "attribute": attribute, "statement": statement, "kind": "stated", **extra}
 
 
+def guess(attribute: str, statement: str, based_on: list[str], **extra: Any) -> dict[str, Any]:
+  return fact(attribute, statement, kind="inferred", based_on=based_on, **extra)
+
+
 async def remember(connect: ConnectFixture, *facts: dict[str, Any], token: str = "token-a") -> list[dict[str, Any]]:
   return (await mcp_call(connect, "remember", {"facts": list(facts)}, token=token))["results"]
+
+
+async def known(connect: ConnectFixture) -> str:
+  """A fact for guesses to be based on."""
+  [result] = await remember(connect, fact("läggdags", "Släcker vid 02 på vardagar", area="sömn/vanor"))
+  return result["fact"]["id"]
 
 
 async def revise(connect: ConnectFixture, *changes: dict[str, Any]) -> list[dict[str, Any]]:
@@ -71,17 +82,33 @@ class TestRemember:
 
   @pytest.mark.asyncio
   async def test_a_conclusion_is_a_hypothesis_until_seen_three_times(self, connect: ConnectFixture) -> None:
-    guess = fact("sena kvällar", "Somnar sent efter kvällscall", area="sömn", kind="inferred")
+    conclusion = guess("sena kvällar", "Somnar sent efter kvällscall", [await known(connect)], area="sömn")
 
-    [first] = await remember(connect, guess)
-    [second] = await remember(connect, guess)
-    [third] = await remember(connect, guess)
+    [first] = await remember(connect, conclusion)
+    [second] = await remember(connect, conclusion)
+    [third] = await remember(connect, conclusion)
 
     assert (first["fact"]["status"], second["fact"]["status"], third["fact"]["status"]) == ("hypothesis", "hypothesis", "confirmed")
 
   @pytest.mark.asyncio
+  async def test_a_conclusion_must_name_the_facts_it_was_checked_against(self, connect: ConnectFixture) -> None:
+    error = await mcp_call_error(connect, "remember", {"facts": [fact("kostnad utomlands", "Billigare att bo i Asien", kind="inferred")]})
+
+    assert "based_on" in error
+    assert await search(connect) == []
+
+  @pytest.mark.asyncio
+  async def test_a_conclusion_keeps_the_facts_it_rests_on_as_evidence(self, connect: ConnectFixture) -> None:
+    rent = await known(connect)
+    [theirs] = await remember(connect, fact("hyra", "Betalar 9 000 i månaden"), token="token-b")
+
+    [result] = await remember(connect, guess("kronotyp", "Kvällsmänniska", [rent, theirs["fact"]["id"]], area="rytm"))
+
+    assert result["fact"]["evidence"] == [{"source": "memory", "ref": rent, "day": None, "note": None}]
+
+  @pytest.mark.asyncio
   async def test_the_user_saying_it_confirms_a_hypothesis(self, connect: ConnectFixture) -> None:
-    await remember(connect, fact("kronotyp", "Kvällsmänniska", area="rytm", kind="inferred"))
+    await remember(connect, guess("kronotyp", "Kvällsmänniska", [await known(connect)], area="rytm"))
     [said] = await remember(connect, fact("kronotyp", "Kvällsmänniska", area="rytm"))
 
     assert said["fact"]["status"] == "confirmed"
@@ -96,47 +123,120 @@ class TestRemember:
     assert [s["id"] for s in added["similar"]] == [shoes["fact"]["id"]]
     assert unrelated["similar"] == []
 
+  @pytest.mark.asyncio
+  async def test_facts_about_the_same_things_are_offered_to_check_against(self, connect: ConnectFixture) -> None:
+    [home] = await remember(connect, fact("ekonomi hemma", "Mamma äger huset och betalar maten; du betalar bredbandet", area="hem"))
+    await remember(connect, fact("skostorlek", "44"), fact("mammas jobb", "Mamma är revisor", area="människor"))
+
+    [added] = await remember(connect, fact("kostnad utomlands", "Huset och maten kostar mer i Asien", area="resor"))
+
+    assert [s["id"] for s in added["similar"]] == [home["fact"]["id"]]
+
+  @pytest.mark.asyncio
+  async def test_facts_already_checked_are_not_offered_again(self, connect: ConnectFixture) -> None:
+    [home] = await remember(connect, fact("ekonomi hemma", "Mamma äger huset och betalar maten", area="hem"))
+
+    [added] = await remember(connect, guess("kostnad utomlands", "Huset och maten kostar mer i Asien", [home["fact"]["id"]], area="resor"))
+
+    assert added["similar"] == []
+
+  @pytest.mark.asyncio
+  async def test_what_only_others_wrote_stays_a_hypothesis(self, connect: ConnectFixture) -> None:
+    [mailed, seen] = await remember(
+      connect,
+      fact("favoritbutik", "Handlar på Hoka", kind="observed", evidence=[{"source": "gmail", "ref": "nyhetsbrev"}]),
+      fact("läggdags", "Släcker 02", area="sömn", kind="observed", evidence=[{"source": "gmail"}, {"source": "sleep", "ref": "90 nätter"}]),
+    )
+
+    assert (mailed["fact"]["status"], seen["fact"]["status"]) == ("hypothesis", "confirmed")
+
 
 class TestProfile:
   @pytest.mark.asyncio
   async def test_nothing_known_yet(self, connect: ConnectFixture) -> None:
     profile = await mcp_call(connect, "get_profile")
 
-    assert profile == {"profile": [], "areas": [], "recently_changed": [], "total_facts": 0, "truncated": False}
+    assert profile == {"profile": [], "areas": [], "recently_changed": [], "withheld": [], "total_facts": 0, "truncated": False}
 
   @pytest.mark.asyncio
   async def test_holds_what_matters_most_by_area_and_counts_the_rest(self, connect: ConnectFixture) -> None:
     await remember(
       connect,
       fact("sömnmål", "Släckt 02:00, upp 10:15", area="sömn", importance=5),
-      fact("kronotyp", "Kvällsmänniska", area="sömn", importance=4, kind="inferred"),
+      fact("rutin", "Läser före sängen", area="sömn", importance=4),
       fact("skostorlek", "44", importance=2),
     )
 
     profile = await mcp_call(connect, "get_profile")
 
-    assert [(a["area"], [(f["attribute"], f["status"]) for f in a["facts"]]) for a in profile["profile"]] == [
-      ("sömn", [("sömnmål", "confirmed"), ("kronotyp", "hypothesis")]),
-    ]
+    assert [(a["area"], [f["attribute"] for f in a["facts"]]) for a in profile["profile"]] == [("sömn", ["sömnmål", "rutin"])]
     assert profile["areas"] == [{"area": "kropp/kläder", "facts": 1}, {"area": "sömn", "facts": 2}]
     assert profile["total_facts"] == 3
-    assert {f["attribute"] for f in profile["recently_changed"]} == {"sömnmål", "kronotyp", "skostorlek"}
+    assert {f["attribute"] for f in profile["recently_changed"]} == {"sömnmål", "rutin", "skostorlek"}
+
+  @pytest.mark.asyncio
+  async def test_a_hypothesis_stays_out_until_confirmed(self, connect: ConnectFixture) -> None:
+    [conclusion] = await remember(connect, guess("kronotyp", "Kvällsmänniska", [await known(connect)], area="sömn", importance=5))
+
+    assert (await mcp_call(connect, "get_profile"))["profile"] == []
+    await revise(connect, {"fact_id": conclusion["fact"]["id"], "action": "confirm", "evidence": [{"source": "user"}]})
+    assert [f["attribute"] for a in (await mcp_call(connect, "get_profile"))["profile"] for f in a["facts"]] == ["kronotyp"]
+
+  @pytest.mark.asyncio
+  async def test_sensitive_facts_come_only_when_asked_for(self, connect: ConnectFixture) -> None:
+    await remember(
+      connect,
+      fact("sömnmål", "Släckt 02:00", area="sömn", importance=5),
+      fact("blodtryck", "140/90", area="hälsa", importance=5, sensitivity="health"),
+      fact("lån", "Inga lån", area="pengar", importance=4, sensitivity="money"),
+      fact("ex", "Saknar henne", area="människor", importance=4, sensitivity="private"),
+    )
+
+    default = await mcp_call(connect, "get_profile")
+    health = await mcp_call(connect, "get_profile", {"sensitive": ["health"]})
+
+    def attributes(profile: dict[str, Any]) -> set[str]:
+      return {f["attribute"] for area in profile["profile"] for f in area["facts"]}
+
+    assert attributes(default) == {"sömnmål"}
+    assert {f["attribute"] for f in default["recently_changed"]} == {"sömnmål"}
+    assert default["withheld"] == [{"sensitivity": "health", "facts": 1}, {"sensitivity": "money", "facts": 1}, {"sensitivity": "private", "facts": 1}]
+    assert attributes(health) == {"sömnmål", "blodtryck"}
+    assert health["withheld"] == [{"sensitivity": "money", "facts": 1}, {"sensitivity": "private", "facts": 1}]
+    assert default["areas"] == health["areas"]
+
+  @pytest.mark.asyncio
+  async def test_stops_at_its_size_budget_keeping_the_most_important(self, connect: ConnectFixture, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(service, "PROFILE_MAX_CHARS", 25)
+    await remember(connect, fact("viktigt", "Tjugo tecken långt...", area="a", importance=4))
+    await remember(connect, fact("viktigast", "Tjugo tecken långt...", area="b", importance=5))
+
+    profile = await mcp_call(connect, "get_profile")
+
+    assert [(a["area"], [f["attribute"] for f in a["facts"]]) for a in profile["profile"]] == [("b", ["viktigast"])]
+    assert profile["truncated"] is True
 
   @pytest.mark.asyncio
   async def test_leaves_out_what_ended_or_was_rejected(self, connect: ConnectFixture) -> None:
+    rest = await known(connect)
     [ended, rejected] = await remember(
       connect,
       fact("gym", "Member24", area="träning", importance=5),
-      fact("trigger", "Kaffe efter 14 ger sen insomning", area="sömn", importance=5, kind="inferred"),
+      guess("trigger", "Kaffe efter 14 ger sen insomning", [rest], area="sömn", importance=5),
     )
-    await revise(connect, {"fact_id": ended["fact"]["id"], "action": "end"}, {"fact_id": rejected["fact"]["id"], "action": "reject"})
+    await revise(
+      connect,
+      {"fact_id": ended["fact"]["id"], "action": "end"},
+      {"fact_id": rejected["fact"]["id"], "action": "reject"},
+      {"fact_id": rest, "action": "end"},
+    )
 
     profile = await mcp_call(connect, "get_profile")
 
     assert profile["profile"] == []
     assert profile["total_facts"] == 0
     history = {f["attribute"]: f["status"] for f in await search(connect, include_past=True)}
-    assert history == {"gym": "confirmed", "trigger": "rejected"}
+    assert history == {"gym": "confirmed", "trigger": "rejected", "läggdags": "confirmed"}
     assert [f["attribute"] for f in await search(connect, status="rejected", include_past=True)] == ["trigger"]
 
   @pytest.mark.asyncio
@@ -185,9 +285,9 @@ class TestRevise:
 
   @pytest.mark.asyncio
   async def test_confirming_promotes_a_hypothesis_and_adds_evidence(self, connect: ConnectFixture) -> None:
-    [guess] = await remember(connect, fact("kronotyp", "Kvällsmänniska", area="rytm", kind="inferred"))
+    [conclusion] = await remember(connect, guess("kronotyp", "Kvällsmänniska", [await known(connect)], area="rytm"))
 
-    [result] = await revise(connect, {"fact_id": guess["fact"]["id"], "action": "confirm", "evidence": [{"source": "sleep", "ref": "90 nätter"}]})
+    [result] = await revise(connect, {"fact_id": conclusion["fact"]["id"], "action": "confirm", "evidence": [{"source": "sleep", "ref": "90 nätter"}]})
 
     assert (result["fact"]["status"], result["fact"]["confirm_count"]) == ("confirmed", 2)
     assert result["fact"]["evidence"][-1]["ref"] == "90 nätter"
@@ -244,16 +344,35 @@ class TestRevise:
 
 class TestSearch:
   @pytest.mark.asyncio
-  async def test_every_word_must_match_and_areas_include_deeper_ones(self, connect: ConnectFixture) -> None:
+  async def test_any_word_finds_and_the_most_words_come_first(self, connect: ConnectFixture) -> None:
     await remember(
       connect,
-      fact("mamma", "Födelsedag 3 maj", area="människor/familj"),
-      fact("bror", "Bor i Göteborg", area="människor/familj"),
+      fact("bror", "Bor i Göteborg", area="människor/familj", importance=5),
+      fact("mamma", "Födelsedag 3 maj", area="människor/familj", importance=1),
       fact("människokännare", "Läser folk bra", area="människorelationer"),
     )
 
-    assert [f["attribute"] for f in await search(connect, query="mamma maj")] == ["mamma"]
+    assert [f["attribute"] for f in await search(connect, query="mamma födelsedag göteborg")] == ["mamma", "bror"]
     assert {f["attribute"] for f in await search(connect, area="människor")} == {"mamma", "bror"}
+
+  @pytest.mark.asyncio
+  async def test_word_forms_and_compounds_match_but_not_lookalikes(self, connect: ConnectFixture) -> None:
+    await remember(
+      connect,
+      fact("boende", "Bor hyresfritt hos mamma", area="hem"),
+      fact("lägenhet", "Betalar månadshyra på 9 000", area="hem"),
+      fact("hyllan", "Hyllan är full", area="hem"),
+      fact("gym", "Gymmet ligger 25 minuter bort", area="träning"),
+    )
+
+    assert {f["attribute"] for f in await search(connect, query="hyra")} == {"boende", "lägenhet"}
+    assert [f["attribute"] for f in await search(connect, query="gymet")] == ["gym"]
+
+  @pytest.mark.asyncio
+  async def test_stop_words_alone_find_nothing(self, connect: ConnectFixture) -> None:
+    await remember(connect, fact("boende", "Bor hos mamma och betalar inte hyra", area="hem"))
+
+    assert await search(connect, query="och inte") == []
 
   @pytest.mark.asyncio
   async def test_wildcards_in_the_query_are_plain_text(self, connect: ConnectFixture) -> None:

@@ -9,6 +9,7 @@ from api.models.base import Model
 from api.settings import settings
 from pydantic_core import Url
 from pytest_mock import MockerFixture
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy_utils import create_database, database_exists, drop_database
 
@@ -43,6 +44,8 @@ async def initialize_test_database(worker_id: str) -> AsyncIterator[None]:
   )
 
   async with engine.begin() as conn:
+    # Extensions come from migrations in production.
+    await conn.execute(text("CREATE EXTENSION IF NOT EXISTS pg_trgm"))
     for entity in entities_registry.entities():
       if isinstance(entity, PGTrigger):
         continue
