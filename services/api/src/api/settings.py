@@ -83,6 +83,10 @@ class Settings(BaseSettings):
   AUTH0_DOMAIN: str = ""
   AUTH0_AUDIENCE: str = ""
   AUTH0_ALGORITHMS: list[str] = ["RS256"]
+  # The Auth0 applications (web/desktop, iOS) whose tokens the web API accepts. Anyone can register an app in the
+  # tenant (dynamic client registration, for MCP), and without this list a token such an app obtains for the web
+  # API's audience would pass. Empty: any app, with a warning in production.
+  AUTH0_CLIENT_IDS: list[str] = []
 
   # MCP server. Public URL of the /mcp endpoint exactly as users enter it in
   # Claude; it is also the identifier of the Auth0 API that MCP tokens target.

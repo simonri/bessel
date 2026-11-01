@@ -87,6 +87,8 @@ async def decode_access_token(token: str, *, audience: str) -> dict[str, Any]:
       algorithms=settings.AUTH0_ALGORITHMS,
       audience=audience,
       issuer=f"https://{settings.AUTH0_DOMAIN}/",
+      # python-jose skips a check whose claim is missing; a token without them must not pass.
+      options={"require_aud": True, "require_exp": True, "require_iss": True, "require_sub": True},
     )
   except JWTError as e:
     raise InvalidTokenError(str(e)) from e
@@ -97,6 +99,9 @@ async def verify_token(
 ) -> UserInfo:
   try:
     payload = await decode_access_token(credentials.credentials, audience=settings.AUTH0_AUDIENCE)
+    client_id = payload.get("azp") or payload.get("client_id")
+    if settings.AUTH0_CLIENT_IDS and client_id not in settings.AUTH0_CLIENT_IDS:
+      raise InvalidTokenError(f"Token issued to an unknown application: {client_id}")
   except InvalidTokenError as e:
     log.warning("JWT verification failed", error=str(e))
     raise HTTPException(
