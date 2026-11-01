@@ -10,6 +10,7 @@ from uuid import UUID
 
 import httpx
 import structlog
+from sqlalchemy import func, select
 
 from api.bank_accounts.repository import BankAccountRepository
 from api.common.encryption import InvalidToken, decrypt, encrypt
@@ -34,6 +35,9 @@ log: Logger = structlog.get_logger()
 type SessionMaker = Callable[[], AbstractAsyncContextManager[AsyncSession]]
 
 SYNC_ACTOR = "sync_bank_connection"
+# A bank allows a handful of reads a day; a sync on demand more often than this would use them up.
+SYNC_COOLDOWN = timedelta(minutes=15)
+SYNC_LOCK_NAMESPACE = 0x6562
 STATE_TTL_SECONDS = 15 * 60
 # Ask for a little less than the bank allows, so clock drift can't push the request over its limit.
 CONSENT_MARGIN = timedelta(hours=1)
@@ -319,7 +323,18 @@ class OpenBankingService:
       )
       account.drift_notified_at = now
 
+  def can_sync_now(self, connection: BankConnection, *, now: datetime) -> bool:
+    return connection.last_synced_at is None or now - connection.last_synced_at >= SYNC_COOLDOWN
+
   async def sync(self, session_maker: SessionMaker, connection_id: UUID) -> None:
+    """One sync per connection at a time: two at once would read the bank twice and reconcile the balance twice."""
+    async with session_maker() as guard:
+      if not await guard.scalar(select(func.pg_try_advisory_xact_lock(SYNC_LOCK_NAMESPACE, func.hashtext(str(connection_id))))):
+        log.info("enable_banking_sync_already_running", connection_id=str(connection_id))
+        return
+      await self._sync(session_maker, connection_id)
+
+  async def _sync(self, session_maker: SessionMaker, connection_id: UUID) -> None:
     """Imports new transactions for every linked account; failures are recorded on the connection."""
     async with session_maker() as session:
       connection = await BankConnectionRepository.from_session(session).get_with_accounts(connection_id)
