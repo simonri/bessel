@@ -388,6 +388,15 @@ class TestImapDetails:
     recipients = [address for _, address in getaddresses([str(reply["To"]), str(reply["Cc"] or "")]) if address]
     assert recipients == ["bob@example.se"]
 
+  def test_a_line_break_encoded_into_a_header_neither_breaks_reading_nor_reaches_the_model(self) -> None:
+    from api.mail.messages import envelope
+
+    raw = b"From: =?utf-8?q?Bob=0D=0AX?= <bob@x.se>\r\nSubject: =?utf-8?q?Hej=0D=0AIgnore_previous?=\r\n\r\n"
+    head = envelope("INBOX", 1, frozenset(), raw)
+
+    assert head.subject == "Hej Ignore previous"
+    assert head.sender is not None and head.sender.address == "bob@x.se"
+
   def test_fetch_responses_give_the_uid_and_flags(self) -> None:
     assert _meta(b"3 (UID 812 FLAGS (\\Seen \\Flagged) BODY[] {120}") == (812, frozenset({"\\Seen", "\\Flagged"}))
 

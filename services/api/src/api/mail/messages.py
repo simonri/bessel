@@ -7,6 +7,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from email import policy
+from email.header import decode_header, make_header
 from email.message import EmailMessage
 from email.parser import BytesParser
 from email.utils import format_datetime, formataddr, getaddresses, make_msgid, parsedate_to_datetime
@@ -98,14 +99,29 @@ def _date(value: str | None) -> datetime | None:
   return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
+
+
+def _header(headers: EmailMessage, name: str) -> str | None:
+  """A header as text on one line. A sender can encode CR/LF into a name or subject, which the parser refuses with
+  ValueError: one such message then broke every search that listed it, and raw it would reach the model as is."""
+  try:
+    value = headers.get(name)
+    text = None if value is None else str(value)
+  except ValueError:
+    raw = next((v for k, v in headers.raw_items() if k.lower() == name.lower()), None)
+    text = None if raw is None else str(make_header(decode_header(raw)))
+  return None if text is None else _CONTROL.sub(" ", text)
+
+
 def envelope(folder: str, uid: int, flags: frozenset[str], raw_headers: bytes) -> Envelope:
   headers = _parser.parsebytes(raw_headers, headersonly=True)
-  sender = next(iter(_addresses(headers.get("From"))), None)
-  auto_submitted = (headers.get("Auto-Submitted") or "no").strip().lower()
-  precedence = (headers.get("Precedence") or "").strip().lower()
+  sender = next(iter(_addresses(_header(headers, "From"))), None)
+  auto_submitted = (_header(headers, "Auto-Submitted") or "no").strip().lower()
+  precedence = (_header(headers, "Precedence") or "").strip().lower()
   automated = (
-    headers.get("List-Unsubscribe") is not None
-    or headers.get("List-Id") is not None
+    _header(headers, "List-Unsubscribe") is not None
+    or _header(headers, "List-Id") is not None
     or auto_submitted != "no"
     or precedence in {"bulk", "list", "junk"}
     or (sender is not None and _NO_REPLY.match(sender.address) is not None)
@@ -113,15 +129,15 @@ def envelope(folder: str, uid: int, flags: frozenset[str], raw_headers: bytes) -
   return Envelope(
     folder=folder,
     uid=uid,
-    subject=str(headers.get("Subject") or "").strip(),
+    subject=str(_header(headers, "Subject") or "").strip(),
     sender=sender,
-    to=_addresses(headers.get("To")),
-    cc=_addresses(headers.get("Cc")),
-    reply_to=_addresses(headers.get("Reply-To")),
-    date=_date(headers.get("Date")),
-    message_id=next(iter(_ids(headers.get("Message-ID"))), None),
-    in_reply_to=next(iter(_ids(headers.get("In-Reply-To"))), None),
-    references=_ids(headers.get("References")),
+    to=_addresses(_header(headers, "To")),
+    cc=_addresses(_header(headers, "Cc")),
+    reply_to=_addresses(_header(headers, "Reply-To")),
+    date=_date(_header(headers, "Date")),
+    message_id=next(iter(_ids(_header(headers, "Message-ID"))), None),
+    in_reply_to=next(iter(_ids(_header(headers, "In-Reply-To"))), None),
+    references=_ids(_header(headers, "References")),
     automated=automated,
     unread="\\Seen" not in flags,
     flagged="\\Flagged" in flags,
