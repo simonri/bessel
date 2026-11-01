@@ -163,6 +163,13 @@ def _part_text(part: EmailMessage) -> str:
       return payload.decode("latin-1")
 
 
+def _size(part: EmailMessage) -> int:
+  if part.is_multipart():
+    # A forwarded message (message/rfc822) or a nested multipart: its parts, as they'd be saved.
+    return len(b"".join(inner.as_bytes() for inner in part.get_payload()))
+  return len(part.get_payload(decode=True) or b"")
+
+
 def message(folder: str, uid: int, flags: frozenset[str], raw: bytes) -> Message:
   parsed = _parser.parsebytes(raw)
   plain = parsed.get_body(preferencelist=("plain",))
@@ -171,7 +178,7 @@ def message(folder: str, uid: int, flags: frozenset[str], raw: bytes) -> Message
     # Some mail carries an empty plain part beside the real HTML one.
     html = parsed.get_body(preferencelist=("html",))
     text = _html_text(_part_text(html)) if html is not None else ""
-  attachments = [Attachment(part.get_filename(), part.get_content_type(), len(part.get_payload(decode=True) or b"")) for part in parsed.iter_attachments()]
+  attachments = [Attachment(part.get_filename(), part.get_content_type(), _size(part)) for part in parsed.iter_attachments()]
   return Message(
     envelope=envelope(folder, uid, flags, raw),
     text=text[:MAX_TEXT_CHARS],

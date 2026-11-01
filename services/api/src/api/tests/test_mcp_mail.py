@@ -220,6 +220,20 @@ class TestRead:
       assert (found["subject"], found["sender"]["name"]) == ("Räkning", "Börje")
 
   @pytest.mark.asyncio
+  async def test_a_forwarded_message_attachment_has_its_size(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    forwarded = mail("Bo <bo@y.se>", "Kvitto", "Här är kvittot")
+    outer = EmailMessage()
+    outer["From"], outer["To"], outer["Subject"] = "anna@x.se", ME, "Fwd: Kvitto"
+    outer.set_content("Se bifogat")
+    outer.add_attachment(_parse.parsebytes(forwarded), filename="kvitto.eml")
+    mailbox["mailbox"] = FakeMailbox({"INBOX": [(outer.as_bytes(), set())]})
+
+    [attachment] = (await mcp_call(connect, "read_email", {"uid": 1}))["attachments"]
+
+    assert (attachment["name"], attachment["content_type"]) == ("kvitto.eml", "message/rfc822")
+    assert abs(attachment["size"] - len(forwarded)) <= 2
+
+  @pytest.mark.asyncio
   async def test_a_missing_message_is_an_error(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
     mailbox["mailbox"] = FakeMailbox({"INBOX": []})
 
