@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 
 from api.common.repository.base import RepositoryBase, RepositoryUserMixin
 from api.common.utils import utc_now
@@ -13,6 +13,10 @@ class NotificationRepository(RepositoryBase[Notification], RepositoryUserMixin[N
   async def list_recent(self, user_id: UUID, limit: int = 50) -> list[Notification]:
     notifications = await super().list_for_user(user_id, order_by=Notification.created_at.desc(), limit=limit)
     return list(notifications)
+
+  async def count_unread(self, user_id: UUID) -> int:
+    statement = select(func.count()).where(Notification.user_id == user_id, Notification.deleted_at.is_(None), Notification.read_at.is_(None))
+    return (await self.session.execute(statement)).scalar_one()
 
   async def mark_read(self, notification_id: UUID, user_id: UUID) -> Notification | None:
     result = await self.session.execute(
