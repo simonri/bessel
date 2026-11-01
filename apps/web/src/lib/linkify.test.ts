@@ -36,6 +36,22 @@ describe("linkify", () => {
     ).toEqual(["https://en.wikipedia.org/wiki/Bessel_(crater)"]);
   });
 
+  it("leaves out typographic quotes and a square bracket around a link", () => {
+    expect(
+      links(
+        "Läs ”https://x.se/a”. Se »https://x.se/b«, ’https://x.se/c’ och [https://x.se/d]",
+      ).map((p) => p.href),
+    ).toEqual([
+      "https://x.se/a",
+      "https://x.se/b",
+      "https://x.se/c",
+      "https://x.se/d",
+    ]);
+    expect(
+      links("See http://[::1]/a[1].").map((p) => p.href),
+    ).toEqual(["http://[::1]/a[1]"]);
+  });
+
   it("turns email addresses into mailto links", () => {
     expect(links("Ask support@montrose.io if it fails again.")).toEqual([
       {
