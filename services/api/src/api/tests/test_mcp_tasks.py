@@ -115,6 +115,18 @@ class TestFindTasks:
     assert detailed["tasks"][0]["notes"] == "Book at the police station"
 
   @pytest.mark.asyncio
+  async def test_search_text_is_matched_literally(self, connect: ConnectFixture, stockholm_user: User, make_task: MakeTask) -> None:
+    await make_task("Pay 50% deposit")
+    await make_task("Pay 500 kr")
+    await make_task("Rename user_id column")
+    await make_task("Rename username field")
+
+    percent = await mcp_call(connect, "find_tasks", {"search": "50%"})
+    underscore = await mcp_call(connect, "find_tasks", {"search": "user_"})
+    assert [t["title"] for t in percent["tasks"]] == ["Pay 50% deposit"]
+    assert [t["title"] for t in underscore["tasks"]] == ["Rename user_id column"]
+
+  @pytest.mark.asyncio
   async def test_other_user_sees_nothing(self, connect: ConnectFixture, stockholm_user: User, make_task: MakeTask) -> None:
     task = await make_task("A's secret task")
     assert (await mcp_call(connect, "find_tasks", {"timezone": TZ}, token="token-b"))["tasks"] == []
