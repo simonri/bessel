@@ -69,11 +69,14 @@ services:
   bessel-redis:
     image: redis:7-alpine
     restart: unless-stopped
+    # volatile-lru: only keys with a TTL (caches, rate limits, idempotency
+    # replays) may be evicted. allkeys-lru also dropped the job queue, so one
+    # user filling the weather cache could lose everyone's queued bank syncs.
     command: >
       redis-server
       --appendonly yes
       --maxmemory 128mb
-      --maxmemory-policy allkeys-lru
+      --maxmemory-policy volatile-lru
     volumes:
       - bessel_redis_data:/data
     healthcheck:
