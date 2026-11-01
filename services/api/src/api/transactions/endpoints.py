@@ -9,6 +9,8 @@ from api.categories.repository import CategoryRepository
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.uploads import read_upload
+from api.common.utils import utc_now
+from api.contacts.keeping import user_zone
 from api.documents.repository import DocumentRepository
 from api.documents.service import document_service
 from api.exceptions import ResourceNotFound, ValidationError
@@ -361,5 +363,6 @@ async def get_monthly_flow(
   months: int = Query(6, description="Number of months to look back (including current)."),
 ) -> MonthlyFlowResponse:
   """Return income and expenses aggregated per month."""
-  items = await transaction_service.monthly_flow(TransactionRepository.from_session(session), current_user.id, months=months, today=date.today())
+  today = utc_now().astimezone(user_zone(current_user)).date()
+  items = await transaction_service.monthly_flow(TransactionRepository.from_session(session), current_user.id, months=months, today=today)
   return MonthlyFlowResponse(items=items)
