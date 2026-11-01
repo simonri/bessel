@@ -460,9 +460,7 @@ class TestDates:
     ]
 
   @pytest.mark.asyncio
-  async def test_a_date_in_a_year_still_to_come_is_not_a_reminder_before_then(
-    self, client: AsyncClient, session: AsyncSession, stockholm: User
-  ) -> None:
+  async def test_a_date_in_a_year_still_to_come_is_not_a_reminder_before_then(self, client: AsyncClient, session: AsyncSession, stockholm: User) -> None:
     wedding = {"events": [{"date": {"year": 2028, "month": 3, "day": 12}, "type": "anniversary", "formattedType": "Anniversary"}]}
     first = {"events": [{"date": {"year": 2027, "month": 3, "day": 11}, "type": "anniversary", "formattedType": "Anniversary"}]}
     await _contact(session, stockholm, "Engaged", person=wedding)

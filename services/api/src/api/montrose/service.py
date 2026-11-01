@@ -22,8 +22,8 @@ from api.logging import Logger
 from api.models.bank_account import BankAccount
 from api.models.montrose import MontroseAccount, MontroseConnection
 from api.models.trade import TradeType
-from api.models.user import User
 from api.models.transaction import TransactionDirection
+from api.models.user import User
 from api.montrose import client as montrose
 from api.montrose import parsing
 from api.montrose.client import McpSession, MontroseAuthError, MontroseError, RegisteredClient, Tokens
