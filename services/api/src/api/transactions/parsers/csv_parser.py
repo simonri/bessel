@@ -3,12 +3,15 @@ from collections import Counter
 from datetime import date
 
 from aiocsv import AsyncDictReader
+from api.exceptions import ValidationError
 from api.models.bank_profile import BankProfile
 from api.models.transaction import TransactionDirection
 from api.transactions.parsers.base import ParsedTransaction, compute_dedup_hash
 
 # Stands in for a line break inside a field while the CSV reader splits rows.
 _BREAK = "\x1f"
+# A payment abroad takes a handful of lines; far more is a broken or hostile file.
+MAX_LINES_PER_ROW = 50
 _PAYEE = "Mottagare:"
 
 
@@ -22,15 +25,20 @@ def _join_broken_rows(lines: list[str], delimiter: str) -> str:
     return ""
   expected = lines[0].count(delimiter)
   rows: list[str] = []
-  pending = ""
+  # Counted per line as it comes: re-counting the joined row made a file of short lines take quadratic time.
+  pending: list[str] = []
+  fields = 0
   for line in lines:
     text = line.rstrip("\r\n")
-    pending = f"{pending}{_BREAK}{text}" if pending else text
-    if pending.count(delimiter) >= expected:
-      rows.append(pending)
-      pending = ""
+    pending.append(text)
+    fields += text.count(delimiter)
+    if len(pending) > MAX_LINES_PER_ROW:
+      raise ValidationError(f"A row runs over more than {MAX_LINES_PER_ROW} lines; this doesn't look like the bank's export.")
+    if fields >= expected:
+      rows.append(_BREAK.join(pending))
+      pending, fields = [], 0
   if pending:
-    rows.append(pending)
+    rows.append(_BREAK.join(pending))
   return "\n".join(rows) + "\n"
 
 
