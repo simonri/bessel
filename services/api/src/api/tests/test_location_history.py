@@ -423,6 +423,10 @@ class TestImport:
     assert result["as_of"] < "2999"
 
   @pytest.mark.asyncio
+  async def test_export_time_without_a_timezone_is_refused(self, client: AsyncClient) -> None:
+    await _import(client, _export(1), status=422, exported_at="2026-09-02T20:00:00")
+
+  @pytest.mark.asyncio
   async def test_deleted_then_restored_segment_comes_back(self, client: AsyncClient) -> None:
     await _import(client, _export(1, 2, 3))
     await _import(client, _export(1, 3))
