@@ -121,7 +121,7 @@ async def get_finances_overview(ctx: Context, timezone: TimezoneParam = None) ->
   """
   async with user_session(ctx) as (session, user):
     today = today_in(resolve_timezone(user, timezone))
-    overview = await accounts_overview.overview(session, user.id, now=utc_now())
+    overview = await accounts_overview.overview(session, user.id, now=utc_now(), today=today)
     history = await net_worth_history.history(session, user.id, today=today)
   return FinancesOverview(
     accounts=[

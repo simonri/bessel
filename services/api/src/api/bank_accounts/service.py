@@ -102,7 +102,7 @@ def _history(base: int, monthly: list[tuple[date, int]], *, today: date) -> list
 
 
 class AccountsOverview:
-  async def overview(self, session: AsyncSession, user_id: UUID, *, now: datetime) -> AccountsOverviewResponse:
+  async def overview(self, session: AsyncSession, user_id: UUID, *, now: datetime, today: date) -> AccountsOverviewResponse:
     accounts = await BankAccountRepository.from_session(session).list_for_user(user_id)
     ids = [a.id for a in accounts]
     transactions = TransactionRepository.from_session(session)
@@ -114,7 +114,7 @@ class AccountsOverview:
     holdings: dict[UUID, int] = defaultdict(int)
     for row in await HoldingSnapshotRepository.from_session(session).latest_for_accounts(ids):
       holdings[row.bank_account_id] += row.value
-    sources = await self._sources(session, user_id, accounts, activity, now=now)
+    sources = await self._sources(session, user_id, accounts, activity, now=now, today=today)
 
     overviews = []
     for account in accounts:
@@ -141,7 +141,7 @@ class AccountsOverview:
           first_transaction=first,
           last_transaction=last,
           transaction_count=count,
-          history=_history(account.base_balance, monthly[account.id], today=now.date()),
+          history=_history(account.base_balance, monthly[account.id], today=today),
         )
       )
     return AccountsOverviewResponse(accounts=overviews, totals=self._totals(overviews))
@@ -164,7 +164,7 @@ class AccountsOverview:
     ]
 
   async def _sources(
-    self, session: AsyncSession, user_id: UUID, accounts: Sequence[BankAccount], activity: dict[UUID, tuple[date, date, int]], *, now: datetime
+    self, session: AsyncSession, user_id: UUID, accounts: Sequence[BankAccount], activity: dict[UUID, tuple[date, date, int]], *, now: datetime, today: date
   ) -> dict[UUID, tuple[AccountSource, int | None, int | None]]:
     """Where each account's data comes from, with the balance the source reported and any difference to Bessel's."""
     found: dict[UUID, tuple[AccountSource, int | None, int | None]] = {}
@@ -256,7 +256,7 @@ class AccountsOverview:
       problem = None
       if last is None:
         problem = AccountProblem(kind="no_transactions")
-      elif now.date() - last > MANUAL_STALE_AFTER:
+      elif today - last > MANUAL_STALE_AFTER:
         problem = AccountProblem(kind="import_due", day=last)
       import_bank = import_banks.get(account.id)
       logo = bank_logo(FILE_BANKS[import_bank], "SE") if import_bank in FILE_BANKS else None

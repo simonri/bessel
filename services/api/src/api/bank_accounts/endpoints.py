@@ -17,6 +17,7 @@ from api.bank_accounts.service import accounts_overview, net_worth_history
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.utils import utc_now
+from api.contacts.keeping import user_zone
 from api.documents.service import document_service
 from api.models.bank_account import BankAccount
 from api.postgres import AsyncSession, DBSession
@@ -73,13 +74,14 @@ async def list_bank_accounts(
 @router.get("/overview", summary="Accounts Overview", response_model=AccountsOverviewResponse)
 async def get_accounts_overview(session: DBSession, current_user: CurrentDBUser) -> AccountsOverviewResponse:
   """Every account with its balance, history and where its data comes from, plus totals per owner and currency."""
-  return await accounts_overview.overview(session, current_user.id, now=utc_now())
+  now = utc_now()
+  return await accounts_overview.overview(session, current_user.id, now=now, today=now.astimezone(user_zone(current_user)).date())
 
 
 @router.get("/net-worth", summary="Net Worth History", response_model=NetWorthHistoryResponse)
 async def get_net_worth_history(session: DBSession, current_user: CurrentDBUser) -> NetWorthHistoryResponse:
   """Net worth on every day it changed, per currency, from the first transaction to today."""
-  return await net_worth_history.history(session, current_user.id, today=utc_now().date())
+  return await net_worth_history.history(session, current_user.id, today=utc_now().astimezone(user_zone(current_user)).date())
 
 
 @router.get(
