@@ -115,21 +115,26 @@ class ContactRepository(RepositoryBase[Contact], RepositoryIDMixin[Contact, UUID
     return contact
 
 
+def _cut(value: str | None, length: int) -> str | None:
+  """Google keeps longer text than the columns do; one long name mustn't stop every sync."""
+  return value[:length] if value else value
+
+
 def _copy(person: ParsedPerson, contact: Contact) -> None:
   contact.etag = person.etag
   contact.person = person.raw
-  contact.display_name = person.display_name
-  contact.given_name = person.given_name
-  contact.family_name = person.family_name
-  contact.nickname = person.nickname
-  contact.organization = person.organization
-  contact.job_title = person.job_title
+  contact.display_name = person.display_name[:500]
+  contact.given_name = _cut(person.given_name, 255)
+  contact.family_name = _cut(person.family_name, 255)
+  contact.nickname = _cut(person.nickname, 255)
+  contact.organization = _cut(person.organization, 500)
+  contact.job_title = _cut(person.job_title, 500)
   contact.birthday_month = person.birthday_month
   contact.birthday_day = person.birthday_day
   contact.birthday_year = person.birthday_year
   contact.photo_url = person.photo_url
   contact.notes = person.notes
-  contact.methods = [ContactMethod(kind=m.kind, label=m.label, value=m.value, position=i) for i, m in enumerate(person.methods)]
+  contact.methods = [ContactMethod(kind=m.kind, label=_cut(m.label, 100), value=m.value, position=i) for i, m in enumerate(person.methods)]
 
 
 class ContactInteractionRepository(RepositoryBase[ContactInteraction], RepositoryIDMixin[ContactInteraction, UUID]):

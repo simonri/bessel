@@ -127,6 +127,30 @@ class TestSync:
     assert {k: v for k, v in second.items() if k != "pageToken"} == first, "every page repeats the first request's parameters"
 
   @pytest.mark.asyncio
+  async def test_a_value_longer_than_bessel_keeps_is_cut_rather_than_stopping_the_sync(
+    self, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker
+  ) -> None:
+    label = "Mobil på jobbet " * 10
+    people.put(
+      "people/c1",
+      names=[{"displayName": "Anna " + "Å" * 600, "givenName": "Anna" + "ö" * 300, "familyName": "B" * 300}],
+      nicknames=[{"value": "N" * 300}],
+      organizations=[{"name": "O" * 600, "title": "T" * 600}],
+      phoneNumbers=[{**PHONE, "type": label, "formattedType": label}],
+    )
+    people.put("people/c2", names=[{"displayName": "Bo Ek"}])
+    source = await _source(session, user)
+
+    assert await sync_source(session_maker, source.id) is True
+
+    contacts = await _contacts(session, source)
+    anna = contacts["people/c1"]
+    assert [m.label for m in anna.methods] == [label[:100]]
+    assert (len(anna.display_name), len(anna.given_name or ""), len(anna.family_name or ""), len(anna.nickname or "")) == (500, 255, 255, 255)
+    assert (len(anna.organization or ""), len(anna.job_title or "")) == (500, 500)
+    assert contacts["people/c2"].display_name == "Bo Ek"
+
+  @pytest.mark.asyncio
   async def test_the_next_sync_asks_only_for_changes_and_applies_edits_and_deletions(
     self, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker
   ) -> None:
