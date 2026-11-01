@@ -27,6 +27,15 @@ describe("hyperliquid formatting", () => {
     expect(axisUsdFormatter([14950, 15000])(15000)).toBe("$15,000");
   });
 
+  it("signs only amounts that show as more than zero", () => {
+    expect(formatSignedUsd(-0.004)).toBe("$0.00");
+    expect(formatSignedUsd(0.003)).toBe("$0.00");
+    expect(formatSignedUsd(-0.005)).toBe("-$0.01");
+    expect(formatPercent(-0.00001)).toBe("0.00%");
+    expect(formatPercent(0.00004)).toBe("0.00%");
+    expect(formatPercent(-0.00005)).toBe("-0.01%");
+  });
+
   it("puts the value axis on round steps", () => {
     expect(valueAxis([0, 38300]).ticks).toEqual([
       0, 10000, 20000, 30000, 40000,
