@@ -99,6 +99,39 @@ describe("rewriteLinksInContent", () => {
     );
   });
 
+  it("leaves links written as code alone", () => {
+    const note = [
+      "Link it with `[[Fiske]]`, like [[Fiske]].",
+      "```md",
+      "[[Fiske]]",
+      "```",
+      "",
+    ].join("\r\n");
+    const { content, changed } = rewriteLinksInContent(
+      note,
+      "Places/Fiske.md",
+      "Places/Fiskebutik.md",
+    );
+    expect(changed).toBe(true);
+    expect(content).toBe(
+      [
+        "Link it with `[[Fiske]]`, like [[Fiskebutik]].",
+        "```md",
+        "[[Fiske]]",
+        "```",
+        "",
+      ].join("\r\n"),
+    );
+
+    expect(
+      rewriteLinksInContent(
+        "```\n[[Fiske]]\n```\n",
+        "Places/Fiske.md",
+        "Places/Fiskebutik.md",
+      ).changed,
+    ).toBe(false);
+  });
+
   it("leaves non-matching links untouched", () => {
     const { content, changed } = rewriteLinksInContent(
       "[[Somewhere Else]] and [[Fiskehandlaren]]",

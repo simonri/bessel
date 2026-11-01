@@ -153,33 +153,52 @@ export function rewriteLinksInContent(
   let changed = false;
   // In a table the alias pipe is written `\|`; it stays with the alias.
   const wikilinkRe = /(!)?\[\[([^\]|#]+?)(#[^\]|]+)?(\\?\|[^\]]+)?\]\]/g;
-  const newContent = content.replace(
-    wikilinkRe,
-    (
-      match,
-      embed: string | undefined,
-      rawTarget: string,
-      headingPart: string | undefined,
-      aliasPart: string | undefined,
-    ) => {
-      const target = rawTarget.trim();
-      const targetNoExt = target.replace(/\.md$/i, "");
+  const rewrite = (text: string): string =>
+    text.replace(
+      wikilinkRe,
+      (
+        match,
+        embed: string | undefined,
+        rawTarget: string,
+        headingPart: string | undefined,
+        aliasPart: string | undefined,
+      ) => {
+        const target = rawTarget.trim();
+        const targetNoExt = target.replace(/\.md$/i, "");
 
-      let newTarget: string | null = null;
-      if (targetNoExt.toLowerCase() === fromFull.toLowerCase()) {
-        newTarget = toFull;
-      } else if (
-        !targetNoExt.includes("/") &&
-        targetNoExt.toLowerCase() === fromBase.toLowerCase()
-      ) {
-        newTarget = toBase;
+        let newTarget: string | null = null;
+        if (targetNoExt.toLowerCase() === fromFull.toLowerCase()) {
+          newTarget = toFull;
+        } else if (
+          !targetNoExt.includes("/") &&
+          targetNoExt.toLowerCase() === fromBase.toLowerCase()
+        ) {
+          newTarget = toBase;
+        }
+        if (newTarget === null) return match;
+
+        changed = true;
+        return `${embed ?? ""}[[${newTarget}${headingPart ?? ""}${aliasPart ?? ""}]]`;
+      },
+    );
+
+  // Code isn't a link, as the index reads it: fenced blocks and inline code
+  // stay as written.
+  let inFence = false;
+  const newContent = content
+    .split("\n")
+    .map((line) => {
+      if (isFenceDelimiter(line)) {
+        inFence = !inFence;
+        return line;
       }
-      if (newTarget === null) return match;
-
-      changed = true;
-      return `${embed ?? ""}[[${newTarget}${headingPart ?? ""}${aliasPart ?? ""}]]`;
-    },
-  );
+      if (inFence) return line;
+      return line
+        .split(/(`[^`]*`)/)
+        .map((piece, i) => (i % 2 === 1 ? piece : rewrite(piece)))
+        .join("");
+    })
+    .join("\n");
 
   return { content: newContent, changed };
 }
