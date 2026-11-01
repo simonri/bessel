@@ -523,10 +523,10 @@ async def update_tasks(ctx: Context, changes: Annotated[list[TaskChange], Field(
     owned = await _owned_tasks(session, user, [c.task_id for c in changes])
     projects = await ProjectRepository.from_session(session).list_for_user(user.id)
 
-    planned: list[tuple[TaskModel, dict[str, object]]] = []
+    # Changes to the same task add up, in order.
+    planned: dict[UUID, tuple[TaskModel, dict[str, object]]] = {}
     for change in changes:
-      task = owned[change.task_id]
-      fields: dict[str, object] = {}
+      task, fields = planned.setdefault(change.task_id, (owned[change.task_id], {}))
       if change.title is not None:
         fields["title"] = change.title.strip()
       if change.notes is not None:
@@ -555,11 +555,10 @@ async def update_tasks(ctx: Context, changes: Annotated[list[TaskChange], Field(
         fields.update(_repeat_fields(change.repeat))
       if change.stop_repeating:
         fields.update(is_recurring=False, rrule_frequency=None)
-      planned.append((task, fields))
 
-    for task, fields in planned:
+    for task, fields in planned.values():
       await task_service.update(session, task, fields)
-    updated = [to_task(task, today) for task, _ in planned]
+    updated = [to_task(task, today) for task, _ in planned.values()]
     return Tasks(total_count=len(updated), tasks=updated)
 
 

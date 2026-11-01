@@ -219,6 +219,19 @@ class TestUpdateTasks:
     assert detailed["notes"] == f"Seen on iOS\n\n[{_today().isoformat()}] Root cause: stale token"
 
   @pytest.mark.asyncio
+  async def test_two_changes_to_one_task_both_apply(self, connect: ConnectFixture, stockholm_user: User, make_task: MakeTask) -> None:
+    task = await make_task("Fix sync bug", description="Seen on iOS")
+    changes = [{"task_id": str(task.id), "append_note": "Root cause found"}, {"task_id": str(task.id), "append_note": "Fixed", "priority": "high"}]
+
+    result = await mcp_call(connect, "update_tasks", {"changes": changes})
+
+    detailed = await mcp_call(connect, "get_task", {"task_id": str(task.id)})
+    today = _today().isoformat()
+    assert detailed["notes"] == f"Seen on iOS\n\n[{today}] Root cause found\n\n[{today}] Fixed"
+    assert detailed["priority"] == "high"
+    assert [t["id"] for t in result["tasks"]] == [str(task.id)]
+
+  @pytest.mark.asyncio
   async def test_one_bad_id_changes_nothing(self, connect: ConnectFixture, stockholm_user: User, make_task: MakeTask) -> None:
     mine = await make_task("Mine", priority=0)
     message = await mcp_call_error(
