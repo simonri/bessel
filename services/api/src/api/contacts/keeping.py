@@ -381,7 +381,11 @@ async def meeting_brief(session: AsyncSession, user: User, event_id: UUID) -> Me
     dates = _dates(contact, ctx.today, BRIEF_DATES_DAYS)
     brief.append(
       MeetingBriefPerson(
-        contact=_reference(contact), sure=sure, last_seen=seen[contact_id], recent=[_entry(i) for i in recent], upcoming=dates[0] if dates else None
+        contact=_reference(contact),
+        sure=sure,
+        last_seen=seen[contact_id],
+        recent=[_entry(i) for i in recent],
+        upcoming=min(dates, key=lambda d: d.on, default=None),
       )
     )
   return MeetingBrief(event=ContactFollowUpEvent(id=event.id, title=event.title, on=ctx.day(event)), people=brief)

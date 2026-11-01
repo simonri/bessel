@@ -400,6 +400,17 @@ class TestBrief:
     assert (first["upcoming"]["label"], first["upcoming"]["on"], first["upcoming"]["years"]) == ("Birthday", "2027-03-15", 37)
 
   @pytest.mark.asyncio
+  async def test_the_date_coming_up_is_the_soonest(self, client: AsyncClient, session: AsyncSession, stockholm: User) -> None:
+    calendar = await _calendar(session, await _account(session, stockholm))
+    anniversary = {"events": [{"date": {"year": 2015, "month": 3, "day": 12}, "formattedType": "Anniversary"}]}
+    await _contact(session, stockholm, "Anna Berg", birthday_month=3, birthday_day=15, person=anniversary)
+    meeting = await calendar.event("Fika with Anna Berg", datetime(2027, 3, 10, 9, tzinfo=UTC))
+
+    brief = (await client.get("/v1/contacts/brief", params={"calendar_event_id": str(meeting.id)})).json()
+
+    assert (brief["people"][0]["upcoming"]["label"], brief["people"][0]["upcoming"]["on"]) == ("Anniversary", "2027-03-12")
+
+  @pytest.mark.asyncio
   async def test_not_for_another_users_event(self, client: AsyncClient, session: AsyncSession, other_user: User) -> None:
     theirs = await (await _calendar(session, await _account(session, other_user, "them@gmail.com"))).event("Theirs", date(2027, 3, 1))
 
