@@ -351,6 +351,20 @@ class TestNamesInLists:
     assert await found("anthropic") == ["ANTHROPIC* CLAUDE SUB"]
 
   @pytest.mark.asyncio
+  async def test_search_takes_percent_and_underscore_as_they_are_written(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
+    await _add(save_fixture, account, "SALE 20% OFF")
+    await _add(save_fixture, account, "SALE 200 OFF")
+    await _add(save_fixture, account, "REF_42")
+    await _add(save_fixture, account, "REFX42")
+
+    async def found(search: str) -> list[str]:
+      return [t["description"] for t in (await client.get("/v1/transactions", params={"search": search})).json()["items"]]
+
+    assert await found("20%") == ["SALE 20% OFF"]
+    assert await found("ref_42") == ["REF_42"]
+    assert await found("_") == ["REF_42"]
+
+  @pytest.mark.asyncio
   async def test_the_months_biggest_spending_adds_up_two_bank_texts_with_one_name(self, client: AsyncClient, save_fixture: SaveFixture, user: User) -> None:
     checking = BankAccount(name="Lönekonto", currency="SEK", base_balance=0, subtype="checking", user_id=user.id)
     await save_fixture(checking)

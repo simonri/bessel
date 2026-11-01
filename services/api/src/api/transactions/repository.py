@@ -242,7 +242,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     if direction:
       statement = statement.where(Transaction.direction == direction)
     if search:
-      statement = statement.where(or_(*(column.ilike(f"%{search}%") for column in (Transaction.description, Transaction.name, Transaction.note))))
+      statement = statement.where(or_(*(column.icontains(search, autoescape=True) for column in (Transaction.description, Transaction.name, Transaction.note))))
     if date_from:
       statement = statement.where(Transaction.transaction_date >= date_from)
     if date_to:
