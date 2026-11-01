@@ -7,7 +7,7 @@ import structlog
 from api.common.pagination import PaginationParamsQuery
 from api.common.repository.base import without_required_nulls
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
-from api.exceptions import ServiceUnavailableError
+from api.exceptions import ConflictError, ServiceUnavailableError
 from api.models.place import Place
 from api.places.repository import PlaceRepository
 from api.places.schemas import GooglePlaceSearchResponse, GooglePlaceSearchResult, PlaceCreate, PlaceListResponse, PlaceSchema, PlaceStatus, PlaceUpdate
@@ -181,6 +181,8 @@ async def create_place(
   current_user: CurrentDBUser,
 ) -> PlaceSchema:
   repo = PlaceRepository.from_session(session)
+  if body.google_place_id and (saved := (await repo.by_google_place_ids(current_user.id, [body.google_place_id])).get(body.google_place_id)):
+    raise ConflictError(f"You've already saved {saved.name}.")
   place = Place(**body.model_dump(), user_id=current_user.id)
   await repo.create(place, flush=True)
   return PlaceSchema.model_validate(place)

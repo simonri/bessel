@@ -1,7 +1,7 @@
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import Date, Float, ForeignKey, Integer, String, Text, Uuid
+from sqlalchemy import Date, Float, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -10,13 +10,15 @@ from api.models.base import RecordModel
 
 class Place(RecordModel):
   __tablename__ = "places"
+  # Each user saves a Google place once; another user saving it is unrelated.
+  __table_args__ = (UniqueConstraint("user_id", "google_place_id"),)
 
   name: Mapped[str] = mapped_column(String(255), nullable=False)
   address: Mapped[str | None] = mapped_column(String(500), nullable=True)
   country: Mapped[str | None] = mapped_column(String(100), nullable=True)
   latitude: Mapped[float] = mapped_column(Float, nullable=False)
   longitude: Mapped[float] = mapped_column(Float, nullable=False)
-  google_place_id: Mapped[str | None] = mapped_column(String(255), nullable=True, unique=True)
+  google_place_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
   plus_code: Mapped[str | None] = mapped_column(String(50), nullable=True)
   status: Mapped[str] = mapped_column(String(20), nullable=False, default="want_to_go")
   rating: Mapped[int | None] = mapped_column(Integer, nullable=True)
