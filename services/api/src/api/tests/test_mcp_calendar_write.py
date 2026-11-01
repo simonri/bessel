@@ -86,6 +86,15 @@ class TestListCalendars:
 
 class TestAddCalendarEvents:
   @pytest.mark.asyncio
+  async def test_an_all_day_event_lasts_at_most_a_year(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
+    # 9999-12-31 overflowed the date arithmetic into a 500.
+    await _calendars(save_fixture, user)
+    message = await mcp_call_error(
+      connect, "add_calendar_events", {"events": [{"calendar": "Privat", "title": "Forever", "day": "2026-11-20", "last_day": "9999-12-31"}]}
+    )
+    assert "at most 366 days" in message
+
+  @pytest.mark.asyncio
   async def test_a_calendar_someone_else_shared_takes_none(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
     await _calendars(save_fixture, user)
 

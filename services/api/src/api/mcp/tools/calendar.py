@@ -25,6 +25,8 @@ MAX_CALENDAR_DAYS = 62
 MAX_FREE_TIME_DAYS = 31
 DEFAULT_FREE_TIME_DAYS = 7
 MAX_NEW_EVENTS = 50
+# A far last_day (9999-12-31) overflowed the date arithmetic into a 500.
+MAX_ALL_DAY_SPAN_DAYS = 366
 DEFAULT_EVENT_MINUTES = 60
 _CLOCK = re.compile(r"^(\d{1,2}):([0-5]\d)$")
 
@@ -282,6 +284,8 @@ def _timing(event: NewEvent, today: date) -> dict:
     last = parse_day(event.last_day, today) if event.last_day else day
     if last < day:
       raise ToolError(f"{event.title!r}: last_day is before day.")
+    if (last - day).days > MAX_ALL_DAY_SPAN_DAYS:
+      raise ToolError(f"{event.title!r}: an all-day event can last at most {MAX_ALL_DAY_SPAN_DAYS} days.")
     return {"start": {"date": day.isoformat()}, "end": {"date": (last + timedelta(days=1)).isoformat()}}
   if event.last_day is not None:
     raise ToolError(f"{event.title!r}: last_day is only for all-day events; a timed event ends on its own day.")
