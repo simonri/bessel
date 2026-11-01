@@ -1,3 +1,5 @@
+import imaplib
+import re
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
@@ -375,6 +377,33 @@ class TestImapDetails:
     assert box._server_name("Företag") == "Fo&Awg-retag"
     assert box._server_name("inbox") == "INBOX"
     assert box._server_name("Ny mapp") == "Ny mapp"
+
+  def test_a_header_search_names_the_field_and_the_text_apart(self) -> None:
+    class Server:
+      """Answers UID SEARCH as RFC 3501 reads it: HEADER takes a field name, then the text to find."""
+
+      literal: bytes | None = None
+
+      def __init__(self) -> None:
+        self.searched: list[tuple[str, str]] = []
+
+      def uid(self, command: str, *args: str) -> tuple[str, list[bytes]]:
+        words = list(args[2:] if args[0] == "CHARSET" else args)
+        assert words[0] == "HEADER" and command == "SEARCH"
+        if len(words) != (2 if self.literal else 3) or not re.fullmatch(r"[\w-]+", words[1]):
+          raise imaplib.IMAP4.error(f"SEARCH command error: BAD {args}")
+        needle = self.literal.decode() if self.literal else words[2].strip('"')
+        self.searched.append((words[1], needle))
+        self.literal = None
+        return "OK", [b"7"]
+
+    box = ImapMailbox("me", "secret")
+    server = Server()
+    box._conn = server  # type: ignore[assignment]
+    box._selected = "INBOX"
+
+    assert box.search("INBOX", [Criterion("HEADER", "Message-ID <m1@x.se>"), Criterion("HEADER", "Subject Räkning")]) == [7]
+    assert server.searched == [("Message-ID", "<m1@x.se>"), ("Subject", "Räkning")]
 
   def test_fetch_responses_give_the_uid_and_flags(self) -> None:
     assert _meta(b"3 (UID 812 FLAGS (\\Seen \\Flagged) BODY[] {120}") == (812, frozenset({"\\Seen", "\\Flagged"}))

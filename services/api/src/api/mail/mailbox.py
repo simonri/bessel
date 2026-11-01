@@ -120,13 +120,18 @@ class ImapMailbox:
 
   def _search_one(self, criterion: Criterion) -> set[int]:
     args: list[str] = [criterion.key]
-    if criterion.value is not None:
-      if criterion.value.isascii():
-        args.append(_quote(criterion.value))
+    value = criterion.value
+    if criterion.key == "HEADER" and value is not None:
+      # HEADER takes two arguments: the field's name, then the text to find in it.
+      field, _, value = value.partition(" ")
+      args.append(field)
+    if value is not None:
+      if value.isascii():
+        args.append(_quote(value))
       else:
         # Only ASCII travels in the command itself; the rest goes as a literal, which must come last.
-        self.conn.literal = criterion.value.encode()  # type: ignore[assignment]
-        args = ["CHARSET", "UTF-8", criterion.key]
+        self.conn.literal = value.encode()  # type: ignore[assignment]
+        args = ["CHARSET", "UTF-8", *args]
     data = self._check(self.conn.uid("SEARCH", *args), "search")
     return {int(uid) for uid in (data[0] or b"").split()} if data and isinstance(data[0], bytes) else set()
 
