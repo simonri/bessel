@@ -16,29 +16,32 @@ export function sshConfigPath(): string {
 /** Host aliases from one config file's text, skipping wildcard patterns. */
 export function parseHostAliases(text: string): string[] {
   const hosts: string[] = [];
-  for (const line of text.split("\n")) {
-    const match = /^\s*host\s+(.+)$/i.exec(line.replace(/#.*/, ""));
-    if (!match) continue;
-    for (const alias of match[1].trim().split(/\s+/))
+  for (const line of text.split("\n"))
+    for (const alias of directiveArgs(line, "host"))
       if (!PATTERN_CHARS.test(alias) && SSH_HOST_PATTERN.test(alias))
         hosts.push(alias);
-  }
   return hosts;
+}
+
+/** A line's arguments if it holds `keyword`: "Key value", "Key=value", quotes allowed. */
+function directiveArgs(line: string, keyword: string): string[] {
+  const match = /^\s*(\w+)(?:\s*=\s*|\s+)(.+)$/.exec(line.replace(/#.*/, ""));
+  if (!match || match[1].toLowerCase() !== keyword) return [];
+  return [...match[2].matchAll(/"([^"]*)"|(\S+)/g)]
+    .map((m) => m[1] ?? m[2])
+    .filter(Boolean);
 }
 
 /** `Include` targets in one config file, relative paths resolved from ~/.ssh. */
 export function parseIncludes(text: string, sshDir: string): string[] {
   const targets: string[] = [];
-  for (const line of text.split("\n")) {
-    const match = /^\s*include\s+(.+)$/i.exec(line.replace(/#.*/, ""));
-    if (!match) continue;
-    for (const raw of match[1].trim().split(/\s+/)) {
+  for (const line of text.split("\n"))
+    for (const raw of directiveArgs(line, "include")) {
       const expanded = raw.startsWith("~/")
         ? path.join(os.homedir(), raw.slice(2))
         : raw;
       targets.push(path.resolve(sshDir, expanded));
     }
-  }
   return targets;
 }
 

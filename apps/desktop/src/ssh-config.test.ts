@@ -24,6 +24,15 @@ describe("parseHostAliases", () => {
     ]);
   });
 
+  it("reads `Host=` and quoted aliases, as ssh does", () => {
+    const config = [
+      "Host=gpu1",
+      'Host = "vps" edge-box',
+      "HostName=10.0.0.1",
+    ].join("\n");
+    expect(parseHostAliases(config)).toEqual(["gpu1", "vps", "edge-box"]);
+  });
+
   it("skips patterns and commented-out hosts", () => {
     const config = ["Host *", "Host *.internal !bastion", "# Host secret"].join(
       "\n",
@@ -53,6 +62,14 @@ describe("listConfiguredHosts", () => {
       "gpu1",
       "orb",
     ]);
+  });
+
+  it("follows `Include=` with a quoted path", () => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), "ssh-config-"));
+    fs.mkdirSync(path.join(dir, "config.d"));
+    fs.writeFileSync(path.join(dir, "config.d", "a"), "Host orb\n");
+    fs.writeFileSync(path.join(dir, "config"), 'Include="config.d/*"\n');
+    expect(listConfiguredHosts(path.join(dir, "config"))).toEqual(["orb"]);
   });
 
   it("is empty without a config file", () => {
