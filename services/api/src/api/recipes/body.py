@@ -135,7 +135,7 @@ _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 _LIST_RE = re.compile(r"^\s*[-*]\s+(.*)$")
 _BOLD_LABEL_RE = re.compile(r"^\*\*(.+?):?\*\*:?$")
 _TIME_RE = re.compile(r"\s*\*\(([^)]*)\)\*\s*$")
-_STEP_NUMBER_RE = re.compile(r"^\d+[.)]\s+")
+_STEP_NUMBER_RE = re.compile(r"^\d+[.)](?:\s+|$)")
 _CALLOUT_RE = re.compile(r"^>\s*(?:\*\*(.+?):?\*\*:?\s*)?(.*)$")
 _INGREDIENTS_RE = re.compile(r"^(ingrediens|ingredient)", re.IGNORECASE)
 _STEPS_RE = re.compile(r"^(gör så här|så gör du|instruktion|tillagning|method|instructions|directions)", re.IGNORECASE)
@@ -173,6 +173,8 @@ def parse_markdown(content: str) -> RecipeBody:
   mode: Literal["intro", "ingredients", "steps", "section"] = "intro"
   group: RecipeIngredientGroup | None = None
   step: RecipeStep | None = None
+  # A step under its own numbered heading, which takes the lines that follow; it may have no title.
+  headed: RecipeStep | None = None
   section: RecipeSection | None = None
   intro: list[str] = []
 
@@ -185,8 +187,8 @@ def parse_markdown(content: str) -> RecipeBody:
     stripped = raw.strip()
     if stripped in ("", "---", "***"):
       # A blank line ends a paragraph inside a titled step or section.
-      if step is not None and step.title:
-        step.text = _paragraph_break(step.text)
+      if headed is not None:
+        headed.text = _paragraph_break(headed.text)
       if section is not None:
         section.text = _paragraph_break(section.text)
       continue
@@ -197,19 +199,20 @@ def parse_markdown(content: str) -> RecipeBody:
       time = _TIME_RE.search(title)
       clean = _TIME_RE.sub("", title).strip().rstrip(":").strip()
       if _INGREDIENTS_RE.match(clean):
-        mode, group, step, section = "ingredients", None, None, None
+        mode, group, step, headed, section = "ingredients", None, None, None, None
       elif _STEPS_RE.match(clean):
-        mode, group, step, section = "steps", None, None, None
+        mode, group, step, headed, section = "steps", None, None, None, None
       elif mode == "ingredients" and level >= 3:
         group = new_group(clean)
       elif mode == "steps" and _STEP_NUMBER_RE.match(clean):
         step = RecipeStep(
-          title=_STEP_NUMBER_RE.sub("", clean).strip(),
+          title=_STEP_NUMBER_RE.sub("", clean).strip() or None,
           time_label=time.group(1).strip() if time else None,
         )
+        headed = step
         body.steps.append(step)
       else:
-        mode, group, step = "section", None, None
+        mode, group, step, headed = "section", None, None, None
         section = RecipeSection(title=clean)
         body.sections.append(section)
       continue
@@ -250,12 +253,12 @@ def parse_markdown(content: str) -> RecipeBody:
           target.callouts.append(RecipeCallout(kind=kind, label=label, text=callout.group(2).strip()))
         continue
       item = _LIST_RE.match(stripped)
-      if step is None or not step.title:
-        # Untitled steps are one list item (or line) each.
+      if headed is None:
+        # Without numbered headings, steps are one list item (or line) each.
         step = RecipeStep(text=item.group(1) if item else stripped)
         body.steps.append(step)
         continue
-      step.text = _append_line(step.text, stripped)
+      headed.text = _append_line(headed.text, stripped)
       continue
 
     if section is not None:

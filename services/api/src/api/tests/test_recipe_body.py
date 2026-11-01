@@ -155,6 +155,17 @@ class TestParseMarkdown:
     body = parse_markdown(markdown)
     assert parse_markdown(render_markdown(body)) == body
 
+  def test_an_untitled_step_among_titled_ones_round_trips(self) -> None:
+    body = RecipeBody(
+      steps=[
+        RecipeStep(title="Förbered", text="Hacka löken."),
+        RecipeStep(text="Stek allt.\n\nRör om ibland."),
+        RecipeStep(title="Servera", text="Ät."),
+      ]
+    )
+
+    assert parse_markdown(render_markdown(body)) == body
+
 
 SIMPLE_BODY = RecipeBody(
   intro="Snabb lunch.",
