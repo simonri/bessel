@@ -100,6 +100,40 @@ class TestProjectLocation:
     assert resp.status_code == 400
 
 
+class TestProjectRename:
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_renaming_onto_another_projects_name_is_refused(self, client: AsyncClient) -> None:
+    await client.post("/v1/projects", json={"name": "Garden"})
+    shed = (await client.post("/v1/projects", json={"name": "Shed"})).json()
+
+    resp = await client.patch(f"/v1/projects/{shed['id']}", json={"name": "Garden"})
+
+    assert resp.status_code == 409
+    task = await client.post("/v1/tasks", json={"title": "Buy seeds", "project": "Garden"})
+    assert task.status_code == 201
+    assert sorted(p["name"] for p in (await client.get("/v1/projects")).json()) == ["Garden", "Shed"]
+
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_keeping_its_own_name_or_a_deleted_projects_name_is_allowed(self, client: AsyncClient) -> None:
+    old = (await client.post("/v1/projects", json={"name": "Garden"})).json()
+    await client.delete(f"/v1/projects/{old['id']}")
+    shed = (await client.post("/v1/projects", json={"name": "Shed"})).json()
+
+    assert (await client.patch(f"/v1/projects/{shed['id']}", json={"name": "Shed"})).status_code == 200
+    assert (await client.patch(f"/v1/projects/{shed['id']}", json={"name": "Garden"})).status_code == 200
+
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_a_missing_name_is_refused(self, client: AsyncClient) -> None:
+    shed = (await client.post("/v1/projects", json={"name": "Shed"})).json()
+
+    assert (await client.patch(f"/v1/projects/{shed['id']}", json={"name": None})).status_code == 422
+    assert (await client.patch(f"/v1/projects/{shed['id']}", json={"name": "  "})).status_code == 422
+    assert (await client.patch(f"/v1/projects/{shed['id']}", json={})).status_code == 200
+
+
 class TestSshHost:
   @pytest.mark.asyncio
   @pytest.mark.parametrize("host", ["vps", "root@vps", "dev_box", "vps.tailca3fd9.ts.net", "simon@192.168.1.10"])
