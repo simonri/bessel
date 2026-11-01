@@ -22,6 +22,14 @@ export function localDayBounds(d: Date, startHour = 0): [number, number] {
   return [Math.floor(start.getTime() / 1000), Math.floor(end.getTime() / 1000)];
 }
 
+/** The day `now` is on when days start at `startHour` on the clock: before
+ *  that hour it's still the day before. Wall-clock hours, not elapsed ones,
+ *  so a DST night doesn't move the switch an hour. */
+export function dayStartingAt(now: Date, startHour = 0): Date {
+  const back = now.getHours() < startHour ? 1 : 0;
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - back);
+}
+
 export function fmtDur(secs: number): string {
   const m = Math.floor(secs / 60);
   if (m >= 60)
