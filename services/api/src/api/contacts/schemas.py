@@ -149,6 +149,9 @@ class ContactMethodInput(Schema):
   )
 
 
+MAX_METHODS = 50
+
+
 class ContactUpdate(Schema):
   """Fields to change; any left out stay as they are, and null clears one."""
 
@@ -162,10 +165,11 @@ class ContactUpdate(Schema):
   job_title: str | None = Field(default=None, max_length=500)
   birthday: ContactBirthday | None = None
   notes: str | None = Field(default=None, max_length=10000)
-  phones: list[ContactMethodInput] | None = None
-  emails: list[ContactMethodInput] | None = None
-  addresses: list[ContactMethodInput] | None = None
-  urls: list[ContactMethodInput] | None = None
+  # Each list goes to Google whole, and each address with a place adds a row: bounded like a real address book entry.
+  phones: list[ContactMethodInput] | None = Field(default=None, max_length=MAX_METHODS)
+  emails: list[ContactMethodInput] | None = Field(default=None, max_length=MAX_METHODS)
+  addresses: list[ContactMethodInput] | None = Field(default=None, max_length=MAX_METHODS)
+  urls: list[ContactMethodInput] | None = Field(default=None, max_length=MAX_METHODS)
 
 
 MAX_PHOTO_BYTES = 2 * 1024 * 1024

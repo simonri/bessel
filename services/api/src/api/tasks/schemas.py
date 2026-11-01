@@ -1,5 +1,6 @@
 from datetime import date, datetime
 from enum import StrEnum
+from typing import Annotated
 from uuid import UUID
 
 from pydantic import Field
@@ -63,40 +64,49 @@ class TaskSchema(IDSchema, TimestampedSchema):
   attachments: list[TaskAttachmentSchema] = Field(default_factory=list, description="Image attachments.")
 
 
+# Bounded to what fits: a tag is String(50) (longer was a 500), an interval past a few years overflowed the date
+# arithmetic of the next occurrence (a 500 on completing it), and notes had no end.
+Tag = Annotated[str, Field(min_length=1, max_length=50)]
+Tags = Annotated[list[Tag], Field(max_length=20)]
+Description = Annotated[str, Field(max_length=20_000)]
+Interval = Annotated[int, Field(ge=1, le=365)]
+MAX_REORDER = 1000
+
+
 class TaskCreate(Schema):
   title: str = Field(max_length=500, description="Task title.")
-  description: str | None = Field(default=None)
+  description: Description | None = Field(default=None)
   status: TaskStatus = Field(default=TaskStatus.todo)
   priority: int = Field(default=0, ge=0, le=4)
 
   due_date: date | None = Field(default=None)
 
   project: str | None = Field(default=None, max_length=100)
-  tags: list[str] | None = Field(default=None)
+  tags: Tags | None = Field(default=None)
   position: float | None = Field(default=None)
 
   is_recurring: bool = Field(default=False)
   rrule_frequency: RruleFrequency | None = Field(default=None)
-  rrule_interval: int | None = Field(default=None, ge=1)
+  rrule_interval: Interval | None = Field(default=None)
   rrule_day_of_week: int | None = Field(default=None, ge=0, le=6)
   rrule_day_of_month: int | None = Field(default=None, ge=1, le=31)
 
 
 class TaskUpdate(Schema):
   title: str | None = Field(default=None, max_length=500)
-  description: str | None = Field(default=None)
+  description: Description | None = Field(default=None)
   status: TaskStatus | None = Field(default=None)
   priority: int | None = Field(default=None, ge=0, le=4)
 
   due_date: date | None = Field(default=None)
 
   project: str | None = Field(default=None, max_length=100)
-  tags: list[str] | None = Field(default=None)
+  tags: Tags | None = Field(default=None)
   position: float | None = Field(default=None)
 
   is_recurring: bool | None = Field(default=None)
   rrule_frequency: RruleFrequency | None = Field(default=None)
-  rrule_interval: int | None = Field(default=None, ge=1)
+  rrule_interval: Interval | None = Field(default=None)
   rrule_day_of_week: int | None = Field(default=None, ge=0, le=6)
   rrule_day_of_month: int | None = Field(default=None, ge=1, le=31)
 

@@ -309,6 +309,14 @@ class TestProjects:
 
 class TestPlaces:
   @pytest.mark.asyncio
+  async def test_saving_a_place_says_nothing_about_who_else_saved_it(self, client: AsyncClient, other_client: AsyncClient) -> None:
+    # It was unique across users: the second to save a clinic got a 500, learning someone else had.
+    clinic = {"name": "Kliniken", "latitude": 59.3, "longitude": 18.0, "google_place_id": "ChIJ-clinic"}
+    assert (await client.post("/v1/places", json=clinic)).status_code == 201
+    assert (await other_client.post("/v1/places", json=clinic)).status_code == 201
+    assert (await client.post("/v1/places", json=clinic)).status_code == 409
+
+  @pytest.mark.asyncio
   async def test_other_user_cannot_read_or_change_places(self, client: AsyncClient, other_client: AsyncClient) -> None:
     place = await _create(client, "/v1/places", {"name": "A's cafe", "latitude": 59.9, "longitude": 10.7})
 

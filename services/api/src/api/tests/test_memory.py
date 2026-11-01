@@ -77,3 +77,20 @@ class TestForgetMemoryFact:
     assert resp.status_code == 204
     assert (await client.get("/v1/memory/facts")).json()["facts"] == []
     assert (await client.delete(f"/v1/memory/facts/{fact.id}")).status_code == 404
+
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_the_versions_it_replaced_go_too(self, client: AsyncClient, session: AsyncSession, user: User) -> None:
+    # Otherwise search with include_past would still find what the user asked to forget.
+    first = await add_fact(session, user, "diagnos", "Utredd för X", valid_to=date(2026, 5, 1), embedding=[0.1] * 3)
+    merged = await add_fact(session, user, "diagnos-2", "Remiss för X", valid_to=date(2026, 6, 1))
+    current = await add_fact(session, user, "diagnos", "Har X", embedding=[0.2] * 3)
+    first.superseded_by_id = merged.superseded_by_id = current.id
+    await session.flush()
+
+    assert (await client.delete(f"/v1/memory/facts/{current.id}")).status_code == 204
+
+    for fact in (first, merged, current):
+      await session.refresh(fact)
+      assert fact.deleted_at is not None, fact.statement
+      assert fact.embedding is None

@@ -28,6 +28,10 @@ overrides:
   vitest: 'catalog:'
   react: '19.3.1'
   react-dom: '19.3.1'
+  # Security floors for transitive dependencies (dbus-next's XML parser ships in the desktop app).
+  xml2js: '^0.6.2'
+  fast-uri: '^3.1.9'
+  postcss-selector-parser@6: '^6.1.5'
 
 peerDependencyRules:
   allowAny:

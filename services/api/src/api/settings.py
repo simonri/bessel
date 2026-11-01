@@ -192,6 +192,11 @@ class Settings(BaseSettings):
   @model_validator(mode="after")
   def validate_production_settings(self) -> "Settings":
     """Validate that required settings are configured in production."""
+    # Auth0 signs with its RSA key. An HMAC algorithm here would let a token signed with the public key (which anyone
+    # can fetch) pass: python-jose has no fix for that (CVE-2026-85394), so only RSA algorithms are accepted.
+    if not self.AUTH0_ALGORITHMS or any(not alg.startswith(("RS", "PS")) for alg in self.AUTH0_ALGORITHMS):
+      raise ValueError(f"AUTH0_ALGORITHMS must list only RSA algorithms, got {self.AUTH0_ALGORITHMS}")
+
     if self.ENV == Environment.production:
       missing = []
 

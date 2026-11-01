@@ -16,7 +16,9 @@ from api.weather.service import MAX_DAYS, MAX_HOURS, weather_forecast
 
 async def get_weather(
   ctx: Context,
-  place: Annotated[str | None, Field(description="A place name, e.g. 'Västerås', 'Åre' or 'Barcelona, Spain'. Or give latitude and longitude.")] = None,
+  place: Annotated[
+    str | None, Field(max_length=200, description="A place name, e.g. 'Västerås', 'Åre' or 'Barcelona, Spain'. Or give latitude and longitude.")
+  ] = None,
   latitude: Annotated[float | None, Field(ge=-90, le=90)] = None,
   longitude: Annotated[float | None, Field(ge=-180, le=180)] = None,
   days: Annotated[int, Field(ge=1, le=MAX_DAYS, description="How many days, starting today.")] = 3,

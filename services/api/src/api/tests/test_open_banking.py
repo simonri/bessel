@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 import httpx
 import pytest
 from api.common.encryption import decrypt, encrypt
+from api.common.utils import utc_now
 from api.models.bank_account import BankAccount
 from api.models.bank_connection import BankConnection, BankConnectionAccount
 from api.models.notification import Notification
@@ -358,6 +359,22 @@ class TestLinkAccount:
 
 
 class TestSync:
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_sync_now_waits_out_a_cooldown(
+    self, client: AsyncClient, save_fixture: SaveFixture, configured: None, user: User, job_queue_manager: JobQueueManager
+  ) -> None:
+    # A bank allows a handful of reads a day, and Enable Banking's quota is shared by every user.
+    connection = await _connection(save_fixture, user.id)
+    connection.last_synced_at = utc_now() - timedelta(minutes=2)
+    await save_fixture(connection)
+    assert (await client.post(f"/v1/bank-connections/{connection.id}/sync")).status_code == 429
+
+    connection.last_synced_at = utc_now() - timedelta(minutes=20)
+    await save_fixture(connection)
+    assert (await client.post(f"/v1/bank-connections/{connection.id}/sync")).status_code == 202
+    assert [job[:2] for job in job_queue_manager._enqueued_jobs] == [("sync_bank_connection", (str(connection.id),))]
+
   @pytest.mark.asyncio
   async def test_imports_booked_transactions_from_every_page(
     self, session: AsyncSession, session_maker: SessionMaker, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User

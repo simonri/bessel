@@ -413,7 +413,7 @@ async def get_investments(ctx: Context) -> Investments:
 
 TOOLS: list[ToolSpec] = [
   read(get_finances_overview, "Finances overview"),
-  read(get_month_summary, "Month summary"),
-  read(search_transactions, "Search transactions"),
+  read(get_month_summary, "Month summary", open_world=True),
+  read(search_transactions, "Search transactions", open_world=True),
   read(get_investments, "Investments"),
 ]

@@ -83,3 +83,42 @@ class MinimumClientVersionMiddleware:
       return
 
     await self.app(scope, receive, send)
+
+
+# No endpoint takes more than an upload's cap, so a body past these is refused before anything reads it into memory.
+MAX_BODY_BYTES = 32 * 1024 * 1024
+# A Google Timeline export runs to hundreds of MB.
+_LARGE_BODY_PATHS = {"/v1/location-history/import": 210 * 1024 * 1024}
+
+
+class BodySizeLimitMiddleware:
+  """413 for a declared Content-Length over the limit; a body streamed without one ends at the limit as if the client
+  had gone away, so no reader (the idempotency middleware buffers whole bodies) holds more than the limit."""
+
+  def __init__(self, app: ASGIApp) -> None:
+    self.app = app
+
+  async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+    if scope["type"] != "http":
+      await self.app(scope, receive, send)
+      return
+
+    limit = _LARGE_BODY_PATHS.get(scope["path"], MAX_BODY_BYTES)
+    declared = Headers(scope=scope).get("content-length", "")
+    if declared.isdigit() and int(declared) > limit:
+      response = JSONResponse(status_code=413, content={"error": "PayloadTooLarge", "detail": f"The request body is over {limit // (1024 * 1024)} MB."})
+      await response(scope, receive, send)
+      return
+
+    received = 0
+
+    async def limited() -> Message:
+      nonlocal received
+      message = await receive()
+      if message["type"] == "http.request":
+        received += len(message.get("body", b""))
+        if received > limit:
+          return {"type": "http.disconnect"}
+      return message
+
+    await self.app(scope, limited, send)

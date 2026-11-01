@@ -143,6 +143,7 @@ class CalendarRepository(RepositoryBase[Calendar], RepositoryIDMixin[Calendar, U
             "color": c.color,
             "hidden": c.hidden_by_default,
             "writable": c.writable,
+            "owned": c.owned,
             "primary": c.primary,
             "change_tag": c.change_tag,
           }
@@ -155,6 +156,7 @@ class CalendarRepository(RepositoryBase[Calendar], RepositoryIDMixin[Calendar, U
           "name": statement.excluded.name,
           "color": statement.excluded.color,
           "writable": statement.excluded.writable,
+          "owned": statement.excluded.owned,
           "primary": statement.excluded.primary,
           "change_tag": statement.excluded.change_tag,
           "modified_at": utc_now(),

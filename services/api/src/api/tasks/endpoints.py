@@ -4,6 +4,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Response, UploadFile
+from pydantic import Field
 
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
@@ -14,7 +15,17 @@ from api.models.task_attachment import TaskAttachment
 from api.postgres import AsyncSession, DBSession
 from api.tasks.attachment_storage import delete_attachment_file, read_attachment_file, save_attachment_file
 from api.tasks.repository import TaskAttachmentRepository, TaskRepository
-from api.tasks.schemas import TaskAttachmentSchema, TaskCompleteResponse, TaskCreate, TaskListResponse, TaskReorderItem, TaskSchema, TaskStatus, TaskUpdate
+from api.tasks.schemas import (
+  MAX_REORDER,
+  TaskAttachmentSchema,
+  TaskCompleteResponse,
+  TaskCreate,
+  TaskListResponse,
+  TaskReorderItem,
+  TaskSchema,
+  TaskStatus,
+  TaskUpdate,
+)
 from api.tasks.service import task_service
 from api.users.dependencies import CurrentDBUser
 
@@ -108,7 +119,7 @@ async def create_task(
   status_code=204,
 )
 async def reorder_tasks(
-  body: list[TaskReorderItem],
+  body: Annotated[list[TaskReorderItem], Field(max_length=MAX_REORDER)],
   session: DBSession,
   current_user: CurrentDBUser,
 ) -> None:
