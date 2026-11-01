@@ -491,6 +491,19 @@ class TestSyncAndEvents:
     assert account.last_synced_at is not None
 
   @pytest.mark.asyncio
+  async def test_a_calendar_name_longer_than_bessel_keeps_is_cut_rather_than_stopping_the_sync(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture
+  ) -> None:
+    account_id = await _account(save_fixture, await _current_user_id(client, session))
+    name = "Sveriges helgdagar och flaggdagar " * 10
+
+    for _ in range(2):
+      await _apply(session, account_id, AccountSnapshot(calendars=[ProviderCalendar("feed", name, "#ff0000")], events={"feed": []}))
+
+    calendars = (await client.get("/v1/calendars/accounts")).json()["accounts"][0]["calendars"]
+    assert [c["name"] for c in calendars] == [name[:255]]
+
+  @pytest.mark.asyncio
   async def test_events_in_range(self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture) -> None:
     account_id = await _account(save_fixture, await _current_user_id(client, session))
     await _apply(

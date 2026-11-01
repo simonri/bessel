@@ -139,7 +139,7 @@ class CalendarRepository(RepositoryBase[Calendar], RepositoryIDMixin[Calendar, U
             "created_at": utc_now(),
             "account_id": account.id,
             "external_id": c.external_id,
-            "name": c.name,
+            "name": c.name[:255],
             "color": c.color,
             "hidden": c.hidden_by_default,
             "writable": c.writable,
@@ -369,7 +369,14 @@ class CalendarPersonRepository(RepositoryBase[CalendarPerson]):
       await self.session.execute(
         insert(CalendarPerson).values(
           [
-            {"id": generate_uuid(), "created_at": utc_now(), "account_id": account.id, "email": p.email, "name": p.name, "photo_url": p.photo_url}
+            {
+              "id": generate_uuid(),
+              "created_at": utc_now(),
+              "account_id": account.id,
+              "email": p.email,
+              "name": p.name[:255] if p.name else None,
+              "photo_url": p.photo_url,
+            }
             for p in unique.values()
           ]
         )

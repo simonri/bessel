@@ -204,6 +204,19 @@ class TestRefreshPeople:
     assert account.people_synced_at is not None
 
   @pytest.mark.asyncio
+  async def test_a_name_longer_than_bessel_keeps_is_cut_rather_than_stopping_the_refresh(
+    self, session: AsyncSession, save_fixture: SaveFixture, google: FakePeople
+  ) -> None:
+    account, calendar = await _account(save_fixture)
+    await _event(save_fixture, calendar, "dan@oh.xyz")
+    google.sources[OTHER] = [[person("dan@oh.xyz", "Dan " + "Ö" * 300)]]
+
+    assert await people.refresh_people(_session_maker(session), account.id)
+
+    stored = (await session.execute(select(CalendarPerson.name).where(CalendarPerson.account_id == account.id))).scalars().all()
+    assert stored == [("Dan " + "Ö" * 300)[:255]]
+
+  @pytest.mark.asyncio
   async def test_replaces_the_previous_list(self, session: AsyncSession, save_fixture: SaveFixture, google: FakePeople) -> None:
     account, calendar = await _account(save_fixture)
     await _event(save_fixture, calendar, "dan@oh.xyz")
