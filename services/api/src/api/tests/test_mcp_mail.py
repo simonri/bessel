@@ -198,6 +198,16 @@ class TestRead:
     assert [(a["name"], a["content_type"]) for a in found["attachments"]] == [("villkor.pdf", "application/pdf")]
 
   @pytest.mark.asyncio
+  async def test_a_charset_python_doesnt_know_is_read_anyway(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    head = f"From: anna@x.se\r\nTo: {ME}\r\nSubject: Middag\r\nContent-Transfer-Encoding: 8bit\r\n".encode()
+    plain = head + b"Content-Type: text/plain; charset=unknown-8bit\r\n\r\nSes vi p\xc3\xa5 fredag?\r\n"
+    html = head + b"Content-Type: text/html; charset=x-mac-unknown\r\n\r\n<p>Ses vi p\xe5 l\xf6rdag?</p>\r\n"
+    mailbox["mailbox"] = FakeMailbox({"INBOX": [(plain, set()), (html, set())]})
+
+    assert (await mcp_call(connect, "read_email", {"uid": 1}))["text"] == "Ses vi på fredag?"
+    assert (await mcp_call(connect, "read_email", {"uid": 2}))["text"] == "Ses vi på lördag?"
+
+  @pytest.mark.asyncio
   async def test_a_missing_message_is_an_error(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
     mailbox["mailbox"] = FakeMailbox({"INBOX": []})
 

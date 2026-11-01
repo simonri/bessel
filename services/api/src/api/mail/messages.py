@@ -135,14 +135,26 @@ def _html_text(html: str) -> str:
   return re.sub(r"\n{3,}", "\n\n", soup.get_text("\n")).strip()
 
 
+def _part_text(part: EmailMessage) -> str:
+  try:
+    return part.get_content()
+  except LookupError:
+    # A charset Python doesn't know ("unknown-8bit"): UTF-8 if it reads as such, else Latin-1, which always does.
+    payload = part.get_payload(decode=True) or b""
+    try:
+      return payload.decode()
+    except UnicodeDecodeError:
+      return payload.decode("latin-1")
+
+
 def message(folder: str, uid: int, flags: frozenset[str], raw: bytes) -> Message:
   parsed = _parser.parsebytes(raw)
   plain = parsed.get_body(preferencelist=("plain",))
-  text = plain.get_content().strip() if plain is not None else ""
+  text = _part_text(plain).strip() if plain is not None else ""
   if not text:
     # Some mail carries an empty plain part beside the real HTML one.
     html = parsed.get_body(preferencelist=("html",))
-    text = _html_text(html.get_content()) if html is not None else ""
+    text = _html_text(_part_text(html)) if html is not None else ""
   attachments = [Attachment(part.get_filename(), part.get_content_type(), len(part.get_payload(decode=True) or b"")) for part in parsed.iter_attachments()]
   return Message(
     envelope=envelope(folder, uid, flags, raw),
