@@ -93,6 +93,13 @@ class TestTimeEntries:
     resp = await client.get("/v1/time/entries", params={"start": "2026-01-01T00:00:00Z", "end": "2026-06-01T00:00:00Z"})
     assert resp.status_code == 422
 
+  @pytest.mark.asyncio
+  async def test_a_range_without_a_timezone_is_rejected(self, client: AsyncClient) -> None:
+    for start, end in [("2026-10-05T00:00:00Z", "2026-10-12T00:00:00"), ("2026-10-05T00:00:00", "2026-10-12T00:00:00Z")]:
+      resp = await client.get("/v1/time/entries", params={"start": start, "end": end})
+      assert resp.status_code == 422
+      assert resp.json()["detail"] == "Times need a timezone."
+
 
 class TestTimeSummary:
   @pytest.mark.asyncio
