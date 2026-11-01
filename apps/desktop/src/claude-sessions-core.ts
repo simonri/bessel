@@ -382,22 +382,26 @@ export function listConversations(
     seen.add(sessionId);
     return true;
   });
-  return newest
-    .slice(0, limit)
-    .flatMap(({ sessionId, file, updatedAt, worktree }) => {
-      let title: string | null;
-      try {
-        title = transcriptTitle(file);
-      } catch {
-        return [];
-      }
-      // Transcripts without a single message are aborted starts, not
-      // conversations, even once a name was given to them.
-      if (!title || !fileHasConversation(file)) return [];
-      return [
-        { sessionId, title, updatedAt, ...(worktree ? { worktree } : {}) },
-      ];
+  const conversations: ClaudeConversation[] = [];
+  for (const { sessionId, file, updatedAt, worktree } of newest) {
+    if (conversations.length >= limit) break;
+    let title: string | null;
+    try {
+      title = transcriptTitle(file);
+    } catch {
+      continue;
+    }
+    // Transcripts without a single message are aborted starts, not
+    // conversations, even once a name was given to them.
+    if (!title || !fileHasConversation(file)) continue;
+    conversations.push({
+      sessionId,
+      title,
+      updatedAt,
+      ...(worktree ? { worktree } : {}),
     });
+  }
+  return conversations;
 }
 
 const PREVIEW_EXCHANGES = 3;
