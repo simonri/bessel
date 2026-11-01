@@ -179,9 +179,8 @@ class TestSearchTransactions:
     food = await _category(save_fixture, user, "Mat")
     await _transaction(save_fixture, only, date(2026, 9, 3), 12_950, DEBIT, "ICA NARA", food)
 
-    for arguments in ({"account": " "}, {"category": " "}):
-      message = await mcp_call_error(connect, "search_transactions", arguments)
-      assert "No account called" in message or "No category called" in message
+    for kind in ("account", "category"):
+      assert f"No {kind} called ' '" in await mcp_call_error(connect, "search_transactions", {kind: " "})
 
   @pytest.mark.asyncio
   @pytest.mark.usefixtures("books")
