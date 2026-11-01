@@ -23,6 +23,8 @@ class Calendar(RecordModel):
   hidden: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
   # The account may add and change events here (not a subscribed/read-only calendar).
   writable: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
+  # The account's own calendar, not one someone else shared with it: what others can read is theirs to decide.
+  owned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default=text("true"))
   # The account's main calendar; the default target for new events.
   primary: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default=text("false"))
 

@@ -206,6 +206,8 @@ class ICloudCalendarClient:
           name=_text(prop, "d:displayname") or "Calendar",
           color=normalize_color(_text(prop, "a:calendar-color"), DEFAULT_COLOR),
           writable=any(prop.find(f"d:current-user-privilege-set/d:privilege/{p}", NS) is not None for p in WRITE_PRIVILEGES),
+          # Calendar Server marks a calendar someone shared with this account as cs:shared (the owner's copy is shared-owner).
+          owned=prop.find("d:resourcetype/cs:shared", NS) is None,
           change_tag=_text(prop, "cs:getctag") or _text(prop, "d:sync-token"),
         )
       )

@@ -102,11 +102,11 @@ class TestGoogleCalendarAccess:
     async with httpx.AsyncClient(transport=transport) as http:
       calendars = await GoogleCalendarClient(http).list_calendars("token")
 
-    assert [(c.external_id, c.writable, c.primary) for c in calendars] == [
-      ("me@gmail.com", True, True),
-      ("shared", True, False),
-      ("holidays", False, False),
-      ("busy", False, False),
+    assert [(c.external_id, c.writable, c.owned, c.primary) for c in calendars] == [
+      ("me@gmail.com", True, True, True),
+      ("shared", True, False, False),
+      ("holidays", False, False, False),
+      ("busy", False, False, False),
     ]
 
   @pytest.mark.asyncio
@@ -200,17 +200,20 @@ HOME = "https://p42-caldav.icloud.com/1234/calendars/"
 
 
 def _multistatus(*responses: str) -> str:
-  return f'<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/">{"".join(responses)}</d:multistatus>'
+  return f'<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/" xmlns:cs="http://calendarserver.org/ns/">{"".join(responses)}</d:multistatus>'
 
 
 def _response(href: str, prop: str) -> str:
   return f"<d:response><d:href>{href}</d:href><d:propstat><d:prop>{prop}</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>"
 
 
-def _calendar(name: str, privileges: str) -> str:
+READ_WRITE = "<d:privilege><d:read/></d:privilege><d:privilege><d:write/></d:privilege>"
+
+
+def _calendar(name: str, privileges: str, *, shared: bool = False) -> str:
   return "".join(
     [
-      "<d:resourcetype><d:collection/><c:calendar/></d:resourcetype>",
+      f"<d:resourcetype><d:collection/><c:calendar/>{'<cs:shared/>' if shared else ''}</d:resourcetype>",
       f"<d:displayname>{name}</d:displayname>",
       '<c:supported-calendar-component-set><c:comp name="VEVENT"/></c:supported-calendar-component-set>',
       f"<d:current-user-privilege-set>{privileges}</d:current-user-privilege-set>",
@@ -230,8 +233,8 @@ def _handler(request: httpx.Request) -> httpx.Response:
     return httpx.Response(
       207,
       text=_multistatus(
-        _response("/1234/calendars/home/", _calendar("Home", "<d:privilege><d:read/></d:privilege><d:privilege><d:write/></d:privilege>")),
-        _response("/1234/calendars/shared/", _calendar("Shared with me", "<d:privilege><d:read/></d:privilege>")),
+        _response("/1234/calendars/home/", _calendar("Home", READ_WRITE)),
+        _response("/1234/calendars/shared/", _calendar("Shared with me", READ_WRITE, shared=True)),
       ),
     )
   if request.method == "REPORT":
@@ -248,7 +251,7 @@ class TestICloudClientCapture:
       calendars = await ICloudCalendarClient(http, "me@risberg.eu", "pw").list_calendars()
     assert calendars == [
       ProviderCalendar(external_id=f"{HOME}home/", name="Home", color="#34aadc", writable=True),
-      ProviderCalendar(external_id=f"{HOME}shared/", name="Shared with me", color="#34aadc", writable=False),
+      ProviderCalendar(external_id=f"{HOME}shared/", name="Shared with me", color="#34aadc", writable=True, owned=False),
     ]
 
   @pytest.mark.asyncio
