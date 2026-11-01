@@ -14,11 +14,13 @@ import structlog
 from api.bank_accounts.repository import BankAccountRepository
 from api.common.encryption import InvalidToken, decrypt, encrypt
 from api.common.utils import utc_now
+from api.contacts.keeping import user_zone
 from api.logging import Logger
 from api.models.bank_account import BankAccount
 from api.models.bank_connection import BankConnection, BankConnectionAccount
 from api.models.notification import Notification
 from api.models.transaction import TransactionDirection
+from api.models.user import User
 from api.open_banking import http
 from api.open_banking.enable_banking import BookedTransaction, EnableBankingClient, EnableBankingError, SessionGoneError
 from api.open_banking.repository import BankConnectionRepository
@@ -367,7 +369,8 @@ class OpenBankingService:
     """Leaves one notification when the approval is about to end; True if it did."""
     if connection.expiry_notified_at is not None or connection.valid_until - now > EXPIRY_WARNING:
       return False
-    ends = connection.valid_until.astimezone(UTC).date()
+    user = await session.get(User, connection.user_id)
+    ends = connection.valid_until.astimezone(user_zone(user) if user else UTC).date()
     session.add(
       Notification(
         user_id=connection.user_id,

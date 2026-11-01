@@ -804,6 +804,20 @@ class TestExpiryWarning:
     assert notification.body == "Bessel can read Klarna until 5 November. Renew the approval from Accounts to keep transactions importing."
     assert (notification.link, notification.kind) == ("/accounts", "warning")
 
+  @pytest.mark.asyncio
+  async def test_the_last_day_is_the_users_own(self, session: AsyncSession, save_fixture: SaveFixture, user: User) -> None:
+    user.timezone = "Europe/Stockholm"
+    await save_fixture(user)
+    connection = await _connection(save_fixture, user.id, bank_name="Klarna")
+    # 00:30 on 15 November in Stockholm.
+    connection.valid_until = datetime(2026, 11, 14, 23, 30, tzinfo=UTC)
+
+    assert await open_banking_service.warn_before_expiry(session, connection, now=connection.valid_until - timedelta(days=3)) is True
+    await session.flush()
+
+    [notification] = (await session.execute(select(Notification).where(Notification.user_id == user.id))).scalars().all()
+    assert notification.body.startswith("Bessel can read Klarna until 15 November.")
+
 
 class TestDisconnect:
   @pytest.mark.asyncio
