@@ -97,6 +97,35 @@ class TestSoftDeleted:
     assert (await client.delete(f"/v1/tasks/{task.id}")).status_code == 404
 
 
+class TestTaskRecurrence:
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_monthly_routine_returns_to_its_day_after_a_short_month(self, client: AsyncClient) -> None:
+    routine = (
+      await client.post("/v1/tasks", json={"title": "Pay rent", "is_recurring": True, "rrule_frequency": "monthly", "due_date": "2027-01-31"})
+    ).json()
+
+    february = (await client.post(f"/v1/tasks/{routine['id']}/complete")).json()["next_task"]
+    march = (await client.post(f"/v1/tasks/{february['id']}/complete")).json()["next_task"]
+    april = (await client.post(f"/v1/tasks/{march['id']}/complete")).json()["next_task"]
+
+    assert [february["due_date"], march["due_date"], april["due_date"]] == ["2027-02-28", "2027-03-31", "2027-04-30"]
+
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_monthly_routine_keeps_a_chosen_day(self, client: AsyncClient) -> None:
+    routine = (
+      await client.post(
+        "/v1/tasks",
+        json={"title": "Pay rent", "is_recurring": True, "rrule_frequency": "monthly", "rrule_day_of_month": 15, "due_date": "2027-01-31"},
+      )
+    ).json()
+
+    february = (await client.post(f"/v1/tasks/{routine['id']}/complete")).json()["next_task"]
+
+    assert (february["due_date"], february["rrule_day_of_month"]) == ("2027-02-15", 15)
+
+
 class TestTaskUndoComplete:
   @pytest.mark.asyncio
   @pytest.mark.keep_session_state
