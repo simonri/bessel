@@ -237,6 +237,31 @@ describe("buildFileMeta", () => {
     expect(meta.tags.sort()).toEqual(["project"]);
   });
 
+  it("reads a fence that shows another fence as one code block", () => {
+    const content = [
+      "````md",
+      "```",
+      "#example [[Example]]",
+      "```",
+      "````",
+      "~~~",
+      "```",
+      "#example",
+      "~~~",
+      "```",
+      "```js",
+      "#example",
+      "```",
+      "## After",
+      "#real [[Real]]",
+      "```inline``` #too",
+    ].join("\n");
+    const meta = buildFileMeta("note.md", content);
+    expect(meta.tags).toEqual(["real", "too"]);
+    expect(meta.links.map((l) => l.target)).toEqual(["Real"]);
+    expect(meta.headings).toEqual([{ level: 2, text: "After", line: 13 }]);
+  });
+
   it("reads tags in any script and ones that start with a digit", () => {
     const content = "Plan #måndag and #2024-review, see #café/ideas- too.";
     const meta = buildFileMeta("note.md", content);

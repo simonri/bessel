@@ -227,15 +227,11 @@ export function rewriteLinksInContent(
 
   // Code isn't a link, as the index reads it: fenced blocks and inline code
   // stay as written.
-  let inFence = false;
+  const isCode = fencedCode();
   const newContent = content
     .split("\n")
     .map((line) => {
-      if (isFenceDelimiter(line)) {
-        inFence = !inFence;
-        return line;
-      }
-      if (inFence) return line;
+      if (isCode(line)) return line;
       return line
         .split(/(`[^`]*`)/)
         .map((piece, i) => (i % 2 === 1 ? piece : rewrite(piece)))
@@ -251,8 +247,29 @@ function splitLines(content: string): string[] {
   return content.split(/\r\n|\n/);
 }
 
-function isFenceDelimiter(line: string): boolean {
-  return /^ {0,3}(```|~~~)/.test(line);
+/**
+ * Takes a note's lines in order and says which are fenced code, fences
+ * included. A fence closes only on a bare run of its own character at least
+ * as long, so a ```` block can show a ``` one.
+ */
+function fencedCode(): (line: string) => boolean {
+  let open: { char: string; length: number } | null = null;
+  return (line) => {
+    const fence = /^ {0,3}(`{3,}|~{3,})([^\n]*)$/.exec(line);
+    if (open) {
+      if (
+        fence &&
+        fence[1][0] === open.char &&
+        fence[1].length >= open.length &&
+        !fence[2].trim()
+      )
+        open = null;
+      return true;
+    }
+    if (!fence || (fence[1][0] === "`" && fence[2].includes("`"))) return false;
+    open = { char: fence[1][0], length: fence[1].length };
+    return true;
+  };
 }
 
 function stripInlineCode(line: string): string {
@@ -305,14 +322,10 @@ const HEADING_RE = /^ {0,3}(#{1,6})\s+(.+?)\s*$/;
 
 function extractHeadings(lines: string[], bodyStart: number): VaultHeading[] {
   const headings: VaultHeading[] = [];
-  let inFence = false;
+  const isCode = fencedCode();
   for (let i = bodyStart; i < lines.length; i++) {
     const line = lines[i];
-    if (isFenceDelimiter(line)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
+    if (isCode(line)) continue;
     const m = HEADING_RE.exec(line);
     if (m) {
       const text = m[2].replace(/\s+#+\s*$/, "").trim();
@@ -324,14 +337,10 @@ function extractHeadings(lines: string[], bodyStart: number): VaultHeading[] {
 
 function extractWikilinks(lines: string[], bodyStart: number): VaultLink[] {
   const links: VaultLink[] = [];
-  let inFence = false;
+  const isCode = fencedCode();
   for (let i = bodyStart; i < lines.length; i++) {
     const raw = lines[i];
-    if (isFenceDelimiter(raw)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
+    if (isCode(raw)) continue;
     const line = stripInlineCode(raw);
     const wikilinkRe =
       /(!)?\[\[([^\]|#]+?)(?:#([^\]|]+?))?(?:\\?\|([^\]]+?))?\]\]/g;
@@ -352,14 +361,10 @@ function extractWikilinks(lines: string[], bodyStart: number): VaultLink[] {
 
 function extractTags(lines: string[], bodyStart: number): string[] {
   const tags = new Set<string>();
-  let inFence = false;
+  const isCode = fencedCode();
   for (let i = bodyStart; i < lines.length; i++) {
     const raw = lines[i];
-    if (isFenceDelimiter(raw)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
+    if (isCode(raw)) continue;
 
     let line = stripInlineCode(raw);
     line = line.replace(/https?:\/\/\S+/g, " ");
