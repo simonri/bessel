@@ -352,6 +352,36 @@ describe("transcripts", () => {
     expect(listConversations("/elsewhere", 10)).toEqual([]);
   });
 
+  it("fills the limit with conversations, past newer empty transcripts", () => {
+    const said = { type: "user", message: { content: "hi" } };
+    writeTranscript(
+      "/repo",
+      "11111111-1111-4111-8111-111111111111",
+      [said, { type: "ai-title", aiTitle: "Older" }],
+      100,
+    );
+    writeTranscript(
+      "/repo",
+      "22222222-2222-4222-8222-222222222222",
+      [said, { type: "ai-title", aiTitle: "Newer" }],
+      200,
+    );
+    writeTranscript(
+      "/repo",
+      "33333333-3333-4333-8333-333333333333",
+      [{ type: "custom-title", customTitle: "Aborted" }],
+      300,
+    );
+
+    expect(listConversations("/repo", 2).map((c) => c.title)).toEqual([
+      "Newer",
+      "Older",
+    ]);
+    expect(listConversations("/repo", 1).map((c) => c.title)).toEqual([
+      "Newer",
+    ]);
+  });
+
   it("keeps conversations that moved into one of the project's worktrees", () => {
     const moved = "44444444-4444-4444-8444-444444444444";
     writeTranscript(
@@ -447,6 +477,29 @@ describe("transcripts", () => {
         },
       ],
     });
+  });
+
+  it("keeps a prompt that starts with markup", () => {
+    const id = "99999999-9999-4999-8999-999999999999";
+    writeTranscript(
+      "/repo",
+      id,
+      [
+        user("Rename the button"),
+        assistant(text("Renamed.")),
+        user("<Button> no longer renders"),
+        assistant(text("Fixed the import.")),
+        user("<local-command-stdout>ok</local-command-stdout>"),
+      ],
+      1,
+    );
+
+    expect(
+      transcriptPreview("/repo", id)?.exchanges.map((e) => [e.prompt, e.reply]),
+    ).toEqual([
+      ["Rename the button", "Renamed."],
+      ["<Button> no longer renders", "Fixed the import."],
+    ]);
   });
 
   it("reads back past bulky tool output, and names how it started", () => {

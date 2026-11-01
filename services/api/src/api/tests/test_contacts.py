@@ -7,14 +7,16 @@ import pytest
 from api.calendars import http as provider_http
 from api.common.encryption import encrypt
 from api.contacts import endpoints as contact_endpoints
+from api.contacts import tasks as contact_tasks
 from api.contacts.person import parse_person
 from api.contacts.repository import ContactSourceRepository
-from api.contacts.service import sync_source
+from api.contacts.service import SYNC_SOURCE_ACTOR, sync_source
 from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.contact import Contact, ContactMethodKind, ContactSource
 from api.models.user import User
 from api.settings import settings
 from api.tests.people_fake import FakePeople
+from api.worker._enqueue import JobQueueManager
 from cryptography.fernet import Fernet
 from httpx import AsyncClient
 from pytest_mock import MockerFixture
@@ -125,6 +127,30 @@ class TestSync:
     assert {k: v for k, v in second.items() if k != "pageToken"} == first, "every page repeats the first request's parameters"
 
   @pytest.mark.asyncio
+  async def test_a_value_longer_than_bessel_keeps_is_cut_rather_than_stopping_the_sync(
+    self, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker
+  ) -> None:
+    label = "Mobil på jobbet " * 10
+    people.put(
+      "people/c1",
+      names=[{"displayName": "Anna " + "Å" * 600, "givenName": "Anna" + "ö" * 300, "familyName": "B" * 300}],
+      nicknames=[{"value": "N" * 300}],
+      organizations=[{"name": "O" * 600, "title": "T" * 600}],
+      phoneNumbers=[{**PHONE, "type": label, "formattedType": label}],
+    )
+    people.put("people/c2", names=[{"displayName": "Bo Ek"}])
+    source = await _source(session, user)
+
+    assert await sync_source(session_maker, source.id) is True
+
+    contacts = await _contacts(session, source)
+    anna = contacts["people/c1"]
+    assert [m.label for m in anna.methods] == [label[:100]]
+    assert (len(anna.display_name), len(anna.given_name or ""), len(anna.family_name or ""), len(anna.nickname or "")) == (500, 255, 255, 255)
+    assert (len(anna.organization or ""), len(anna.job_title or "")) == (500, 500)
+    assert contacts["people/c2"].display_name == "Bo Ek"
+
+  @pytest.mark.asyncio
   async def test_the_next_sync_asks_only_for_changes_and_applies_edits_and_deletions(
     self, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker
   ) -> None:
@@ -196,6 +222,29 @@ class TestSync:
     assert source.sync_token is None
 
   @pytest.mark.asyncio
+  async def test_the_cron_still_visits_an_address_book_google_stopped_sharing(
+    self,
+    session: AsyncSession,
+    user: User,
+    people: FakePeople,
+    session_maker: SessionMaker,
+    monkeypatch: pytest.MonkeyPatch,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    source = await _source(session, user)
+    # The calendar sync saw the contacts scope revoked.
+    (await ContactSourceRepository.from_session(session).account_for(source)).can_read_people = False
+    await session.flush()
+    monkeypatch.setattr(contact_tasks, "AsyncSessionMaker", session_maker)
+
+    await contact_tasks.sync_all_contact_sources.__wrapped__()  # type: ignore[attr-defined]
+
+    queued = [args for actor, args, _, _ in job_queue_manager._enqueued_jobs if actor == SYNC_SOURCE_ACTOR]
+    assert queued == [(str(source.id),)]
+    await sync_source(session_maker, source.id)
+    assert source.sync_error is not None and "Reconnect" in source.sync_error
+
+  @pytest.mark.asyncio
   async def test_only_google_accounts_that_may_read_contacts_get_a_source(self, session: AsyncSession, user: User) -> None:
     session.add(
       CalendarAccount(user_id=user.id, provider=CalendarProvider.google, email="a@gmail.com", encrypted_credentials=encrypt("r"), can_read_people=True)
@@ -252,6 +301,25 @@ class TestEndpoints:
     assert await names(search="acme") == ["Bo Ek"]
     assert await names(search="123 45") == ["Dr. Anna Maria Berg Jr."]
     assert await names(search="ANNA@") == ["Dr. Anna Maria Berg Jr."]
+
+  @pytest.mark.asyncio
+  async def test_a_number_is_found_however_it_is_written(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker
+  ) -> None:
+    people.put("people/c1", names=[{"displayName": "Anna Berg"}], phoneNumbers=[PHONE])
+    people.put("people/c2", names=[{"displayName": "Bo Ek"}], phoneNumbers=[{"value": "073-987 65 43"}])
+    people.put("people/c3", names=[{"displayName": "Cia Ny"}], phoneNumbers=[{"value": "+44 20 7946 0958"}])
+    await sync_source(session_maker, (await _source(session, user)).id)
+
+    async def names(search: str) -> list[str]:
+      return [c["display_name"] for c in (await client.get("/v1/contacts", params={"search": search})).json()["items"]]
+
+    for written in ("0701234567", "+46701234567", "070-123 45 67", "0046 70 123 45 67"):
+      assert await names(written) == ["Anna Berg"], written
+    for written in ("0739876543", "+46 73 987 65 43", "0046739876543"):
+      assert await names(written) == ["Bo Ek"], written
+    assert await names("0044 20 7946 0958") == ["Cia Ny"]
+    assert await names("0801234567") == []
 
   @pytest.mark.asyncio
   async def test_a_contact_reads_with_its_ways_to_reach_and_birthday(

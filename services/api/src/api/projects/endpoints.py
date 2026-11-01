@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from api.common.utils import utc_now
 from api.devices.dependencies import CurrentDevice, OptionalCurrentDevice
+from api.exceptions import ConflictError, ValidationError
 from api.models.project import Project
 from api.postgres import DBSession
 from api.projects.repository import ProjectDeviceConfigRepository, ProjectRepository
@@ -61,6 +62,13 @@ async def update_project(
   repo = ProjectRepository.from_session(session)
   project = await repo.get_owned_or_404(project_id, current_user.id, not_found_message="Project not found.")
   update_dict = body.model_dump(exclude_unset=True)
+  if "name" in update_dict:
+    name = update_dict["name"]
+    if name is None or not name.strip():
+      raise ValidationError("A project needs a name.", status_code=422)
+    existing = await repo.get_by_name(name, user_id=current_user.id)
+    if existing is not None and existing.id != project.id:
+      raise ConflictError(f"There is already a project called {name!r}.")
   if update_dict:
     await repo.update(project, update_dict=update_dict, flush=True)
   return _to_schema(await project_service.resolve_one(session, project, device.id if device else None))

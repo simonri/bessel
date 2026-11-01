@@ -24,7 +24,7 @@ from api.investments import schemas as investments
 from api.investments.kinds import investment_kind
 from api.investments.service import investment_service
 from api.mcp.context import user_session
-from api.mcp.dates import Day, TimezoneParam, parse_day, resolve_timezone, today_in
+from api.mcp.dates import Day, TimezoneParam, check_order, parse_day, resolve_timezone, today_in
 from api.mcp.tools.common import ToolSpec, read
 from api.models.bank_account import BankAccount
 from api.models.category import Category
@@ -52,8 +52,8 @@ def match_name[T: (BankAccount, Category)](name: str, items: Sequence[T], kind: 
   wanted = name.strip().casefold()
   for candidates in (
     [i for i in items if i.name.casefold() == wanted],
-    [i for i in items if i.name.casefold().startswith(wanted)],
-    [i for i in items if wanted in i.name.casefold()],
+    [i for i in items if wanted and i.name.casefold().startswith(wanted)],
+    [i for i in items if wanted and wanted in i.name.casefold()],
   ):
     if len(candidates) == 1:
       return candidates[0]
@@ -120,8 +120,9 @@ async def get_finances_overview(ctx: Context, timezone: TimezoneParam = None) ->
   renewing before giving money advice. The company's accounts belong to the user's own aktiebolag, not to the user.
   """
   async with user_session(ctx) as (session, user):
-    today = today_in(resolve_timezone(user, timezone))
-    overview = await accounts_overview.overview(session, user.id, now=utc_now())
+    zone = resolve_timezone(user, timezone)
+    today = today_in(zone)
+    overview = await accounts_overview.overview(session, user.id, now=utc_now(), zone=zone)
     history = await net_worth_history.history(session, user.id, today=today)
   return FinancesOverview(
     accounts=[
@@ -279,6 +280,8 @@ async def search_transactions(
   """
   async with user_session(ctx) as (session, user):
     today = today_in(resolve_timezone(user, timezone))
+    date_from, date_to = (parse_day(start, today) if start else None), (parse_day(end, today) if end else None)
+    check_order(date_from, date_to)
     accounts = await BankAccountRepository.from_session(session).list_for_user(user.id)
     categories = await CategoryRepository.from_session(session).list_for_user(user.id, order_by=Category.name)
     repository = TransactionRepository.from_session(session)
@@ -289,8 +292,8 @@ async def search_transactions(
       uncategorized=uncategorized,
       direction={"out": TransactionDirection.debit, "in": TransactionDirection.credit}[direction] if direction else None,
       search=(text.strip() or None) if text else None,
-      date_from=parse_day(start, today) if start else None,
-      date_to=parse_day(end, today) if end else None,
+      date_from=date_from,
+      date_to=date_to,
       is_business=company,
     ).order_by(TransactionModel.transaction_date.desc(), TransactionModel.id)
     rows, total_count = await repository.paginate(statement, limit=limit, page=1)

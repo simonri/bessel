@@ -491,7 +491,12 @@ export function registerVaultHandlers(logLine: (line: string) => void): void {
         // Waits out a save in flight, so it can't recreate the old path.
         await withPathLock(fromAbs, () => fs.promises.rename(fromAbs, toAbs));
 
-        if (!from.toLowerCase().endsWith(".md")) return { updatedFiles: 0 };
+        // Links lead to notes, or into a folder of them.
+        if (
+          kindForRel(from) !== "md" &&
+          !(await fs.promises.stat(toAbs)).isDirectory()
+        )
+          return { updatedFiles: 0 };
         return rewriteLinksAfterRename(root, from, to, skip, {
           lock: withPathLock,
           log,

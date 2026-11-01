@@ -13,6 +13,12 @@ from sqlalchemy.sql.base import ExecutableOption
 type Options = Sequence[ExecutableOption]
 
 
+def without_required_nulls(model: type, changes: dict[str, Any]) -> dict[str, Any]:
+  """`changes` minus the nulls sent for columns that can't hold one: an update leaves those as they are."""
+  columns = model.__table__.columns  # type: ignore[attr-defined]
+  return {key: value for key, value in changes.items() if value is not None or key not in columns or columns[key].nullable}
+
+
 class RepositoryProtocol[M](Protocol):
   model: type[M]
 
@@ -68,7 +74,9 @@ class RepositoryBase[M]:
 
   async def paginate(self, statement: Select[M], *, limit: int, page: int) -> tuple[list[M], int]:
     offset = (page - 1) * limit
-    paginated_statement: Select[M, int] = statement.add_columns(over(func.count())).limit(limit).offset(offset)
+    # Rows that tie on the statement's order still need one, or pages overlap and skip rows.
+    tiebreak = cast(Any, self.model).id
+    paginated_statement: Select[M, int] = statement.add_columns(over(func.count())).order_by(tiebreak).limit(limit).offset(offset)
 
     results = await self.session.execute(paginated_statement)
 
@@ -77,6 +85,10 @@ class RepositoryBase[M]:
     for result in results.unique().all():
       item, count = result
       items.append(item)
+
+    if not items and offset > 0:
+      # Past the last page there's no row to carry the count.
+      count = (await self.session.execute(select(func.count()).select_from(statement.order_by(None).subquery()))).scalar_one()
 
     return items, count
 

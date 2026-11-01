@@ -140,45 +140,127 @@ function basenameNoExt(rel: string): string {
   return stripMdExt(base);
 }
 
+function parentFolders(rel: string): string[] {
+  return rel.split("/").slice(0, -1);
+}
+
+function sharedFolderDepth(a: string, b: string): number {
+  const af = parentFolders(a);
+  const bf = parentFolders(b);
+  let i = 0;
+  while (i < af.length && i < bf.length && af[i] === bf[i]) i++;
+  return i;
+}
+
+/**
+ * The note a link target opens, as the vault page resolves it
+ * (apps/web/.../wikilinks.ts resolveLink): an exact vault-relative path, else
+ * the note of that name with the shortest path, then the closest to `fromRel`.
+ */
+export function resolveLink(
+  files: readonly string[],
+  fromRel: string,
+  target: string,
+): string | null {
+  const wanted = target.trim().replace(/^\.?\//, "");
+  if (!wanted) return fromRel;
+  const lower = wanted.toLowerCase();
+  const candidates: string[] = [];
+  for (const rel of files) {
+    const relLower = rel.toLowerCase();
+    if (relLower === lower || relLower === `${lower}.md`) return rel;
+    const base = rel.slice(rel.lastIndexOf("/") + 1).toLowerCase();
+    if (base === lower || base === `${lower}.md`) candidates.push(rel);
+  }
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => {
+    if (a.length !== b.length) return a.length - b.length;
+    return sharedFolderDepth(b, fromRel) - sharedFolderDepth(a, fromRel);
+  });
+  return candidates[0];
+}
+
+/** Where `rel` is after moving `fromRel` (a note or a folder) to `toRel`. */
+export function movedRel(
+  rel: string,
+  fromRel: string,
+  toRel: string,
+): string | null {
+  if (rel === fromRel) return toRel;
+  return rel.startsWith(`${fromRel}/`)
+    ? `${toRel}${rel.slice(fromRel.length)}`
+    : null;
+}
+
+/**
+ * Rewrites the links in `content`, the note at `sourceRel`, that lead to
+ * `fromRel` (a note, or a note in the folder `fromRel`) so they lead to where
+ * it is under `toRel`. `files` are the vault's notes before the rename: a bare
+ * [[Name]] that opens another note of the same name is left be, and any link
+ * that would open a different note once renamed gets the full path.
+ */
 export function rewriteLinksInContent(
   content: string,
   fromRel: string,
   toRel: string,
+  {
+    sourceRel = "",
+    files = [fromRel],
+  }: { sourceRel?: string; files?: readonly string[] } = {},
 ): { content: string; changed: boolean } {
-  const fromFull = stripMdExt(fromRel);
-  const fromBase = basenameNoExt(fromRel);
-  const toFull = stripMdExt(toRel);
-  const toBase = basenameNoExt(toRel);
+  const moved = (rel: string) => movedRel(rel, fromRel, toRel);
+  const filesAfter = files.map((rel) => moved(rel) ?? rel);
+  const sourceAfter = moved(sourceRel) ?? sourceRel;
 
   let changed = false;
-  const wikilinkRe = /(!)?\[\[([^\]|#]+?)(#[^\]|]+)?(\|[^\]]+)?\]\]/g;
-  const newContent = content.replace(
-    wikilinkRe,
-    (
-      match,
-      embed: string | undefined,
-      rawTarget: string,
-      headingPart: string | undefined,
-      aliasPart: string | undefined,
-    ) => {
-      const target = rawTarget.trim();
-      const targetNoExt = target.replace(/\.md$/i, "");
+  // In a table the alias pipe is written `\|`; it stays with the alias.
+  const wikilinkRe = /(!)?\[\[([^\]|#]+?)(#[^\]|]+)?(\\?\|[^\]]+)?\]\]/g;
+  const rewrite = (text: string): string =>
+    text.replace(
+      wikilinkRe,
+      (
+        match,
+        embed: string | undefined,
+        rawTarget: string,
+        headingPart: string | undefined,
+        aliasPart: string | undefined,
+      ) => {
+        const target = rawTarget.trim();
+        const resolved = resolveLink(files, sourceRel, target);
+        if (resolved === null) return match;
+        // A link to another note can change too: the renamed note may now
+        // take its name.
+        const newRel = moved(resolved) ?? resolved;
+        if (resolveLink(filesAfter, sourceAfter, target) === newRel)
+          return match;
+        const newBase = basenameNoExt(newRel);
+        const newTarget =
+          !target.includes("/") &&
+          resolveLink(filesAfter, sourceAfter, newBase) === newRel
+            ? newBase
+            : stripMdExt(newRel);
 
-      let newTarget: string | null = null;
-      if (targetNoExt.toLowerCase() === fromFull.toLowerCase()) {
-        newTarget = toFull;
-      } else if (
-        !targetNoExt.includes("/") &&
-        targetNoExt.toLowerCase() === fromBase.toLowerCase()
-      ) {
-        newTarget = toBase;
+        changed = true;
+        return `${embed ?? ""}[[${newTarget}${headingPart ?? ""}${aliasPart ?? ""}]]`;
+      },
+    );
+
+  // Code isn't a link, as the index reads it: fenced blocks and inline code
+  // stay as written.
+  const isCode = fencedCode();
+  const newContent = content
+    .split("\n")
+    .map((line) => {
+      if (isCode(line)) return line;
+      let out = "";
+      let at = 0;
+      for (const code of line.matchAll(INLINE_CODE_RE)) {
+        out += rewrite(line.slice(at, code.index)) + code[0];
+        at = code.index + code[0].length;
       }
-      if (newTarget === null) return match;
-
-      changed = true;
-      return `${embed ?? ""}[[${newTarget}${headingPart ?? ""}${aliasPart ?? ""}]]`;
-    },
-  );
+      return out + rewrite(line.slice(at));
+    })
+    .join("\n");
 
   return { content: newContent, changed };
 }
@@ -188,12 +270,37 @@ function splitLines(content: string): string[] {
   return content.split(/\r\n|\n/);
 }
 
-function isFenceDelimiter(line: string): boolean {
-  return /^ {0,3}(```|~~~)/.test(line);
+/**
+ * Takes a note's lines in order and says which are fenced code, fences
+ * included. A fence closes only on a bare run of its own character at least
+ * as long, so a ```` block can show a ``` one.
+ */
+function fencedCode(): (line: string) => boolean {
+  let open: { char: string; length: number } | null = null;
+  return (line) => {
+    const fence = /^ {0,3}(`{3,}|~{3,})([^\n]*)$/.exec(line);
+    if (open) {
+      if (
+        fence &&
+        fence[1][0] === open.char &&
+        fence[1].length >= open.length &&
+        !fence[2].trim()
+      )
+        open = null;
+      return true;
+    }
+    if (!fence || (fence[1][0] === "`" && fence[2].includes("`"))) return false;
+    open = { char: fence[1][0], length: fence[1].length };
+    return true;
+  };
 }
 
+// A code span closes on a run of exactly as many backticks as opened it, so
+// ``[[Note]]`` and `` a ` b `` are code throughout.
+const INLINE_CODE_RE = /(?<!`)(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/g;
+
 function stripInlineCode(line: string): string {
-  return line.replace(/`[^`]*`/g, (m) => " ".repeat(m.length));
+  return line.replace(INLINE_CODE_RE, (m) => " ".repeat(m.length));
 }
 
 interface Frontmatter {
@@ -242,14 +349,10 @@ const HEADING_RE = /^ {0,3}(#{1,6})\s+(.+?)\s*$/;
 
 function extractHeadings(lines: string[], bodyStart: number): VaultHeading[] {
   const headings: VaultHeading[] = [];
-  let inFence = false;
+  const isCode = fencedCode();
   for (let i = bodyStart; i < lines.length; i++) {
     const line = lines[i];
-    if (isFenceDelimiter(line)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
+    if (isCode(line)) continue;
     const m = HEADING_RE.exec(line);
     if (m) {
       const text = m[2].replace(/\s+#+\s*$/, "").trim();
@@ -261,17 +364,13 @@ function extractHeadings(lines: string[], bodyStart: number): VaultHeading[] {
 
 function extractWikilinks(lines: string[], bodyStart: number): VaultLink[] {
   const links: VaultLink[] = [];
-  let inFence = false;
+  const isCode = fencedCode();
   for (let i = bodyStart; i < lines.length; i++) {
     const raw = lines[i];
-    if (isFenceDelimiter(raw)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
+    if (isCode(raw)) continue;
     const line = stripInlineCode(raw);
     const wikilinkRe =
-      /(!)?\[\[([^\]|#]+?)(?:#([^\]|]+?))?(?:\|([^\]]+?))?\]\]/g;
+      /(!)?\[\[([^\]|#]+?)(?:#([^\]|]+?))?(?:\\?\|([^\]]+?))?\]\]/g;
     let m: RegExpExecArray | null;
     // biome-ignore lint/suspicious/noAssignInExpressions: standard exec loop
     while ((m = wikilinkRe.exec(line))) {
@@ -289,25 +388,23 @@ function extractWikilinks(lines: string[], bodyStart: number): VaultLink[] {
 
 function extractTags(lines: string[], bodyStart: number): string[] {
   const tags = new Set<string>();
-  let inFence = false;
+  const isCode = fencedCode();
   for (let i = bodyStart; i < lines.length; i++) {
     const raw = lines[i];
-    if (isFenceDelimiter(raw)) {
-      inFence = !inFence;
-      continue;
-    }
-    if (inFence) continue;
+    if (isCode(raw)) continue;
 
     let line = stripInlineCode(raw);
     line = line.replace(/https?:\/\/\S+/g, " ");
     line = line.replace(/!?\[\[[^\]]*\]\]/g, " ");
     line = line.replace(/\[[^\]]*\]\([^)]*\)/g, " ");
 
-    const tagRe = /(^|[\s([])#([A-Za-z_][A-Za-z0-9_/-]*)/g;
+    // As the editor highlights them: letters of any script, and not all digits.
+    const tagRe = /(^|[\s([])#([\p{L}\p{N}_/-]+)/gu;
     let m: RegExpExecArray | null;
     // biome-ignore lint/suspicious/noAssignInExpressions: standard exec loop
     while ((m = tagRe.exec(line))) {
-      tags.add(m[2]);
+      const tag = m[2].replace(/[/-]+$/, "");
+      if (/[\p{L}_]/u.test(tag)) tags.add(tag);
     }
   }
   return Array.from(tags);

@@ -57,6 +57,7 @@ class TimeTrackingService:
     return await TimeEntryRepository.from_session(session).update(entry, update_dict=changes, flush=True)
 
   async def list_entries(self, session: AsyncSession, user_id: UUID, start: datetime, end: datetime) -> Sequence[TimeEntry]:
+    _check_aware(start, end)
     if end <= start or end - start > MAX_RANGE:
       raise ValidationError("Pick a range of up to two months.", status_code=422)
     return await TimeEntryRepository.from_session(session).list_overlapping(user_id, start, end)
@@ -73,9 +74,13 @@ def _without_nulls(changes: dict[str, Any], required: set[str]) -> dict[str, Any
   return {k: v for k, v in changes.items() if v is not None or k not in required}
 
 
-def _check_span(start: datetime, end: datetime) -> None:
+def _check_aware(start: datetime, end: datetime) -> None:
   if start.tzinfo is None or end.tzinfo is None:
     raise ValidationError("Times need a timezone.", status_code=422)
+
+
+def _check_span(start: datetime, end: datetime) -> None:
+  _check_aware(start, end)
   if end <= start:
     raise ValidationError("An entry has to end after it starts.", status_code=422)
   if end - start > MAX_ENTRY:

@@ -3,6 +3,7 @@ import type { AllDayGridEvent, TimedGridEvent } from "./calendar-types";
 
 export const HOUR_HEIGHT = 48;
 export const MIN_EVENT_HEIGHT = 20;
+const MIN_EVENT_MINUTES = (MIN_EVENT_HEIGHT / HOUR_HEIGHT) * 60;
 
 export interface PositionedEvent {
   event: TimedGridEvent;
@@ -37,8 +38,14 @@ export function layoutDayEvents(
     .map((event) => {
       const startMin =
         event.start <= dayStart ? 0 : minutesIntoDay(event.start);
-      const endMin = event.end >= dayEnd ? 24 * 60 : minutesIntoDay(event.end);
-      return { event, startMin, endMin: Math.max(endMin, startMin) };
+      const endMin = Math.max(
+        event.end >= dayEnd ? 24 * 60 : minutesIntoDay(event.end),
+        startMin,
+      );
+      // A short event is drawn taller than it lasts, so it overlaps (and
+      // takes a column beside) whatever the drawn block covers.
+      const drawnEndMin = Math.max(endMin, startMin + MIN_EVENT_MINUTES);
+      return { event, startMin, endMin, drawnEndMin };
     })
     .sort((a, b) => a.startMin - b.startMin || b.endMin - a.endMin);
 
@@ -71,12 +78,12 @@ export function layoutDayEvents(
     let column = columnEnds.findIndex((end) => end <= item.startMin);
     if (column === -1) {
       column = columnEnds.length;
-      columnEnds.push(item.endMin);
+      columnEnds.push(item.drawnEndMin);
     } else {
-      columnEnds[column] = item.endMin;
+      columnEnds[column] = item.drawnEndMin;
     }
     cluster.push({ item, column });
-    clusterEnd = Math.max(clusterEnd, item.endMin);
+    clusterEnd = Math.max(clusterEnd, item.drawnEndMin);
   }
   flush();
 

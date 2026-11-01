@@ -121,6 +121,39 @@ describe("layoutDayEvents", () => {
     expect(p.height).toBe(MIN_EVENT_HEIGHT);
   });
 
+  it("puts short events beside what their minimum height covers", () => {
+    const placed = layoutDayEvents(
+      [
+        timed("reminder", [9, 0], [9, 0]),
+        timed("other reminder", [9, 0], [9, 0]),
+        timed("standup", [9, 5], [9, 20]),
+        timed("after", [9, 26], [10, 0]),
+      ],
+      DAY,
+    );
+    const byId = Object.fromEntries(placed.map((p) => [p.event.id, p]));
+    expect(
+      ["reminder", "other reminder", "standup"].map((id) => byId[id].column),
+    ).toEqual([0, 1, 2]);
+    expect(byId.reminder.columns).toBe(3);
+    expect(byId.after).toMatchObject({ column: 0, columns: 3 });
+  });
+
+  it("keeps a reused column taken for as long as a short event is drawn", () => {
+    const placed = layoutDayEvents(
+      [
+        timed("a", [9, 0], [12, 0]),
+        timed("b", [9, 0], [10, 0]),
+        timed("short", [10, 0], [10, 5]),
+        timed("next", [10, 10], [10, 30]),
+      ],
+      DAY,
+    );
+    const byId = Object.fromEntries(placed.map((p) => [p.event.id, p]));
+    expect(byId.short.column).toBe(1);
+    expect(byId.next.column).toBe(2);
+  });
+
   it("ignores events on other days", () => {
     expect(layoutDayEvents([timed("a", [9, 0], [10, 0], 1)], DAY)).toEqual([]);
   });

@@ -11,7 +11,7 @@ from api.healthkit.repository import HealthKitDailyMetricRepository, HealthKitSl
 from api.healthkit.schemas import SleepDailyEntry, SleepStageSummary
 from api.healthkit.service import healthkit_sleep_service
 from api.mcp.context import user_session
-from api.mcp.dates import Day, TimezoneParam, local_window, parse_day, resolve_timezone, today_in
+from api.mcp.dates import Day, TimezoneParam, check_order, local_window, parse_day, resolve_timezone, today_in
 from api.mcp.tools.common import ToolSpec, read
 
 MAX_SLEEP_DAYS = 92
@@ -73,10 +73,12 @@ async def list_workouts(
     if start is not None or end is not None:
       tz = resolve_timezone(user, timezone)
       today = today_in(tz)
-      if start is not None:
-        since = datetime.combine(parse_day(start, today), time.min, tzinfo=tz)
-      if end is not None:
-        until = datetime.combine(parse_day(end, today) + timedelta(days=1), time.min, tzinfo=tz)
+      first, last = (parse_day(start, today) if start is not None else None), (parse_day(end, today) if end is not None else None)
+      check_order(first, last)
+      if first is not None:
+        since = datetime.combine(first, time.min, tzinfo=tz)
+      if last is not None:
+        until = datetime.combine(last + timedelta(days=1), time.min, tzinfo=tz)
     repo = HealthKitWorkoutRepository.from_session(session)
     rows, _ = await repo.paginate(repo.get_list_statement(user.id, since=since, until=until), limit=limit, page=1)
   return Workouts(

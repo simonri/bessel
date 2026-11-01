@@ -12,6 +12,12 @@ export function apiDate(day: string): Date {
   return new Date(`${day}T00:00:00Z`);
 }
 
+/** A date-only API field, which arrives as a Date at UTC midnight, as local
+ *  midnight of that same calendar day. */
+export function fromApiDate(day: Date): Date {
+  return new Date(day.getUTCFullYear(), day.getUTCMonth(), day.getUTCDate());
+}
+
 /** Milliseconds until the next local midnight after `now`. */
 export function msUntilNextLocalDay(now: Date): number {
   return startOfDay(addDays(now, 1)).getTime() - now.getTime();

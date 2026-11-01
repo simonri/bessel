@@ -1,7 +1,8 @@
-from datetime import date, datetime
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Query, UploadFile
+from pydantic import AwareDatetime
 
 from api.common.uploads import read_upload
 from api.location_history.repository import LocationImportRepository, LocationSegmentRepository
@@ -26,7 +27,7 @@ async def import_location_history(
   session: DBSession,
   current_user: CurrentDBUser,
   exported_at: Annotated[
-    datetime | None,
+    AwareDatetime | None,
     Query(description="When the file was exported (its modified time). Lets a fresh export remove its latest segments."),
   ] = None,
 ) -> LocationImportSchema:

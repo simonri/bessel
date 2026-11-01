@@ -87,6 +87,87 @@ describe("rewriteLinksInContent", () => {
     expect(content).toBe("![[Fiskebutik]]");
   });
 
+  it("rewrites a link in a table, its alias pipe escaped", () => {
+    const { content, changed } = rewriteLinksInContent(
+      "| [[Fiske\\|the fish place]] | [[Fiske#Opening hours\\|hours]] |",
+      "Places/Fiske.md",
+      "Places/Fiskebutik.md",
+    );
+    expect(changed).toBe(true);
+    expect(content).toBe(
+      "| [[Fiskebutik\\|the fish place]] | [[Fiskebutik#Opening hours\\|hours]] |",
+    );
+  });
+
+  it("leaves links written as code alone", () => {
+    const note = [
+      "Link it with `[[Fiske]]`, like [[Fiske]].",
+      "```md",
+      "[[Fiske]]",
+      "```",
+      "",
+    ].join("\r\n");
+    const { content, changed } = rewriteLinksInContent(
+      note,
+      "Places/Fiske.md",
+      "Places/Fiskebutik.md",
+    );
+    expect(changed).toBe(true);
+    expect(content).toBe(
+      [
+        "Link it with `[[Fiske]]`, like [[Fiskebutik]].",
+        "```md",
+        "[[Fiske]]",
+        "```",
+        "",
+      ].join("\r\n"),
+    );
+
+    expect(
+      rewriteLinksInContent(
+        "```\n[[Fiske]]\n```\n",
+        "Places/Fiske.md",
+        "Places/Fiskebutik.md",
+      ).changed,
+    ).toBe(false);
+  });
+
+  it("rewrites a bare link only where it opened the renamed note", () => {
+    const files = ["Archive/Deep/Fiske.md", "Places/Fiske.md"];
+    const rename = (from: string, to: string, sourceRel: string) =>
+      rewriteLinksInContent("[[Fiske]]", from, to, { sourceRel, files })
+        .content;
+
+    // The shorter path wins, wherever the link is.
+    expect(
+      rename(
+        "Archive/Deep/Fiske.md",
+        "Archive/Deep/Hamn.md",
+        "Archive/Deep/a.md",
+      ),
+    ).toBe("[[Fiske]]");
+    expect(
+      rename("Places/Fiske.md", "Places/Hamn.md", "Archive/Deep/a.md"),
+    ).toBe("[[Hamn]]");
+    // A note at the vault root is the exact path.
+    expect(
+      rewriteLinksInContent("[[Fiske]]", "Places/Fiske.md", "Places/Hamn.md", {
+        sourceRel: "Places/a.md",
+        files: [...files, "Fiske.md"],
+      }).content,
+    ).toBe("[[Fiske]]");
+
+    // Equally short: the one in the linking note's own folder.
+    const twins = ["Väst/Fiske.md", "Norr/Fiske.md"];
+    const renameVäst = (sourceRel: string) =>
+      rewriteLinksInContent("[[Fiske]]", "Väst/Fiske.md", "Väst/Hamn.md", {
+        sourceRel,
+        files: twins,
+      }).content;
+    expect(renameVäst("Norr/a.md")).toBe("[[Fiske]]");
+    expect(renameVäst("Väst/a.md")).toBe("[[Hamn]]");
+  });
+
   it("leaves non-matching links untouched", () => {
     const { content, changed } = rewriteLinksInContent(
       "[[Somewhere Else]] and [[Fiskehandlaren]]",
@@ -99,6 +180,19 @@ describe("rewriteLinksInContent", () => {
 });
 
 describe("buildFileMeta", () => {
+  it("reads a table link whose alias pipe is escaped", () => {
+    const meta = buildFileMeta("note.md", "| [[Third#Part\\|alias]] |");
+    expect(meta.links).toEqual([
+      {
+        target: "Third",
+        heading: "Part",
+        alias: "alias",
+        embed: false,
+        line: 0,
+      },
+    ]);
+  });
+
   it("collects wikilinks with 0-based line numbers", () => {
     const content = [
       "Intro line",
@@ -141,6 +235,56 @@ describe("buildFileMeta", () => {
     ].join("\n");
     const meta = buildFileMeta("note.md", content);
     expect(meta.tags.sort()).toEqual(["project"]);
+  });
+
+  it("reads a fence that shows another fence as one code block", () => {
+    const content = [
+      "````md",
+      "```",
+      "#example [[Example]]",
+      "```",
+      "````",
+      "~~~",
+      "```",
+      "#example",
+      "~~~",
+      "```",
+      "```js",
+      "#example",
+      "```",
+      "## After",
+      "#real [[Real]]",
+      "```inline``` #too",
+    ].join("\n");
+    const meta = buildFileMeta("note.md", content);
+    expect(meta.tags).toEqual(["real", "too"]);
+    expect(meta.links.map((l) => l.target)).toEqual(["Real"]);
+    expect(meta.headings).toEqual([{ level: 2, text: "After", line: 13 }]);
+  });
+
+  it("reads code spans opened with several backticks as code", () => {
+    const content = [
+      "Type ``[[Example]]`` or `` #example ` [[Example]] ``, then [[Real]] #real",
+      // Runs of different lengths never pair up: no code here.
+      "``[[Loose]]``` [[Also]]",
+    ].join("\n");
+    const meta = buildFileMeta("note.md", content);
+    expect(meta.tags).toEqual(["real"]);
+    expect(meta.links.map((l) => l.target)).toEqual(["Real", "Loose", "Also"]);
+
+    expect(
+      rewriteLinksInContent(
+        "Type ``[[Fiske]]``, see [[Fiske]]",
+        "Places/Fiske.md",
+        "Places/Hamn.md",
+      ).content,
+    ).toBe("Type ``[[Fiske]]``, see [[Hamn]]");
+  });
+
+  it("reads tags in any script and ones that start with a digit", () => {
+    const content = "Plan #måndag and #2024-review, see #café/ideas- too.";
+    const meta = buildFileMeta("note.md", content);
+    expect(meta.tags.sort()).toEqual(["2024-review", "café/ideas", "måndag"]);
   });
 
   it("reads frontmatter tags as a YAML list", () => {

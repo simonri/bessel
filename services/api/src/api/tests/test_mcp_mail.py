@@ -1,3 +1,5 @@
+import imaplib
+import re
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
@@ -198,6 +200,40 @@ class TestRead:
     assert [(a["name"], a["content_type"]) for a in found["attachments"]] == [("villkor.pdf", "application/pdf")]
 
   @pytest.mark.asyncio
+  async def test_a_charset_python_doesnt_know_is_read_anyway(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    head = f"From: anna@x.se\r\nTo: {ME}\r\nSubject: Middag\r\nContent-Transfer-Encoding: 8bit\r\n".encode()
+    plain = head + b"Content-Type: text/plain; charset=unknown-8bit\r\n\r\nSes vi p\xc3\xa5 fredag?\r\n"
+    html = head + b"Content-Type: text/html; charset=x-mac-unknown\r\n\r\n<p>Ses vi p\xe5 l\xf6rdag?</p>\r\n"
+    mailbox["mailbox"] = FakeMailbox({"INBOX": [(plain, set()), (html, set())]})
+
+    assert (await mcp_call(connect, "read_email", {"uid": 1}))["text"] == "Ses vi på fredag?"
+    assert (await mcp_call(connect, "read_email", {"uid": 2}))["text"] == "Ses vi på lördag?"
+
+  @pytest.mark.asyncio
+  async def test_raw_8bit_headers_are_read_in_utf8_or_latin1(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    latin1 = f"From: B\xf6rje <borje@x.se>\r\nTo: {ME}\r\nSubject: R\xe4kning\r\n\r\nHej\r\n".encode("latin-1")
+    utf8 = f"From: B\xf6rje <borje@x.se>\r\nTo: {ME}\r\nSubject: R\xe4kning\r\n\r\nHej\r\n".encode()
+    mailbox["mailbox"] = FakeMailbox({"INBOX": [(latin1, set()), (utf8, set())]})
+
+    for uid in (1, 2):
+      found = await mcp_call(connect, "read_email", {"uid": uid})
+      assert (found["subject"], found["sender"]["name"]) == ("Räkning", "Börje")
+
+  @pytest.mark.asyncio
+  async def test_a_forwarded_message_attachment_has_its_size(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    forwarded = mail("Bo <bo@y.se>", "Kvitto", "Här är kvittot")
+    outer = EmailMessage()
+    outer["From"], outer["To"], outer["Subject"] = "anna@x.se", ME, "Fwd: Kvitto"
+    outer.set_content("Se bifogat")
+    outer.add_attachment(_parse.parsebytes(forwarded), filename="kvitto.eml")
+    mailbox["mailbox"] = FakeMailbox({"INBOX": [(outer.as_bytes(), set())]})
+
+    [attachment] = (await mcp_call(connect, "read_email", {"uid": 1}))["attachments"]
+
+    assert (attachment["name"], attachment["content_type"]) == ("kvitto.eml", "message/rfc822")
+    assert abs(attachment["size"] - len(forwarded)) <= 2
+
+  @pytest.mark.asyncio
   async def test_a_missing_message_is_an_error(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
     mailbox["mailbox"] = FakeMailbox({"INBOX": []})
 
@@ -261,6 +297,20 @@ class TestOwedReplies:
 
     assert [(e["sender"]["address"], e["subject"]) for e in found["emails"]] == [("anna@x.se", "Fråga 2")]
 
+  @pytest.mark.asyncio
+  async def test_not_someone_whose_latest_mail_was_answered(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    mailbox["mailbox"] = FakeMailbox(
+      {
+        "INBOX": [
+          (mail("bo@y.se", "Gammal fråga", days_ago=4), set()),
+          (mail("bo@y.se", "Ny fråga", days_ago=2, message_id="<b2@y.se>", headers={"Reply-To": "bo.privat@y.se"}), set()),
+        ],
+        "Sent Messages": [(mail(ME, "Re: Ny fråga", to="bo.privat@y.se", days_ago=1, in_reply_to="<b2@y.se>"), set())],
+      }
+    )
+
+    assert (await mcp_call(connect, "owed_replies", {"days": 7}))["emails"] == []
+
 
 @pytest.mark.usefixtures("icloud")
 class TestDrafts:
@@ -300,6 +350,30 @@ class TestDrafts:
     assert only["Cc"] is None
     assert "Gärna!" in only.get_content() and "> Ses vi fredag?" in only.get_content()
     assert everyone["Cc"] == "bo@y.se, cia@z.se"
+
+  @pytest.mark.asyncio
+  async def test_a_reply_to_your_own_mail_goes_to_whom_it_was_sent(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    sent = mail(f"Simon <{ME}>", "Middag", "Ses vi fredag?", to=f"Anna <anna@x.se>, {ME}", message_id="<m1@me.se>", headers={"Cc": "bo@y.se"})
+    box = FakeMailbox({"INBOX": [], "Drafts": [], "Sent Messages": [(sent, {"\\Seen"})]})
+    mailbox["mailbox"] = box
+
+    await mcp_call(connect, "draft_reply", {"uid": 1, "folder": "Sent Messages", "body": "Påminnelse!"})
+    await mcp_call(connect, "draft_reply", {"uid": 1, "folder": "Sent Messages", "body": "Alla", "reply_all": True})
+
+    only, everyone = drafts(box)
+    assert (only["To"], only["Cc"]) == ("Anna <anna@x.se>", None)
+    assert (everyone["To"], everyone["Cc"]) == ("Anna <anna@x.se>", "bo@y.se")
+
+  @pytest.mark.asyncio
+  async def test_a_reply_keeps_a_name_with_quotes_and_a_comma_as_one_recipient(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    original = mail('"Anna \\"Berg, Ek\\"" <anna@x.se>', "Middag", "Ses vi fredag?")
+    box = FakeMailbox({"INBOX": [(original, set())], "Drafts": [], "Sent Messages": []})
+    mailbox["mailbox"] = box
+
+    await mcp_call(connect, "draft_reply", {"uid": 1, "body": "Gärna!"})
+
+    [reply] = drafts(box)
+    assert [(a.display_name, a.addr_spec) for a in reply["To"].addresses] == [('Anna "Berg, Ek"', "anna@x.se")]
 
   @pytest.mark.asyncio
   async def test_drafts_are_found_by_name_and_sent_by_role(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
@@ -353,6 +427,33 @@ class TestImapDetails:
     assert box._server_name("Företag") == "Fo&Awg-retag"
     assert box._server_name("inbox") == "INBOX"
     assert box._server_name("Ny mapp") == "Ny mapp"
+
+  def test_a_header_search_names_the_field_and_the_text_apart(self) -> None:
+    class Server:
+      """Answers UID SEARCH as RFC 3501 reads it: HEADER takes a field name, then the text to find."""
+
+      literal: bytes | None = None
+
+      def __init__(self) -> None:
+        self.searched: list[tuple[str, str]] = []
+
+      def uid(self, command: str, *args: str) -> tuple[str, list[bytes]]:
+        words = list(args[2:] if args[0] == "CHARSET" else args)
+        assert words[0] == "HEADER" and command == "SEARCH"
+        if len(words) != (2 if self.literal else 3) or not re.fullmatch(r"[\w-]+", words[1]):
+          raise imaplib.IMAP4.error(f"SEARCH command error: BAD {args}")
+        needle = self.literal.decode() if self.literal else words[2].strip('"')
+        self.searched.append((words[1], needle))
+        self.literal = None
+        return "OK", [b"7"]
+
+    box = ImapMailbox("me", "secret")
+    server = Server()
+    box._conn = server  # type: ignore[assignment]
+    box._selected = "INBOX"
+
+    assert box.search("INBOX", [Criterion("HEADER", "Message-ID <m1@x.se>"), Criterion("HEADER", "Subject Räkning")]) == [7]
+    assert server.searched == [("Message-ID", "<m1@x.se>"), ("Subject", "Räkning")]
 
   def test_a_search_value_cant_smuggle_another_imap_command(self) -> None:
     box = ImapMailbox("me", "secret")

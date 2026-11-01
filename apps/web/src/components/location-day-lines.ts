@@ -22,9 +22,11 @@ const EDGE_SECONDS = 3 * 60;
 
 const WALKING = new Set(["walking", "running", "hiking", "on foot"]);
 
+/** Android writes "WALKING" or "IN_PASSENGER_VEHICLE", iOS "walking". */
 function mode(activityType: string | null): TripLine["mode"] {
-  if (activityType === "flying") return "flight";
-  return activityType && WALKING.has(activityType) ? "walk" : "ride";
+  const type = (activityType ?? "").toLowerCase().replaceAll("_", " ").trim();
+  if (type === "flying") return "flight";
+  return WALKING.has(type) ? "walk" : "ride";
 }
 
 function seconds(at: Date): number {

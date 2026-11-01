@@ -29,6 +29,17 @@ describe("formatKr", () => {
     expect(plain(formatKr(-5000, "SEK", { sign: true }))).toBe("-50 kr");
     expect(plain(formatKr(5000))).toBe("50 kr");
   });
+
+  it("rounds a refund the way it rounds the purchase", () => {
+    expect(plain(formatKr(150))).toBe("2 kr");
+    expect(plain(formatKr(-150))).toBe("-2 kr");
+    expect(plain(formatKr(-12_350))).toBe("-124 kr");
+  });
+
+  it("shows less than half a krona below zero as 0 kr, not -0 kr", () => {
+    expect(plain(formatKr(-40))).toBe("0 kr");
+    expect(plain(formatKr(-40, "SEK", { sign: true }))).toBe("0 kr");
+  });
 });
 
 describe("formatKr exact", () => {
@@ -47,5 +58,16 @@ describe("formatAxisKr", () => {
     expect(plain(formatAxisKr(95000))).toBe("950");
     expect(formatAxisKr(34_000_000)).toBe("340k");
     expect(plain(formatAxisKr(120_000_000))).toBe("1,2 mn");
+  });
+
+  it("moves up to mn instead of showing 1000k", () => {
+    expect(plain(formatAxisKr(99_960_000))).toBe("1 mn");
+    expect(plain(formatAxisKr(-99_960_000))).toBe("-1 mn");
+  });
+
+  it("rounds negative ticks like positive ones and never shows -0", () => {
+    expect(plain(formatAxisKr(-40))).toBe("0");
+    expect(plain(formatAxisKr(-150))).toBe("-2");
+    expect(plain(formatAxisKr(-250_000))).toBe("-3k");
   });
 });

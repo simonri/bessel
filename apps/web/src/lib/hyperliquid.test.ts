@@ -45,6 +45,11 @@ describe("parseAddress", () => {
     expect(parseAddress("0x1234")).toBeNull();
   });
 
+  it("rejects a longer hex string, such as a transaction link", () => {
+    const hash = `0x${"3f".repeat(32)}`;
+    expect(parseAddress(`https://hypurrscan.io/tx/${hash}`)).toBeNull();
+  });
+
   it("shortens for display", () => {
     expect(shortAddress(ADDRESS)).toBe("0xa417…da19");
   });

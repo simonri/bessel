@@ -26,6 +26,7 @@ import {
   NoteField,
 } from "@/components/transactions/transaction-naming";
 import { SoftButton } from "@/components/ui-kit";
+import { fromApiDate } from "@/lib/local-day";
 import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
 
@@ -109,7 +110,10 @@ function Body({
             )}
           />
           <SheetDescription className="type-caption text-white/45">
-            {format(transaction.transaction_date, "EEEE d MMMM yyyy")}
+            {format(
+              fromApiDate(transaction.transaction_date),
+              "EEEE d MMMM yyyy",
+            )}
           </SheetDescription>
         </div>
       </header>

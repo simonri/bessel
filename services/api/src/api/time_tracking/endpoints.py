@@ -87,7 +87,7 @@ async def get_time_summary(
 ) -> TimeSummarySchema:
   try:
     tz = ZoneInfo(tz_name)
-  except (ZoneInfoNotFoundError, ValueError) as e:
+  except (ZoneInfoNotFoundError, ValueError, OSError) as e:
     raise ValidationError(f"Unknown timezone: {tz_name}", status_code=422) from e
   totals = await time_tracking_service.summary(session, current_user.id, year, tz)
   return TimeSummarySchema(year=year, totals=totals)

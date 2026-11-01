@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query
 
 from api.common.pagination import PaginationParamsQuery
+from api.common.repository.base import without_required_nulls
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.models.recipe import Recipe
 from api.postgres import DBSession
@@ -96,7 +97,7 @@ async def update_recipe(
 ) -> RecipeSchema:
   repo = RecipeRepository.from_session(session)
   recipe = await repo.get_owned_or_404(recipe_id, current_user.id, not_found_message="Recipe not found.")
-  update_data = body.model_dump(exclude_unset=True, exclude={"content", "body"})
+  update_data = without_required_nulls(Recipe, body.model_dump(exclude_unset=True, exclude={"content", "body"}))
   if body.body is not None:
     update_data |= content_fields("", body.body)
   elif body.content is not None:

@@ -59,7 +59,7 @@ class TaskRepository(RepositoryBase[Task], RepositoryIDMixin[Task, UUID]):
     if completed_before is not None:
       statement = statement.where(Task.completed_at < completed_before)
     if search:
-      statement = statement.where(Task.title.ilike(f"%{search}%") | Task.description.ilike(f"%{search}%"))
+      statement = statement.where(Task.title.icontains(search, autoescape=True) | Task.description.icontains(search, autoescape=True))
     return statement
 
   async def get_max_position(self, user_id: UUID) -> float | None:

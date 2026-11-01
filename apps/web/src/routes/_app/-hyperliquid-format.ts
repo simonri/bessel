@@ -28,8 +28,16 @@ export function formatUsd(value: number): string {
 
 /** "+$1,201.67" / "-$40.00": the sign carries direction, not only color. */
 export function formatSignedUsd(value: number): string {
-  const sign = value > 0 ? "+" : value < 0 ? "-" : "";
-  return `${sign}${usd.format(Math.abs(value))}`;
+  const text = usd.format(Math.abs(value));
+  return `${signOf(value, text !== ZERO_USD)}${text}`;
+}
+
+const ZERO_USD = usd.format(0);
+
+/** A value that rounds to zero shows no sign: never "-$0.00". */
+function signOf(value: number, shown: boolean): string {
+  if (!shown) return "";
+  return value > 0 ? "+" : "-";
 }
 
 /** Large amounts compacted ("$21.3M"), small ones exact. */
@@ -107,8 +115,8 @@ export function formatAmount(value: number): string {
 }
 
 export function formatPercent(fraction: number): string {
-  const sign = fraction > 0 ? "+" : "";
-  return `${sign}${(fraction * 100).toFixed(2)}%`;
+  const text = (Math.abs(fraction) * 100).toFixed(2);
+  return `${signOf(fraction, Number(text) !== 0)}${text}%`;
 }
 
 /** Axis and tooltip labels sized to the range: hours for a day, dates beyond. */

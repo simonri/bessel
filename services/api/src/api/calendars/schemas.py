@@ -3,7 +3,7 @@ from typing import Literal, Self
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import EmailStr, Field, field_validator, model_validator
+from pydantic import EmailStr, Field, ValidationInfo, field_validator, model_validator
 
 from api.calendars.edits import EVENT_FIELDS, GOOGLE_COLOR_IDS, EditScope, EventChanges, EventTiming, Reply
 from api.calendars.providers import AttendeeResponse
@@ -17,7 +17,7 @@ Weekday = Literal["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 def _check_time_zone(value: str) -> str:
   try:
     ZoneInfo(value)
-  except (ZoneInfoNotFoundError, ValueError) as e:
+  except (ZoneInfoNotFoundError, ValueError, OSError) as e:
     raise ValueError(f"Unknown time zone: {value}") from e
   return value
 
@@ -138,9 +138,10 @@ class CalendarEventSchema(Schema):
   recurrence: RecurrenceSchema | None = Field(default=None, description="`rule` in structured form; null when not repeating or not representable.")
 
   @model_validator(mode="after")
-  def _structured_recurrence(self) -> Self:
+  def _structured_recurrence(self, info: ValidationInfo) -> Self:
     if self.rule and self.recurrence is None:
-      parsed = from_rule(self.rule, time_zone="UTC")
+      # An UNTIL instant falls on a day only in some zone: the user's, as the editor writes it (see `time_zone`).
+      parsed = from_rule(self.rule, time_zone=(info.context or {}).get("time_zone") or "UTC")
       if parsed is not None:
         self.recurrence = RecurrenceSchema(
           frequency=parsed.frequency,

@@ -13,6 +13,7 @@ const UNICODE_FRACTIONS: Record<string, number> = {
 };
 
 const AMOUNT_RE = /^(\d+(?:[.,]\d+)?)?\s*([½¼¾⅓⅔])?(?=\s|$)/;
+const SLASH_AMOUNT_RE = /^(?:(\d+)\s+)?(\d+)\/(\d+)(?=\s|$)/;
 const TRAILING_PAREN_RE = /\s*\(([^)]*)\)\s*$/;
 const LIST_MARKER_RE = /^(?:[-*•]\s+|\d+[.)]\s+)/;
 
@@ -24,6 +25,13 @@ const UNITS = new Set([
 ]);
 
 function splitAmount(text: string): [number | null, string] {
+  const slash = SLASH_AMOUNT_RE.exec(text);
+  if (slash) {
+    const [, whole, numerator, denominator] = slash;
+    if (Number(denominator) === 0) return [null, text];
+    const value = Number(whole ?? 0) + Number(numerator) / Number(denominator);
+    return [value, text.slice(slash[0].length).trim()];
+  }
   const match = AMOUNT_RE.exec(text);
   if (!match || !(match[1] || match[2])) return [null, text];
   let value = 0;
@@ -81,7 +89,8 @@ export function parseIngredientLines(text: string): RecipeIngredient[] {
     .map(parseIngredientLine);
 }
 
-const GLYPHS: Record<string, string> = { "1/2": "½", "1/4": "¼", "3/4": "¾" };
+// biome-ignore format: one line like the Python dict
+const GLYPHS: Record<string, string> = { "1/4": "¼", "1/3": "⅓", "1/2": "½", "2/3": "⅔", "3/4": "¾" };
 
 // Python's Fraction.limit_denominator(4): the closest fraction with a
 // denominator of at most 4.
@@ -105,9 +114,12 @@ function gcd(a: number, b: number): number {
 
 export function formatAmount(amount: number): string {
   const whole = Math.trunc(amount);
-  const [n, d] = closestQuarterish(amount - whole);
+  const rest = amount - whole;
+  const [n, d] = closestQuarterish(rest);
   const g = gcd(n, d) || 1;
-  const glyph = GLYPHS[`${n / g}/${d / g}`];
+  // Only an exact fraction gets a glyph: 0.2 is not ¼.
+  const exact = Math.abs(rest - n / d) < 1e-9;
+  const glyph = exact ? GLYPHS[`${n / g}/${d / g}`] : undefined;
   if (glyph) return whole ? `${whole}${glyph}` : glyph;
   return String(Number(amount.toPrecision(6)));
 }

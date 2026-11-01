@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from uuid import uuid4
 
 import pytest
@@ -68,6 +68,31 @@ class TestExcludedFromReports:
 
     assert (current["income"], current["expenses"]) == (3, 120)
     assert [(item["category_name"], item["total"]) for item in spending] == [("Food", 100)]
+
+
+class TestMonthlyFlow:
+  @pytest.mark.asyncio
+  async def test_ends_with_the_users_own_month(self, client: AsyncClient, save_fixture: SaveFixture, user: User, monkeypatch: pytest.MonkeyPatch) -> None:
+    user.timezone = "Europe/Stockholm"
+    await save_fixture(user)
+    # 00:30 on 1 February in Stockholm, still January in UTC.
+    monkeypatch.setattr("api.transactions.endpoints.utc_now", lambda: datetime(2025, 1, 31, 23, 30, tzinfo=UTC))
+    checking = await _account(save_fixture, user)
+    await save_fixture(
+      Transaction(
+        amount=4500,
+        currency="SEK",
+        transaction_date=date(2025, 2, 1),
+        direction=TransactionDirection.debit,
+        dedup_hash=uuid4().hex,
+        bank_account_id=checking.id,
+        user_id=user.id,
+      )
+    )
+
+    items = (await client.get("/v1/transactions/monthly-flow", params={"months": 2})).json()["items"]
+
+    assert [(m["year"], m["month"], m["expenses"]) for m in items] == [(2025, 1, 0), (2025, 2, 4500)]
 
 
 class TestCompanyAccounts:

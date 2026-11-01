@@ -136,10 +136,16 @@ class TestNextOccurrence:
     assert next_occurrence(2, 29, date(2027, 2, 1)) == date(2027, 2, 28)
     assert next_occurrence(2, 29, date(2028, 2, 1)) == date(2028, 2, 29)
 
+  def test_a_day_past_the_months_end_falls_on_its_last_day(self) -> None:
+    assert next_occurrence(2, 30, date(2027, 2, 1)) == date(2027, 2, 28)
+    assert next_occurrence(2, 31, date(2028, 2, 1)) == date(2028, 2, 29)
+    assert next_occurrence(4, 31, date(2027, 4, 1)) == date(2027, 4, 30)
+
 
 class TestUserZone:
   def test_falls_back_to_utc_for_a_zone_that_doesnt_exist(self) -> None:
     assert user_zone(User(timezone="Mars/Olympus")) == ZoneInfo("UTC")
+    assert user_zone(User(timezone="Europe")) == ZoneInfo("UTC")
     assert user_zone(User(timezone="Europe/Stockholm")) == ZoneInfo("Europe/Stockholm")
 
 
@@ -338,6 +344,21 @@ class TestFollowUps:
     ]
 
   @pytest.mark.asyncio
+  async def test_an_all_day_event_that_ended_at_midnight_asks_for_a_note_in_the_users_timezone(
+    self, client: AsyncClient, session: AsyncSession, stockholm: User, mocker: MockerFixture
+  ) -> None:
+    # 00:30 on Wednesday in Stockholm, still Tuesday in UTC.
+    mocker.patch("api.contacts.keeping.utc_now", return_value=datetime(2027, 3, 9, 23, 30, tzinfo=UTC))
+    calendar = await _calendar(session, await _account(session, stockholm))
+    await _contact(session, stockholm, "Anna Berg", emails=("anna@example.com",))
+    trip = await calendar.event("Trip", date(2027, 3, 9), attendees=[{"email": "anna@example.com"}])
+    await calendar.event("Day off", date(2027, 3, 10), attendees=[{"email": "anna@example.com"}])
+
+    follow_ups = (await client.get("/v1/contacts/follow-ups")).json()
+
+    assert [(f["kind"], f["event"]["id"], f["event"]["on"]) for f in follow_ups] == [("note", str(trip.id), "2027-03-09")]
+
+  @pytest.mark.asyncio
   async def test_asks_whether_someone_named_by_first_name_was_there_for_a_month(self, client: AsyncClient, session: AsyncSession, stockholm: User) -> None:
     calendar = await _calendar(session, await _account(session, stockholm))
     await _contact(session, stockholm, "Anna Berg", given_name="Anna")
@@ -400,6 +421,17 @@ class TestBrief:
     assert (first["upcoming"]["label"], first["upcoming"]["on"], first["upcoming"]["years"]) == ("Birthday", "2027-03-15", 37)
 
   @pytest.mark.asyncio
+  async def test_the_date_coming_up_is_the_soonest(self, client: AsyncClient, session: AsyncSession, stockholm: User) -> None:
+    calendar = await _calendar(session, await _account(session, stockholm))
+    anniversary = {"events": [{"date": {"year": 2015, "month": 3, "day": 12}, "formattedType": "Anniversary"}]}
+    await _contact(session, stockholm, "Anna Berg", birthday_month=3, birthday_day=15, person=anniversary)
+    meeting = await calendar.event("Fika with Anna Berg", datetime(2027, 3, 10, 9, tzinfo=UTC))
+
+    brief = (await client.get("/v1/contacts/brief", params={"calendar_event_id": str(meeting.id)})).json()
+
+    assert (brief["people"][0]["upcoming"]["label"], brief["people"][0]["upcoming"]["on"]) == ("Anniversary", "2027-03-12")
+
+  @pytest.mark.asyncio
   async def test_not_for_another_users_event(self, client: AsyncClient, session: AsyncSession, other_user: User) -> None:
     theirs = await (await _calendar(session, await _account(session, other_user, "them@gmail.com"))).event("Theirs", date(2027, 3, 1))
 
@@ -426,6 +458,17 @@ class TestDates:
       ("Married", "Anniversary", "2027-03-12", 12),
       ("Last day", "Birthday", "2027-03-15", 37),
     ]
+
+  @pytest.mark.asyncio
+  async def test_a_date_in_a_year_still_to_come_is_not_a_reminder_before_then(self, client: AsyncClient, session: AsyncSession, stockholm: User) -> None:
+    wedding = {"events": [{"date": {"year": 2028, "month": 3, "day": 12}, "type": "anniversary", "formattedType": "Anniversary"}]}
+    first = {"events": [{"date": {"year": 2027, "month": 3, "day": 11}, "type": "anniversary", "formattedType": "Anniversary"}]}
+    await _contact(session, stockholm, "Engaged", person=wedding)
+    await _contact(session, stockholm, "Newlyweds", person=first)
+
+    response = await client.get("/v1/contacts/reminders", params={"days": 7})
+
+    assert [(d["contact"]["display_name"], d["on"], d["years"]) for d in response.json()["dates"]] == [("Newlyweds", "2027-03-11", 0)]
 
   @pytest.mark.asyncio
   async def test_a_contact_shows_its_other_dates(self, client: AsyncClient, session: AsyncSession, stockholm: User) -> None:

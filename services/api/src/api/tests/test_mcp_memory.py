@@ -1,8 +1,14 @@
 from collections.abc import Sequence
+from datetime import UTC, date, datetime
 from typing import Any
 
 import pytest
+from api.mcp.tools import memory as memory_tools
 from api.memory import service
+from api.models.memory_fact import MemoryFact, MemoryKind, MemoryStatus
+from api.models.user import User
+from api.postgres import AsyncSession
+from api.tests.fixtures.database import SaveFixture
 from api.tests.fixtures.mcp import ConnectFixture, mcp_call
 
 
@@ -197,6 +203,17 @@ class TestRemember:
     assert [f["attribute"] for a in (await mcp_call(connect, "get_profile"))["profile"] for f in a["facts"]] == ["läggdags"]
 
   @pytest.mark.asyncio
+  async def test_what_others_wrote_again_does_not_confirm_it(self, connect: ConnectFixture) -> None:
+    mailed = fact("favoritbutik", "Handlar på Hoka", kind="observed", evidence=[{"source": "gmail", "ref": "nyhetsbrev"}])
+    await remember(connect, mailed)
+
+    [again] = await remember(connect, {**mailed, "evidence": [{"source": "gmail", "ref": "nyhetsbrev-2"}]})
+    [seen] = await remember(connect, {**mailed, "evidence": [{"source": "transactions", "ref": "kvitto"}]})
+
+    assert (again["outcome"], again["fact"]["status"]) == ("known", "hypothesis")
+    assert seen["fact"]["status"] == "confirmed"
+
+  @pytest.mark.asyncio
   async def test_no_way_round_the_cap_on_what_only_others_wrote(self, connect: ConnectFixture) -> None:
     # Each of these is what an assistant steered by a planted email could try next.
     mail = [{"source": "mail ", "ref": "x"}]
@@ -247,6 +264,29 @@ class TestProfile:
     assert profile["areas"] == [{"area": "kropp/kläder", "facts": 1}, {"area": "sömn", "facts": 2}]
     assert profile["total_facts"] == 3
     assert {f["attribute"] for f in profile["recently_changed"]} == {"sömnmål", "kronotyp", "skostorlek"}
+
+  @pytest.mark.asyncio
+  async def test_this_week_is_counted_in_the_users_own_days(
+    self, connect: ConnectFixture, save_owned: SaveFixture, session: AsyncSession, user: User, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    user.timezone = "Europe/Stockholm"
+    await session.flush()
+    monkeypatch.setattr(memory_tools, "today_in", lambda tz: date(2026, 11, 2))
+    # 00:30 on 26 October in Stockholm, still 25 October in UTC; seven days before 2 November is the 26th.
+    await save_owned(
+      MemoryFact(
+        area="sömn",
+        attribute="läggdags",
+        statement="Släcker 02",
+        kind=MemoryKind.stated,
+        status=MemoryStatus.confirmed,
+        created_at=datetime(2026, 10, 25, 23, 30, tzinfo=UTC),
+      )
+    )
+
+    profile = await mcp_call(connect, "get_profile")
+
+    assert [f["attribute"] for f in profile["recently_changed"]] == ["läggdags"]
 
   @pytest.mark.asyncio
   async def test_sensitive_facts_come_only_when_asked_for(self, connect: ConnectFixture) -> None:
@@ -330,6 +370,28 @@ class TestRevise:
     assert [f["statement"] for f in await search(connect, query="stad", as_of="2026-06-01")] == ["Bor i Stockholm"]
     [closed] = [f for f in await search(connect, query="stad", include_past=True) if f["id"] == old["fact"]["id"]]
     assert (closed["valid_to"], closed["superseded_by_id"]) == ("2026-03-01", new["id"])
+
+  @pytest.mark.asyncio
+  async def test_a_rejected_guess_was_never_true(self, connect: ConnectFixture) -> None:
+    [conclusion] = await remember(connect, guess("kronotyp", "Kvällsmänniska", [await known(connect)], area="rytm", valid_from="2026-01-01"))
+    await revise(connect, {"fact_id": conclusion["fact"]["id"], "action": "reject", "ended_on": "2026-03-01"})
+
+    assert await search(connect, area="rytm", as_of="2026-02-01") == []
+    assert await search(connect, query="kvällsmänniska", as_of="2026-02-01") == []
+    [rejected] = await search(connect, area="rytm", status="rejected", as_of="2026-02-01")
+    assert rejected["id"] == conclusion["fact"]["id"]
+
+  @pytest.mark.asyncio
+  async def test_a_replacement_only_others_wrote_stays_out_of_the_profile(self, connect: ConnectFixture) -> None:
+    [old] = await remember(connect, fact("stad", "Bor i Västerås", area="identitet", importance=5))
+
+    [result] = await revise(
+      connect,
+      {"fact_id": old["fact"]["id"], "action": "supersede", "statement": "Bor i Malmö", "kind": "observed", "evidence": [{"source": "gmail", "ref": "x"}]},
+    )
+
+    assert (result["fact"]["status"], result["fact"]["importance"]) == ("hypothesis", 3)
+    assert (await mcp_call(connect, "get_profile"))["profile"] == []
 
   @pytest.mark.asyncio
   async def test_merging_keeps_one_fact_with_both_facts_evidence(self, connect: ConnectFixture) -> None:

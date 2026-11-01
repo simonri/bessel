@@ -1,13 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { changeThisMonth, pointsInRange, valueOn } from "./net-worth-card";
 
 const day = (iso: string) => new Date(`${iso}T00:00:00`);
+// The API's date-only days arrive as Dates at UTC midnight.
+const apiDay = (iso: string) => new Date(iso);
 const points = [
-  { day: day("2025-01-10"), value: 100 },
-  { day: day("2026-06-15"), value: 300 },
-  { day: day("2026-09-30"), value: 400 },
-  { day: day("2026-10-05"), value: 450 },
-  { day: day("2026-10-22"), value: 470 },
+  { day: apiDay("2025-01-10"), value: 100 },
+  { day: apiDay("2026-06-15"), value: 300 },
+  { day: apiDay("2026-09-30"), value: 400 },
+  { day: apiDay("2026-10-05"), value: 450 },
+  { day: apiDay("2026-10-22"), value: 470 },
 ];
 const today = day("2026-10-22");
 
@@ -44,5 +46,31 @@ describe("changeThisMonth", () => {
 
   it("is unknown without history from before the month", () => {
     expect(changeThisMonth(points.slice(3), today)).toBeNull();
+  });
+});
+
+describe("west of UTC", () => {
+  beforeAll(() => {
+    vi.stubEnv("TZ", "America/New_York");
+  });
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("keeps each change on its own day", () => {
+    const changes = [
+      { day: apiDay("2026-10-31"), value: 100 },
+      { day: apiDay("2026-11-01"), value: 150 },
+    ];
+    expect(valueOn(changes, day("2026-10-31"))).toBe(100);
+    expect(changeThisMonth(changes, day("2026-11-15"))).toBe(50);
+    expect(
+      pointsInRange(changes, "all", day("2026-11-15")).map((p) =>
+        new Date(p.time).toDateString(),
+      ),
+    ).toEqual([
+      day("2026-10-31").toDateString(),
+      day("2026-11-01").toDateString(),
+    ]);
   });
 });

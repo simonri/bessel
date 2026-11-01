@@ -6,6 +6,7 @@ from api.avanza.repository import AvanzaAccountRepository, AvanzaConnectionRepos
 from api.avanza.schemas import AvanzaAccountUpdate, AvanzaConnectionSchema, AvanzaImportRequest, AvanzaStatusResponse, AvanzaSyncFailure
 from api.avanza.service import AvanzaConflictError, AvanzaDataError, available_to, avanza_service, parse
 from api.bank_accounts.repository import BankAccountRepository
+from api.contacts.keeping import user_zone
 from api.exceptions import ConflictError, ForbiddenError, ResourceNotFound, ValidationError
 from api.models.avanza import AvanzaConnection
 from api.postgres import DBSession
@@ -60,6 +61,7 @@ async def import_avanza(body: AvanzaImportRequest, session: DBSession, current_u
     username=body.username.strip(),
     fetched=fetched,
     fetched_from=body.fetched_from,
+    zone=user_zone(current_user),
   )
   return _schema(connection)
 

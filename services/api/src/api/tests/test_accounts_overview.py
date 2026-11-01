@@ -1,7 +1,8 @@
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from uuid import uuid4
 
 import pytest
+import pytest_asyncio
 from api.common.encryption import encrypt
 from api.common.utils import utc_now
 from api.models.avanza import AvanzaAccount, AvanzaConnection, HoldingSnapshot
@@ -67,6 +68,15 @@ class _Accounts:
 @pytest.fixture
 def accounts(save_fixture: SaveFixture, user: User) -> _Accounts:
   return _Accounts(save_fixture, user)
+
+
+@pytest_asyncio.fixture
+async def just_after_midnight_in_stockholm(monkeypatch: pytest.MonkeyPatch, save_fixture: SaveFixture, user: User) -> date:
+  """00:30 on 1 November in Stockholm, still 31 October in UTC; returns the user's day."""
+  user.timezone = "Europe/Stockholm"
+  await save_fixture(user)
+  monkeypatch.setattr("api.bank_accounts.endpoints.utc_now", lambda: datetime(2026, 10, 31, 23, 30, tzinfo=UTC))
+  return date(2026, 11, 1)
 
 
 async def _overview(client: AsyncClient) -> dict:
@@ -149,6 +159,16 @@ class TestHistory:
     assert (account["first_transaction"], account["transaction_count"]) == (two_months_ago.isoformat(), 2)
 
   @pytest.mark.asyncio
+  async def test_runs_to_the_users_own_month(self, client: AsyncClient, accounts: _Accounts, just_after_midnight_in_stockholm: date) -> None:
+    checking = await accounts.account("Skandia", base=1000)
+    await accounts.add(checking, date(2026, 10, 20), 500)
+    await accounts.add(checking, just_after_midnight_in_stockholm, 200, TransactionDirection.debit)
+
+    [account] = (await _overview(client))["accounts"]
+
+    assert [(p["month"], p["balance"]) for p in account["history"]] == [("2026-10-01", 1500), ("2026-11-01", 1300)]
+
+  @pytest.mark.asyncio
   async def test_history_shows_at_most_a_year(self, client: AsyncClient, accounts: _Accounts) -> None:
     checking = await accounts.account("Skandia")
     await accounts.add(checking, utc_now().date() - timedelta(days=800), 100)
@@ -226,6 +246,30 @@ class TestSources:
       "Empty": "No transactions yet. Import an export, or connect the bank.",
     }
     assert by_name["Marginalen"]["source"]["access_until"] is None
+
+  @pytest.mark.asyncio
+  async def test_days_are_the_users_own(
+    self, client: AsyncClient, save_fixture: SaveFixture, user: User, accounts: _Accounts, just_after_midnight_in_stockholm: date
+  ) -> None:
+    stale, ending = await accounts.account("Skandia"), await accounts.account("Klarna")
+    # 00:30 in Stockholm, still the day before in UTC.
+    synced = datetime(2026, 10, 28, 23, 30, tzinfo=UTC)
+    for bank_account, valid_until in ((stale, synced + timedelta(days=100)), (ending, datetime(2026, 11, 9, 23, 30, tzinfo=UTC))):
+      connection = BankConnection(
+        user_id=user.id,
+        bank_name=bank_account.name,
+        bank_country="SE",
+        encrypted_session_id=encrypt("s"),
+        valid_until=valid_until,
+        last_synced_at=synced if bank_account is stale else datetime(2026, 10, 31, 23, 0, tzinfo=UTC),
+      )
+      await save_fixture(connection)
+      await save_fixture(BankConnectionAccount(connection_id=connection.id, identification_hash="h", uid="u", currency="SEK", bank_account_id=bank_account.id))
+
+    by_name = {a["name"]: a["source"]["issue"] for a in (await _overview(client))["accounts"]}
+
+    assert by_name["Skandia"]["kind"] == "stale" and by_name["Skandia"]["day"] == "2026-10-29"
+    assert by_name["Klarna"]["kind"] == "renew_soon" and by_name["Klarna"]["day"] == "2026-11-10"
 
   @pytest.mark.asyncio
   @pytest.mark.parametrize(
@@ -445,6 +489,13 @@ class TestNetWorthHistory:
     assert await _history(client) == {
       "SEK": [(deposited.isoformat(), 10000), (withdrew.isoformat(), 0), (snapshot.isoformat(), 100), (today.isoformat(), 100)],
     }
+
+  @pytest.mark.asyncio
+  async def test_ends_on_the_users_own_day(self, client: AsyncClient, accounts: _Accounts, just_after_midnight_in_stockholm: date) -> None:
+    checking = await accounts.account("Skandia", base=1000)
+    await accounts.add(checking, just_after_midnight_in_stockholm, 200, TransactionDirection.debit)
+
+    assert await _history(client) == {"SEK": [("2026-11-01", 800)]}
 
   @pytest.mark.asyncio
   async def test_debt_counts_but_a_card_in_credit_does_not(self, client: AsyncClient, accounts: _Accounts) -> None:

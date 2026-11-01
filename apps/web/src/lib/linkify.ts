@@ -3,18 +3,24 @@ export type TextPart =
   | { type: "link"; text: string; href: string };
 
 const LINK_RE =
-  /\b(?:https?:\/\/|mailto:)[^\s<>"]+|\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+/gi;
-const TRAILING = /[.,;:!?'"*]+$/;
+  /\b(?:https?:\/\/|mailto:)[^\s<>"]+|(?<![\p{L}\p{N}_.+-])[\p{L}\p{N}_.+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+/giu;
+const TRAILING = /[.,;:!?'"*”’»«]+$/;
+const BRACKETS = [
+  ["(", ")"],
+  ["[", "]"],
+] as const;
 
-/** Drops sentence punctuation and a closing bracket the link didn't open, as in "(see https://x.se/a)." */
+const count = (text: string, char: string) => text.split(char).length - 1;
+
+/** Drops sentence punctuation, quotes and a closing bracket the link didn't open, as in "(see https://x.se/a)." */
 function trimLink(raw: string): string {
   let link = raw.replace(TRAILING, "");
-  while (
-    link.endsWith(")") &&
-    (link.match(/\(/g)?.length ?? 0) < (link.match(/\)/g)?.length ?? 0)
-  ) {
-    link = link.slice(0, -1).replace(TRAILING, "");
-  }
+  const unopened = () =>
+    BRACKETS.some(
+      ([open, close]) =>
+        link.endsWith(close) && count(link, open) < count(link, close),
+    );
+  while (unopened()) link = link.slice(0, -1).replace(TRAILING, "");
   return link;
 }
 

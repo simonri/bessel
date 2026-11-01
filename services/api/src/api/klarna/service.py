@@ -4,9 +4,10 @@ import re
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 import httpx
 from api.bank_accounts.repository import BankAccountRepository
@@ -24,6 +25,8 @@ from api.transactions.service import transaction_service
 PAID_AT_PURCHASE = frozenset({"pay in full", "pay now", "pay by card", "swish", "imported from gmail"})
 PAY_LATER_PLANS = re.compile(r"^(pay in \d+ days|pay later|pay over \d+ months|pay in \d+( (instal+ments|parts))?|financing)$", re.IGNORECASE)
 _CLOCK = re.compile(r"^\d{1,2}:\d{2}$")
+# Klarna stamps purchases in UTC; the app, and the user, see the day in Sweden.
+KLARNA_TIMEZONE = ZoneInfo("Europe/Stockholm")
 
 KLARNA_URL = "https://app.klarna.com/se/api/post_purchase_bff/post-purchase/feature/graphql"
 PAYMENTS_URL = "https://app.klarna.com/se/api/post_purchase_bff/post-purchase/feature/manage-payments/v1"
@@ -258,7 +261,8 @@ def map_to_parsed(item: dict[str, Any]) -> ParsedTransaction | None:
   if amount_minor is None or not currency or not unique_id or not created_at:
     return None
 
-  tx_date = date.fromisoformat(created_at[:10])
+  created = datetime.fromisoformat(created_at)
+  tx_date = (created if created.tzinfo else created.replace(tzinfo=UTC)).astimezone(KLARNA_TIMEZONE).date()
   credit = bool(amount.get("hasPlus")) != (amount_minor < 0)
   direction = TransactionDirection.credit if credit else TransactionDirection.debit
   amount_minor = abs(amount_minor)

@@ -103,15 +103,22 @@ _CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
 
 
 def _header(headers: EmailMessage, name: str) -> str | None:
-  """A header as text on one line. A sender can encode CR/LF into a name or subject, which the parser refuses with
-  ValueError: one such message then broke every search that listed it, and raw it would reach the model as is."""
+  """A header as text on one line. Raw 8-bit bytes are read as UTF-8 when they are, else as Latin-1, as mail apps do.
+  A sender can encode CR/LF into a name or subject, which the parser refuses with ValueError: one such message then
+  broke every search that listed it, and raw it would reach the model as is."""
+  raw = next((v for k, v in headers.raw_items() if k.lower() == name.lower()), None)
+  if raw is None:
+    return None
   try:
-    value = headers.get(name)
-    text = None if value is None else str(value)
+    data = raw.encode("ascii", "surrogateescape")
+    try:
+      data.decode()
+      text = str(headers.get(name))
+    except UnicodeDecodeError:
+      text = str(policy.default.header_fetch_parse(name, data.decode("latin-1")))
   except ValueError:
-    raw = next((v for k, v in headers.raw_items() if k.lower() == name.lower()), None)
-    text = None if raw is None else str(make_header(decode_header(raw)))
-  return None if text is None else _CONTROL.sub(" ", text)
+    text = str(make_header(decode_header(raw)))
+  return _CONTROL.sub(" ", text)
 
 
 def envelope(folder: str, uid: int, flags: frozenset[str], raw_headers: bytes) -> Envelope:
@@ -157,17 +164,36 @@ def _html_text(html: str) -> str:
   return re.sub(r"\n{3,}", "\n\n", soup.get_text("\n")).strip()
 
 
+def _part_text(part: EmailMessage) -> str:
+  try:
+    return part.get_content()
+  except LookupError:
+    # A charset Python doesn't know ("unknown-8bit"): UTF-8 if it reads as such, else Latin-1, which always does.
+    payload = part.get_payload(decode=True) or b""
+    try:
+      return payload.decode()
+    except UnicodeDecodeError:
+      return payload.decode("latin-1")
+
+
+def _size(part: EmailMessage) -> int:
+  if part.is_multipart():
+    # A forwarded message (message/rfc822) or a nested multipart: its parts, as they'd be saved.
+    return len(b"".join(inner.as_bytes() for inner in part.get_payload()))
+  return len(part.get_payload(decode=True) or b"")
+
+
 def message(folder: str, uid: int, flags: frozenset[str], raw: bytes) -> Message:
   """The text the user sees. Mail apps show the HTML part where there is one, so that comes first, without what its
   styles hide: a sender could otherwise put instructions only in the plain part, or in hidden markup, that only an
   assistant reads."""
   parsed = _parser.parsebytes(raw)
   html = parsed.get_body(preferencelist=("html",))
-  text = _html_text(html.get_content()) if html is not None else ""
+  text = _html_text(_part_text(html)) if html is not None else ""
   if not text:
     plain = parsed.get_body(preferencelist=("plain",))
-    text = plain.get_content().strip() if plain is not None else ""
-  attachments = [Attachment(part.get_filename(), part.get_content_type(), len(part.get_payload(decode=True) or b"")) for part in parsed.iter_attachments()]
+    text = _part_text(plain).strip() if plain is not None else ""
+  attachments = [Attachment(part.get_filename(), part.get_content_type(), _size(part)) for part in parsed.iter_attachments()]
   return Message(
     envelope=envelope(folder, uid, flags, raw),
     text=text[:MAX_TEXT_CHARS],
@@ -212,7 +238,11 @@ def draft(sender: str, to: Sequence[str], subject: str, body: str, *, cc: Sequen
 def reply_draft(sender: str, own_addresses: frozenset[str], original: Message, body: str, *, reply_all: bool, now: datetime) -> EmailMessage:
   """A reply in the original's thread, quoting it the way mail apps do."""
   head = original.envelope
-  to = head.reply_to or ([head.sender] if head.sender else [])
+  if head.sender is not None and head.sender.address in own_addresses:
+    # Following up on one's own mail, as mail apps do: to whom it went, not back to oneself.
+    to = [a for a in head.to if a.address not in own_addresses] or [head.sender]
+  else:
+    to = head.reply_to or ([head.sender] if head.sender else [])
   cc: list[Address] = []
   if reply_all:
     seen = {a.address for a in to} | own_addresses

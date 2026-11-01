@@ -656,6 +656,36 @@ class TestBankingAndTransactions:
     assert own[0]["name"] is None
 
   @pytest.mark.asyncio
+  async def test_other_user_cannot_file_their_transactions_under_this_users_category(
+    self, client: AsyncClient, other_client: AsyncClient, save_owned: SaveFixture, save_fixture: SaveFixture, other_user: User
+  ) -> None:
+    category = Category(name="A's private category", slug="a-private", color="#22c55e")
+    await save_owned(category)
+    account = BankAccount(name="B checking", currency="NOK", base_balance=0, subtype="checking", user_id=other_user.id)
+    await save_fixture(account)
+    tx = Transaction(
+      amount=5_000,
+      currency="NOK",
+      transaction_date=datetime.now(UTC).date(),
+      direction=TransactionDirection.debit,
+      dedup_hash=f"b-{uuid4().hex}",
+      description="B's corner shop",
+      bank_account_id=account.id,
+      user_id=other_user.id,
+    )
+    await save_fixture(tx)
+
+    assert (await other_client.patch(f"/v1/transactions/{tx.id}", json={"category_id": str(category.id)})).status_code == 404
+    assert (await other_client.patch("/v1/transactions/bulk", json={"ids": [str(tx.id)], "category_id": str(category.id)})).status_code == 404
+    by_description = await other_client.post(
+      "/v1/transactions/categorize-by-description", json={"description": "B's corner shop", "category_id": str(category.id)}
+    )
+    assert by_description.status_code == 404
+
+    [own] = (await other_client.get("/v1/transactions")).json()["items"]
+    assert own["category_id"] is None
+
+  @pytest.mark.asyncio
   async def test_klarna_import_into_other_users_account_is_rejected(
     self, client: AsyncClient, other_client: AsyncClient, monkeypatch: pytest.MonkeyPatch
   ) -> None:

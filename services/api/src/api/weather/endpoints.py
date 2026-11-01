@@ -26,6 +26,6 @@ async def get_weather_forecast(
   """Yr's forecast for a point: the weather now, the next hours and day by day."""
   try:
     tz = ZoneInfo(timezone or current_user.timezone or "UTC")
-  except (ZoneInfoNotFoundError, ValueError) as e:
+  except (ZoneInfoNotFoundError, ValueError, OSError) as e:
     raise ValidationError(f"Unknown timezone: {timezone}") from e
   return await weather_forecast(redis, lat, lon, tz, now=utc_now(), days=days, hours=hours)

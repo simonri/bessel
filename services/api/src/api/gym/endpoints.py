@@ -3,6 +3,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
+from api.contacts.keeping import user_zone
 from api.gym.repository import GymExerciseRepository, GymTopSetRepository
 from api.gym.schemas import GymExerciseListResponse, GymExerciseSchema, GymExerciseUpsert, GymTopSetListResponse, GymTopSetSchema, GymTopSetUpsert
 from api.gym.service import gym_service
@@ -18,7 +19,9 @@ router = APIRouter(prefix="/gym", tags=["gym"])
   response_model=GymExerciseListResponse,
 )
 async def list_gym_exercises(session: DBSession, current_user: CurrentDBUser) -> GymExerciseListResponse:
-  exercises = await gym_service.list_exercises(GymExerciseRepository.from_session(session), GymTopSetRepository.from_session(session), current_user.id)
+  exercises = await gym_service.list_exercises(
+    GymExerciseRepository.from_session(session), GymTopSetRepository.from_session(session), current_user.id, user_zone(current_user)
+  )
   return GymExerciseListResponse(exercises=exercises)
 
 

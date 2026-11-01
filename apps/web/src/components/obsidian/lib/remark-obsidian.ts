@@ -29,7 +29,10 @@ export interface RemarkObsidianOptions {
 // free, never touches "code"/"inlineCode" nodes since those are distinct
 // mdast node types the text visitor never sees.
 const INLINE_RE =
-  /(!?)\[\[([^[\]]+?)\]\]|==([^=\n]+)==|(^|[\s(])#([A-Za-z][A-Za-z0-9_/-]*)/g;
+  /(!?)\[\[([^[\]]+?)\]\]|==([^=\n]+)==|(^|[\s(])#([\p{L}\p{N}_/-]+)/gu;
+// As the editor reads them: trailing / and - aren't part of a tag, and a tag
+// isn't all digits (#2024 is a number).
+const TAG_NON_NUMERIC = /[\p{L}_]/u;
 
 function buildWikiNode(
   embed: boolean,
@@ -107,7 +110,9 @@ function tokenizeInline(
   let match: RegExpExecArray | null;
   // biome-ignore lint/suspicious/noAssignInExpressions: standard regex-exec loop
   while ((match = INLINE_RE.exec(value))) {
-    const [full, bang, wikiInner, highlightInner, tagBoundary, tagName] = match;
+    const [full, bang, wikiInner, highlightInner, tagBoundary, tagBody] = match;
+    const tagName = tagBody?.replace(/[/-]+$/, "");
+    if (tagName !== undefined && !TAG_NON_NUMERIC.test(tagName)) continue;
     if (match.index > lastIndex) {
       out.push({ type: "text", value: value.slice(lastIndex, match.index) });
     }
@@ -118,6 +123,8 @@ function tokenizeInline(
     } else if (tagName !== undefined) {
       if (tagBoundary) out.push({ type: "text", value: tagBoundary });
       out.push(buildTagNode(tagName));
+      lastIndex = match.index + tagBoundary.length + 1 + tagName.length;
+      continue;
     }
     lastIndex = match.index + full.length;
   }

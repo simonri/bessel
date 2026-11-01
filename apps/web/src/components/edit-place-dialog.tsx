@@ -14,6 +14,7 @@ import { Input } from "@bessel/ui/components/input";
 import { Label } from "@bessel/ui/components/label";
 import { useForm } from "@tanstack/react-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -220,7 +221,7 @@ export function EditPlaceDialog({ place }: { place: PlaceSchema }) {
                       if (!form.getFieldValue("visitedAt")) {
                         form.setFieldValue(
                           "visitedAt",
-                          new Date().toISOString().split("T")[0],
+                          format(new Date(), "yyyy-MM-dd"),
                         );
                       }
                     }}

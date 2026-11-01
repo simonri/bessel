@@ -102,6 +102,11 @@ class TestFindTasks:
     assert sorted(t["title"] for t in tomorrow["tasks"]) == ["Buy milk", "Fix sync bug"]
 
   @pytest.mark.asyncio
+  async def test_due_days_in_reverse_are_refused_rather_than_finding_nothing(self, connect: ConnectFixture, stockholm_user: User) -> None:
+    message = await mcp_call_error(connect, "find_tasks", {"due_from": "2026-12-31", "due_to": "2026-12-01"})
+    assert "end day must not be before the start day" in message
+
+  @pytest.mark.asyncio
   async def test_unknown_project_lists_the_real_ones(self, connect: ConnectFixture, stockholm_user: User, bessel: Project) -> None:
     message = await mcp_call_error(connect, "find_tasks", {"project": "Uni"})
     assert "Bessel" in message
@@ -113,6 +118,18 @@ class TestFindTasks:
     detailed = await mcp_call(connect, "find_tasks", {"search": "passport", "response_format": "detailed"})
     assert concise["tasks"][0]["notes"] is None
     assert detailed["tasks"][0]["notes"] == "Book at the police station"
+
+  @pytest.mark.asyncio
+  async def test_search_text_is_matched_literally(self, connect: ConnectFixture, stockholm_user: User, make_task: MakeTask) -> None:
+    await make_task("Pay 50% deposit")
+    await make_task("Pay 500 kr")
+    await make_task("Rename user_id column")
+    await make_task("Rename username field")
+
+    percent = await mcp_call(connect, "find_tasks", {"search": "50%"})
+    underscore = await mcp_call(connect, "find_tasks", {"search": "user_"})
+    assert [t["title"] for t in percent["tasks"]] == ["Pay 50% deposit"]
+    assert [t["title"] for t in underscore["tasks"]] == ["Rename user_id column"]
 
   @pytest.mark.asyncio
   async def test_other_user_sees_nothing(self, connect: ConnectFixture, stockholm_user: User, make_task: MakeTask) -> None:
@@ -176,6 +193,15 @@ class TestAddTasks:
     assert result["created"][0]["project"] == "Uni"
 
   @pytest.mark.asyncio
+  async def test_a_task_for_a_new_project_is_not_a_retry_of_one_without(self, connect: ConnectFixture, stockholm_user: User) -> None:
+    await mcp_call(connect, "add_tasks", {"tasks": [{"title": "Buy milk"}]})
+
+    result = await mcp_call(connect, "add_tasks", {"tasks": [{"title": "Buy milk", "project": "Groceries", "new_project": True}]})
+
+    assert result["already_existed"] == []
+    assert [(t["title"], t["project"]) for t in result["created"]] == [("Buy milk", "Groceries")]
+
+  @pytest.mark.asyncio
   async def test_tasks_belong_to_the_caller(self, connect: ConnectFixture, stockholm_user: User) -> None:
     await mcp_call(connect, "add_tasks", {"tasks": [{"title": "B's task"}], "timezone": TZ}, token="token-b")
     assert (await mcp_call(connect, "find_tasks", {"search": "B's task"}))["tasks"] == []
@@ -196,6 +222,30 @@ class TestUpdateTasks:
     assert date.fromisoformat(updated["due"]).weekday() == 4
     detailed = await mcp_call(connect, "get_task", {"task_id": str(task.id)})
     assert detailed["notes"] == f"Seen on iOS\n\n[{_today().isoformat()}] Root cause: stale token"
+
+  @pytest.mark.asyncio
+  async def test_two_changes_to_one_task_both_apply(self, connect: ConnectFixture, stockholm_user: User, make_task: MakeTask) -> None:
+    task = await make_task("Fix sync bug", description="Seen on iOS")
+    changes = [{"task_id": str(task.id), "append_note": "Root cause found"}, {"task_id": str(task.id), "append_note": "Fixed", "priority": "high"}]
+
+    result = await mcp_call(connect, "update_tasks", {"changes": changes})
+
+    detailed = await mcp_call(connect, "get_task", {"task_id": str(task.id)})
+    today = _today().isoformat()
+    assert detailed["notes"] == f"Seen on iOS\n\n[{today}] Root cause found\n\n[{today}] Fixed"
+    assert detailed["priority"] == "high"
+    assert [t["id"] for t in result["tasks"]] == [str(task.id)]
+
+  @pytest.mark.asyncio
+  async def test_a_blank_project_name_is_no_project(self, connect: ConnectFixture, stockholm_user: User, bessel: Project, make_task: MakeTask) -> None:
+    task = await make_task("Buy milk")
+
+    message = await mcp_call_error(connect, "update_tasks", {"changes": [{"task_id": str(task.id), "project": ""}]})
+
+    assert "No project called ''" in message
+    assert (await mcp_call(connect, "get_task", {"task_id": str(task.id)}))["project"] is None
+    assert "No project called ' '" in await mcp_call_error(connect, "find_tasks", {"project": " "})
+    assert "No project called ''" in await mcp_call_error(connect, "add_tasks", {"tasks": [{"title": "Buy oat milk", "project": "", "new_project": True}]})
 
   @pytest.mark.asyncio
   async def test_one_bad_id_changes_nothing(self, connect: ConnectFixture, stockholm_user: User, make_task: MakeTask) -> None:

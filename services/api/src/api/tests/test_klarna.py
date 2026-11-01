@@ -178,6 +178,27 @@ class TestPayLaterImport:
     assert (result["created"], result["updated"]) == (0, 1)
     assert await _stored(session, account) == [("Booking.com", 0, TransactionDirection.debit)]
 
+  @pytest.mark.asyncio
+  async def test_a_purchase_is_dated_by_the_day_in_sweden_not_in_utc(
+    self, client: AsyncClient, session: AsyncSession, account: BankAccount, klarna: list[dict[str, Any]]
+  ) -> None:
+    klarna.extend(
+      [
+        item("1", "Summer night", "Pay in 30 days", 10000, created="2026-05-31T22:30:00.000Z"),
+        item("2", "Winter night", "Pay in 30 days", 20000, created="2026-01-31T23:30:00.000Z"),
+        item("3", "Late evening", "Pay in 30 days", 30000, created="2026-05-31T21:30:00.000Z"),
+      ]
+    )
+
+    await _import(client, account)
+
+    rows = await session.execute(select(Transaction.description, Transaction.transaction_date).where(Transaction.bank_account_id == account.id))
+    assert {description: day.isoformat() for description, day in rows} == {
+      "Summer night": "2026-06-01",
+      "Winter night": "2026-02-01",
+      "Late evening": "2026-05-31",
+    }
+
 
 class TestPayLaterPayments:
   @pytest.mark.asyncio

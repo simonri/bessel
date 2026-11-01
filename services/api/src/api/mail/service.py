@@ -118,14 +118,17 @@ def owed_replies(box: Mailbox, own_address: str, since: datetime, limit: int) ->
   for e in envelopes(box, INBOX, box.search(INBOX, criteria)[:MAX_TRIAGE_MESSAGES]):
     if e.automated or e.sender is None or e.sender.address in own or e.date is None or e.date < since:
       continue
-    if e.message_id in answered:
-      continue
-    replied_after = last_sent_to.get(e.sender.address)
-    if replied_after is not None and replied_after >= e.date:
-      continue
     if e.sender.address not in latest or e.date > (latest[e.sender.address].date or e.date):
       latest[e.sender.address] = e
-  return sorted(latest.values(), key=lambda e: e.date or since, reverse=True)[:limit]
+
+  # Only each person's latest mail counts: once it's answered, the older ones are too.
+  owed: list[Envelope] = []
+  for address, e in latest.items():
+    replied_after = last_sent_to.get(address)
+    if e.message_id in answered or (replied_after is not None and e.date is not None and replied_after >= e.date):
+      continue
+    owed.append(e)
+  return sorted(owed, key=lambda e: e.date or since, reverse=True)[:limit]
 
 
 def save_draft(box: Mailbox, mail: EmailMessage) -> str:

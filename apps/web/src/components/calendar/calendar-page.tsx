@@ -6,7 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import { addDays, addHours, isSameDay } from "date-fns";
+import { addDays, isSameDay } from "date-fns";
 import { ChevronLeft, ChevronRight, PanelLeft } from "lucide-react";
 import {
   type RefObject,
@@ -22,6 +22,7 @@ import type { IntegrationsTab } from "@/components/settings-integrations-page";
 import { IconButton, SoftButton } from "@/components/ui-kit";
 import { clearPageTarget, usePageTarget } from "@/lib/page-target";
 import { userStorage } from "@/lib/user-storage";
+import { dayStartingAt } from "@/routes/_app/-activity-utils";
 import { headerMonth, visibleDays } from "./calendar-dates";
 import { CalendarSidebar } from "./calendar-sidebar";
 import { toWallClock, useCalendarTimeZone } from "./calendar-timezone";
@@ -91,7 +92,7 @@ export function useCalendarNavigation(
   dayStartHour = 0,
 ): CalendarNavigation {
   const [date, setDate] = useState(() =>
-    addHours(toWallClock(new Date(), timeZone), -dayStartHour),
+    dayStartingAt(toWallClock(new Date(), timeZone), dayStartHour),
   );
   const [view, setViewState] = useState(() => rememberedView(storageKey));
   const setView = useCallback(

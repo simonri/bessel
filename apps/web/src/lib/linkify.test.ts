@@ -36,6 +36,22 @@ describe("linkify", () => {
     ).toEqual(["https://en.wikipedia.org/wiki/Bessel_(crater)"]);
   });
 
+  it("leaves out typographic quotes and a square bracket around a link", () => {
+    expect(
+      links(
+        "Läs ”https://x.se/a”. Se »https://x.se/b«, ’https://x.se/c’ och [https://x.se/d]",
+      ).map((p) => p.href),
+    ).toEqual([
+      "https://x.se/a",
+      "https://x.se/b",
+      "https://x.se/c",
+      "https://x.se/d",
+    ]);
+    expect(links("See http://[::1]/a[1].").map((p) => p.href)).toEqual([
+      "http://[::1]/a[1]",
+    ]);
+  });
+
   it("turns email addresses into mailto links", () => {
     expect(links("Ask support@montrose.io if it fails again.")).toEqual([
       {
@@ -43,6 +59,18 @@ describe("linkify", () => {
         text: "support@montrose.io",
         href: "mailto:support@montrose.io",
       },
+    ]);
+  });
+
+  it("keeps å, ä and ö in an email address", () => {
+    expect(
+      links(
+        "Mejla åsa@exempel.se, björn@exempel.se eller info@räksmörgås.se",
+      ).map((p) => p.href),
+    ).toEqual([
+      "mailto:åsa@exempel.se",
+      "mailto:björn@exempel.se",
+      "mailto:info@räksmörgås.se",
     ]);
   });
 

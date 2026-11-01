@@ -24,8 +24,10 @@ export interface LinkTargetParts {
 
 /** Parses the inside of `[[...]]`: "target#heading|alias", "target#^block", "#heading". */
 export function parseLinkTarget(inner: string): LinkTargetParts {
-  const [beforeAlias, ...aliasParts] = inner.split("|");
-  const alias = aliasParts.length ? aliasParts.join("|").trim() : null;
+  // Inside a table Obsidian escapes the separator: [[Note\|alias]].
+  const pipe = /\\?\|/.exec(inner);
+  const beforeAlias = pipe ? inner.slice(0, pipe.index) : inner;
+  const alias = pipe ? inner.slice(pipe.index + pipe[0].length).trim() : null;
   const hashAt = beforeAlias.indexOf("#");
   const target = (
     hashAt === -1 ? beforeAlias : beforeAlias.slice(0, hashAt)
@@ -94,14 +96,12 @@ export function resolveLink(
   const wanted = target.trim().replace(/^\.?\//, "");
   if (!wanted) return fromRel;
   const lower = wanted.toLowerCase();
-  const hasExt = /\.[a-z0-9]+$/i.test(wanted);
   const candidates: string[] = [];
   for (const rel of files) {
     const relLower = rel.toLowerCase();
     if (relLower === lower || relLower === `${lower}.md`) return rel;
     const base = rel.slice(rel.lastIndexOf("/") + 1).toLowerCase();
-    if (base === lower || (!hasExt && base === `${lower}.md`))
-      candidates.push(rel);
+    if (base === lower || base === `${lower}.md`) candidates.push(rel);
   }
   if (!candidates.length) return null;
   candidates.sort((a, b) => {

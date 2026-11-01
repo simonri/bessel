@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 from collections.abc import Sequence
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, tzinfo
 from typing import Literal
 from uuid import UUID
 
@@ -102,7 +102,9 @@ def _history(base: int, monthly: list[tuple[date, int]], *, today: date) -> list
 
 
 class AccountsOverview:
-  async def overview(self, session: AsyncSession, user_id: UUID, *, now: datetime) -> AccountsOverviewResponse:
+  async def overview(self, session: AsyncSession, user_id: UUID, *, now: datetime, zone: tzinfo) -> AccountsOverviewResponse:
+    """`zone` is the user's: days, such as when a source last synced, are theirs."""
+    today = now.astimezone(zone).date()
     accounts = await BankAccountRepository.from_session(session).list_for_user(user_id)
     ids = [a.id for a in accounts]
     transactions = TransactionRepository.from_session(session)
@@ -114,7 +116,7 @@ class AccountsOverview:
     holdings: dict[UUID, int] = defaultdict(int)
     for row in await HoldingSnapshotRepository.from_session(session).latest_for_accounts(ids):
       holdings[row.bank_account_id] += row.value
-    sources = await self._sources(session, user_id, accounts, activity, now=now)
+    sources = await self._sources(session, user_id, accounts, activity, now=now, zone=zone)
 
     overviews = []
     for account in accounts:
@@ -141,7 +143,7 @@ class AccountsOverview:
           first_transaction=first,
           last_transaction=last,
           transaction_count=count,
-          history=_history(account.base_balance, monthly[account.id], today=now.date()),
+          history=_history(account.base_balance, monthly[account.id], today=today),
         )
       )
     return AccountsOverviewResponse(accounts=overviews, totals=self._totals(overviews))
@@ -164,9 +166,13 @@ class AccountsOverview:
     ]
 
   async def _sources(
-    self, session: AsyncSession, user_id: UUID, accounts: Sequence[BankAccount], activity: dict[UUID, tuple[date, date, int]], *, now: datetime
+    self, session: AsyncSession, user_id: UUID, accounts: Sequence[BankAccount], activity: dict[UUID, tuple[date, date, int]], *, now: datetime, zone: tzinfo
   ) -> dict[UUID, tuple[AccountSource, int | None, int | None]]:
     """Where each account's data comes from, with the balance the source reported and any difference to Bessel's."""
+
+    def day(at: datetime) -> date:
+      return at.astimezone(zone).date()
+
     found: dict[UUID, tuple[AccountSource, int | None, int | None]] = {}
     for connection in await BankConnectionRepository.from_session(session).list_for_user(user_id):
       for linked in connection.accounts:
@@ -178,9 +184,9 @@ class AccountsOverview:
         elif not linked.shared:
           problem = AccountProblem(kind="not_shared")
         elif connection.last_synced_at and now - connection.last_synced_at > STALE_AFTER:
-          problem = AccountProblem(kind="stale", day=connection.last_synced_at.date())
+          problem = AccountProblem(kind="stale", day=day(connection.last_synced_at))
         elif connection.valid_until - now < RENEW_WARNING:
-          problem = AccountProblem(kind="renew_soon", day=connection.valid_until.date())
+          problem = AccountProblem(kind="renew_soon", day=day(connection.valid_until))
         elif linked.balance_drift and linked.bank_balance is not None:
           problem = AccountProblem(kind="balance_mismatch", source_balance=linked.bank_balance)
         found[linked.bank_account_id] = (
@@ -206,7 +212,7 @@ class AccountsOverview:
       elif avanza.sync_error:
         problem = AccountProblem(kind="sync_failed", detail=avanza.sync_error)
       elif avanza.last_synced_at and now - avanza.last_synced_at > STALE_AFTER:
-        problem = AccountProblem(kind="stale", day=avanza.last_synced_at.date())
+        problem = AccountProblem(kind="stale", day=day(avanza.last_synced_at))
       found[linked.bank_account_id] = (
         AccountSource(kind="avanza", label="Avanza", synced_at=avanza.last_synced_at, issue=problem, problem=None),
         linked.cash_balance,
@@ -223,9 +229,9 @@ class AccountsOverview:
       elif montrose.sync_error:
         problem = AccountProblem(kind="sync_failed", detail=montrose.sync_error)
       elif montrose.last_synced_at and now - montrose.last_synced_at > STALE_AFTER:
-        problem = AccountProblem(kind="stale", day=montrose.last_synced_at.date())
+        problem = AccountProblem(kind="stale", day=day(montrose.last_synced_at))
       elif expires - now < RENEW_WARNING:
-        problem = AccountProblem(kind="renew_soon", day=expires.date())
+        problem = AccountProblem(kind="renew_soon", day=day(expires))
       elif linked.balance_drift and linked.cash_balance is not None:
         problem = AccountProblem(kind="balance_mismatch", source_balance=linked.cash_balance)
       found[linked.bank_account_id] = (
@@ -241,7 +247,7 @@ class AccountsOverview:
       if pay_later.balance_drift:
         problem = AccountProblem(kind="balance_mismatch", source_balance=owed)
       elif pay_later.last_imported_at and now - pay_later.last_imported_at > PAY_LATER_STALE_AFTER:
-        problem = AccountProblem(kind="import_due", day=pay_later.last_imported_at.date())
+        problem = AccountProblem(kind="import_due", day=day(pay_later.last_imported_at))
       found[pay_later.bank_account_id] = (
         AccountSource(kind="klarna", label="Klarna pay later", logo=KLARNA_LOGO, synced_at=pay_later.last_imported_at, issue=problem, problem=None),
         owed,
@@ -256,7 +262,7 @@ class AccountsOverview:
       problem = None
       if last is None:
         problem = AccountProblem(kind="no_transactions")
-      elif now.date() - last > MANUAL_STALE_AFTER:
+      elif day(now) - last > MANUAL_STALE_AFTER:
         problem = AccountProblem(kind="import_due", day=last)
       import_bank = import_banks.get(account.id)
       logo = bank_logo(FILE_BANKS[import_bank], "SE") if import_bank in FILE_BANKS else None

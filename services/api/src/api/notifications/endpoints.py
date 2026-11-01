@@ -23,7 +23,7 @@ async def list_notifications(
 ) -> NotificationsListResponse:
   repo = NotificationRepository.from_session(session)
   notifications = await repo.list_recent(current_user.id)
-  unread_count = sum(1 for n in notifications if n.read_at is None)
+  unread_count = await repo.count_unread(current_user.id)
   return NotificationsListResponse(
     notifications=[NotificationResponse.model_validate(n) for n in notifications],
     unread_count=unread_count,

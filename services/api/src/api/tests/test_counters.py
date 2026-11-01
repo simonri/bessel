@@ -66,6 +66,28 @@ class TestBackdatedReset:
     assert resp.status_code == 422
 
 
+class TestUpdateCounter:
+  @pytest.mark.asyncio
+  async def test_renames(self, client: AsyncClient) -> None:
+    counter = (await client.post("/v1/counters", json={"name": "Gym"})).json()
+
+    resp = await client.patch(f"/v1/counters/{counter['id']}", json={"name": "Climbing"})
+
+    assert resp.status_code == 200
+    assert resp.json()["name"] == "Climbing"
+
+  @pytest.mark.asyncio
+  async def test_null_name_leaves_the_name(self, client: AsyncClient) -> None:
+    counter = (await client.post("/v1/counters", json={"name": "Gym"})).json()
+
+    resp = await client.patch(f"/v1/counters/{counter['id']}", json={"name": None})
+
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["name"] == "Gym"
+    [listed] = (await client.get("/v1/counters")).json()
+    assert listed["name"] == "Gym"
+
+
 class TestCounterNotFound:
   @pytest.mark.asyncio
   @pytest.mark.keep_session_state

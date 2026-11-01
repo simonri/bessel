@@ -171,6 +171,16 @@ class ContactUpdate(Schema):
   addresses: list[ContactMethodInput] | None = Field(default=None, max_length=MAX_METHODS)
   urls: list[ContactMethodInput] | None = Field(default=None, max_length=MAX_METHODS)
 
+  @field_validator("birthday")
+  @classmethod
+  def _real_day(cls, birthday: ContactBirthday | None) -> ContactBirthday | None:
+    if birthday is not None:
+      try:
+        date(birthday.year or 2000, birthday.month, birthday.day)
+      except ValueError as e:
+        raise ValueError("The birthday isn't a date") from e
+    return birthday
+
 
 MAX_PHOTO_BYTES = 2 * 1024 * 1024
 

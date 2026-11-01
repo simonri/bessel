@@ -1,6 +1,7 @@
 from typing import Any
 from uuid import UUID
 
+from api.common.repository.base import without_required_nulls
 from api.common.utils import utc_now
 from api.exceptions import ValidationError
 from api.models.project import Project
@@ -52,7 +53,8 @@ class TaskService:
 
   async def update(self, session: AsyncSession, task: Task, changes: dict[str, Any]) -> Task:
     """Applies `changes` (TaskUpdate fields that were set) to `task`."""
-    changes = dict(changes)
+    changes = without_required_nulls(Task, changes)
+    status = changes.pop("status", None)
     if changes.get("title") is not None:
       changes["title"] = _title(changes["title"])
     if "project" in changes:
@@ -61,7 +63,21 @@ class TaskService:
       task.project_obj = project
     if changes:
       await TaskRepository.from_session(session).update(task, update_dict=changes, flush=True)
+    if status is not None:
+      await self.set_status(session, task, status)
     return task
+
+  async def set_status(self, session: AsyncSession, task: Task, status: str) -> None:
+    """Moves `task` to `status`, into and out of done the way completing and reopening do."""
+    if status == task.status:
+      return
+    if status == "done":
+      await self.complete(session, task)
+      return
+    update: dict[str, Any] = {"status": status}
+    if task.status == "done":
+      update["completed_at"] = None
+    await TaskRepository.from_session(session).update(task, update_dict=update, flush=True)
 
   async def complete(self, session: AsyncSession, task: Task) -> Task | None:
     """Marks `task` done and returns the next occurrence it spawned, for a recurring task."""
@@ -73,12 +89,16 @@ class TaskService:
     await repo.update(task, update_dict={"status": "done", "completed_at": utc_now()}, flush=True)
     if not (task.is_recurring and task.rrule_frequency):
       return None
+    day_of_month = task.rrule_day_of_month
+    if day_of_month is None and task.rrule_frequency == "monthly" and task.due_date is not None:
+      # Pinned so a routine on the 31st comes back to it after February, instead of drifting to the 28th.
+      day_of_month = task.due_date.day
     next_due = compute_next_due_date(
       current_due=task.due_date,
       frequency=task.rrule_frequency,
       interval=task.rrule_interval or 1,
       day_of_week=task.rrule_day_of_week,
-      day_of_month=task.rrule_day_of_month,
+      day_of_month=day_of_month,
     )
     max_pos = await repo.get_max_position(task.user_id)
     next_task = Task(
@@ -94,7 +114,7 @@ class TaskService:
       rrule_frequency=task.rrule_frequency,
       rrule_interval=task.rrule_interval,
       rrule_day_of_week=task.rrule_day_of_week,
-      rrule_day_of_month=task.rrule_day_of_month,
+      rrule_day_of_month=day_of_month,
       parent_task_id=task.id,
       user_id=task.user_id,
     )

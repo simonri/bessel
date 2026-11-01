@@ -50,7 +50,7 @@ async def get_counters(ctx: Context, timezone: TimezoneParam = None) -> Counters
         name=counter.name,
         created_at=counter.created_at.astimezone(tz),
         last_reset_at=last.astimezone(tz) if last else None,
-        days_since=(now - last).days if last else None,
+        days_since=max((now - last).days, 0) if last else None,
         reset_count=count,
         recent_resets=[at.astimezone(tz) for at in recent.get(counter.id, [])],
       )

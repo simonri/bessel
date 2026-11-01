@@ -67,6 +67,21 @@ describe("parseLinkTarget", () => {
     });
   });
 
+  it("reads a table's escaped pipe as the alias separator", () => {
+    expect(parseLinkTarget("Note\\|Alias")).toEqual({
+      target: "Note",
+      heading: null,
+      block: null,
+      alias: "Alias",
+    });
+    expect(parseLinkTarget("Note#Heading\\|Alias")).toEqual({
+      target: "Note",
+      heading: "Heading",
+      block: null,
+      alias: "Alias",
+    });
+  });
+
   it("parses target#heading|alias together", () => {
     expect(parseLinkTarget("Note#Heading|Alias")).toEqual({
       target: "Note",
@@ -214,6 +229,16 @@ describe("resolveLink", () => {
   it("resolves a non-markdown target with spaces", () => {
     expect(resolveLink(files, "Note.md", "Pasted image.png")).toBe(
       "Pasted image.png",
+    );
+  });
+
+  it("resolves a note whose name has a dot in it by basename", () => {
+    const dotted = ["Journal/2026.03.29.md", "Notes/Release v1.2.md"];
+    expect(resolveLink(dotted, "Note.md", "2026.03.29")).toBe(
+      "Journal/2026.03.29.md",
+    );
+    expect(resolveLink(dotted, "Note.md", "Release v1.2")).toBe(
+      "Notes/Release v1.2.md",
     );
   });
 

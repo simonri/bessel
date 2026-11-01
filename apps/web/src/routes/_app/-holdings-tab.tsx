@@ -25,9 +25,10 @@ import { cn } from "@/lib/utils";
 const LARGEST = 6;
 
 export function percent(part: number, of: number): string | null {
-  return of > 0
-    ? `${part >= 0 ? "+" : ""}${((part / of) * 100).toFixed(1).replace(".", ",")}%`
-    : null;
+  if (of <= 0) return null;
+  const text = ((Math.abs(part) / of) * 100).toFixed(1);
+  const sign = Number(text) === 0 ? "" : part > 0 ? "+" : "-";
+  return `${sign}${text.replace(".", ",")}%`;
 }
 
 export interface InvestmentTotals {

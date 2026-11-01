@@ -62,7 +62,7 @@ async def update_counter(
 ) -> CounterSchema:
   repo = CounterRepository.from_session(session)
   counter = await repo.get_owned_or_404(counter_id, current_user.id, not_found_message="Counter not found.")
-  counter = await repo.update(counter, update_dict=body.model_dump(exclude_unset=True), flush=True)
+  counter = await repo.update(counter, update_dict=body.model_dump(exclude_unset=True, exclude_none=True), flush=True)
 
   stats_by_id = await CounterResetRepository.from_session(session).get_stats_by_counter([counter_id])
   return _to_schema(counter, stats_by_id.get(counter_id, _NO_RESETS))

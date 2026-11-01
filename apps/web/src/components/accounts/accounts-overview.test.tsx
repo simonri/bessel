@@ -169,7 +169,7 @@ describe("NeedsAttention", () => {
         problem: "Imported by hand, nothing since 2 Jul 2026.",
         issue: problem({
           kind: "import_due",
-          day: new Date("2026-07-02T00:00:00"),
+          day: new Date("2026-07-02"),
         }),
       },
     });

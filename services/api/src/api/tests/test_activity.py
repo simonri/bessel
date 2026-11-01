@@ -97,6 +97,33 @@ class TestIntradayActivity:
     assert data["buckets"][0]["bucket"] == 1
 
   @pytest.mark.asyncio
+  async def test_splits_segment_across_bucket_boundary(self, client: AsyncClient, save_owned: SaveFixture) -> None:
+    # Active 10:10 → 10:20, across the 10:15 boundary of 15-minute buckets.
+    await save_owned(_ev(35, DAY_START + 10 * 3600 + 600))
+    await save_owned(_ev(36, DAY_START + 10 * 3600 + 1200, state="idle"))
+
+    resp = await client.get(
+      "/v1/activity/intraday",
+      params={"start_ts": DAY_START, "end_ts": DAY_END, "source": SOURCE},
+    )
+    assert resp.status_code == 200
+    buckets = {b["bucket"]: b["active_secs"] for b in resp.json()["buckets"]}
+    assert buckets == {40: 300, 41: 300}
+
+  @pytest.mark.asyncio
+  async def test_bucket_never_exceeds_its_length(self, client: AsyncClient, save_owned: SaveFixture) -> None:
+    await save_owned(_ev(37, DAY_START + 3600))
+    await save_owned(_ev(38, DAY_START + 3600 + 300, state="idle"))
+
+    resp = await client.get(
+      "/v1/activity/intraday",
+      params={"start_ts": DAY_START, "end_ts": DAY_END, "source": SOURCE, "bucket_mins": 1},
+    )
+    assert resp.status_code == 200
+    buckets = {b["bucket"]: b["active_secs"] for b in resp.json()["buckets"]}
+    assert buckets == {60 + i: 60 for i in range(5)}
+
+  @pytest.mark.asyncio
   async def test_credits_session_carried_over_from_before_window(self, client: AsyncClient, save_owned: SaveFixture) -> None:
     # Active session starts 2 min before the window and continues 3 min into it.
     await save_owned(_ev(40, DAY_START - 120))

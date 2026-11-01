@@ -1,5 +1,5 @@
 import type { LocationActivity, LocationVisit } from "@bessel/client";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   activityInfo,
   adjacentDay,
@@ -12,6 +12,7 @@ import {
   isoDay,
   localTime,
   utcOffsetLabel,
+  viewerOffsetOn,
   visitTitle,
 } from "./-google-timeline-utils";
 
@@ -95,6 +96,20 @@ describe("localTime", () => {
     expect(utcOffsetLabel(330)).toBe("GMT+5:30");
     expect(utcOffsetLabel(-300)).toBe("GMT-5");
   });
+
+  describe("the viewer's own offset", () => {
+    beforeAll(() => {
+      vi.stubEnv("TZ", "Europe/Stockholm");
+    });
+    afterAll(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("is the one most of a DST day runs on", () => {
+      expect(viewerOffsetOn("2026-03-29")).toBe(120);
+      expect(viewerOffsetOn("2026-10-25")).toBe(60);
+    });
+  });
 });
 
 describe("formatting", () => {
@@ -106,6 +121,11 @@ describe("formatting", () => {
     expect(formatDistance(812.5)).toBe("810 m");
     expect(formatDistance(3979)).toBe("4.0 km");
     expect(formatDistance(23_400)).toBe("23 km");
+  });
+
+  it("switches unit where a distance rounds up to the next one", () => {
+    expect(formatDistance(995)).toBe("1.0 km");
+    expect(formatDistance(9_960)).toBe("10 km");
   });
 
   it("names activities from either platform's spelling", () => {

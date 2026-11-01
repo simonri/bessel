@@ -59,6 +59,7 @@ class RecipeBody(RoundTripSchema):
 
 _UNICODE_FRACTIONS = {"½": Fraction(1, 2), "¼": Fraction(1, 4), "¾": Fraction(3, 4), "⅓": Fraction(1, 3), "⅔": Fraction(2, 3)}
 _AMOUNT_RE = re.compile(r"^(\d+(?:[.,]\d+)?)?\s*([½¼¾⅓⅔])?(?=\s|$)")
+_SLASH_AMOUNT_RE = re.compile(r"^(?:(\d+)\s+)?(\d+)/(\d+)(?=\s|$)")
 _UNITS = frozenset(
   {
     "dl", "cl", "ml", "l", "msk", "tsk", "krm", "g", "kg", "hg", "st", "skiva", "skivor", "nypa", "nypor",
@@ -69,6 +70,13 @@ _UNITS = frozenset(
 
 
 def _parse_amount(text: str) -> tuple[float | None, str]:
+  slash = _SLASH_AMOUNT_RE.match(text)
+  if slash:
+    whole, numerator, denominator = slash.groups()
+    if int(denominator) == 0:
+      return None, text
+    value = int(whole or 0) + Fraction(int(numerator), int(denominator))
+    return float(value), text[slash.end() :].strip()
   match = _AMOUNT_RE.match(text)
   if not match or not (match.group(1) or match.group(2)):
     return None, text
@@ -80,10 +88,15 @@ def _parse_amount(text: str) -> tuple[float | None, str]:
   return float(value), text[match.end() :].strip()
 
 
+_FRACTION_GLYPHS = {Fraction(1, 4): "¼", Fraction(1, 3): "⅓", Fraction(1, 2): "½", Fraction(2, 3): "⅔", Fraction(3, 4): "¾"}
+
+
 def format_amount(amount: float) -> str:
   whole = int(amount)
-  fraction = Fraction(amount - whole).limit_denominator(4)
-  glyph = {Fraction(1, 2): "½", Fraction(1, 4): "¼", Fraction(3, 4): "¾"}.get(fraction)
+  rest = amount - whole
+  fraction = Fraction(rest).limit_denominator(4)
+  # Only an exact fraction gets a glyph: 0.2 is not ¼.
+  glyph = _FRACTION_GLYPHS.get(fraction) if abs(rest - float(fraction)) < 1e-9 else None
   if glyph:
     return f"{whole}{glyph}" if whole else glyph
   return f"{amount:g}"
@@ -120,9 +133,10 @@ def format_ingredient(item: RecipeIngredient) -> str:
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 _LIST_RE = re.compile(r"^\s*[-*]\s+(.*)$")
+_STEP_ITEM_RE = re.compile(r"^\s*(?:[-*]|\d+[.)])\s+(.*)$")
 _BOLD_LABEL_RE = re.compile(r"^\*\*(.+?):?\*\*:?$")
-_TIME_RE = re.compile(r"\s*\*\(([^)]*)\)\*\s*$")
-_STEP_NUMBER_RE = re.compile(r"^\d+[.)]\s+")
+_TIME_RE = re.compile(r"\s*\*\((.+?)\)\*\s*$")
+_STEP_NUMBER_RE = re.compile(r"^\d+[.)](?:\s+|$)")
 _CALLOUT_RE = re.compile(r"^>\s*(?:\*\*(.+?):?\*\*:?\s*)?(.*)$")
 _INGREDIENTS_RE = re.compile(r"^(ingrediens|ingredient)", re.IGNORECASE)
 _STEPS_RE = re.compile(r"^(gör så här|så gör du|instruktion|tillagning|method|instructions|directions)", re.IGNORECASE)
@@ -160,6 +174,8 @@ def parse_markdown(content: str) -> RecipeBody:
   mode: Literal["intro", "ingredients", "steps", "section"] = "intro"
   group: RecipeIngredientGroup | None = None
   step: RecipeStep | None = None
+  # A step under its own numbered heading, which takes the lines that follow; it may have no title.
+  headed: RecipeStep | None = None
   section: RecipeSection | None = None
   intro: list[str] = []
 
@@ -172,8 +188,8 @@ def parse_markdown(content: str) -> RecipeBody:
     stripped = raw.strip()
     if stripped in ("", "---", "***"):
       # A blank line ends a paragraph inside a titled step or section.
-      if step is not None and step.title:
-        step.text = _paragraph_break(step.text)
+      if headed is not None:
+        headed.text = _paragraph_break(headed.text)
       if section is not None:
         section.text = _paragraph_break(section.text)
       continue
@@ -184,19 +200,20 @@ def parse_markdown(content: str) -> RecipeBody:
       time = _TIME_RE.search(title)
       clean = _TIME_RE.sub("", title).strip().rstrip(":").strip()
       if _INGREDIENTS_RE.match(clean):
-        mode, group, step, section = "ingredients", None, None, None
+        mode, group, step, headed, section = "ingredients", None, None, None, None
       elif _STEPS_RE.match(clean):
-        mode, group, step, section = "steps", None, None, None
+        mode, group, step, headed, section = "steps", None, None, None, None
       elif mode == "ingredients" and level >= 3:
         group = new_group(clean)
       elif mode == "steps" and _STEP_NUMBER_RE.match(clean):
         step = RecipeStep(
-          title=_STEP_NUMBER_RE.sub("", clean).strip(),
+          title=_STEP_NUMBER_RE.sub("", clean).strip() or None,
           time_label=time.group(1).strip() if time else None,
         )
+        headed = step
         body.steps.append(step)
       else:
-        mode, group, step = "section", None, None
+        mode, group, step, headed = "section", None, None, None
         section = RecipeSection(title=clean)
         body.sections.append(section)
       continue
@@ -236,13 +253,13 @@ def parse_markdown(content: str) -> RecipeBody:
           kind: Literal["tip", "warning"] = "warning" if label and _WARNING_RE.search(label) else "tip"
           target.callouts.append(RecipeCallout(kind=kind, label=label, text=callout.group(2).strip()))
         continue
-      item = _LIST_RE.match(stripped)
-      if step is None or not step.title:
-        # Untitled steps are one list item (or line) each.
+      item = _STEP_ITEM_RE.match(stripped)
+      if headed is None:
+        # Without numbered headings, steps are one list item (or line) each.
         step = RecipeStep(text=item.group(1) if item else stripped)
         body.steps.append(step)
         continue
-      step.text = _append_line(step.text, stripped)
+      headed.text = _append_line(headed.text, stripped)
       continue
 
     if section is not None:
@@ -290,7 +307,8 @@ def render_markdown(body: RecipeBody) -> str:
       out.append("")
   if body.steps:
     out += ["## Gör så här", ""]
-    titled = any(s.title for s in body.steps)
+    # A list item holds one line, so a step of several lines needs a numbered heading.
+    titled = any(s.title or "\n" in s.text for s in body.steps)
     for i, step in enumerate(body.steps, 1):
       if titled:
         heading = f"### {i}. {step.title or ''}".rstrip()

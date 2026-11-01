@@ -250,6 +250,7 @@ class TestValidation:
       body(title="x", timing={"start": {"date": "2026-02-30"}, "end": {"date": "2026-03-01"}, "time_zone": TZ}),
       body(title="x", timing=timed("2026-10-07T25:00", "2026-10-07T26:00")),
       body(title="x", timing={**timed("2026-10-07T17:00", "2026-10-07T18:00"), "time_zone": "Mars/Olympus"}),
+      body(title="x", timing={**timed("2026-10-07T17:00", "2026-10-07T18:00"), "time_zone": "Europe"}),
       body(title="x", timing=timed("2026-10-07T17:00", "2026-10-07T18:00"), recurrence={"frequency": "daily", "count": 3, "until": "2026-12-01"}),
       body(title="x", timing=timed("2026-10-07T17:00", "2026-10-07T18:00"), recurrence={"frequency": "daily", "by_weekday": ["MO"]}),
       body(title="x", timing=timed("2026-10-07T17:00", "2026-10-07T18:00"), recurrence={"frequency": "hourly"}),

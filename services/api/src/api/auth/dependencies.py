@@ -8,6 +8,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
 from api.auth.schemas import UserInfo
+from api.exceptions import ServiceUnavailableError
 from api.settings import settings
 
 log = structlog.get_logger()
@@ -38,12 +39,21 @@ class JWKSClient:
   async def get_jwks(cls, *, force_refresh: bool = False) -> dict | None:
     if force_refresh or not cls._is_cache_valid():
       uri = f"https://{settings.AUTH0_DOMAIN}/.well-known/jwks.json"
-      async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.get(uri)
-        response.raise_for_status()
-        cls._jwks = response.json()
-        cls._cache_timestamp = time.monotonic()
-        log.debug("JWKS cache refreshed", uri=uri)
+      try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+          response = await client.get(uri)
+          response.raise_for_status()
+          jwks = response.json()
+      except (httpx.HTTPError, ValueError) as e:
+        if cls._jwks is None:
+          raise ServiceUnavailableError("Sign-in can't be checked right now.") from e
+        # Auth0 is unreachable: keep checking tokens against the keys we have, and try again shortly.
+        log.warning("JWKS refresh failed, using cached keys", uri=uri, error=str(e))
+        cls._cache_timestamp = time.monotonic() - JWKS_CACHE_TTL + JWKS_MIN_REFRESH_INTERVAL
+        return cls._jwks
+      cls._jwks = jwks
+      cls._cache_timestamp = time.monotonic()
+      log.debug("JWKS cache refreshed", uri=uri)
     return cls._jwks
 
   @classmethod

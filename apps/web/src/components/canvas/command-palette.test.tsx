@@ -1,7 +1,14 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import {
+  afterAll,
   afterEach,
   beforeAll,
   beforeEach,
@@ -85,5 +92,40 @@ describe("CommandPalette", () => {
       manager().allWindows.filter((w) => w.module === "terminal"),
     ).toHaveLength(1);
     expect(onClose).toHaveBeenCalled();
+  });
+
+  describe("adding a task", () => {
+    beforeAll(() => {
+      vi.stubEnv("TZ", "Europe/Stockholm");
+    });
+    afterAll(() => {
+      vi.unstubAllEnvs();
+      vi.useRealTimers();
+      vi.unstubAllGlobals();
+    });
+
+    it("sends the due day as the exact date the API takes", async () => {
+      vi.useFakeTimers({
+        now: new Date(2026, 2, 26, 12),
+        toFake: ["Date"],
+      });
+      const fetchMock = vi.fn(async (_request: Request) =>
+        Response.json({ id: "t1", title: "Call the bank" }),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      mount();
+
+      fireEvent.change(screen.getByLabelText("Search"), {
+        target: { value: "add task" },
+      });
+      fireEvent.click(screen.getByRole("button", { name: /Add task/ }));
+      const input = screen.getByLabelText("New task");
+      fireEvent.change(input, { target: { value: "Call the bank fri" } });
+      fireEvent.keyDown(input, { key: "Enter" });
+
+      await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+      const body = await fetchMock.mock.calls[0][0].json();
+      expect(body.due_date).toBe("2026-03-27T00:00:00.000Z");
+    });
   });
 });

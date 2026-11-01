@@ -63,6 +63,37 @@ describe("TranscriptScanner", () => {
     });
   });
 
+  it("counts a message's final output when its blocks were written as it grew", async () => {
+    const block = (outputTokens: number, type: string) =>
+      `${JSON.stringify({
+        type: "assistant",
+        timestamp: new Date().toISOString(),
+        message: {
+          id: "m1",
+          role: "assistant",
+          model: "claude-opus-5-5",
+          content: [{ type }],
+          usage: {
+            input_tokens: 2,
+            output_tokens: outputTokens,
+            cache_read_input_tokens: 10,
+          },
+        },
+      })}\n`;
+    const scanner = new TranscriptScanner(dir);
+    fs.writeFileSync(file("a.jsonl"), block(5, "thinking"));
+    await scanner.scan(TODAY);
+    fs.appendFileSync(file("a.jsonl"), block(380, "tool_use"));
+
+    const totals = await scanner.scan(TODAY);
+    expect(totals.get(`${TODAY}\tclaude-opus-5-5`)).toEqual({
+      input_tokens: 2,
+      output_tokens: 380,
+      cache_read_tokens: 10,
+      cache_creation_tokens: 0,
+    });
+  });
+
   it("reads only what was appended, and waits for a line to finish", async () => {
     const scanner = new TranscriptScanner(dir);
     fs.writeFileSync(file("a.jsonl"), assistant("m1", "claude-opus-5-5", 100));

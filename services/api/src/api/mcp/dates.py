@@ -44,7 +44,7 @@ def resolve_timezone(user: User, override: str | None) -> ZoneInfo:
     raise ToolError("The user's timezone isn't known yet. Pass `timezone` (IANA name, e.g. 'Europe/Stockholm').")
   try:
     return ZoneInfo(name)
-  except (ZoneInfoNotFoundError, ValueError) as e:
+  except (ZoneInfoNotFoundError, ValueError, OSError) as e:
     raise ToolError(f"Unknown timezone: {name}") from e
 
 
@@ -81,10 +81,14 @@ def parse_day(text: str, today: date) -> date:
   raise ToolError(f"Couldn't read the day {text!r}. Use {DAY_HELP}.")
 
 
+def check_order(start: date | None, end: date | None) -> None:
+  if start is not None and end is not None and end < start:
+    raise ToolError("The end day must not be before the start day.")
+
+
 def local_window(start: date, end: date, tz: ZoneInfo, *, max_days: int) -> tuple[datetime, datetime]:
   """[start of `start`, start of the day after `end`) in `tz`, as UTC datetimes."""
-  if end < start:
-    raise ToolError("The end day must not be before the start day.")
+  check_order(start, end)
   if (end - start).days + 1 > max_days:
     raise ToolError(f"The range can span at most {max_days} days.")
   return (

@@ -112,6 +112,17 @@ class TestMonthSummary:
     assert [(c["name"], c["total"]) for c in sek["categories"]] == [("Restaurang", 30000)]
 
   @pytest.mark.asyncio
+  async def test_money_in_under_the_text_of_a_move_between_own_accounts_is_income(self, client: AsyncClient, ledger: _Ledger) -> None:
+    checking = await ledger.account("Skandia")
+    day = date(2026, 9, 10)
+    await ledger.add(checking, day, 100000, DEBIT, "Överföring", transfer=True)
+    await ledger.add(checking, date(2026, 9, 20), 250000, CREDIT, "Överföring")
+
+    [sek] = (await _summary(client))["currencies"]
+
+    assert (sek["income"], sek["spending"]) == (250000, 0)
+
+  @pytest.mark.asyncio
   async def test_compares_with_the_month_before_and_the_six_before_that(self, client: AsyncClient, ledger: _Ledger) -> None:
     checking = await ledger.account("Skandia")
     for month, spent in ((3, 70000), (8, 50000), (9, 20000)):

@@ -382,22 +382,26 @@ export function listConversations(
     seen.add(sessionId);
     return true;
   });
-  return newest
-    .slice(0, limit)
-    .flatMap(({ sessionId, file, updatedAt, worktree }) => {
-      let title: string | null;
-      try {
-        title = transcriptTitle(file);
-      } catch {
-        return [];
-      }
-      // Transcripts without a single message are aborted starts, not
-      // conversations, even once a name was given to them.
-      if (!title || !fileHasConversation(file)) return [];
-      return [
-        { sessionId, title, updatedAt, ...(worktree ? { worktree } : {}) },
-      ];
+  const conversations: ClaudeConversation[] = [];
+  for (const { sessionId, file, updatedAt, worktree } of newest) {
+    if (conversations.length >= limit) break;
+    let title: string | null;
+    try {
+      title = transcriptTitle(file);
+    } catch {
+      continue;
+    }
+    // Transcripts without a single message are aborted starts, not
+    // conversations, even once a name was given to them.
+    if (!title || !fileHasConversation(file)) continue;
+    conversations.push({
+      sessionId,
+      title,
+      updatedAt,
+      ...(worktree ? { worktree } : {}),
     });
+  }
+  return conversations;
 }
 
 const PREVIEW_EXCHANGES = 3;
@@ -440,6 +444,8 @@ function plainText(text: string): string {
     : flat;
 }
 
+const WRAPPER_TAG_RE = /^<[a-z]+(?:-[a-z]+)+>/;
+
 /** What the user typed, or null for anything Claude Code wrote on their behalf. */
 function promptText(msg: TranscriptMessage): string | null {
   if (msg.type !== "user" || msg.isMeta || msg.isCompactSummary) return null;
@@ -456,8 +462,13 @@ function promptText(msg: TranscriptMessage): string | null {
   }
   const shell = /^<bash-input>([\s\S]*?)<\/bash-input>/.exec(text);
   if (shell) return plainText(`! ${shell[1]}`);
-  // Task notifications, command output and the like.
-  if (!text || text.startsWith("<") || text.startsWith("[Request interrupted"))
+  // Task notifications, command output and the like: Claude Code's own tags
+  // are hyphenated, which a prompt starting with HTML or JSX isn't.
+  if (
+    !text ||
+    WRAPPER_TAG_RE.test(text) ||
+    text.startsWith("[Request interrupted")
+  )
     return null;
   return plainText(text);
 }

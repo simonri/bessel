@@ -8,7 +8,15 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 vi.mock("@/components/category-cell", () => ({
   CategoryCell: ({ categoryId }: { categoryId: string | null }) => (
@@ -33,7 +41,7 @@ function tx(overrides: Partial<TransactionSchema>): TransactionSchema {
     id: "t1",
     amount: 10000,
     currency: "SEK",
-    transaction_date: new Date("2026-10-20T00:00:00"),
+    transaction_date: new Date("2026-10-20"),
     direction: "debit",
     description: "ICA Nära",
     category_id: "food",
@@ -87,9 +95,9 @@ afterEach(cleanup);
 describe("groupByDay", () => {
   it("starts a group each time the day changes", () => {
     const groups = groupByDay([
-      tx({ id: "a", transaction_date: new Date("2026-10-20T00:00:00") }),
-      tx({ id: "b", transaction_date: new Date("2026-10-20T00:00:00") }),
-      tx({ id: "c", transaction_date: new Date("2026-10-18T00:00:00") }),
+      tx({ id: "a", transaction_date: new Date("2026-10-20") }),
+      tx({ id: "b", transaction_date: new Date("2026-10-20") }),
+      tx({ id: "c", transaction_date: new Date("2026-10-18") }),
     ]);
     expect(groups.map((g) => [g.key, g.transactions.map((t) => t.id)])).toEqual(
       [
@@ -97,6 +105,38 @@ describe("groupByDay", () => {
         ["2026-10-18", ["c"]],
       ],
     );
+  });
+
+  describe("west of UTC", () => {
+    beforeAll(() => {
+      vi.stubEnv("TZ", "America/New_York");
+    });
+    afterAll(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("keeps each transaction on the day the bank booked it", () => {
+      const [group] = groupByDay([
+        tx({ transaction_date: new Date("2026-10-20") }),
+      ]);
+      expect(group.key).toBe("2026-10-20");
+      expect(group.day.getDate()).toBe(20);
+    });
+
+    it("dates the open transaction by that day too", () => {
+      render(
+        <QueryClientProvider client={new QueryClient()}>
+          <TransactionPanel
+            transaction={tx({})}
+            account="Lönekonto"
+            categories={categories}
+            handlers={handlers()}
+            onOpenChange={vi.fn()}
+          />
+        </QueryClientProvider>,
+      );
+      expect(screen.getByText("Tuesday 20 October 2026")).toBeTruthy();
+    });
   });
 });
 

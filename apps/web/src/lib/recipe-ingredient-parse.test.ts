@@ -48,6 +48,10 @@ describe("parseIngredientLine", () => {
         note: "20 % fetthalt; gärna högrev",
       }),
     ],
+    ["1/2 dl mjölk", item({ amount: 0.5, unit: "dl", name: "mjölk" })],
+    ["1 1/2 tsk salt", item({ amount: 1.5, unit: "tsk", name: "salt" })],
+    ["12/3 st citroner", item({ amount: 4, unit: "st", name: "citroner" })],
+    ["1/0 dl vatten", item({ name: "1/0 dl vatten" })],
   ])("%s", (line, expected) => {
     expect(parseIngredientLine(line)).toEqual(expected);
   });
@@ -69,6 +73,12 @@ describe("formatAmount", () => {
     [0.75, "¾"],
     [5, "5"],
     [2.4, "2.4"],
+    [2 / 3, "⅔"],
+    [1 + 1 / 3, "1⅓"],
+    [0.2, "0.2"],
+    [0.8, "0.8"],
+    [1.2, "1.2"],
+    [0.55, "0.55"],
   ])("%s → %s", (amount, text) => {
     expect(formatAmount(amount)).toBe(text);
   });
@@ -83,6 +93,8 @@ describe("parseAmount", () => {
     ["", null],
     ["a lot", null],
     ["2 dl", null],
+    ["1/2", 0.5],
+    ["1 3/4", 1.75],
   ])("%j → %s", (text, amount) => {
     expect(parseAmount(text)).toBe(amount);
   });

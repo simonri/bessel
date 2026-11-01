@@ -47,6 +47,11 @@ class TestResolveTimezone:
     with pytest.raises(ToolError, match="Pass `timezone`"):
       resolve_timezone(User(auth0_sub="x"), None)
 
+  @pytest.mark.parametrize("name", ["Europe", "America", "Mars/Olympus", pytest.param("a" * 300, id="too-long")])
+  def test_a_region_or_garbage_is_an_unknown_timezone(self, name: str) -> None:
+    with pytest.raises(ToolError, match="Unknown timezone"):
+      resolve_timezone(User(auth0_sub="x"), name)
+
 
 class TestMeTimezone:
   @pytest.mark.asyncio
@@ -57,5 +62,6 @@ class TestMeTimezone:
     assert (await client.get("/v1/auth/me")).json()["timezone"] == "Europe/Stockholm"
 
   @pytest.mark.asyncio
-  async def test_rejects_unknown_timezones(self, client: AsyncClient) -> None:
-    assert (await client.patch("/v1/auth/me", json={"timezone": "Mars/Olympus"})).status_code == 422
+  @pytest.mark.parametrize("name", ["Mars/Olympus", "Europe"])
+  async def test_rejects_unknown_timezones(self, client: AsyncClient, name: str) -> None:
+    assert (await client.patch("/v1/auth/me", json={"timezone": name})).status_code == 422

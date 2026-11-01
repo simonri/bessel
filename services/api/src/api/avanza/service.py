@@ -1,7 +1,7 @@
 import hashlib
 import json
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, timedelta, tzinfo
 from decimal import Decimal
 from typing import Any, Literal
 from uuid import UUID
@@ -93,12 +93,12 @@ def parse(overview: dict[str, Any], positions: dict[str, Any] | None, transactio
 
 class AvanzaService:
   async def import_data(
-    self, connections: AvanzaConnectionRepository, user_id: UUID, *, username: str, fetched: Fetched, fetched_from: date | None
+    self, connections: AvanzaConnectionRepository, user_id: UUID, *, username: str, fetched: Fetched, fetched_from: date | None, zone: tzinfo
   ) -> AvanzaConnection:
     """Imports what the desktop app read from Avanza into every linked account the upload reaches back far enough for.
 
     An account whose history starts before `fetched_from` (linked after the app asked where to start) waits for the next
-    upload, which reads far enough back for it."""
+    upload, which reads far enough back for it. Positions are dated by the day in `zone`, the user's timezone."""
     now = utc_now()
     connection = await connections.get_for_user(user_id)
     if connection is None:
@@ -113,7 +113,7 @@ class AvanzaService:
       if fetched_from is None or fetched.positions is None or account.date_from < fetched_from:
         waiting += 1
         continue
-      created += await self.import_account(connections.session, user_id, account, fetched, today=now.date())
+      created += await self.import_account(connections.session, user_id, account, fetched, today=now.astimezone(zone).date())
       by_external_id[account.external_id].last_synced_at = now
       imported += 1
     connection.last_synced_at = now

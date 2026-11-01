@@ -23,8 +23,10 @@ def _no_place_names(monkeypatch: pytest.MonkeyPatch) -> None:
   place_names.clear_cache()
 
 
-def _segment(kind: LocationSegmentKind, local_start: datetime, local_end: datetime, *, offset: int = 120, **fields: Any) -> LocationSegment:
-  """A segment at wall-clock `local_start`..`local_end` in a zone `offset` minutes from UTC."""
+def _segment(
+  kind: LocationSegmentKind, local_start: datetime, local_end: datetime, *, offset: int = 120, end_offset: int | None = None, **fields: Any
+) -> LocationSegment:
+  """A segment at wall-clock `local_start`..`local_end` in a zone `offset` minutes from UTC, `end_offset` at its end if that differs."""
   shift = timedelta(minutes=offset)
   return LocationSegment(
     segment_key=f"{kind}-{local_start.isoformat()}-{fields.get('hierarchy_level')}",
@@ -32,8 +34,9 @@ def _segment(kind: LocationSegmentKind, local_start: datetime, local_end: dateti
     observed_at=datetime(2026, 10, 1, tzinfo=UTC),
     kind=kind,
     start_at=(local_start - shift).replace(tzinfo=UTC),
-    end_at=(local_end - shift).replace(tzinfo=UTC),
+    end_at=(local_end - timedelta(minutes=offset if end_offset is None else end_offset)).replace(tzinfo=UTC),
     utc_offset_minutes=offset,
+    end_utc_offset_minutes=end_offset,
     local_start=local_start,
     local_end=local_end,
     **fields,
@@ -162,6 +165,31 @@ class TestGetLocationHistory:
 
     assert [(d["date"], d["stays"][0]["start"]) for d in history["days"]] == [("2026-10-04", "2026-10-04T23:00:00-04:00")]
     assert (await mcp_call(connect, "get_location_history", {"start": "2026-10-05", "end": "2026-10-05", **STOCKHOLM}))["days"] == []
+
+  @pytest.mark.asyncio
+  async def test_a_night_over_the_clocks_going_back_is_an_hour_longer(self, connect: ConnectFixture, save_owned: SaveFixture) -> None:
+    # 22:00 CEST to 08:00 CET is eleven hours, not the ten the wall clock shows.
+    await save_owned(_visit(datetime(2026, 10, 24, 22), datetime(2026, 10, 25, 8), "home-id", "HOME", end_offset=60))
+
+    history = await mcp_call(connect, "get_location_history", {"start": "2026-10-24", "end": "2026-10-25", **STOCKHOLM})
+
+    assert [(s["start"], s["end"], s["duration_secs"]) for d in history["days"] for s in d["stays"]] == [
+      ("2026-10-24T22:00:00+02:00", "2026-10-25T00:00:00+02:00", 2 * 3600),
+      ("2026-10-25T00:00:00+02:00", "2026-10-25T08:00:00+01:00", 9 * 3600),
+    ]
+    assert history["places"][0]["total_secs"] == 11 * 3600
+
+  @pytest.mark.asyncio
+  async def test_a_trip_ends_at_the_offset_where_it_arrived(self, connect: ConnectFixture, save_owned: SaveFixture) -> None:
+    # Departs 10:00 at UTC+1, lands 11:30 at UTC+0: two and a half hours in the air.
+    await save_owned(
+      _segment(LocationSegmentKind.activity, datetime(2026, 11, 2, 10), datetime(2026, 11, 2, 11, 30), offset=60, end_offset=0, activity_type="FLYING")
+    )
+
+    history = await mcp_call(connect, "get_location_history", {"start": "2026-11-02", "end": "2026-11-02", **STOCKHOLM})
+
+    [trip] = history["days"][0]["trips"]
+    assert (trip["start"], trip["end"], trip["duration_secs"]) == ("2026-11-02T10:00:00+01:00", "2026-11-02T11:30:00Z", int(2.5 * 3600))
 
   @pytest.mark.asyncio
   async def test_a_range_over_a_month_is_refused(self, connect: ConnectFixture) -> None:

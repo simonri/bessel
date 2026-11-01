@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+import { format } from "date-fns";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   endTimeOptions,
   fmtDuration,
@@ -21,6 +22,34 @@ describe("startTimeOptions", () => {
     const i = options.findIndex((o) => o.value.getTime() === current.getTime());
     expect(options[i - 1].value).toEqual(new Date(2026, 9, 6, 12));
     expect(options[i + 1].value).toEqual(new Date(2026, 9, 6, 12, 15));
+  });
+});
+
+describe("startTimeOptions on DST days", () => {
+  beforeAll(() => {
+    vi.stubEnv("TZ", "Europe/Stockholm");
+  });
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
+  const clock = (options: { value: Date }[]) =>
+    options.map((o) => format(o.value, "yyyy-MM-dd HH:mm"));
+
+  it("lists the clock's times when the clocks spring forward", () => {
+    const options = clock(startTimeOptions(new Date(2026, 2, 29, 12)));
+    expect(options).toHaveLength(92);
+    expect(new Set(options).size).toBe(92);
+    expect(options.every((t) => t.startsWith("2026-03-29"))).toBe(true);
+    expect(options).not.toContain("2026-03-29 02:00");
+    expect(options.at(-1)).toBe("2026-03-29 23:45");
+  });
+
+  it("reaches 23:45 when the clocks fall back", () => {
+    const options = clock(startTimeOptions(new Date(2026, 9, 25, 12)));
+    expect(options.every((t) => t.startsWith("2026-10-25"))).toBe(true);
+    expect(options.at(-1)).toBe("2026-10-25 23:45");
+    expect(options).toContain("2026-10-25 23:00");
   });
 });
 

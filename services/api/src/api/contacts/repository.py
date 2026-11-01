@@ -2,14 +2,15 @@ from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Select, delete, exists, func, or_, select
+from sqlalchemy import Select, delete, exists, func, or_, select, union
 from sqlalchemy.dialects.postgresql import distinct_on, insert
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.common.utils import generate_uuid, utc_now
 from api.contacts.person import ParsedPerson
+from api.contacts.phones import phone_search_digits
 from api.models.calendar_account import CalendarAccount, CalendarProvider
-from api.models.contact import Contact, ContactEventDismissal, ContactInteraction, ContactMethod, ContactSource
+from api.models.contact import Contact, ContactEventDismissal, ContactInteraction, ContactMethod, ContactMethodKind, ContactSource
 
 
 class ContactSourceRepository(RepositoryBase[ContactSource], RepositoryIDMixin[ContactSource, UUID]):
@@ -37,13 +38,12 @@ class ContactSourceRepository(RepositoryBase[ContactSource], RepositoryIDMixin[C
     return await self.get_all(statement)
 
   async def list_user_ids(self) -> Sequence[UUID]:
-    """Everyone with a Google account that may read contacts."""
-    statement = (
-      select(CalendarAccount.user_id)
-      .where(CalendarAccount.provider == CalendarProvider.google, CalendarAccount.can_read_people.is_(True), CalendarAccount.deleted_at.is_(None))
-      .distinct()
+    """Everyone with a Google account that may read contacts, or with an address book that one could once:
+    its sync is what tells them Google stopped sharing it."""
+    readable = select(CalendarAccount.user_id).where(
+      CalendarAccount.provider == CalendarProvider.google, CalendarAccount.can_read_people.is_(True), CalendarAccount.deleted_at.is_(None)
     )
-    return (await self.session.execute(statement)).scalars().all()
+    return (await self.session.execute(union(readable, select(ContactSource.user_id)))).scalars().all()
 
   async def account_for(self, source: ContactSource) -> CalendarAccount:
     return (await self.session.execute(select(CalendarAccount).where(CalendarAccount.id == source.account_id))).scalar_one()
@@ -55,15 +55,20 @@ class ContactRepository(RepositoryBase[Contact], RepositoryIDMixin[Contact, UUID
   def get_filtered_statement(self, user_id: UUID, *, search: str | None = None) -> Select[tuple[Contact]]:
     statement = self.get_base_statement().where(Contact.user_id == user_id, Contact.deleted_at.is_(None))
     if search and (query := search.strip()):
-      statement = statement.where(
-        or_(
-          Contact.display_name.icontains(query, autoescape=True),
-          Contact.nickname.icontains(query, autoescape=True),
-          Contact.organization.icontains(query, autoescape=True),
-          func.array_to_string(Contact.tags, " ").icontains(query, autoescape=True),
-          exists().where(ContactMethod.contact_id == Contact.id, ContactMethod.value.icontains(query, autoescape=True)),
+      matches = [
+        Contact.display_name.icontains(query, autoescape=True),
+        Contact.nickname.icontains(query, autoescape=True),
+        Contact.organization.icontains(query, autoescape=True),
+        func.array_to_string(Contact.tags, " ").icontains(query, autoescape=True),
+        exists().where(ContactMethod.contact_id == Contact.id, ContactMethod.value.icontains(query, autoescape=True)),
+      ]
+      if digits := phone_search_digits(query):
+        # Numbers are saved however the phone or Google wrote them ("+46 70-123 45 67"), so compare digits only.
+        dialled = func.regexp_replace(ContactMethod.value, r"\D", "", "g")
+        matches.append(
+          exists().where(ContactMethod.contact_id == Contact.id, ContactMethod.kind == ContactMethodKind.phone, dialled.contains(digits, autoescape=True))
         )
-      )
+      statement = statement.where(or_(*matches))
     return statement.order_by(func.lower(Contact.display_name), Contact.id)
 
   async def list_for_user(self, user_id: UUID) -> Sequence[Contact]:
@@ -110,21 +115,26 @@ class ContactRepository(RepositoryBase[Contact], RepositoryIDMixin[Contact, UUID
     return contact
 
 
+def _cut(value: str | None, length: int) -> str | None:
+  """Google keeps longer text than the columns do; one long name mustn't stop every sync."""
+  return value[:length] if value else value
+
+
 def _copy(person: ParsedPerson, contact: Contact) -> None:
   contact.etag = person.etag
   contact.person = person.raw
-  contact.display_name = person.display_name
-  contact.given_name = person.given_name
-  contact.family_name = person.family_name
-  contact.nickname = person.nickname
-  contact.organization = person.organization
-  contact.job_title = person.job_title
+  contact.display_name = person.display_name[:500]
+  contact.given_name = _cut(person.given_name, 255)
+  contact.family_name = _cut(person.family_name, 255)
+  contact.nickname = _cut(person.nickname, 255)
+  contact.organization = _cut(person.organization, 500)
+  contact.job_title = _cut(person.job_title, 500)
   contact.birthday_month = person.birthday_month
   contact.birthday_day = person.birthday_day
   contact.birthday_year = person.birthday_year
   contact.photo_url = person.photo_url
   contact.notes = person.notes
-  contact.methods = [ContactMethod(kind=m.kind, label=m.label, value=m.value, position=i) for i, m in enumerate(person.methods)]
+  contact.methods = [ContactMethod(kind=m.kind, label=_cut(m.label, 100), value=m.value, position=i) for i, m in enumerate(person.methods)]
 
 
 class ContactInteractionRepository(RepositoryBase[ContactInteraction], RepositoryIDMixin[ContactInteraction, UUID]):

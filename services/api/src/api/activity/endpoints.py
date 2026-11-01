@@ -106,7 +106,7 @@ async def get_daily_activity(
 ) -> ActivityDailyResponse:
   try:
     tz = ZoneInfo(tz_name) if tz_name else None
-  except (ZoneInfoNotFoundError, ValueError) as e:
+  except (ZoneInfoNotFoundError, ValueError, OSError) as e:
     # Don't silently fall back to UTC — that would bucket days on the wrong boundary.
     raise ValidationError(f"Unknown timezone: {tz_name}", status_code=422) from e
 
@@ -148,9 +148,13 @@ async def get_intraday_activity(
   buckets: dict[int, int] = {}
 
   for seg in segments:
-    bucket_idx = (seg.start_ts - start_ts) // bucket_secs
-    bucket_idx = min(bucket_idx, total_buckets - 1)
-    buckets[bucket_idx] = buckets.get(bucket_idx, 0) + seg.duration
+    cur = seg.start_ts
+    while cur < seg.end_ts:
+      bucket_idx = (cur - start_ts) // bucket_secs
+      boundary = min(start_ts + (bucket_idx + 1) * bucket_secs, seg.end_ts)
+      bucket_idx = min(bucket_idx, total_buckets - 1)
+      buckets[bucket_idx] = buckets.get(bucket_idx, 0) + boundary - cur
+      cur = boundary
 
   result = sorted(
     [ActivityIntradayBucket(bucket=k, active_secs=v) for k, v in buckets.items()],

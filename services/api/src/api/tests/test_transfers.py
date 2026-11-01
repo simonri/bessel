@@ -1,5 +1,6 @@
 import json
 from datetime import date, timedelta
+from uuid import UUID
 
 import pytest
 from api.models.bank_account import BankAccount
@@ -240,3 +241,34 @@ class TestUnpairing:
 
     assert await _flow(client) == (5000, 5000)
     assert (await client.delete(f"/v1/transactions/{debit.id}/transfer")).status_code == 400
+
+
+class TestDeletingOneSide:
+  async def _pair(self, session: AsyncSession, save_fixture: SaveFixture, user: User) -> Transaction:
+    a, b = await _account(save_fixture, user, "A"), await _account(save_fixture, user, "B")
+    await _import(session, a, 5000, TransactionDirection.debit)
+    await _import(session, b, 5000, TransactionDirection.credit)
+    debit = (await session.execute(select(Transaction).where(Transaction.direction == TransactionDirection.debit))).scalar_one()
+    assert debit.transfer_id is not None
+    return debit
+
+  async def _credit_transfer_id(self, session: AsyncSession) -> UUID | None:
+    session.expire_all()
+    return (await session.execute(select(Transaction.transfer_id).where(Transaction.direction == TransactionDirection.credit))).scalar_one()
+
+  @pytest.mark.asyncio
+  async def test_the_other_side_counts_again(self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, user: User) -> None:
+    debit = await self._pair(session, save_fixture, user)
+
+    assert (await client.request("DELETE", "/v1/transactions", json={"ids": [str(debit.id)]})).status_code == 204
+
+    assert await self._credit_transfer_id(session) is None
+    assert await _flow(client) == (5000, 0)
+
+  @pytest.mark.asyncio
+  async def test_deleting_the_account_frees_the_other_side(self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, user: User) -> None:
+    debit = await self._pair(session, save_fixture, user)
+
+    assert (await client.delete(f"/v1/bank-accounts/{debit.bank_account_id}")).status_code == 204
+
+    assert await self._credit_transfer_id(session) is None

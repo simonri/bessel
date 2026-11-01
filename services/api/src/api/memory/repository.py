@@ -96,6 +96,8 @@ class MemoryFactRepository(
     if as_of is not None:
       filters.append(or_(MemoryFact.valid_from.is_(None), MemoryFact.valid_from <= as_of))
       filters.append(or_(MemoryFact.valid_to.is_(None), MemoryFact.valid_to > as_of))
+      if status is None and not include_past:
+        filters.append(MemoryFact.status != MemoryStatus.rejected)
     elif not include_past:
       filters.append(and_(_current(), MemoryFact.status != MemoryStatus.rejected))
     return filters

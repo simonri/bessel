@@ -52,6 +52,7 @@ import {
   localTime,
   mapsUrl,
   utcOffsetLabel,
+  viewerOffsetOn,
   visitSubtitle,
   visitTitle,
 } from "./-google-timeline-utils";
@@ -274,7 +275,7 @@ function TimelineDay({
   );
   const stats = dayStats(visits, activities, day);
   const offset = dayOffset(visits, activities);
-  const viewerOffset = -date.getTimezoneOffset();
+  const viewerOffset = viewerOffsetOn(day);
   const prev = adjacentDay(days, day, -1);
   const next = adjacentDay(days, day, 1);
   const latest = days.at(-1);

@@ -15,7 +15,7 @@ from sqlalchemy import func, nulls_last
 from api.common.schemas import Schema
 from api.common.utils import utc_now
 from api.mcp.context import user_session
-from api.mcp.dates import Day, TimezoneParam, local_window, parse_day, resolve_timezone, today_in
+from api.mcp.dates import Day, TimezoneParam, check_order, local_window, parse_day, resolve_timezone, today_in
 from api.mcp.tools.common import ToolSpec, read, write
 from api.models.project import Project
 from api.models.task import Task as TaskModel
@@ -238,6 +238,8 @@ def _repeat_fields(repeat: Repeat | None) -> _RepeatFields:
 def match_project(name: str, projects: Sequence[Project]) -> Project | None:
   """The project `name` refers to: exact (any case), else the only one starting with or containing it."""
   wanted = name.strip().casefold()
+  if not wanted:
+    return None
   for candidates in (
     [p for p in projects if p.name.casefold() == wanted],
     [p for p in projects if p.name.casefold().startswith(wanted)],
@@ -382,6 +384,7 @@ async def find_tasks(
       project_id = matched.id
 
     start, end = (parse_day(due_from, today) if due_from else None), (parse_day(due_to, today) if due_to else None)
+    check_order(start, end)
     has_due_date = None
     match due:
       case "overdue":
@@ -482,7 +485,7 @@ async def add_tasks(ctx: Context, tasks: Annotated[list[NewTask], Field(min_leng
       project_name, project_obj = None, None
       if item.project is not None:
         project_obj = match_project(item.project, projects)
-        if project_obj is None and not item.new_project:
+        if project_obj is None and not (item.new_project and item.project.strip()):
           raise _unknown_project(item.project, projects)
         project_name = project_obj.name if project_obj else item.project.strip()
       prepared.append((item, project_name, project_obj, parse_day(item.due, today) if item.due else None))
@@ -491,7 +494,10 @@ async def add_tasks(ctx: Context, tasks: Annotated[list[NewTask], Field(min_leng
     created: list[Task] = []
     existed: list[Task] = []
     for item, project_name, project_obj, due_date in prepared:
-      duplicate = await repo.find_recent_open_by_title(user.id, item.title.strip(), project_obj.id if project_obj else None, utc_now() - DUPLICATE_WINDOW)
+      # A project that doesn't exist yet holds no task this could repeat.
+      duplicate = None
+      if project_obj is not None or project_name is None:
+        duplicate = await repo.find_recent_open_by_title(user.id, item.title.strip(), project_obj.id if project_obj else None, utc_now() - DUPLICATE_WINDOW)
       if duplicate is not None:
         existed.append(to_task(duplicate, today))
         continue
@@ -521,10 +527,10 @@ async def update_tasks(ctx: Context, changes: Annotated[list[TaskChange], Field(
     owned = await _owned_tasks(session, user, [c.task_id for c in changes])
     projects = await ProjectRepository.from_session(session).list_for_user(user.id)
 
-    planned: list[tuple[TaskModel, dict[str, object]]] = []
+    # Changes to the same task add up, in order.
+    planned: dict[UUID, tuple[TaskModel, dict[str, object]]] = {}
     for change in changes:
-      task = owned[change.task_id]
-      fields: dict[str, object] = {}
+      task, fields = planned.setdefault(change.task_id, (owned[change.task_id], {}))
       if change.title is not None:
         fields["title"] = change.title.strip()
       if change.notes is not None:
@@ -555,11 +561,10 @@ async def update_tasks(ctx: Context, changes: Annotated[list[TaskChange], Field(
         fields.update(_repeat_fields(change.repeat))
       if change.stop_repeating:
         fields.update(is_recurring=False, rrule_frequency=None)
-      planned.append((task, fields))
 
-    for task, fields in planned:
+    for task, fields in planned.values():
       await task_service.update(session, task, fields)
-    updated = [to_task(task, today) for task, _ in planned]
+    updated = [to_task(task, today) for task, _ in planned.values()]
     return Tasks(total_count=len(updated), tasks=updated)
 
 

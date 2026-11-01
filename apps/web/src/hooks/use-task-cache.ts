@@ -114,7 +114,7 @@ export function useTaskCacheHelpers() {
       queryClient.setQueriesData(
         { queryKey: listKey },
         (old: TaskListPage | undefined) => {
-          if (!old?.items) return old;
+          if (!old?.items?.some((t) => t.id === taskId)) return old;
           return {
             ...old,
             items: old.items.filter((t) => t.id !== taskId),

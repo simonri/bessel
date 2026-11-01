@@ -12,6 +12,7 @@ from collections.abc import Sequence
 from datetime import date, timedelta
 from typing import Any
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 import structlog
 
@@ -99,6 +100,10 @@ def _default_status(kind: MemoryKind, evidence: Sequence[Evidence] = ()) -> Memo
   return MemoryStatus.confirmed
 
 
+def _importance(importance: int, evidence: Sequence[Evidence]) -> int:
+  return min(importance, EXTERNAL_MAX_IMPORTANCE) if _external_only(evidence) else importance
+
+
 def _merged_evidence(existing: Sequence[dict[str, Any]], added: Sequence[Evidence]) -> list[dict[str, Any]]:
   merged = list(existing)
   for item in added:
@@ -142,7 +147,7 @@ def _confirm(fact: MemoryFact, evidence: Sequence[Evidence], *, promote: bool) -
 
 
 class MemoryService:
-  async def profile(self, session: AsyncSession, user: User, *, today: date, sensitive: Sequence[MemorySensitivity] = ()) -> MemoryProfile:
+  async def profile(self, session: AsyncSession, user: User, *, today: date, tz: ZoneInfo, sensitive: Sequence[MemorySensitivity] = ()) -> MemoryProfile:
     facts = await MemoryFactRepository.from_session(session).list_current(user.id)
     shown = {MemorySensitivity.normal, *sensitive}
     core = sorted(
@@ -167,7 +172,7 @@ class MemoryService:
 
     since = today - timedelta(days=RECENT_DAYS)
     recent = sorted(
-      (fact for fact in facts if fact.sensitivity in shown and (fact.modified_at or fact.created_at).date() >= since),
+      (fact for fact in facts if fact.sensitivity in shown and (fact.modified_at or fact.created_at).astimezone(tz).date() >= since),
       key=lambda fact: fact.modified_at or fact.created_at,
       reverse=True,
     )
@@ -358,7 +363,7 @@ class MemoryService:
         statement=change.statement.strip(),
         kind=kind,
         status=_default_status(kind, change.evidence),
-        importance=change.importance or fact.importance,
+        importance=_importance(change.importance or fact.importance, change.evidence),
         sensitivity=change.sensitivity or fact.sensitivity,
         evidence=_merged_evidence([], change.evidence),
         valid_from=ended_on,

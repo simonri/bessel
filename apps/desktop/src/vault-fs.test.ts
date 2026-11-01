@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   assertNotRoot,
   assertRenameTargetFree,
+  atomicWrite,
   createExclusive,
   listIndexableRels,
   MAX_INDEXED_BYTES,
@@ -41,6 +42,24 @@ describe("assertNotRoot", () => {
     expect(() => assertNotRoot(root, path.resolve(root))).toThrow();
     expect(() => assertNotRoot(`${root}/`, root)).toThrow();
     expect(() => assertNotRoot(root, path.join(root, "a.md"))).not.toThrow();
+  });
+});
+
+describe("atomicWrite", () => {
+  it("keeps the note's permissions", async () => {
+    write("private.md", "before");
+    fs.chmodSync(path.join(root, "private.md"), 0o600);
+    write("shared.md", "before");
+    fs.chmodSync(path.join(root, "shared.md"), 0o664);
+
+    await atomicWrite(path.join(root, "private.md"), "after");
+    await atomicWrite(path.join(root, "shared.md"), "after");
+
+    const mode = (rel: string) =>
+      fs.statSync(path.join(root, rel)).mode & 0o777;
+    expect(read("private.md")).toBe("after");
+    expect(mode("private.md")).toBe(0o600);
+    expect(mode("shared.md")).toBe(0o664);
   });
 });
 
@@ -153,6 +172,86 @@ describe("rewriteLinksAfterRename", () => {
     expect(read("a.md")).toBe("see [[New]]");
     expect(read("b.md")).toBe("also [[Old]]");
     expect(read("c.md")).toBe("unrelated");
+  });
+
+  it("leaves links to another note of the same name", async () => {
+    // Archive/Fiske.md was just renamed; [[Fiske]] opens the shorter Fiske.md.
+    write("Fiske.md", "the shop");
+    write("Archive/Fiskebutik.md", "the old shop");
+    write("a.md", "see [[Fiske]] and [[Archive/Fiske]]");
+    write("Archive/b.md", "see [[Fiske]]");
+
+    const result = await rewriteLinksAfterRename(
+      root,
+      "Archive/Fiske.md",
+      "Archive/Fiskebutik.md",
+      new Set(),
+      deps,
+    );
+
+    expect(result.updatedFiles).toBe(1);
+    expect(read("a.md")).toBe("see [[Fiske]] and [[Archive/Fiskebutik]]");
+    expect(read("Archive/b.md")).toBe("see [[Fiske]]");
+  });
+
+  it("links by full path when the new name is another note's", async () => {
+    write("Hamn.md", "the harbour");
+    write("Archive/Hamn.md", "the shop, renamed");
+    write("a.md", "see [[Fiske]]");
+
+    await rewriteLinksAfterRename(
+      root,
+      "Archive/Fiske.md",
+      "Archive/Hamn.md",
+      new Set(),
+      deps,
+    );
+
+    expect(read("a.md")).toBe("see [[Archive/Hamn]]");
+    expect(read("Hamn.md")).toBe("the harbour");
+  });
+
+  it("keeps links to a note whose name the renamed one takes", async () => {
+    // Fiske.md was just renamed to Hamn.md, which [[Hamn]] would now open.
+    write("Places/Hamn.md", "the harbour");
+    write("Hamn.md", "the shop, renamed");
+    write("a.md", "see [[Hamn]] and [[Fiske]]");
+
+    await rewriteLinksAfterRename(root, "Fiske.md", "Hamn.md", new Set(), deps);
+
+    expect(read("a.md")).toBe("see [[Places/Hamn]] and [[Hamn]]");
+  });
+
+  it("rewrites links into a renamed folder", async () => {
+    // "Places" was just renamed to "Ställen".
+    write("Ställen/Fiske.md", "see [[Places/Hamn#Öppet]] and [[Hamn]]");
+    write("Ställen/Hamn.md", "back to [[Places/Fiske]]");
+    write("Placesbook.md", "not in the folder");
+    write("b.md", "[[fiske]]");
+    write("a.md", "[[Places/Fiske|the shop]], [[Fiske]], [[Placesbook]]");
+
+    // Open with unsaved edits under its old path.
+    const result = await rewriteLinksAfterRename(
+      root,
+      "Places",
+      "Ställen",
+      new Set(["Places/Hamn.md"]),
+      deps,
+    );
+
+    expect(result).toEqual({
+      updatedFiles: 2,
+      skippedFiles: ["Ställen/Hamn.md"],
+      failedFiles: [],
+    });
+    expect(read("Ställen/Hamn.md")).toBe("back to [[Places/Fiske]]");
+    expect(read("b.md")).toBe("[[fiske]]");
+    expect(read("a.md")).toBe(
+      "[[Ställen/Fiske|the shop]], [[Fiske]], [[Placesbook]]",
+    );
+    expect(read("Ställen/Fiske.md")).toBe(
+      "see [[Ställen/Hamn#Öppet]] and [[Hamn]]",
+    );
   });
 
   it("collects failures instead of aborting the rewrite", async () => {

@@ -88,12 +88,31 @@ class TestIngredientLines:
         "500 g nötfärs, 20 % fetthalt (gärna högrev)",
         RecipeIngredient(amount=500, unit="g", name="nötfärs", note="20 % fetthalt; gärna högrev"),
       ),
+      ("1/2 dl mjölk", RecipeIngredient(amount=0.5, unit="dl", name="mjölk")),
+      ("1 1/2 tsk salt", RecipeIngredient(amount=1.5, unit="tsk", name="salt")),
+      ("12/3 st citroner", RecipeIngredient(amount=4, unit="st", name="citroner")),
+      ("1/0 dl vatten", RecipeIngredient(name="1/0 dl vatten")),
     ],
   )
   def test_parses(self, line: str, expected: RecipeIngredient) -> None:
     assert parse_ingredient_line(line) == expected
 
-  @pytest.mark.parametrize(("amount", "text"), [(0.5, "½"), (1.5, "1½"), (0.75, "¾"), (5, "5"), (2.4, "2.4")])
+  @pytest.mark.parametrize(
+    ("amount", "text"),
+    [
+      (0.5, "½"),
+      (1.5, "1½"),
+      (0.75, "¾"),
+      (5, "5"),
+      (2.4, "2.4"),
+      (2 / 3, "⅔"),
+      (1 + 1 / 3, "1⅓"),
+      (0.2, "0.2"),
+      (0.8, "0.8"),
+      (1.2, "1.2"),
+      (0.55, "0.55"),
+    ],
+  )
   def test_formats_amounts(self, amount: float, text: str) -> None:
     assert format_amount(amount) == text
 
@@ -134,6 +153,32 @@ class TestParseMarkdown:
   @pytest.mark.parametrize("markdown", [GRANOLA, GRANOLA_WITH_INTRO, BURGER])
   def test_render_round_trips(self, markdown: str) -> None:
     body = parse_markdown(markdown)
+    assert parse_markdown(render_markdown(body)) == body
+
+  def test_numbered_steps_lose_their_numbers(self) -> None:
+    body = parse_markdown("## Ingredienser\n- 2 ägg\n\n## Gör så här\n1. Vispa äggen.\n2) Stek i smör.\n10. Ät.")
+
+    assert [s.text for s in body.steps] == ["Vispa äggen.", "Stek i smör.", "Ät."]
+
+  def test_untitled_steps_of_several_lines_round_trip(self) -> None:
+    body = RecipeBody(steps=[RecipeStep(text="Blanda mjöl och ägg.\n\nLåt vila i 10 min."), RecipeStep(text="Stek.\nVänd en gång.")])
+
+    assert parse_markdown(render_markdown(body)) == body
+
+  def test_a_time_with_parentheses_round_trips(self) -> None:
+    body = RecipeBody(steps=[RecipeStep(title="Grädda", text="Mitt i ugnen.", time_label="20 min (lite längre i varmluft)")])
+
+    assert parse_markdown(render_markdown(body)) == body
+
+  def test_an_untitled_step_among_titled_ones_round_trips(self) -> None:
+    body = RecipeBody(
+      steps=[
+        RecipeStep(title="Förbered", text="Hacka löken."),
+        RecipeStep(text="Stek allt.\n\nRör om ibland."),
+        RecipeStep(title="Servera", text="Ät."),
+      ]
+    )
+
     assert parse_markdown(render_markdown(body)) == body
 
 

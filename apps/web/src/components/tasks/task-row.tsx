@@ -61,6 +61,8 @@ export function TaskRow({
       aria-pressed={selecting ? picked : undefined}
       onClick={activate}
       onKeyDown={(e) => {
+        // Keys on the check or Reopen button inside are theirs.
+        if (e.target !== e.currentTarget) return;
         if (e.key === "Enter" || (selecting && e.key === " ")) {
           e.preventDefault();
           activate();

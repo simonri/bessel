@@ -83,6 +83,8 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         charged.bank_account_id == Transaction.bank_account_id,
         charged.direction == TransactionDirection.debit,
         charged.description == Transaction.description,
+        # A move to another own account charged nothing.
+        charged.transfer_id.is_(None),
         charged.deleted_at.is_(None),
       ),
       # Filed under what it paid back, such as dinner a friend Swished for.
@@ -242,7 +244,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     if direction:
       statement = statement.where(Transaction.direction == direction)
     if search:
-      statement = statement.where(or_(*(column.ilike(f"%{search}%") for column in (Transaction.description, Transaction.name, Transaction.note))))
+      statement = statement.where(or_(*(column.icontains(search, autoescape=True) for column in (Transaction.description, Transaction.name, Transaction.note))))
     if date_from:
       statement = statement.where(Transaction.transaction_date >= date_from)
     if date_to:
@@ -395,7 +397,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
   async def delete_imported(self, bank_account_id: UUID, dedup_hashes: Sequence[str]) -> None:
     """Takes back imported rows the source has since cancelled."""
     if dedup_hashes:
-      await self.session.execute(delete(Transaction).where(Transaction.bank_account_id == bank_account_id, Transaction.dedup_hash.in_(dedup_hashes)))
+      await self._delete(Transaction.bank_account_id == bank_account_id, Transaction.dedup_hash.in_(dedup_hashes))
 
   async def move_imported(self, from_account_id: UUID, to_account_id: UUID, *, hash_prefix: str) -> None:
     """Hands a source's imported rows to another account, for a source account linked somewhere new."""
@@ -404,6 +406,15 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       .where(Transaction.bank_account_id == from_account_id, Transaction.dedup_hash.startswith(hash_prefix, autoescape=True))
       .values(bank_account_id=to_account_id)
     )
+
+  async def claim_imported(self, user_id: UUID, bank_account_id: UUID, dedup_hashes: Sequence[str]) -> None:
+    """Moves the user's rows with these dedup hashes into the account, for a source now linked to it."""
+    if dedup_hashes:
+      await self.session.execute(
+        update(Transaction)
+        .where(Transaction.user_id == user_id, Transaction.dedup_hash.in_(dedup_hashes), Transaction.bank_account_id != bank_account_id)
+        .values(bank_account_id=bank_account_id)
+      )
 
   async def insert_ignoring_duplicates(self, values: list[dict[str, Any]]) -> int:
     stmt = pg_insert(Transaction).values(values).on_conflict_do_nothing(index_elements=["user_id", "dedup_hash"])
@@ -460,7 +471,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     return [(row.amount, row.direction) for row in await self.session.execute(statement)]
 
   async def delete_for_bank_account(self, bank_account_id: UUID) -> None:
-    await self.session.execute(delete(Transaction).where(Transaction.bank_account_id == bank_account_id))
+    await self._delete(Transaction.bank_account_id == bank_account_id)
 
   async def net_balances_by_account(self, account_ids: Sequence[UUID]) -> dict[UUID, int]:
     """Net transaction sum (credits minus debits) per bank account."""
@@ -483,8 +494,14 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     return {row.bank_account_id: int(row.net) for row in result}
 
   async def delete_by_ids(self, *, user_id: UUID, ids: Sequence[UUID]) -> int:
-    statement = delete(Transaction).where(Transaction.id.in_(ids), Transaction.user_id == user_id)
-    return await self.execute_for_rowcount(statement)
+    return await self._delete(Transaction.id.in_(ids), Transaction.user_id == user_id)
+
+  async def _delete(self, *where: ColumnElement[bool]) -> int:
+    """Deletes the matching transactions; the other side of a transfer pair they were in counts on its own again."""
+    deleted = (await self.session.execute(delete(Transaction).where(*where).returning(Transaction.transfer_id))).scalars().all()
+    if pairs := {transfer_id for transfer_id in deleted if transfer_id is not None}:
+      await self.session.execute(update(Transaction).where(Transaction.transfer_id.in_(pairs)).values(transfer_id=None))
+    return len(deleted)
 
   async def spending_by_category(self, *, user_id: UUID, year: int, month: int) -> Sequence[Row]:
     statement = (

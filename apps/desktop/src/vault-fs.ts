@@ -7,6 +7,7 @@ import {
   autoSuffixName,
   kindForRel,
   MAX_WRITE_BYTES,
+  movedRel,
   resolveInside,
   resolveInsideReal,
   rewriteLinksInContent,
@@ -35,10 +36,15 @@ export async function atomicWrite(
 ): Promise<void> {
   const dir = path.dirname(abs);
   const tmp = path.join(dir, tempFileName(path.basename(abs)));
+  // The replacement keeps the note's permissions: a private note stays private.
+  const existing = await fs.promises.stat(abs).catch(() => null);
   try {
     if (typeof data === "string")
       await fs.promises.writeFile(tmp, data, "utf8");
     else await fs.promises.writeFile(tmp, data);
+    // Some mounts (FAT, SMB) have no permissions to keep.
+    if (existing)
+      await fs.promises.chmod(tmp, existing.mode & 0o7777).catch(() => {});
     await fs.promises.rename(tmp, abs);
   } catch (err) {
     await fs.promises.unlink(tmp).catch(() => {});
@@ -178,7 +184,13 @@ export async function rewriteLinksAfterRename(
   let updatedFiles = 0;
   const skippedFiles: string[] = [];
   const failedFiles: string[] = [];
-  for (const { rel } of await listMarkdownEntries(root)) {
+  const rels = (await listMarkdownEntries(root)).map((e) => e.rel);
+  // What links resolved against: the vault as it was before the rename.
+  const relBefore = (rel: string) => movedRel(rel, to, from) ?? rel;
+  const filesBefore = rels.map(relBefore);
+  if (kindForRel(from) === "md" && !filesBefore.includes(from))
+    filesBefore.push(from);
+  for (const rel of rels) {
     const abs = resolveInside(root, rel);
     try {
       await lock(abs, async () => {
@@ -189,9 +201,10 @@ export async function rewriteLinksAfterRename(
           content,
           from,
           to,
+          { sourceRel: relBefore(rel), files: filesBefore },
         );
         if (!changed) return;
-        if (skip.has(rel)) {
+        if (skip.has(rel) || skip.has(relBefore(rel))) {
           skippedFiles.push(rel);
           return;
         }

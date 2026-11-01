@@ -3,6 +3,7 @@ import {
   getContactRemindersOptions,
   getDailySleepOptions,
   listActivitySourcesOptions,
+  listCalendarAccountsOptions,
   listCalendarEventsOptions,
   listTasksOptions,
   type TaskSchema,
@@ -87,6 +88,16 @@ function Block({
   );
 }
 
+/** Calendars the user hid in the calendar; the events API still lists them. */
+function useHiddenCalendarIds(): ReadonlySet<string> {
+  const { data } = useQuery(listCalendarAccountsOptions({ client }));
+  return new Set(
+    (data?.accounts ?? []).flatMap((a) =>
+      a.calendars.filter((c) => c.hidden).map((c) => c.id),
+    ),
+  );
+}
+
 function useUpcomingEvents(now: Date) {
   const startTs = Math.floor(now.getTime() / 1000) - 12 * 60 * 60;
   const endTs = Math.floor((now.getTime() + UPCOMING_WINDOW_MS) / 1000);
@@ -109,7 +120,8 @@ function useUpcomingEvents(now: Date) {
 
 export function NextUp({ now }: { now: Date }) {
   const events = useUpcomingEvents(now);
-  const next = nextEvent(events, now);
+  const hiddenCalendarIds = useHiddenCalendarIds();
+  const next = nextEvent(events, now, hiddenCalendarIds);
   const { accounts, isLoading } = useCalendarAccounts();
   const openSettings = useOpenSettings();
   // The get started card above already offers to connect one.

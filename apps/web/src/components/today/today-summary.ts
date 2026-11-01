@@ -9,13 +9,20 @@ export interface NextEvent {
   ongoing: boolean;
 }
 
-/** The event that's on now, or the next one to start; declined ones don't count. */
+/** The event that's on now, or the next one to start; declined ones and
+ *  those on calendars hidden in the calendar don't count. */
 export function nextEvent(
   events: readonly TimedCalendarEvent[],
   now: Date,
+  hiddenCalendarIds: ReadonlySet<string> = new Set(),
 ): NextEvent | null {
   const upcoming = events
-    .filter((e) => e.details.myResponse !== "declined" && e.end > now)
+    .filter(
+      (e) =>
+        e.details.myResponse !== "declined" &&
+        !hiddenCalendarIds.has(e.calendarId) &&
+        e.end > now,
+    )
     .sort((a, b) => a.start.getTime() - b.start.getTime());
   const event = upcoming[0];
   return event ? { event, ongoing: event.start <= now } : null;

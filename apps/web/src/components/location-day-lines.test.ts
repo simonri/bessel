@@ -114,6 +114,28 @@ describe("tripLines", () => {
     expect(lines[1].points[0]).toEqual(OFFICE);
   });
 
+  it("reads Android's upper-case activity types", () => {
+    const lines = tripLines(
+      [],
+      [
+        trip("walk", "08:00", "08:10", { activity_type: "WALKING" }),
+        trip("on foot", "09:00", "09:10", { activity_type: "ON_FOOT" }),
+        trip("flight", "10:00", "12:00", { activity_type: "FLYING" }),
+        trip("drive", "13:00", "14:00", {
+          activity_type: "IN_PASSENGER_VEHICLE",
+        }),
+      ],
+      [],
+    );
+
+    expect(lines.map((l) => l.mode)).toEqual([
+      "walk",
+      "walk",
+      "flight",
+      "ride",
+    ]);
+  });
+
   it("falls back to Google's ends, marked unrecorded, when there's no route and no stay nearby", () => {
     const [line] = tripLines(
       [stay("far", "05:00", "06:00", HOME)],

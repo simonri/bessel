@@ -9,6 +9,7 @@ from api.models.bank_profile import BankProfile
 from api.models.transaction import TransactionDirection
 from api.transactions.parsers.base import ParsedTransaction, compute_dedup_hash
 from openpyxl import load_workbook
+from openpyxl.utils.cell import coordinate_to_tuple
 
 # An XLSX is a zip; a tiny upload can expand to gigabytes (zip bomb).
 MAX_UNCOMPRESSED_BYTES = 100 * 1024 * 1024
@@ -47,11 +48,10 @@ def _parse_xlsx(content: bytes, profile: BankProfile) -> list[ParsedTransaction]
   # Extract account number from metadata rows if present
   account_col_name = col.get("account_number_cell")
   if account_col_name:
-    # e.g. "B1" -> row 1, col B
-    for row in ws.iter_rows(min_row=1, max_row=profile.skip_rows, values_only=False):
-      for cell in row:
-        if cell.coordinate == account_col_name:
-          account_number = str(cell.value or "").strip()
+    row_idx, col_idx = coordinate_to_tuple(account_col_name)
+    for values in ws.iter_rows(min_row=row_idx, max_row=row_idx, values_only=True):
+      if col_idx <= len(values):
+        account_number = str(values[col_idx - 1] or "").strip()
 
   # Read header row to find column indices
   header_row_idx = profile.skip_rows + 1

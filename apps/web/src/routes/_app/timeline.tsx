@@ -13,14 +13,7 @@ import {
 import { Skeleton } from "@bessel/ui/components/skeleton";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  addDays,
-  format,
-  isSameDay,
-  parseISO,
-  subDays,
-  subHours,
-} from "date-fns";
+import { addDays, format, isSameDay, parseISO, subDays } from "date-fns";
 import { useMemo } from "react";
 import { useOpenPage } from "@/components/open-page-context";
 import { DayNav } from "@/components/timeline/day-nav";
@@ -41,7 +34,7 @@ import {
   useSelectedDay,
   useSelectedSource,
 } from "@/lib/selected-day";
-import { fmtDur, localDayBounds } from "./-activity-utils";
+import { dayStartingAt, fmtDur, localDayBounds } from "./-activity-utils";
 import { dayParam } from "./-google-timeline-utils";
 
 // Days run 6am to 6am: a night out past midnight still belongs to the day
@@ -53,7 +46,7 @@ export const Route = createFileRoute("/_app/timeline")({
 });
 
 function TimelinePage() {
-  const today = subHours(new Date(), DAY_START_HOUR);
+  const today = dayStartingAt(new Date(), DAY_START_HOUR);
   const selectedDay = useSelectedDay();
   const date = selectedDay ? parseISO(selectedDay) : today;
   const setDate = (d: Date) =>

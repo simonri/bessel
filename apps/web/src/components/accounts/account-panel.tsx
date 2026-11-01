@@ -45,6 +45,7 @@ import { accountTypeLabel, problemCopy } from "@/lib/account-labels";
 import { errorDetail } from "@/lib/api-error";
 import { desktopAvanza } from "@/lib/avanza-sync";
 import { client } from "@/lib/client";
+import { fromApiDate } from "@/lib/local-day";
 import { Amount } from "@/lib/privacy";
 
 const LINE = "var(--color-primary-400)";
@@ -265,7 +266,7 @@ function AccountName({
 function BalanceHistory({ account }: { account: AccountOverview }) {
   const gradientId = `account-fill-${useId().replace(/[^\w-]/g, "")}`;
   const data = account.history.map((p) => ({
-    month: p.month,
+    month: fromApiDate(p.month),
     balance: p.balance,
   }));
   if (data.length < 2) return null;
@@ -404,7 +405,7 @@ function RecentTransactions({ account }: { account: AccountOverview }) {
           {items.map((t) => (
             <li key={t.id} className="flex items-center gap-3 py-2">
               <span className="w-12 shrink-0 type-caption text-white/40">
-                {format(t.transaction_date, "d MMM")}
+                {format(fromApiDate(t.transaction_date), "d MMM")}
               </span>
               <span className="min-w-0 flex-1 truncate text-13 text-white/75">
                 {displayName(t)}
@@ -489,7 +490,7 @@ function Connection({ account }: { account: AccountOverview }) {
   const updated = source.synced_at
     ? `Updated ${formatDistanceToNow(source.synced_at, { addSuffix: true })}`
     : account.last_transaction
-      ? `Last transaction ${format(account.last_transaction, "d MMM yyyy")}`
+      ? `Last transaction ${format(fromApiDate(account.last_transaction), "d MMM yyyy")}`
       : null;
 
   let body: ReactNode;

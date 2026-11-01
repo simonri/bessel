@@ -2,6 +2,7 @@
 seen, which calendar events they were at, and the dates coming up."""
 
 import re
+from calendar import monthrange
 from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -51,17 +52,15 @@ MIN_FIRST_NAME = 3
 def user_zone(user: User) -> ZoneInfo:
   try:
     return ZoneInfo(user.timezone or "UTC")
-  except (ZoneInfoNotFoundError, ValueError):
+  except (ZoneInfoNotFoundError, ValueError, OSError):
     return ZoneInfo("UTC")
 
 
 def next_occurrence(month: int, day: int, today: date) -> date:
-  """The next time a yearly date comes round, today included; 29 February falls on the 28th in other years."""
+  """The next time a yearly date comes round, today included; a day the month doesn't have, such as 29 February
+  outside leap years, falls on its last day."""
   for year in (today.year, today.year + 1):
-    try:
-      when = date(year, month, day)
-    except ValueError:
-      when = date(year, month, day - 1)
+    when = date(year, month, min(day, monthrange(year, month)[1]))
     if when >= today:
       return when
   raise AssertionError("unreachable")
@@ -167,7 +166,7 @@ class _Context:
 
   async def attended(self, since: timedelta) -> Sequence[CalendarEvent]:
     """Past events the user didn't decline, newest first."""
-    return await CalendarEventRepository.from_session(self.session).list_attended(self.user.id, self.now - since, self.now)
+    return await CalendarEventRepository.from_session(self.session).list_attended(self.user.id, self.now - since, self.now, self.zone)
 
   async def matcher(self, contacts: Iterable[Contact]) -> Matcher:
     return Matcher(contacts, await self.own_emails())
@@ -351,6 +350,8 @@ def _dates(contact: Contact, today: date, days: int) -> list[ContactDateReminder
   found = []
   for label, month, day, year in yearly:
     on = next_occurrence(month, day, today)
+    if year and on.year < year:
+      continue
     if on <= today + timedelta(days=days - 1):
       found.append(ContactDateReminder(contact=_reference(contact), label=label, on=on, years=on.year - year if year else None))
   return found
@@ -381,7 +382,11 @@ async def meeting_brief(session: AsyncSession, user: User, event_id: UUID) -> Me
     dates = _dates(contact, ctx.today, BRIEF_DATES_DAYS)
     brief.append(
       MeetingBriefPerson(
-        contact=_reference(contact), sure=sure, last_seen=seen[contact_id], recent=[_entry(i) for i in recent], upcoming=dates[0] if dates else None
+        contact=_reference(contact),
+        sure=sure,
+        last_seen=seen[contact_id],
+        recent=[_entry(i) for i in recent],
+        upcoming=min(dates, key=lambda d: d.on, default=None),
       )
     )
   return MeetingBrief(event=ContactFollowUpEvent(id=event.id, title=event.title, on=ctx.day(event)), people=brief)
