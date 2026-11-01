@@ -101,9 +101,7 @@ class TestTaskRecurrence:
   @pytest.mark.asyncio
   @pytest.mark.keep_session_state
   async def test_monthly_routine_returns_to_its_day_after_a_short_month(self, client: AsyncClient) -> None:
-    routine = (
-      await client.post("/v1/tasks", json={"title": "Pay rent", "is_recurring": True, "rrule_frequency": "monthly", "due_date": "2027-01-31"})
-    ).json()
+    routine = (await client.post("/v1/tasks", json={"title": "Pay rent", "is_recurring": True, "rrule_frequency": "monthly", "due_date": "2027-01-31"})).json()
 
     february = (await client.post(f"/v1/tasks/{routine['id']}/complete")).json()["next_task"]
     march = (await client.post(f"/v1/tasks/{february['id']}/complete")).json()["next_task"]
