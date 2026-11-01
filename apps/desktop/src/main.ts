@@ -38,6 +38,7 @@ import {
   getMainWindow,
   ipcHandle,
   ipcOn,
+  isTrustedUrl,
   setIpcErrorReporter,
   setMainWindow,
   TRUSTED_ORIGINS,
@@ -930,6 +931,19 @@ app.whenReady().then(() => {
   // Same UA fix as the browser widget below, applied to the default session so
   // the main window's Auth0/Google login (createWindow) isn't blocked too.
   session.defaultSession.setUserAgent(chromeUserAgent(session.defaultSession));
+  // Electron grants every permission unless told otherwise, without asking.
+  // The app itself keeps what it uses (notifications, the clipboard); any
+  // other page this session shows (the login sites it may still navigate to)
+  // gets nothing.
+  session.defaultSession.setPermissionRequestHandler(
+    (_contents, _permission, callback, details) => {
+      callback(isTrustedUrl(details.requestingUrl));
+    },
+  );
+  session.defaultSession.setPermissionCheckHandler(
+    (_contents, _permission, requestingOrigin) =>
+      isTrustedUrl(requestingOrigin),
+  );
 
   const browserSession = session.fromPartition(BROWSER_PARTITION);
   browserSession.setUserAgent(chromeUserAgent(browserSession));

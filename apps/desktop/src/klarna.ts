@@ -33,6 +33,11 @@ export function signInToKlarna(
   pending = new Promise<KlarnaCredentials | null>((resolve) => {
     const ses = session.fromPartition(KLARNA_PARTITION);
     ses.setUserAgent(userAgent);
+    // Klarna's pages need no permission; Electron would grant them all unasked.
+    ses.setPermissionRequestHandler((_contents, _permission, callback) =>
+      callback(false),
+    );
+    ses.setPermissionCheckHandler(() => false);
     const win = new BrowserWindow({
       width: 480,
       height: 800,
