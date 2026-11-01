@@ -12,6 +12,7 @@ from api.weather.schemas import WeatherDay, WeatherForecast, WeatherHour, Weathe
 
 MAX_DAYS = 9
 MAX_HOURS = 48
+SIX_HOURS = timedelta(hours=6)
 _SIMPLE = {"clearsky": "Clear sky", "fair": "Fair", "partlycloudy": "Partly cloudy", "cloudy": "Cloudy", "fog": "Fog"}
 # Yr's precipitation symbols: an intensity, the kind, showers or not, with thunder or not. Two of its names
 # carry a typo ("lightssleetshowersandthunder"), kept by Yr for compatibility.
@@ -65,8 +66,10 @@ def _days(series: list[dict[str, Any]], tz: ZoneInfo, first: date, count: int) -
       break
     instants = [e["data"]["instant"]["details"] for e in entries]
     temperatures = [i["air_temperature"] for i in instants]
-    for entry in entries:
-      six = _details(entry, "next_6_hours")
+    # A six-hour block from late evening mostly covers tomorrow's small hours: its extremes and chances are tomorrow's.
+    day_end = datetime.combine(day + timedelta(days=1), time(), tzinfo=tz)
+    blocks = [_details(e, "next_6_hours") for e in entries if _at(e) + SIX_HOURS - day_end <= SIX_HOURS / 2]
+    for six in blocks:
       temperatures += [t for t in (six.get("air_temperature_min"), six.get("air_temperature_max")) if t is not None]
 
     # Each stretch of time counts once: hourly amounts while Yr has them, six-hourly after.
@@ -94,7 +97,9 @@ def _days(series: list[dict[str, Any]], tz: ZoneInfo, first: date, count: int) -
         temperature_max=max(temperatures),
         condition=condition(symbol),
         precipitation=round(precipitation, 1),
-        precipitation_probability_max=_max(_details(e, p).get("probability_of_precipitation") for e in entries for p in ("next_1_hours", "next_6_hours")),
+        precipitation_probability_max=_max(
+          [_details(e, "next_1_hours").get("probability_of_precipitation") for e in entries] + [six.get("probability_of_precipitation") for six in blocks]
+        ),
         thunder_probability_max=_max(_details(e, "next_1_hours").get("probability_of_thunder") for e in entries),
         wind_speed_max=max(i["wind_speed"] for i in instants),
         wind_gust_max=_max(i.get("wind_speed_of_gust") for i in instants),

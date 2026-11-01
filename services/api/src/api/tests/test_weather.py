@@ -191,6 +191,34 @@ class TestDailyPrecipitation:
     assert only.precipitation == 4.5
 
 
+class TestDailyRanges:
+  def test_a_six_hour_block_mostly_in_the_next_day_does_not_count_towards_today(self) -> None:
+    day = datetime(2026, 11, 10, 18, tzinfo=UTC)
+    mild = {"symbol": "cloudy", "mm": 0.0, "pop": 0.0, "min": 2.0, "max": 4.0}
+    # From 22:00 the next six hours run to 04:00 tomorrow, when it freezes.
+    overnight = {**mild, "min": -6.0, "pop": 90.0}
+    hourly = {"symbol": "cloudy", "mm": 0.0, "pop": 0.0, "thunder": 0.0}
+    series = [
+      *(_entry(day + timedelta(hours=h), 3.0, one=hourly, six=mild) for h in range(4)),
+      _entry(day + timedelta(hours=4), 3.0, one=hourly, six=overnight),
+    ]
+    forecast = {"properties": {"meta": {"updated_at": "2026-11-10T00:00:00Z"}, "timeseries": series}}
+
+    [only] = summarize(forecast, ZoneInfo("UTC"), now=day, days=1, hours=0, location=None, latitude=0, longitude=0).days
+
+    assert (only.temperature_min, only.temperature_max, only.precipitation_probability_max) == (2.0, 4.0, 0.0)
+
+  def test_a_six_hour_block_mostly_in_the_day_counts_towards_it(self) -> None:
+    # Yr's six-hourly blocks start at 00, 06, 12 and 18 UTC: 20:00 to 02:00 in summer Stockholm.
+    day = datetime(2026, 7, 10, 18, tzinfo=UTC)
+    six = {"symbol": "cloudy", "mm": 0.0, "pop": 0.0, "min": 9.0, "max": 14.0}
+    forecast = {"properties": {"meta": {"updated_at": "2026-07-10T00:00:00Z"}, "timeseries": [_entry(day, 12.0, six=six)]}}
+
+    [only] = summarize(forecast, ZoneInfo("Europe/Stockholm"), now=day, days=1, hours=0, location=None, latitude=0, longitude=0).days
+
+    assert (only.temperature_min, only.temperature_max) == (9.0, 14.0)
+
+
 @pytest.mark.usefixtures("clock")
 class TestForecast:
   @pytest.mark.asyncio
