@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, date, datetime
 from urllib.parse import parse_qs, urlparse
 from uuid import UUID, uuid4
@@ -536,6 +537,28 @@ class TestSyncAndEvents:
     resp = await client.get("/v1/calendars/events", params={"start_ts": int(WEEK_START.timestamp()), "end_ts": int(WEEK_END.timestamp())})
 
     assert [e["title"] for e in resp.json()["events"]] == ["Trip", "Anniversary", "Birthday"]
+
+  @pytest.mark.asyncio
+  @pytest.mark.parametrize(
+    ("zone", "until", "last_day"),
+    [
+      # Google ends a series at the end of its last local day; Apple at its last occurrence.
+      ("America/New_York", "20261021T035959Z", "2026-10-20"),
+      ("Europe/Stockholm", "20261019T223000Z", "2026-10-20"),
+    ],
+  )
+  async def test_a_series_ends_on_the_users_own_day(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, zone: str, until: str, last_day: str
+  ) -> None:
+    user_id = await _current_user_id(client, session)
+    (await session.get_one(User, user_id)).timezone = zone
+    account_id = await _account(save_fixture, user_id)
+    series = replace(_timed("s", datetime(2026, 10, 6, 9, tzinfo=UTC), datetime(2026, 10, 6, 10, tzinfo=UTC)), rrule=f"FREQ=WEEKLY;UNTIL={until}")
+    await _apply(session, account_id, AccountSnapshot(calendars=[ProviderCalendar("c", "Cal", "#ff0000")], events={"c": [series]}))
+
+    resp = await client.get("/v1/calendars/events", params={"start_ts": int(WEEK_START.timestamp()), "end_ts": int(WEEK_END.timestamp())})
+
+    assert resp.json()["events"][0]["recurrence"]["until"] == last_day
 
   @pytest.mark.asyncio
   @pytest.mark.parametrize("span", [0, 63 * 86400])

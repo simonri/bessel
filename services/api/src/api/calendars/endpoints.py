@@ -31,6 +31,7 @@ from api.calendars.service import OAuthCallbackError, calendar_service
 from api.exceptions import ServiceUnavailableError, TooManyRequestsError, ValidationError
 from api.logging import Logger
 from api.models.calendar_event import CalendarEvent
+from api.models.user import User
 from api.postgres import AsyncSession, DBSession
 from api.redis import Redis, get_redis
 from api.users.dependencies import CurrentDBUser
@@ -175,13 +176,14 @@ async def list_calendar_events(
     datetime.fromtimestamp(start_ts, tz=UTC),
     datetime.fromtimestamp(end_ts, tz=UTC),
   )
-  return CalendarEventListResponse(events=await calendar_service.event_schemas(CalendarPersonRepository.from_session(session), current_user.id, events))
+  people = CalendarPersonRepository.from_session(session)
+  return CalendarEventListResponse(events=await calendar_service.event_schemas(people, current_user.id, events, time_zone=current_user.timezone))
 
 
-async def _write_response(session: AsyncSession, user_id: UUID, event: CalendarEvent | None) -> EventWriteResponse:
+async def _write_response(session: AsyncSession, user: User, event: CalendarEvent | None) -> EventWriteResponse:
   if event is None:
     return EventWriteResponse(event=None)
-  [schema] = await calendar_service.event_schemas(CalendarPersonRepository.from_session(session), user_id, [event])
+  [schema] = await calendar_service.event_schemas(CalendarPersonRepository.from_session(session), user.id, [event], time_zone=user.timezone)
   return EventWriteResponse(event=schema)
 
 
@@ -194,7 +196,7 @@ async def create_calendar_event(
   current_user: CurrentDBUser,
 ) -> EventWriteResponse:
   event = await calendar_edit_service.create_event(session, redis, current_user.id, calendar_id, body)
-  return await _write_response(session, current_user.id, event)
+  return await _write_response(session, current_user, event)
 
 
 @router.patch("/events/{event_id}", summary="Update Calendar Event", response_model=EventWriteResponse)
@@ -206,7 +208,7 @@ async def update_calendar_event(
   current_user: CurrentDBUser,
 ) -> EventWriteResponse:
   event = await calendar_edit_service.update_event(session, redis, current_user.id, event_id, body)
-  return await _write_response(session, current_user.id, event)
+  return await _write_response(session, current_user, event)
 
 
 @router.put("/events/{event_id}/response", summary="Answer Calendar Invitation", response_model=EventWriteResponse)
@@ -218,7 +220,7 @@ async def respond_to_calendar_event(
   current_user: CurrentDBUser,
 ) -> EventWriteResponse:
   event = await calendar_edit_service.respond_to_event(session, redis, current_user.id, event_id, body)
-  return await _write_response(session, current_user.id, event)
+  return await _write_response(session, current_user, event)
 
 
 @router.delete("/events/{event_id}", summary="Delete Calendar Event", status_code=204)

@@ -4,6 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from uuid import UUID
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import httpx
 import structlog
@@ -193,10 +194,14 @@ class CalendarService:
     async with provider_http.client() as http:
       return await ICloudCalendarClient(http, email, decrypt(encrypted_credentials)).list_calendars()
 
-  async def event_schemas(self, people: CalendarPersonRepository, user_id: UUID, events: Sequence[CalendarEvent]) -> list[CalendarEventSchema]:
+  async def event_schemas(
+    self, people: CalendarPersonRepository, user_id: UUID, events: Sequence[CalendarEvent], *, time_zone: str | None = None
+  ) -> list[CalendarEventSchema]:
     """Events as returned by the API, with guests named and pictured from the
-    user's own accounts' contacts when the event itself doesn't name them."""
-    schemas = [CalendarEventSchema.model_validate(event) for event in events]
+    user's own accounts' contacts when the event itself doesn't name them.
+    A series' last day is read in `time_zone`, the user's own."""
+    context = {"time_zone": _known_zone(time_zone)}
+    schemas = [CalendarEventSchema.model_validate(event, context=context) for event in events]
     known = await people.lookup_for_user(user_id, {a.email.lower() for s in schemas for a in s.attendees})
     for schema in schemas:
       for attendee in schema.attendees:
@@ -221,6 +226,13 @@ class CalendarService:
     account.can_write_contacts = snapshot.can_write_contacts
     account.last_synced_at = utc_now()
     account.sync_error = None
+
+
+def _known_zone(name: str | None) -> str | None:
+  try:
+    return ZoneInfo(name).key if name else None
+  except (ZoneInfoNotFoundError, ValueError):
+    return None
 
 
 calendar_service = CalendarService()
