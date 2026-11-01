@@ -479,6 +479,32 @@ describe("transcripts", () => {
     });
   });
 
+  it("keeps a prompt that starts with markup", () => {
+    const id = "99999999-9999-4999-8999-999999999999";
+    writeTranscript(
+      "/repo",
+      id,
+      [
+        user("Rename the button"),
+        assistant(text("Renamed.")),
+        user("<Button> no longer renders"),
+        assistant(text("Fixed the import.")),
+        user("<local-command-stdout>ok</local-command-stdout>"),
+      ],
+      1,
+    );
+
+    expect(
+      transcriptPreview("/repo", id)?.exchanges.map((e) => [
+        e.prompt,
+        e.reply,
+      ]),
+    ).toEqual([
+      ["Rename the button", "Renamed."],
+      ["<Button> no longer renders", "Fixed the import."],
+    ]);
+  });
+
   it("reads back past bulky tool output, and names how it started", () => {
     const id = "77777777-7777-4777-8777-777777777777";
     const bulk = user([
