@@ -15,13 +15,16 @@ from api.models.memory_fact import MemorySensitivity, MemoryStatus
 from api.models.user import User
 
 
-def _today(user: User) -> date:
+def _zone(user: User) -> ZoneInfo:
   """Memory works before the user's apps have reported a timezone; dates then fall on UTC days."""
   try:
-    zone = ZoneInfo(user.timezone or "UTC")
+    return ZoneInfo(user.timezone or "UTC")
   except (ZoneInfoNotFoundError, ValueError):
-    zone = ZoneInfo("UTC")
-  return today_in(zone)
+    return ZoneInfo("UTC")
+
+
+def _today(user: User) -> date:
+  return today_in(_zone(user))
 
 
 async def get_profile(
@@ -43,7 +46,8 @@ async def get_profile(
   hundreds of questions already.
   """
   async with user_session(ctx) as (session, user):
-    return await memory_service.profile(session, user, today=_today(user), sensitive=sensitive or ())
+    zone = _zone(user)
+    return await memory_service.profile(session, user, today=today_in(zone), tz=zone, sensitive=sensitive or ())
 
 
 class MemorySearch(Schema):

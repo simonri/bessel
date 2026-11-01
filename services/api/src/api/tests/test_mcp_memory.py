@@ -1,8 +1,14 @@
 from collections.abc import Sequence
+from datetime import UTC, date, datetime
 from typing import Any
 
 import pytest
+from api.mcp.tools import memory as memory_tools
 from api.memory import service
+from api.models.memory_fact import MemoryFact, MemoryKind, MemoryStatus
+from api.models.user import User
+from api.postgres import AsyncSession
+from api.tests.fixtures.database import SaveFixture
 from api.tests.fixtures.mcp import ConnectFixture, mcp_call
 
 
@@ -232,6 +238,29 @@ class TestProfile:
     assert profile["areas"] == [{"area": "kropp/kläder", "facts": 1}, {"area": "sömn", "facts": 2}]
     assert profile["total_facts"] == 3
     assert {f["attribute"] for f in profile["recently_changed"]} == {"sömnmål", "kronotyp", "skostorlek"}
+
+  @pytest.mark.asyncio
+  async def test_this_week_is_counted_in_the_users_own_days(
+    self, connect: ConnectFixture, save_owned: SaveFixture, session: AsyncSession, user: User, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    user.timezone = "Europe/Stockholm"
+    await session.flush()
+    monkeypatch.setattr(memory_tools, "today_in", lambda tz: date(2026, 11, 2))
+    # 00:30 on 26 October in Stockholm, still 25 October in UTC; seven days before 2 November is the 26th.
+    await save_owned(
+      MemoryFact(
+        area="sömn",
+        attribute="läggdags",
+        statement="Släcker 02",
+        kind=MemoryKind.stated,
+        status=MemoryStatus.confirmed,
+        created_at=datetime(2026, 10, 25, 23, 30, tzinfo=UTC),
+      )
+    )
+
+    profile = await mcp_call(connect, "get_profile")
+
+    assert [f["attribute"] for f in profile["recently_changed"]] == ["läggdags"]
 
   @pytest.mark.asyncio
   async def test_sensitive_facts_come_only_when_asked_for(self, connect: ConnectFixture) -> None:

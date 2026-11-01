@@ -12,6 +12,7 @@ from collections.abc import Sequence
 from datetime import date, timedelta
 from typing import Any
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 import structlog
 
@@ -138,7 +139,7 @@ def _confirm(fact: MemoryFact, evidence: Sequence[Evidence], *, promote: bool) -
 
 
 class MemoryService:
-  async def profile(self, session: AsyncSession, user: User, *, today: date, sensitive: Sequence[MemorySensitivity] = ()) -> MemoryProfile:
+  async def profile(self, session: AsyncSession, user: User, *, today: date, tz: ZoneInfo, sensitive: Sequence[MemorySensitivity] = ()) -> MemoryProfile:
     facts = await MemoryFactRepository.from_session(session).list_current(user.id)
     shown = {MemorySensitivity.normal, *sensitive}
     core = sorted(
@@ -163,7 +164,7 @@ class MemoryService:
 
     since = today - timedelta(days=RECENT_DAYS)
     recent = sorted(
-      (fact for fact in facts if fact.sensitivity in shown and (fact.modified_at or fact.created_at).date() >= since),
+      (fact for fact in facts if fact.sensitivity in shown and (fact.modified_at or fact.created_at).astimezone(tz).date() >= since),
       key=lambda fact: fact.modified_at or fact.created_at,
       reverse=True,
     )
