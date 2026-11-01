@@ -251,8 +251,11 @@ class MemoryService:
       existing = await repository.get_current_for_attribute(user.id, item.attribute, area=item.area)
       same = next((fact for fact in existing if _normalize(fact.statement) == _normalize(item.statement)), None)
       if same is not None:
-        # A conclusion seen a third time, on its own evidence, stops being a guess.
-        _confirm(same, item.evidence, promote=item.kind != MemoryKind.inferred or same.confirm_count + 1 >= INFERRED_CONFIRMATIONS)
+        # A conclusion seen a third time, on its own evidence, stops being a guess; what others wrote never does.
+        promote = _default_status(item.kind, item.evidence) == MemoryStatus.confirmed or (
+          item.kind == MemoryKind.inferred and same.confirm_count + 1 >= INFERRED_CONFIRMATIONS
+        )
+        _confirm(same, item.evidence, promote=promote)
         await session.flush()
         results.append(RememberResult(outcome="known", fact=to_schema(same)))
         continue

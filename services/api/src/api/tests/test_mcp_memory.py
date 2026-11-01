@@ -196,6 +196,17 @@ class TestRemember:
     assert (seen["fact"]["status"], seen["fact"]["importance"]) == ("confirmed", 5)
     assert [f["attribute"] for a in (await mcp_call(connect, "get_profile"))["profile"] for f in a["facts"]] == ["läggdags"]
 
+  @pytest.mark.asyncio
+  async def test_what_others_wrote_again_does_not_confirm_it(self, connect: ConnectFixture) -> None:
+    mailed = fact("favoritbutik", "Handlar på Hoka", kind="observed", evidence=[{"source": "gmail", "ref": "nyhetsbrev"}])
+    await remember(connect, mailed)
+
+    [again] = await remember(connect, {**mailed, "evidence": [{"source": "gmail", "ref": "nyhetsbrev-2"}]})
+    [seen] = await remember(connect, {**mailed, "evidence": [{"source": "transactions", "ref": "kvitto"}]})
+
+    assert (again["outcome"], again["fact"]["status"]) == ("known", "hypothesis")
+    assert seen["fact"]["status"] == "confirmed"
+
 
 class TestProfile:
   @pytest.mark.asyncio
