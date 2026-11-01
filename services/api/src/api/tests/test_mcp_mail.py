@@ -210,6 +210,16 @@ class TestRead:
     assert (await mcp_call(connect, "read_email", {"uid": 2}))["text"] == "Ses vi på lördag?"
 
   @pytest.mark.asyncio
+  async def test_raw_8bit_headers_are_read_in_utf8_or_latin1(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    latin1 = f"From: B\xf6rje <borje@x.se>\r\nTo: {ME}\r\nSubject: R\xe4kning\r\n\r\nHej\r\n".encode("latin-1")
+    utf8 = f"From: B\xf6rje <borje@x.se>\r\nTo: {ME}\r\nSubject: R\xe4kning\r\n\r\nHej\r\n".encode()
+    mailbox["mailbox"] = FakeMailbox({"INBOX": [(latin1, set()), (utf8, set())]})
+
+    for uid in (1, 2):
+      found = await mcp_call(connect, "read_email", {"uid": uid})
+      assert (found["subject"], found["sender"]["name"]) == ("Räkning", "Börje")
+
+  @pytest.mark.asyncio
   async def test_a_missing_message_is_an_error(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
     mailbox["mailbox"] = FakeMailbox({"INBOX": []})
 

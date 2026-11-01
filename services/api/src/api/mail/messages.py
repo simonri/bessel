@@ -98,9 +98,25 @@ def _date(value: str | None) -> datetime | None:
   return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
+def _header(headers: EmailMessage, name: str) -> str | None:
+  """A header's text. Raw 8-bit bytes are read as UTF-8 when they are, else as Latin-1, as mail apps do."""
+  value = headers.get(name)
+  if value is None:
+    return None
+  raw = next(raw for key, raw in headers.raw_items() if key.lower() == name.lower())
+  data = raw.encode("ascii", "surrogateescape")
+  if data.isascii():
+    return str(value)
+  try:
+    data.decode()
+  except UnicodeDecodeError:
+    return str(policy.default.header_fetch_parse(name, data.decode("latin-1")))
+  return str(value)
+
+
 def envelope(folder: str, uid: int, flags: frozenset[str], raw_headers: bytes) -> Envelope:
   headers = _parser.parsebytes(raw_headers, headersonly=True)
-  sender = next(iter(_addresses(headers.get("From"))), None)
+  sender = next(iter(_addresses(_header(headers, "From"))), None)
   auto_submitted = (headers.get("Auto-Submitted") or "no").strip().lower()
   precedence = (headers.get("Precedence") or "").strip().lower()
   automated = (
@@ -113,11 +129,11 @@ def envelope(folder: str, uid: int, flags: frozenset[str], raw_headers: bytes) -
   return Envelope(
     folder=folder,
     uid=uid,
-    subject=str(headers.get("Subject") or "").strip(),
+    subject=(_header(headers, "Subject") or "").strip(),
     sender=sender,
-    to=_addresses(headers.get("To")),
-    cc=_addresses(headers.get("Cc")),
-    reply_to=_addresses(headers.get("Reply-To")),
+    to=_addresses(_header(headers, "To")),
+    cc=_addresses(_header(headers, "Cc")),
+    reply_to=_addresses(_header(headers, "Reply-To")),
     date=_date(headers.get("Date")),
     message_id=next(iter(_ids(headers.get("Message-ID"))), None),
     in_reply_to=next(iter(_ids(headers.get("In-Reply-To"))), None),
