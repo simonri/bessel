@@ -237,6 +237,17 @@ class TestUpdateTasks:
     assert [t["id"] for t in result["tasks"]] == [str(task.id)]
 
   @pytest.mark.asyncio
+  async def test_a_blank_project_name_is_no_project(self, connect: ConnectFixture, stockholm_user: User, bessel: Project, make_task: MakeTask) -> None:
+    task = await make_task("Buy milk")
+
+    message = await mcp_call_error(connect, "update_tasks", {"changes": [{"task_id": str(task.id), "project": ""}]})
+
+    assert "No project called ''" in message
+    assert (await mcp_call(connect, "get_task", {"task_id": str(task.id)}))["project"] is None
+    assert "No project called ' '" in await mcp_call_error(connect, "find_tasks", {"project": " "})
+    assert "No project called ''" in await mcp_call_error(connect, "add_tasks", {"tasks": [{"title": "Buy oat milk", "project": "", "new_project": True}]})
+
+  @pytest.mark.asyncio
   async def test_one_bad_id_changes_nothing(self, connect: ConnectFixture, stockholm_user: User, make_task: MakeTask) -> None:
     mine = await make_task("Mine", priority=0)
     message = await mcp_call_error(

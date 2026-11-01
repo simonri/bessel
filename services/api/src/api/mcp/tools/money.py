@@ -52,8 +52,8 @@ def match_name[T: (BankAccount, Category)](name: str, items: Sequence[T], kind: 
   wanted = name.strip().casefold()
   for candidates in (
     [i for i in items if i.name.casefold() == wanted],
-    [i for i in items if i.name.casefold().startswith(wanted)],
-    [i for i in items if wanted in i.name.casefold()],
+    [i for i in items if wanted and i.name.casefold().startswith(wanted)],
+    [i for i in items if wanted and wanted in i.name.casefold()],
   ):
     if len(candidates) == 1:
       return candidates[0]

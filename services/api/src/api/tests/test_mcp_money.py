@@ -174,6 +174,16 @@ class TestSearchTransactions:
     assert await self._search(connect) == ["LON", "CLOUDFLARE", "ICA NARA", "HETZNER", "ICA NARA"]
 
   @pytest.mark.asyncio
+  async def test_a_blank_name_is_no_account(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
+    only = await _account(save_fixture, user, "Skandia")
+    food = await _category(save_fixture, user, "Mat")
+    await _transaction(save_fixture, only, date(2026, 9, 3), 12_950, DEBIT, "ICA NARA", food)
+
+    for arguments in ({"account": " "}, {"category": " "}):
+      message = await mcp_call_error(connect, "search_transactions", arguments)
+      assert "No account called" in message or "No category called" in message
+
+  @pytest.mark.asyncio
   @pytest.mark.usefixtures("books")
   async def test_days_in_reverse_are_refused_rather_than_finding_nothing(self, connect: ConnectFixture) -> None:
     message = await mcp_call_error(connect, "search_transactions", {"start": "2026-09-30", "end": "2026-09-01"})

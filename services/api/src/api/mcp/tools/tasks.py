@@ -237,6 +237,8 @@ def _repeat_fields(repeat: Repeat | None) -> _RepeatFields:
 def match_project(name: str, projects: Sequence[Project]) -> Project | None:
   """The project `name` refers to: exact (any case), else the only one starting with or containing it."""
   wanted = name.strip().casefold()
+  if not wanted:
+    return None
   for candidates in (
     [p for p in projects if p.name.casefold() == wanted],
     [p for p in projects if p.name.casefold().startswith(wanted)],
@@ -482,7 +484,7 @@ async def add_tasks(ctx: Context, tasks: Annotated[list[NewTask], Field(min_leng
       project_name, project_obj = None, None
       if item.project is not None:
         project_obj = match_project(item.project, projects)
-        if project_obj is None and not item.new_project:
+        if project_obj is None and not (item.new_project and item.project.strip()):
           raise _unknown_project(item.project, projects)
         project_name = project_obj.name if project_obj else item.project.strip()
       prepared.append((item, project_name, project_obj, parse_day(item.due, today) if item.due else None))
