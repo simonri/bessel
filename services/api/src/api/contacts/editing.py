@@ -67,6 +67,11 @@ class ContactEditor:
     account.can_write_contacts = False
     await session.commit()
 
+  async def _gone(self, session: AsyncSession, contact: Contact) -> None:
+    """Committed at once: the error the user is shown rolls the request back."""
+    contact.deleted_at = utc_now()
+    await session.commit()
+
   async def update(self, session: AsyncSession, redis: Redis, user_id: UUID, contact_id: UUID, changes: dict[str, Any]) -> Contact:
     contacts = ContactRepository.from_session(session)
     contact = await contacts.get_owned_or_404(contact_id, user_id, not_found_message="Contact not found.")
@@ -85,7 +90,7 @@ class ContactEditor:
         body, fields = build_update(person, changes)
         saved = await google.update_contact(token, body, fields)
       except ProviderNotFoundError as e:
-        contact.deleted_at = utc_now()
+        await self._gone(session, contact)
         raise ResourceNotFound("This contact was deleted in Google.") from e
       await _remember_locations(session, user_id, changes, saved)
       return await contacts.save_edited(source, parse_person(saved), replaced_etag=replaced)
@@ -100,7 +105,7 @@ class ContactEditor:
       try:
         saved = await google.update_contact_photo(token, contact.resource_name, photo)
       except ProviderNotFoundError as e:
-        contact.deleted_at = utc_now()
+        await self._gone(session, contact)
         raise ResourceNotFound("This contact was deleted in Google.") from e
       return await contacts.save_edited(source, parse_person(saved), replaced_etag=replaced)
 

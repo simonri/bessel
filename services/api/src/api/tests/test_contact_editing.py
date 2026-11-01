@@ -1,7 +1,9 @@
 import base64
 from collections.abc import AsyncIterator, Callable
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
+from datetime import datetime
 from urllib.parse import parse_qs, urlparse
+from uuid import UUID
 
 import httpx
 import pytest
@@ -84,6 +86,19 @@ async def _synced(session: AsyncSession, user: User, people: FakePeople, session
 async def _contact(session: AsyncSession, resource_name: str) -> Contact:
   statement = select(Contact).where(Contact.resource_name == resource_name).execution_options(populate_existing=True)
   return (await session.execute(statement)).scalar_one()
+
+
+def _committed_deletions(monkeypatch: pytest.MonkeyPatch, session: AsyncSession, contact_id: UUID) -> list[datetime | None]:
+  """The contact's deleted_at at each commit: a request that ends in an error rolls back whatever it didn't commit."""
+  seen: list[datetime | None] = []
+  commit = session.commit
+
+  async def recording_commit() -> None:
+    seen.append(await session.scalar(select(Contact.deleted_at).where(Contact.id == contact_id)))
+    await commit()
+
+  monkeypatch.setattr(session, "commit", recording_commit)
+  return seen
 
 
 class TestBuildUpdate:
@@ -244,6 +259,28 @@ class TestEditing:
     stored = people.people["people/c1"][0]
     assert stored["nicknames"] == [{"value": "Nana"}]
     assert stored["emailAddresses"] == [{"value": "anna@phone.se"}], "the phone's change survives"
+
+  @pytest.mark.asyncio
+  async def test_editing_someone_deleted_in_google_meanwhile_takes_them_off_the_list(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    user: User,
+    people: FakePeople,
+    session_maker: SessionMaker,
+    redis: Redis,
+    monkeypatch: pytest.MonkeyPatch,
+  ) -> None:
+    people.put("people/c1", names=[{"givenName": "Anna"}])
+    await _synced(session, user, people, session_maker)
+    anna = await _contact(session, "people/c1")
+    people.delete("people/c1")
+    committed = _committed_deletions(monkeypatch, session, anna.id)
+
+    response = await client.patch(f"/v1/contacts/{anna.id}", json={"nickname": "Nana"})
+
+    assert response.status_code == 404
+    assert committed and committed[-1] is not None, "the 404 rolls back anything not committed before it"
 
   @pytest.mark.asyncio
   async def test_a_sync_lagging_behind_an_edit_does_not_undo_it(
@@ -539,16 +576,25 @@ class TestPhoto:
 
   @pytest.mark.asyncio
   async def test_someone_deleted_in_google_meanwhile_is_gone(
-    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    user: User,
+    people: FakePeople,
+    session_maker: SessionMaker,
+    redis: Redis,
+    monkeypatch: pytest.MonkeyPatch,
   ) -> None:
     people.put("people/c1", names=[{"givenName": "Anna"}])
     await _synced(session, user, people, session_maker)
     anna = await _contact(session, "people/c1")
     people.delete("people/c1")
+    committed = _committed_deletions(monkeypatch, session, anna.id)
 
     response = await client.put(f"/v1/contacts/{anna.id}/photo", json={"photo": base64.b64encode(PNG).decode()})
 
     assert response.status_code == 404
+    assert committed and committed[-1] is not None, "the 404 rolls back anything not committed before it"
     assert (await client.get("/v1/contacts")).json()["items"] == []
 
 
