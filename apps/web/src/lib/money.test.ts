@@ -29,6 +29,17 @@ describe("formatKr", () => {
     expect(plain(formatKr(-5000, "SEK", { sign: true }))).toBe("-50 kr");
     expect(plain(formatKr(5000))).toBe("50 kr");
   });
+
+  it("rounds a refund the way it rounds the purchase", () => {
+    expect(plain(formatKr(150))).toBe("2 kr");
+    expect(plain(formatKr(-150))).toBe("-2 kr");
+    expect(plain(formatKr(-12_350))).toBe("-124 kr");
+  });
+
+  it("shows less than half a krona below zero as 0 kr, not -0 kr", () => {
+    expect(plain(formatKr(-40))).toBe("0 kr");
+    expect(plain(formatKr(-40, "SEK", { sign: true }))).toBe("0 kr");
+  });
 });
 
 describe("formatKr exact", () => {

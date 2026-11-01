@@ -59,7 +59,8 @@ export function formatKr(
     });
     return `${plus}${value} ${suffix}`;
   }
-  const units = Math.round(minor / 100);
+  // Halves round away from zero, so a refund reads as the purchase did.
+  const units = Math.sign(minor) * Math.round(Math.abs(minor) / 100) || 0;
   const plus = sign && units > 0 ? "+" : "";
   if (compact && Math.abs(units) >= MILLION) {
     const millions = (units / MILLION).toLocaleString("sv-SE", {
