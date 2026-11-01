@@ -4,7 +4,7 @@ services:
     # Room for 8 parallel test runs of 16 databases each (see services/api/conftest.py).
     command: ["redis-server", "--databases", "128"]
     ports:
-      - "${BESSEL_REDIS_PORT}:6379"
+      - "127.0.0.1:${BESSEL_REDIS_PORT}:6379"
 
   db:
     image: postgres:15.1-bullseye
@@ -16,7 +16,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:
-      - "${BESSEL_POSTGRES_PORT}:5432"
+      - "127.0.0.1:${BESSEL_POSTGRES_PORT}:5432"
     expose:
       - ${BESSEL_POSTGRES_PORT}
     healthcheck:
