@@ -2,6 +2,7 @@
 seen, which calendar events they were at, and the dates coming up."""
 
 import re
+from calendar import monthrange
 from collections import Counter
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
@@ -56,12 +57,10 @@ def user_zone(user: User) -> ZoneInfo:
 
 
 def next_occurrence(month: int, day: int, today: date) -> date:
-  """The next time a yearly date comes round, today included; 29 February falls on the 28th in other years."""
+  """The next time a yearly date comes round, today included; a day the month doesn't have, such as 29 February
+  outside leap years, falls on its last day."""
   for year in (today.year, today.year + 1):
-    try:
-      when = date(year, month, day)
-    except ValueError:
-      when = date(year, month, day - 1)
+    when = date(year, month, min(day, monthrange(year, month)[1]))
     if when >= today:
       return when
   raise AssertionError("unreachable")

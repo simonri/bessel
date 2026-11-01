@@ -136,6 +136,11 @@ class TestNextOccurrence:
     assert next_occurrence(2, 29, date(2027, 2, 1)) == date(2027, 2, 28)
     assert next_occurrence(2, 29, date(2028, 2, 1)) == date(2028, 2, 29)
 
+  def test_a_day_past_the_months_end_falls_on_its_last_day(self) -> None:
+    assert next_occurrence(2, 30, date(2027, 2, 1)) == date(2027, 2, 28)
+    assert next_occurrence(2, 31, date(2028, 2, 1)) == date(2028, 2, 29)
+    assert next_occurrence(4, 31, date(2027, 4, 1)) == date(2027, 4, 30)
+
 
 class TestUserZone:
   def test_falls_back_to_utc_for_a_zone_that_doesnt_exist(self) -> None:

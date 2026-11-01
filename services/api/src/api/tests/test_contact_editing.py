@@ -201,6 +201,33 @@ class TestEditing:
     assert [(p["value"], p["display"]) for p in response.json()["phones"]] == [("+46709999999", "070-999 99 99"), ("08123456", "08-12 34 56")]
 
   @pytest.mark.asyncio
+  @pytest.mark.parametrize("birthday", [{"month": 2, "day": 30, "year": None}, {"month": 4, "day": 31, "year": None}, {"month": 2, "day": 29, "year": 2023}])
+  async def test_a_birthday_on_a_day_its_month_does_not_have_is_refused(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis, birthday: dict
+  ) -> None:
+    people.put("people/c1", names=[{"givenName": "Anna"}])
+    await _synced(session, user, people, session_maker)
+    anna = await _contact(session, "people/c1")
+    writes = len(people.writes)
+
+    response = await client.patch(f"/v1/contacts/{anna.id}", json={"birthday": birthday})
+
+    assert response.status_code == 422, response.text
+    assert len(people.writes) == writes
+
+  @pytest.mark.asyncio
+  async def test_29_february_is_a_birthday_in_a_leap_year_or_without_one(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
+  ) -> None:
+    people.put("people/c1", names=[{"givenName": "Anna"}])
+    await _synced(session, user, people, session_maker)
+    anna = await _contact(session, "people/c1")
+
+    for year in (2024, None):
+      response = await client.patch(f"/v1/contacts/{anna.id}", json={"birthday": {"month": 2, "day": 29, "year": year}})
+      assert response.status_code == 200, response.text
+
+  @pytest.mark.asyncio
   async def test_an_edit_to_someone_changed_in_google_meanwhile_lands_on_the_latest_version(
     self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker, redis: Redis
   ) -> None:
