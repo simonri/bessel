@@ -95,12 +95,11 @@ describe("CommandPalette", () => {
   });
 
   describe("adding a task", () => {
-    const tz = process.env.TZ;
     beforeAll(() => {
-      process.env.TZ = "Europe/Stockholm";
+      vi.stubEnv("TZ", "Europe/Stockholm");
     });
     afterAll(() => {
-      process.env.TZ = tz;
+      vi.unstubAllEnvs();
       vi.useRealTimers();
       vi.unstubAllGlobals();
     });

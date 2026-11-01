@@ -1,5 +1,13 @@
 // @vitest-environment jsdom
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import {
   hitsFromNotes,
   hitsFromSearch,
@@ -41,12 +49,11 @@ describe("hitsFromSearch", () => {
   });
 
   describe("west of UTC", () => {
-    const tz = process.env.TZ;
     beforeAll(() => {
-      process.env.TZ = "America/New_York";
+      vi.stubEnv("TZ", "America/New_York");
     });
     afterAll(() => {
-      process.env.TZ = tz;
+      vi.unstubAllEnvs();
     });
 
     it("keeps an all-day event on its own day", () => {
