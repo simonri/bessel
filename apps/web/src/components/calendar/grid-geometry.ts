@@ -34,11 +34,10 @@ export function dayIndexAt(
   );
 }
 
+/** The wall-clock time `minutes` after midnight, as the grid's hour rows
+ *  show it: on a DST day the rows skip or repeat an hour, elapsed time doesn't. */
 function atMinutes(day: Date, minutes: number): Date {
-  return addMinutes(
-    new Date(day.getFullYear(), day.getMonth(), day.getDate()),
-    minutes,
-  );
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minutes);
 }
 
 /** A new event from a drag in one day column. A double click (no drag) gives

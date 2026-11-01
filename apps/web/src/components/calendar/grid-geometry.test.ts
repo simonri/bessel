@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { HOUR_HEIGHT } from "./calendar-layout";
 import {
   allDayRange,
@@ -49,6 +49,27 @@ describe("dayIndexAt", () => {
 
 describe("createRange", () => {
   const day = new Date(2026, 9, 7);
+
+  describe("on DST days", () => {
+    beforeAll(() => {
+      vi.stubEnv("TZ", "Europe/Stockholm");
+    });
+    afterAll(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("starts at the hour row clicked, after the clocks spring forward", () => {
+      const springForward = new Date(2026, 2, 29);
+      const { start, end } = createRange(springForward, 10 * 60, 10 * 60);
+      expect([start.getHours(), end.getHours()]).toEqual([10, 11]);
+    });
+
+    it("starts at the hour row clicked, after the clocks fall back", () => {
+      const fallBack = new Date(2026, 9, 25);
+      const { start, end } = createRange(fallBack, 9 * 60, 10 * 60 + 45);
+      expect([start.getHours(), end.getHours()]).toEqual([9, 11]);
+    });
+  });
 
   it("a click gives an hour from the slot", () => {
     expect(createRange(day, 9 * 60, 9 * 60)).toEqual({
