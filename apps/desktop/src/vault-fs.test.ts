@@ -175,6 +175,23 @@ describe("rewriteLinksAfterRename", () => {
     expect(read("Archive/b.md")).toBe("see [[Fiske]]");
   });
 
+  it("links by full path when the new name is another note's", async () => {
+    write("Hamn.md", "the harbour");
+    write("Archive/Hamn.md", "the shop, renamed");
+    write("a.md", "see [[Fiske]]");
+
+    await rewriteLinksAfterRename(
+      root,
+      "Archive/Fiske.md",
+      "Archive/Hamn.md",
+      new Set(),
+      deps,
+    );
+
+    expect(read("a.md")).toBe("see [[Archive/Hamn]]");
+    expect(read("Hamn.md")).toBe("the harbour");
+  });
+
   it("collects failures instead of aborting the rewrite", async () => {
     write("a.md", "[[Old]]");
     write("b.md", "[[Old]]");

@@ -183,7 +183,8 @@ export function resolveLink(
 /**
  * Rewrites the links in `content`, the note at `sourceRel`, that lead to
  * `fromRel` so they lead to `toRel`. `files` are the vault's notes before the
- * rename: a bare [[Name]] that opens another note of the same name is left be.
+ * rename: a bare [[Name]] that opens another note of the same name is left be,
+ * and one whose new name would open another note gets the full path.
  */
 export function rewriteLinksInContent(
   content: string,
@@ -196,6 +197,7 @@ export function rewriteLinksInContent(
 ): { content: string; changed: boolean } {
   const toFull = stripMdExt(toRel);
   const toBase = basenameNoExt(toRel);
+  const filesAfter = files.map((rel) => (rel === fromRel ? toRel : rel));
 
   let changed = false;
   // In a table the alias pipe is written `\|`; it stays with the alias.
@@ -212,7 +214,11 @@ export function rewriteLinksInContent(
       ) => {
         const target = rawTarget.trim();
         if (resolveLink(files, sourceRel, target) !== fromRel) return match;
-        const newTarget = target.includes("/") ? toFull : toBase;
+        const newTarget =
+          !target.includes("/") &&
+          resolveLink(filesAfter, sourceRel, toBase) === toRel
+            ? toBase
+            : toFull;
 
         changed = true;
         return `${embed ?? ""}[[${newTarget}${headingPart ?? ""}${aliasPart ?? ""}]]`;
