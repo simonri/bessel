@@ -44,7 +44,7 @@ def resolve_timezone(user: User, override: str | None) -> ZoneInfo:
     raise ToolError("The user's timezone isn't known yet. Pass `timezone` (IANA name, e.g. 'Europe/Stockholm').")
   try:
     return ZoneInfo(name)
-  except (ZoneInfoNotFoundError, ValueError) as e:
+  except (ZoneInfoNotFoundError, ValueError, OSError) as e:
     raise ToolError(f"Unknown timezone: {name}") from e
 
 

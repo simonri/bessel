@@ -47,6 +47,11 @@ class TestResolveTimezone:
     with pytest.raises(ToolError, match="Pass `timezone`"):
       resolve_timezone(User(auth0_sub="x"), None)
 
+  @pytest.mark.parametrize("name", ["Europe", "America", "Mars/Olympus", pytest.param("a" * 300, id="too-long")])
+  def test_a_region_or_garbage_is_an_unknown_timezone(self, name: str) -> None:
+    with pytest.raises(ToolError, match="Unknown timezone"):
+      resolve_timezone(User(auth0_sub="x"), name)
+
 
 class TestMeTimezone:
   @pytest.mark.asyncio
