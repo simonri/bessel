@@ -21,6 +21,7 @@ from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from api.auth.dependencies import InvalidTokenError, decode_access_token
+from api.exceptions import ServiceUnavailableError
 from api.logging import Logger
 from api.redis import Redis
 from api.settings import settings
@@ -53,7 +54,7 @@ async def identify_bearer(scope: Scope) -> str | None:
     return None
   try:
     claims = await decode_access_token(token, audience=settings.AUTH0_AUDIENCE)
-  except InvalidTokenError:
+  except (InvalidTokenError, ServiceUnavailableError):
     return None
   sub = claims.get("sub")
   return sub if isinstance(sub, str) else None
