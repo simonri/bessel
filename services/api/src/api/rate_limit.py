@@ -7,6 +7,7 @@ from ratelimit.backends.redis import RedisBackend
 from ratelimit.types import ASGIApp, Scope
 
 from api.enums import RateLimitGroup
+from api.mcp.auth import Auth0TokenVerifier
 from api.redis import Redis, create_redis
 from api.settings import Environment, settings
 
@@ -47,11 +48,14 @@ def client_ip(scope: Scope) -> str | None:
 
 
 async def _authenticate(scope: Scope) -> tuple[str, RateLimitGroup]:
-  # Every Claude user's MCP calls come from Anthropic's addresses, so they are counted per access token instead: one
-  # user's burst then can't use up everyone's budget. A hash, so no token is kept, and one can't be forged to drain another's.
+  # Every Claude user's MCP calls come from Anthropic's addresses, so they are counted per user instead: one user's
+  # burst then can't use up everyone's budget. Only for a token that verifies: a made-up one per request would
+  # otherwise get a fresh budget each time, so those count against the address.
   authorization = _header(scope, b"authorization")
   if scope.get("path") == "/mcp" and authorization and authorization.lower().startswith("bearer "):
-    return "token:" + hashlib.sha256(authorization[7:].strip().encode()).hexdigest()[:32], RateLimitGroup.default
+    access = await Auth0TokenVerifier().verify_token(authorization[7:].strip())
+    if access is not None and access.subject:
+      return "user:" + hashlib.sha256(access.subject.encode()).hexdigest()[:32], RateLimitGroup.default
   return client_ip(scope) or "unknown", RateLimitGroup.default
 
 
