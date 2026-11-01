@@ -126,10 +126,12 @@ class ImapMailbox:
       field, _, value = value.partition(" ")
       args.append(field)
     if value is not None:
-      if value.isascii():
+      if value.isascii() and value.isprintable():
         args.append(_quote(value))
       else:
-        # Only ASCII travels in the command itself; the rest goes as a literal, which must come last.
+        # Only printable ASCII travels in the command itself: a line break there would end it and start another
+        # command (a search from a prompt-injected model could then move or delete folders). The rest goes as a
+        # literal, sent as counted bytes, which must come last.
         self.conn.literal = value.encode()  # type: ignore[assignment]
         args = ["CHARSET", "UTF-8", *args]
     data = self._check(self.conn.uid("SEARCH", *args), "search")

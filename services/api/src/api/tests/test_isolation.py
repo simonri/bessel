@@ -309,6 +309,14 @@ class TestProjects:
 
 class TestPlaces:
   @pytest.mark.asyncio
+  async def test_saving_a_place_says_nothing_about_who_else_saved_it(self, client: AsyncClient, other_client: AsyncClient) -> None:
+    # It was unique across users: the second to save a clinic got a 500, learning someone else had.
+    clinic = {"name": "Kliniken", "latitude": 59.3, "longitude": 18.0, "google_place_id": "ChIJ-clinic"}
+    assert (await client.post("/v1/places", json=clinic)).status_code == 201
+    assert (await other_client.post("/v1/places", json=clinic)).status_code == 201
+    assert (await client.post("/v1/places", json=clinic)).status_code == 409
+
+  @pytest.mark.asyncio
   async def test_other_user_cannot_read_or_change_places(self, client: AsyncClient, other_client: AsyncClient) -> None:
     place = await _create(client, "/v1/places", {"name": "A's cafe", "latitude": 59.9, "longitude": 10.7})
 
@@ -567,6 +575,32 @@ class TestBankingAndTransactions:
     assert (await other_client.delete(f"/v1/bank-accounts/{account['id']}")).status_code == 404
 
     assert (await client.get(f"/v1/bank-accounts/{account['id']}")).json()["name"] == "A checking"
+
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_file_their_transactions_under_my_category(
+    self, client: AsyncClient, other_client: AsyncClient, save_owned: SaveFixture, save_fixture: SaveFixture, other_user: User
+  ) -> None:
+    # Reports join categories by id alone: B would see my category's name and my "excluded" flag would change B's totals.
+    mine = Category(name="Groceries", slug="groceries", color="#22c55e")
+    await save_owned(mine)
+    account = await _create(other_client, "/v1/bank-accounts", {"name": "B checking", "currency": "SEK", "subtype": "checking"})
+    tx = Transaction(
+      user_id=other_user.id,
+      amount=5_000,
+      currency="SEK",
+      transaction_date=datetime.now(UTC).date(),
+      direction=TransactionDirection.debit,
+      dedup_hash=f"b-{uuid4().hex}",
+      description="B's shop",
+      bank_account_id=UUID(account["id"]),
+    )
+    await save_fixture(tx)
+
+    assert (await other_client.patch(f"/v1/transactions/{tx.id}", json={"category_id": str(mine.id)})).status_code == 404
+    assert (await other_client.patch("/v1/transactions/bulk", json={"ids": [str(tx.id)], "category_id": str(mine.id)})).status_code == 404
+    categorize = await other_client.post("/v1/transactions/categorize-by-description", json={"description": "B's shop", "category_id": str(mine.id)})
+    assert categorize.status_code == 404
+    assert (await other_client.get("/v1/transactions")).json()["items"][0]["category_id"] is None
 
   @pytest.mark.asyncio
   async def test_other_user_cannot_read_or_change_transactions(

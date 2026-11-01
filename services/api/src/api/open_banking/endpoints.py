@@ -5,7 +5,8 @@ import structlog
 from fastapi import APIRouter
 
 from api.bank_accounts.repository import BankAccountRepository
-from api.exceptions import ForbiddenError, ServiceUnavailableError, ValidationError
+from api.common.utils import utc_now
+from api.exceptions import ForbiddenError, ServiceUnavailableError, TooManyRequestsError, ValidationError
 from api.logging import Logger
 from api.open_banking.enable_banking import EnableBankingError, bank_logo
 from api.open_banking.repository import BankConnectionAccountRepository, BankConnectionRepository
@@ -98,6 +99,9 @@ async def link_bank_connection_account(
 @router.post("/{connection_id}/sync", summary="Sync Bank Connection", status_code=202)
 async def sync_bank_connection(connection_id: UUID, session: DBSession, current_user: CurrentDBUser) -> None:
   connection = await BankConnectionRepository.from_session(session).get_owned(connection_id, current_user.id)
+  # Banks allow a handful of reads a day and Enable Banking's quota is Bessel's, shared by every user.
+  if not open_banking_service.can_sync_now(connection, now=utc_now()):
+    raise TooManyRequestsError("This bank synced a moment ago. Try again in a few minutes.")
   open_banking_service.request_sync(connection.id)
 
 

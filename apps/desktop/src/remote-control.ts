@@ -5,6 +5,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { ipcHandle } from "./ipc.js";
 import {
+  isTooBroadToTrust,
   isTrustedFolder,
   type PhoneNotifications,
   phoneNotificationsFrom,
@@ -180,6 +181,10 @@ export function registerRemoteControlHandlers(): void {
   });
   ipcHandle("claude:trustFolder", (_event, folder: unknown) => {
     assertFolder(folder);
+    if (isTooBroadToTrust(folder, os.homedir()))
+      throw new Error(
+        "Trust a project's folder, not the whole computer or home folder.",
+      );
     return trustFolder(folder);
   });
   ipcHandle("claudeNotifications:get", () => readNotifications());

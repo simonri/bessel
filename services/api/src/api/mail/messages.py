@@ -7,9 +7,10 @@ from collections.abc import Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from email import policy
+from email.header import decode_header, make_header
 from email.message import EmailMessage
 from email.parser import BytesParser
-from email.utils import format_datetime, getaddresses, make_msgid, parsedate_to_datetime
+from email.utils import format_datetime, formataddr, getaddresses, make_msgid, parsedate_to_datetime
 
 from bs4 import BeautifulSoup
 
@@ -98,30 +99,36 @@ def _date(value: str | None) -> datetime | None:
   return parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)
 
 
+_CONTROL = re.compile(r"[\x00-\x1f\x7f]+")
+
+
 def _header(headers: EmailMessage, name: str) -> str | None:
-  """A header's text. Raw 8-bit bytes are read as UTF-8 when they are, else as Latin-1, as mail apps do."""
-  value = headers.get(name)
-  if value is None:
+  """A header as text on one line. Raw 8-bit bytes are read as UTF-8 when they are, else as Latin-1, as mail apps do.
+  A sender can encode CR/LF into a name or subject, which the parser refuses with ValueError: one such message then
+  broke every search that listed it, and raw it would reach the model as is."""
+  raw = next((v for k, v in headers.raw_items() if k.lower() == name.lower()), None)
+  if raw is None:
     return None
-  raw = next(raw for key, raw in headers.raw_items() if key.lower() == name.lower())
-  data = raw.encode("ascii", "surrogateescape")
-  if data.isascii():
-    return str(value)
   try:
-    data.decode()
-  except UnicodeDecodeError:
-    return str(policy.default.header_fetch_parse(name, data.decode("latin-1")))
-  return str(value)
+    data = raw.encode("ascii", "surrogateescape")
+    try:
+      data.decode()
+      text = str(headers.get(name))
+    except UnicodeDecodeError:
+      text = str(policy.default.header_fetch_parse(name, data.decode("latin-1")))
+  except ValueError:
+    text = str(make_header(decode_header(raw)))
+  return _CONTROL.sub(" ", text)
 
 
 def envelope(folder: str, uid: int, flags: frozenset[str], raw_headers: bytes) -> Envelope:
   headers = _parser.parsebytes(raw_headers, headersonly=True)
   sender = next(iter(_addresses(_header(headers, "From"))), None)
-  auto_submitted = (headers.get("Auto-Submitted") or "no").strip().lower()
-  precedence = (headers.get("Precedence") or "").strip().lower()
+  auto_submitted = (_header(headers, "Auto-Submitted") or "no").strip().lower()
+  precedence = (_header(headers, "Precedence") or "").strip().lower()
   automated = (
-    headers.get("List-Unsubscribe") is not None
-    or headers.get("List-Id") is not None
+    _header(headers, "List-Unsubscribe") is not None
+    or _header(headers, "List-Id") is not None
     or auto_submitted != "no"
     or precedence in {"bulk", "list", "junk"}
     or (sender is not None and _NO_REPLY.match(sender.address) is not None)
@@ -129,25 +136,31 @@ def envelope(folder: str, uid: int, flags: frozenset[str], raw_headers: bytes) -
   return Envelope(
     folder=folder,
     uid=uid,
-    subject=(_header(headers, "Subject") or "").strip(),
+    subject=str(_header(headers, "Subject") or "").strip(),
     sender=sender,
     to=_addresses(_header(headers, "To")),
     cc=_addresses(_header(headers, "Cc")),
     reply_to=_addresses(_header(headers, "Reply-To")),
-    date=_date(headers.get("Date")),
-    message_id=next(iter(_ids(headers.get("Message-ID"))), None),
-    in_reply_to=next(iter(_ids(headers.get("In-Reply-To"))), None),
-    references=_ids(headers.get("References")),
+    date=_date(_header(headers, "Date")),
+    message_id=next(iter(_ids(_header(headers, "Message-ID"))), None),
+    in_reply_to=next(iter(_ids(_header(headers, "In-Reply-To"))), None),
+    references=_ids(_header(headers, "References")),
     automated=automated,
     unread="\\Seen" not in flags,
     flagged="\\Flagged" in flags,
   )
 
 
+# Inline styles that keep text from the reader's eyes while it stays in the markup.
+_HIDDEN_STYLE = re.compile(r"display\s*:\s*none|visibility\s*:\s*hidden|font-size\s*:\s*0(?![.\d]*[1-9])|opacity\s*:\s*0(?![.\d]*[1-9])", re.IGNORECASE)
+
+
 def _html_text(html: str) -> str:
   soup = BeautifulSoup(html, "html.parser")
-  for hidden in soup(["script", "style", "head"]):
+  for hidden in soup(["script", "style", "head", "template"]):
     hidden.decompose()
+  for element in soup.find_all(lambda tag: tag.has_attr("hidden") or _HIDDEN_STYLE.search(str(tag.get("style") or ""))):
+    element.decompose()
   return re.sub(r"\n{3,}", "\n\n", soup.get_text("\n")).strip()
 
 
@@ -171,13 +184,15 @@ def _size(part: EmailMessage) -> int:
 
 
 def message(folder: str, uid: int, flags: frozenset[str], raw: bytes) -> Message:
+  """The text the user sees. Mail apps show the HTML part where there is one, so that comes first, without what its
+  styles hide: a sender could otherwise put instructions only in the plain part, or in hidden markup, that only an
+  assistant reads."""
   parsed = _parser.parsebytes(raw)
-  plain = parsed.get_body(preferencelist=("plain",))
-  text = _part_text(plain).strip() if plain is not None else ""
+  html = parsed.get_body(preferencelist=("html",))
+  text = _html_text(_part_text(html)) if html is not None else ""
   if not text:
-    # Some mail carries an empty plain part beside the real HTML one.
-    html = parsed.get_body(preferencelist=("html",))
-    text = _html_text(_part_text(html)) if html is not None else ""
+    plain = parsed.get_body(preferencelist=("plain",))
+    text = _part_text(plain).strip() if plain is not None else ""
   attachments = [Attachment(part.get_filename(), part.get_content_type(), _size(part)) for part in parsed.iter_attachments()]
   return Message(
     envelope=envelope(folder, uid, flags, raw),
@@ -202,13 +217,9 @@ def _subject_reply(subject: str) -> str:
   return subject if re.match(r"^\s*(re|sv|aw)\s*:", subject, re.IGNORECASE) else f"Re: {subject}".strip()
 
 
-def _quoted(name: str) -> str:
-  escaped = name.replace("\\", "\\\\").replace('"', '\\"')
-  return f'"{escaped}"'
-
-
 def _format(addresses: Sequence[Address]) -> str:
-  return ", ".join(f"{_quoted(a.name)} <{a.address}>" if a.name else a.address for a in addresses)
+  # formataddr quotes the name: a sender named 'Bob", evil@x.com, "' must not become a recipient of the reply.
+  return ", ".join(formataddr((a.name, a.address)) for a in addresses)
 
 
 def draft(sender: str, to: Sequence[str], subject: str, body: str, *, cc: Sequence[str] = (), now: datetime) -> EmailMessage:

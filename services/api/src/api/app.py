@@ -23,12 +23,12 @@ from api.logging import configure as configure_logging
 from api.mcp.server import build_routes as build_mcp_routes
 from api.mcp.server import build_server as build_mcp_server
 from api.memory.service import memory_service
-from api.middlewares import FlushEnqueuedWorkerJobsMiddleware, MinimumClientVersionMiddleware, RequestContextMiddleware
+from api.middlewares import BodySizeLimitMiddleware, FlushEnqueuedWorkerJobsMiddleware, MinimumClientVersionMiddleware, RequestContextMiddleware
 from api.openapi import OPENAPI_PARAMETERS, set_openapi_generator
 from api.postgres import AsyncSessionMiddleware, create_async_engine, create_sync_engine
 from api.redis import Redis, create_redis
 from api.sentry import configure_sentry
-from api.settings import settings
+from api.settings import Environment, settings
 
 log: Logger = structlog.get_logger()
 
@@ -95,6 +95,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[State]:
   redis = create_redis("app")
 
   log.info("Bessel API started")
+  if settings.ENV == Environment.production and not settings.AUTH0_CLIENT_IDS:
+    log.warning("AUTH0_CLIENT_IDS is empty: the web API accepts tokens from any application in the Auth0 tenant")
 
   warm_up = asyncio.create_task(_warm_up_memory_search(async_sessionmaker)) if settings.MEMORY_EMBEDDING_MODEL else None
   mcp_server: MCPServer | None = app.state.mcp_server
@@ -131,6 +133,8 @@ def create_app() -> FastAPI:
   app.add_middleware(MinimumClientVersionMiddleware)
   configure_cors(app)
   app.add_middleware(RequestContextMiddleware)
+  # Outermost, so nothing has read a body before it is limited.
+  app.add_middleware(BodySizeLimitMiddleware)
   add_exception_handlers(app)
 
   app.include_router(health_router)

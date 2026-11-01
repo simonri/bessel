@@ -31,7 +31,10 @@ class Recipes(Schema):
 
 class IngredientGroupInput(Schema):
   title: str | None = Field(default=None, max_length=200, description="e.g. 'Dressing'; omit for a recipe with a single list.")
-  lines: list[str] = Field(description="One ingredient per line as written in the recipe, e.g. '2 dl milk, warm' or '1 onion (finely chopped)'.")
+  # Parsed one by one before the recipe's own limits apply, so bounded here.
+  lines: list[str] = Field(
+    max_length=200, description="One ingredient per line as written in the recipe, e.g. '2 dl milk, warm' or '1 onion (finely chopped)'."
+  )
 
 
 class AddedRecipe(Schema):
@@ -76,10 +79,12 @@ async def search_recipes(
   ingredients: Annotated[
     list[str] | None,
     Field(
+      # One ILIKE each.
+      max_length=20,
       description=(
         "Only recipes that use every one of these, e.g. ['leek', 'feta']. Each is matched case-insensitively as part of an ingredient name, "
         + "so a stem like 'leek' also finds 'leeks'. Write them in the language the recipes use."
-      )
+      ),
     ),
   ] = None,
   limit: Annotated[int, Field(ge=1, le=200)] = 50,
@@ -108,7 +113,7 @@ async def add_recipe(
   ctx: Context,
   title: Annotated[str, Field(min_length=1, max_length=500)],
   recipe_type: Annotated[RecipeType, Field(description="'main' for a meal, 'dessert' for sweets and baking, otherwise 'other'.")],
-  ingredient_groups: Annotated[list[IngredientGroupInput], Field(description="Usually one untitled group; split only where the recipe does.")],
+  ingredient_groups: Annotated[list[IngredientGroupInput], Field(max_length=30, description="Usually one untitled group; split only where the recipe does.")],
   steps: Annotated[list[RecipeStep], Field(description="In order. Give `title` and `time_label` only when the recipe has them.")],
   intro: Annotated[str | None, Field(description="A short description from the recipe, if it has one.")] = None,
   yield_text: Annotated[str | None, Field(description="e.g. '4 servings' or '12 buns'.")] = None,
@@ -157,7 +162,7 @@ async def update_recipe(
   total_minutes: int | None = None,
   active_minutes: int | None = None,
   ingredient_groups: Annotated[
-    list[IngredientGroupInput] | None, Field(description="Replaces all ingredients; give every group and line, as in add_recipe.")
+    list[IngredientGroupInput] | None, Field(max_length=30, description="Replaces all ingredients; give every group and line, as in add_recipe.")
   ] = None,
   steps: Annotated[list[RecipeStep] | None, Field(description="Replaces all steps; give every step in order.")] = None,
   sections: Annotated[list[RecipeSection] | None, Field(description="Replaces all extra sections.")] = None,

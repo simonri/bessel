@@ -69,11 +69,14 @@ services:
   bessel-redis:
     image: redis:7-alpine
     restart: unless-stopped
+    # volatile-lru: only keys with a TTL (caches, rate limits, idempotency
+    # replays) may be evicted. allkeys-lru also dropped the job queue, so one
+    # user filling the weather cache could lose everyone's queued bank syncs.
     command: >
       redis-server
       --appendonly yes
       --maxmemory 128mb
-      --maxmemory-policy allkeys-lru
+      --maxmemory-policy volatile-lru
     volumes:
       - bessel_redis_data:/data
     healthcheck:
@@ -106,6 +109,7 @@ services:
       BESSEL_FRONTEND_BASE_URL: ${BESSEL_FRONTEND_BASE_URL:-https://app.getbessel.com}
       BESSEL_AUTH0_DOMAIN: ${BESSEL_AUTH0_DOMAIN}
       BESSEL_AUTH0_AUDIENCE: ${BESSEL_AUTH0_AUDIENCE}
+      BESSEL_AUTH0_CLIENT_IDS: ${BESSEL_AUTH0_CLIENT_IDS:-[]}
       BESSEL_GOOGLE_PLACES_API_KEY: ${BESSEL_GOOGLE_PLACES_API_KEY:-}
       BESSEL_API_BASE_URL: ${BESSEL_API_BASE_URL:-https://api.getbessel.com}
       BESSEL_MCP_RESOURCE_URL: ${BESSEL_MCP_RESOURCE_URL:-https://api.getbessel.com/mcp}
@@ -186,6 +190,7 @@ services:
       BESSEL_LOG_LEVEL: INFO
       BESSEL_AUTH0_DOMAIN: ${BESSEL_AUTH0_DOMAIN}
       BESSEL_AUTH0_AUDIENCE: ${BESSEL_AUTH0_AUDIENCE}
+      BESSEL_AUTH0_CLIENT_IDS: ${BESSEL_AUTH0_CLIENT_IDS:-[]}
       # Google calendar change notifications are addressed to this API.
       BESSEL_API_BASE_URL: ${BESSEL_API_BASE_URL:-https://api.getbessel.com}
       BESSEL_CREDENTIALS_ENCRYPTION_KEY: ${BESSEL_CREDENTIALS_ENCRYPTION_KEY:-}
@@ -224,8 +229,8 @@ services:
       - "traefik.http.routers.bessel-web-public.service=bessel-web"
       - "traefik.http.routers.bessel-web-public.priority=1"
       - "traefik.http.services.bessel-web.loadbalancer.server.port=3000"
+    # Static files only: kept off bessel-internal so it can't reach Postgres or the password-less Redis.
     networks:
-      - bessel-internal
       - web
 
 # The volumes were created under the old project-scoped names; pinning them keeps the same data.

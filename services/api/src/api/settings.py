@@ -83,6 +83,10 @@ class Settings(BaseSettings):
   AUTH0_DOMAIN: str = ""
   AUTH0_AUDIENCE: str = ""
   AUTH0_ALGORITHMS: list[str] = ["RS256"]
+  # The Auth0 applications (web/desktop, iOS) whose tokens the web API accepts. Anyone can register an app in the
+  # tenant (dynamic client registration, for MCP), and without this list a token such an app obtains for the web
+  # API's audience would pass. Empty: any app, with a warning in production.
+  AUTH0_CLIENT_IDS: list[str] = []
 
   # MCP server. Public URL of the /mcp endpoint exactly as users enter it in
   # Claude; it is also the identifier of the Auth0 API that MCP tokens target.
@@ -188,6 +192,11 @@ class Settings(BaseSettings):
   @model_validator(mode="after")
   def validate_production_settings(self) -> "Settings":
     """Validate that required settings are configured in production."""
+    # Auth0 signs with its RSA key. An HMAC algorithm here would let a token signed with the public key (which anyone
+    # can fetch) pass: python-jose has no fix for that (CVE-2026-85394), so only RSA algorithms are accepted.
+    if not self.AUTH0_ALGORITHMS or any(not alg.startswith(("RS", "PS")) for alg in self.AUTH0_ALGORITHMS):
+      raise ValueError(f"AUTH0_ALGORITHMS must list only RSA algorithms, got {self.AUTH0_ALGORITHMS}")
+
     if self.ENV == Environment.production:
       missing = []
 

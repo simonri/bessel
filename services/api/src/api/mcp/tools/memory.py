@@ -59,6 +59,8 @@ async def search_memory(
   query: Annotated[
     str | None,
     Field(
+      # Each word is its own match expression over every fact.
+      max_length=500,
       description=(
         "Words to look for, any of them, e.g. 'hyra boende mat' or 'mamma födelsedag'; facts mentioning most come first. "
         + "Word forms and compounds match ('hyra' finds 'hyresfritt'), but not other words for the same thing, so "

@@ -1,7 +1,7 @@
 from datetime import date
 from uuid import UUID
 
-from sqlalchemy import Date, Float, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import Date, Float, ForeignKey, Index, Integer, String, Text, Uuid, text
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -10,8 +10,6 @@ from api.models.base import RecordModel
 
 class Place(RecordModel):
   __tablename__ = "places"
-  # Each user saves a Google place once; another user saving it is unrelated.
-  __table_args__ = (UniqueConstraint("user_id", "google_place_id"),)
 
   name: Mapped[str] = mapped_column(String(255), nullable=False)
   address: Mapped[str | None] = mapped_column(String(500), nullable=True)
@@ -30,3 +28,15 @@ class Place(RecordModel):
   website: Mapped[str | None] = mapped_column(String(500), nullable=True)
   phone: Mapped[str | None] = mapped_column(String(50), nullable=True)
   user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
+
+  # Unique per user, not across users: one user saving a place must not tell them, by failing, that someone else
+  # saved it (an address, a clinic), nor stop anyone else saving it. Removed places don't hold it.
+  __table_args__ = (
+    Index(
+      "places_user_google_place_id_key",
+      "user_id",
+      "google_place_id",
+      unique=True,
+      postgresql_where=text("google_place_id IS NOT NULL AND deleted_at IS NULL"),
+    ),
+  )

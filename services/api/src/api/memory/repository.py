@@ -61,6 +61,10 @@ class MemoryFactRepository(
       return []
     return await self.list_for_user(user_id, order_by=MemoryFact.created_at, extra_filters=(_current(), MemoryFact.id.in_(ids)))
 
+  async def list_replaced_by(self, user_id: UUID, fact_id: UUID) -> Sequence[MemoryFact]:
+    """The not yet removed facts that `fact_id` superseded or absorbed."""
+    return await self.list_for_user(user_id, order_by=MemoryFact.created_at, extra_filters=(MemoryFact.superseded_by_id == fact_id,))
+
   async def get_current_for_attribute(self, user_id: UUID, attribute: str, *, area: str | None = None) -> Sequence[MemoryFact]:
     """Current facts about `attribute`, in `area` or in any area, compared without case."""
     filters = [_current(), func.lower(MemoryFact.attribute) == attribute.strip().lower()]

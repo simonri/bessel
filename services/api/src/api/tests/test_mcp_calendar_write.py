@@ -49,8 +49,8 @@ async def _calendars(save_fixture: SaveFixture, user: User, *, can_write: bool =
   )
   await save_fixture(account)
   calendars = {}
-  for name, writable in (("Företag", True), ("Privat", True), ("Helgdagar i Sverige", False)):
-    calendars[name] = Calendar(account_id=account.id, external_id=f"{name}@group", name=name, color="#4285f4", writable=writable)
+  for name, writable, owned in (("Företag", True, True), ("Privat", True, True), ("Helgdagar i Sverige", False, True), ("Familjen", True, False)):
+    calendars[name] = Calendar(account_id=account.id, external_id=f"{name}@group", name=name, color="#4285f4", writable=writable, owned=owned)
     await save_fixture(calendars[name])
   return calendars
 
@@ -67,6 +67,8 @@ class TestListCalendars:
     calendars = (await mcp_call(connect, "list_calendars"))["calendars"]
 
     assert [(c["name"], c["account"], c["can_add_events"]) for c in calendars] == [
+      # Shared with the user by someone else: everyone in it would read what an assistant added.
+      ("Familjen", "me@gmail.com", False),
       ("Företag", "me@gmail.com", True),
       ("Helgdagar i Sverige", "me@gmail.com", False),
       ("Privat", "me@gmail.com", True),
@@ -83,6 +85,23 @@ class TestListCalendars:
 
 
 class TestAddCalendarEvents:
+  @pytest.mark.asyncio
+  async def test_an_all_day_event_lasts_at_most_a_year(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
+    # 9999-12-31 overflowed the date arithmetic into a 500.
+    await _calendars(save_fixture, user)
+    message = await mcp_call_error(
+      connect, "add_calendar_events", {"events": [{"calendar": "Privat", "title": "Forever", "day": "2026-11-20", "last_day": "9999-12-31"}]}
+    )
+    assert "at most 366 days" in message
+
+  @pytest.mark.asyncio
+  async def test_a_calendar_someone_else_shared_takes_none(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
+    await _calendars(save_fixture, user)
+
+    message = await mcp_call_error(connect, "add_calendar_events", {"events": [{"calendar": "Familjen", "title": "Möte", "day": "2026-11-20"}]})
+
+    assert "shared by someone else" in message
+
   @pytest.mark.asyncio
   async def test_adds_all_day_and_timed_events_without_inviting_anyone(
     self, connect: ConnectFixture, save_fixture: SaveFixture, user: User, google: FakeGoogleCalendar

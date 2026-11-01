@@ -59,7 +59,8 @@ async def _schemas(session: AsyncSession, transactions: Sequence[Transaction]) -
   ]
 
 
-async def _require_own_category(session: AsyncSession, user_id: UUID, category_id: UUID | None) -> None:
+async def _check_category(session: AsyncSession, category_id: UUID | None, user_id: UUID) -> None:
+  """A transaction may only be put in one of its owner's categories: reports join categories by id alone."""
   if category_id is not None:
     await CategoryRepository.from_session(session).get_owned_or_404(category_id, user_id, not_found_message="Category not found")
 
@@ -191,7 +192,7 @@ async def bulk_update_transactions(
   current_user: CurrentDBUser,
 ) -> BulkUpdateResponse:
   """Update category for a list of transactions by ID."""
-  await _require_own_category(session, current_user.id, body.category_id)
+  await _check_category(session, body.category_id, current_user.id)
   repo = TransactionRepository.from_session(session)
   updated = await repo.set_category_for_ids(user_id=current_user.id, ids=body.ids, category_id=body.category_id)
   return BulkUpdateResponse(updated=updated)
@@ -214,7 +215,7 @@ async def update_transaction(
 
   update_dict = without_required_nulls(Transaction, body.model_dump(exclude_unset=True))
   if "category_id" in update_dict:
-    await _require_own_category(session, current_user.id, update_dict["category_id"])
+    await _check_category(session, update_dict["category_id"], current_user.id)
     # The user's own choice: rules and transfer pairing leave it alone from now on.
     update_dict["category_rule_id"] = None
   if update_dict:
@@ -288,7 +289,7 @@ async def categorize_by_description(
   current_user: CurrentDBUser,
 ) -> BulkCategorizeResponse:
   """Set category for all transactions matching the given description."""
-  await _require_own_category(session, current_user.id, body.category_id)
+  await _check_category(session, body.category_id, current_user.id)
   repo = TransactionRepository.from_session(session)
   updated = await repo.set_category_for_description(user_id=current_user.id, description=body.description, category_id=body.category_id)
   return BulkCategorizeResponse(updated=updated)

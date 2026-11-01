@@ -284,8 +284,8 @@ class TestGoogleClient:
       calendars = await GoogleCalendarClient(http).list_calendars("token")
 
     assert calendars == [
-      ProviderCalendar(external_id="primary", name="Privat", color="#16a765", hidden_by_default=False),
-      ProviderCalendar(external_id="holidays", name="Helgdagar", color=google.DEFAULT_COLOR, hidden_by_default=True),
+      ProviderCalendar(external_id="primary", name="Privat", color="#16a765", hidden_by_default=False, owned=False),
+      ProviderCalendar(external_id="holidays", name="Helgdagar", color=google.DEFAULT_COLOR, hidden_by_default=True, owned=False),
     ]
 
   @pytest.mark.asyncio

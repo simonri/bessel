@@ -5,6 +5,7 @@ none of a photo's metadata, such as where it was taken. The original is kept as 
 """
 
 import io
+import warnings
 from dataclasses import dataclass
 
 import anyio
@@ -76,10 +77,13 @@ def _pdf(content: bytes) -> Previews:
 
 def _photo(content: bytes) -> list[Image.Image]:
   try:
-    with Image.open(io.BytesIO(content)) as image:
-      # Phones store which way is up separately; apply it before the metadata is dropped.
-      return [ImageOps.exif_transpose(image).copy()]
-  except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as error:
+    # Pillow only refuses past twice MAX_IMAGE_PIXELS and merely warns below that, decoding up to ~480 MB.
+    with warnings.catch_warnings():
+      warnings.simplefilter("error", Image.DecompressionBombWarning)
+      with Image.open(io.BytesIO(content)) as image:
+        # Phones store which way is up separately; apply it before the metadata is dropped.
+        return [ImageOps.exif_transpose(image).copy()]
+  except (UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning) as error:
     raise ValidationError("This image couldn't be read.") from error
 
 

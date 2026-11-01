@@ -20,6 +20,9 @@ import { TerminalWidget } from "@/components/terminal-widget";
 import { sshQuote, sshTerminalArgs } from "@/lib/ssh";
 import { decodeCommands } from "@/lib/widget-commands";
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const PANEL_BUTTON =
   "rounded-md border border-white/10 px-3 py-1.5 text-12 font-medium text-white/75 transition-colors hover:border-white/20 hover:text-white/95";
 const PANEL_PRIMARY_BUTTON =
@@ -64,7 +67,13 @@ function RemoteClaude({ sshHost, path }: { sshHost: string; path: string }) {
   const entry = useWindowEntry();
   const { updateWindowData } = useWindowActions();
   const commands = decodeCommands(entry?.data?.commands);
-  const existingSessionId = entry?.data?.claudeSessionId;
+  // Spliced into a remote shell command below, so only ever a UUID: the stored
+  // value comes from localStorage and anything else could run on the host.
+  const stored = entry?.data?.claudeSessionId;
+  const existingSessionId =
+    typeof stored === "string" && UUID_PATTERN.test(stored)
+      ? stored
+      : undefined;
   const freshSessionId = useRef(crypto.randomUUID()).current;
   const sessionArgs = existingSessionId
     ? ["--resume", existingSessionId]

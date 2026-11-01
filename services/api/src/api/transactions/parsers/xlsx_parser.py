@@ -1,3 +1,4 @@
+import asyncio
 import zipfile
 from collections import Counter
 from datetime import date
@@ -25,7 +26,13 @@ def _check_uncompressed_size(content: bytes) -> None:
 
 
 async def parse_xlsx(content: bytes, profile: BankProfile) -> list[ParsedTransaction]:
-  """Parse XLSX content using the column mapping from a BankProfile."""
+  """Parse XLSX content using the column mapping from a BankProfile.
+
+  In a thread: up to 100 MB of XML takes openpyxl long enough to stall every other request on the event loop."""
+  return await asyncio.to_thread(_parse_xlsx, content, profile)
+
+
+def _parse_xlsx(content: bytes, profile: BankProfile) -> list[ParsedTransaction]:
   _check_uncompressed_size(content)
   wb = load_workbook(filename=BytesIO(content), read_only=True, data_only=True)
   ws = wb.active

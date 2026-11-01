@@ -22,6 +22,7 @@ import {
   registerAgentUsageHandlers,
   removeLegacyCollector,
 } from "./agent-usage.js";
+import { isLoginAnswer, loopbackAuthState } from "./auth-callback.js";
 import { registerAvanzaHandlers } from "./avanza.js";
 import {
   confirmCloseWithClaudeSessions,
@@ -37,6 +38,7 @@ import {
   getMainWindow,
   ipcHandle,
   ipcOn,
+  isTrustedUrl,
   setIpcErrorReporter,
   setMainWindow,
   TRUSTED_ORIGINS,
@@ -44,6 +46,7 @@ import {
 import { KLARNA_PARTITION, signInToKlarna } from "./klarna.js";
 import { registerPortsHandlers } from "./ports.js";
 import { registerRemoteControlHandlers } from "./remote-control.js";
+import { insideRepo } from "./repo-paths.js";
 import { isRealEncryptionAvailable } from "./secure-storage.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
@@ -248,12 +251,19 @@ interface GitFileEntry {
   status: string;
 }
 
+// Before every command the widget runs. A repo's own .git/config can name a
+// program for git to run (core.fsmonitor runs on every status, and the widget
+// polls status): a cloned or extracted repo must not run code by being looked
+// at. Literal pathspecs: a file named `*` or `:(glob)**` must mean that file
+// when discarded or staged, not every file it matches.
+const GIT_SAFE_ARGS = ["-c", "core.fsmonitor=false", "--literal-pathspecs"];
+
 async function gitRun(
   args: string[],
   cwd: string,
   opts?: { env?: NodeJS.ProcessEnv; timeoutMs?: number },
 ): Promise<string> {
-  const { stdout } = await execFileAsync("git", args, {
+  const { stdout } = await execFileAsync("git", [...GIT_SAFE_ARGS, ...args], {
     cwd,
     maxBuffer: 10 * 1024 * 1024,
     ...(opts?.env ? { env: { ...process.env, ...opts.env } } : {}),
@@ -281,7 +291,7 @@ function toGitError(err: unknown): Error {
 // Raw-byte variant for image previews — gitRun's string stdout is decoded as
 // utf8, which corrupts binary content.
 async function gitRunBuffer(args: string[], cwd: string): Promise<Buffer> {
-  const { stdout } = await execFileAsync("git", args, {
+  const { stdout } = await execFileAsync("git", [...GIT_SAFE_ARGS, ...args], {
     cwd,
     maxBuffer: 10 * 1024 * 1024,
     encoding: "buffer",
@@ -694,6 +704,9 @@ const AUTH_CALLBACK_PATH = "/callback";
 const AUTH_CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
 
 let authCallbackServer: http.Server | null = null;
+// The `state` of the login this window just sent to the browser: only a
+// callback carrying it ends the attempt (see isLoginAnswer).
+let expectedAuthState: string | null = null;
 
 function startAuthLogin(): Promise<number> {
   // A stale, abandoned attempt (user closed the login tab and tried again)
@@ -716,10 +729,7 @@ function startAuthLogin(): Promise<number> {
     // the attempt. Auth0 reports a denied or failed login with `error` +
     // `state` instead of `code`, which the renderer still needs to see.
     const { searchParams } = url;
-    if (
-      !searchParams.get("state") ||
-      !(searchParams.get("code") || searchParams.get("error"))
-    ) {
+    if (!isLoginAnswer(searchParams, expectedAuthState)) {
       res.writeHead(400).end();
       return;
     }
@@ -922,6 +932,19 @@ app.whenReady().then(() => {
   // Same UA fix as the browser widget below, applied to the default session so
   // the main window's Auth0/Google login (createWindow) isn't blocked too.
   session.defaultSession.setUserAgent(chromeUserAgent(session.defaultSession));
+  // Electron grants every permission unless told otherwise, without asking.
+  // The app itself keeps what it uses (notifications, the clipboard); any
+  // other page this session shows (the login sites it may still navigate to)
+  // gets nothing.
+  session.defaultSession.setPermissionRequestHandler(
+    (_contents, _permission, callback, details) => {
+      callback(isTrustedUrl(details.requestingUrl));
+    },
+  );
+  session.defaultSession.setPermissionCheckHandler(
+    (_contents, _permission, requestingOrigin) =>
+      isTrustedUrl(requestingOrigin),
+  );
 
   const browserSession = session.fromPartition(BROWSER_PARTITION);
   browserSession.setUserAgent(chromeUserAgent(browserSession));
@@ -945,12 +968,17 @@ app.whenReady().then(() => {
       });
     },
   );
-  // Fullscreen (video player) and media (camera/mic prompts some sites show
-  // regardless of use) are the only permissions a browser widget guest can ask for.
+  // Fullscreen (video player) is the only permission a browser widget guest
+  // gets. Never camera or microphone: Electron asks nobody, so any page or ad
+  // frame in the widget could record silently.
   browserSession.setPermissionRequestHandler(
     (_contents, permission, callback) => {
-      callback(permission === "fullscreen" || permission === "media");
+      callback(permission === "fullscreen");
     },
+  );
+  browserSession.setPermissionCheckHandler(
+    (_contents, permission) =>
+      permission === "fullscreen" || permission === "clipboard-sanitized-write",
   );
 
   app.on("web-contents-created", (_event, contents) => {
@@ -1057,6 +1085,8 @@ app.whenReady().then(() => {
     if (!url.startsWith("https://") && !url.startsWith("http://")) {
       throw new Error("Only http(s) URLs may be opened externally");
     }
+    expectedAuthState =
+      loopbackAuthState(url, AUTH_CALLBACK_PORT) ?? expectedAuthState;
     return shell.openExternal(url);
   });
 
@@ -1355,9 +1385,7 @@ app.whenReady().then(() => {
   const assertInsideRepo = (repoPath: string, file: unknown): void => {
     if (typeof repoPath !== "string" || typeof file !== "string" || !file)
       throw new Error("Invalid repository path");
-    const repoRoot = path.resolve(repoPath);
-    const target = path.resolve(repoRoot, file);
-    if (!target.startsWith(repoRoot + path.sep))
+    if (!insideRepo(repoPath, file))
       throw new Error(`Refusing to read path outside repository: ${file}`);
   };
 
@@ -1484,10 +1512,10 @@ app.whenReady().then(() => {
       if (trackedFiles.length > 0) {
         await gitRun(["restore", "--", ...trackedFiles], repoPath);
       }
-      const repoRoot = path.resolve(repoPath);
       for (const file of untrackedFiles) {
-        const target = path.resolve(repoRoot, file);
-        if (target === repoRoot || !target.startsWith(repoRoot + path.sep)) {
+        const target =
+          typeof file === "string" ? insideRepo(repoPath, file) : null;
+        if (!target) {
           throw new Error(
             `Refusing to delete path outside repository: ${file}`,
           );

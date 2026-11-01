@@ -3306,6 +3306,7 @@ export const ContactCreateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -3320,6 +3321,7 @@ export const ContactCreateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -3334,6 +3336,7 @@ export const ContactCreateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -3348,6 +3351,7 @@ export const ContactCreateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -4239,6 +4243,7 @@ export const ContactUpdateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -4253,6 +4258,7 @@ export const ContactUpdateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -4267,6 +4273,7 @@ export const ContactUpdateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -4281,6 +4288,7 @@ export const ContactUpdateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -9242,6 +9250,7 @@ export const ProjectCreateSchema = {
     name: {
       type: "string",
       maxLength: 100,
+      pattern: "^[^\\x00-\\x1f\\x7f]*$",
       title: "Name",
     },
     path: {
@@ -9249,6 +9258,7 @@ export const ProjectCreateSchema = {
         {
           type: "string",
           maxLength: 500,
+          pattern: "^[^\\x00-\\x1f\\x7f]*$",
         },
         {
           type: "null",
@@ -9282,6 +9292,7 @@ export const ProjectLocationUpdateSchema = {
         {
           type: "string",
           maxLength: 500,
+          pattern: "^[^\\x00-\\x1f\\x7f]*$",
         },
         {
           type: "null",
@@ -9373,6 +9384,7 @@ export const ProjectUpdateSchema = {
         {
           type: "string",
           maxLength: 100,
+          pattern: "^[^\\x00-\\x1f\\x7f]*$",
         },
         {
           type: "null",
@@ -10437,6 +10449,7 @@ export const TaskCreateSchema = {
       anyOf: [
         {
           type: "string",
+          maxLength: 20000,
         },
         {
           type: "null",
@@ -10484,8 +10497,11 @@ export const TaskCreateSchema = {
         {
           items: {
             type: "string",
+            maxLength: 50,
+            minLength: 1,
           },
           type: "array",
+          maxItems: 20,
         },
         {
           type: "null",
@@ -10523,6 +10539,7 @@ export const TaskCreateSchema = {
       anyOf: [
         {
           type: "integer",
+          maximum: 365,
           minimum: 1,
         },
         {
@@ -10885,6 +10902,7 @@ export const TaskUpdateSchema = {
       anyOf: [
         {
           type: "string",
+          maxLength: 20000,
         },
         {
           type: "null",
@@ -10944,8 +10962,11 @@ export const TaskUpdateSchema = {
         {
           items: {
             type: "string",
+            maxLength: 50,
+            minLength: 1,
           },
           type: "array",
+          maxItems: 20,
         },
         {
           type: "null",
@@ -10989,6 +11010,7 @@ export const TaskUpdateSchema = {
       anyOf: [
         {
           type: "integer",
+          maximum: 365,
           minimum: 1,
         },
         {

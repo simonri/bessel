@@ -243,6 +243,7 @@ class GoogleCalendarClient:
         color=normalize_color(item.get("backgroundColor"), DEFAULT_COLOR),
         hidden_by_default=not item.get("selected", False),
         writable=item.get("accessRole") in WRITABLE_ACCESS_ROLES,
+        owned=item.get("accessRole") == "owner",
         primary=bool(item.get("primary")),
       )
       for item in items

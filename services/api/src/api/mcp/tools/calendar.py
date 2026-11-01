@@ -25,6 +25,8 @@ MAX_CALENDAR_DAYS = 62
 MAX_FREE_TIME_DAYS = 31
 DEFAULT_FREE_TIME_DAYS = 7
 MAX_NEW_EVENTS = 50
+# A far last_day (9999-12-31) overflowed the date arithmetic into a 500.
+MAX_ALL_DAY_SPAN_DAYS = 366
 DEFAULT_EVENT_MINUTES = 60
 _CLOCK = re.compile(r"^(\d{1,2}):([0-5]\d)$")
 
@@ -226,8 +228,7 @@ async def list_calendars(ctx: Context) -> Calendars:
     rows = await CalendarRepository.from_session(session).list_with_accounts_for_user(user.id)
   return Calendars(
     calendars=[
-      CalendarInfo(name=calendar.name, account=account.email, can_add_events=account.can_write and calendar.writable, hidden=calendar.hidden)
-      for calendar, account in rows
+      CalendarInfo(name=calendar.name, account=account.email, can_add_events=_can_add(calendar, account), hidden=calendar.hidden) for calendar, account in rows
     ]
   )
 
@@ -255,17 +256,23 @@ class AddedEvents(Schema):
   already_there: list[AddedEvent] = Field(description="Events skipped because the calendar has one with the same title and start.")
 
 
+def _can_add(calendar: Calendar, account: CalendarAccount) -> bool:
+  # Only the user's own calendars: everyone a calendar is shared with reads what lands in it, so text an injected
+  # prompt put in an event would reach them.
+  return account.can_write and calendar.writable and calendar.owned
+
+
 def _calendar_named(name: str, rows: list[tuple[Calendar, CalendarAccount]]) -> tuple[Calendar, CalendarAccount]:
   wanted = name.strip().casefold()
   matches = [(c, a) for c, a in rows if c.name.casefold() == wanted]
-  writable = [(c, a) for c, a in matches if a.can_write and c.writable]
+  writable = [(c, a) for c, a in matches if _can_add(c, a)]
   if len(writable) == 1:
     return writable[0]
   if len(writable) > 1:
     raise ToolError(f"Several calendars are called {name!r}, in {', '.join(a.email for _, a in writable)}.")
   if matches:
-    raise ToolError(f"Events can't be added to {name!r}: it's read-only, or its account needs reconnecting in Bessel.")
-  names = ", ".join(sorted({c.name for c, a in rows if a.can_write and c.writable})) or "none"
+    raise ToolError(f"Events can't be added to {name!r}: it's read-only or shared by someone else, or its account needs reconnecting in Bessel.")
+  names = ", ".join(sorted({c.name for c, a in rows if _can_add(c, a)})) or "none"
   raise ToolError(f"No calendar called {name!r}. Calendars events can be added to: {names}.")
 
 
@@ -277,6 +284,8 @@ def _timing(event: NewEvent, today: date) -> dict:
     last = parse_day(event.last_day, today) if event.last_day else day
     if last < day:
       raise ToolError(f"{event.title!r}: last_day is before day.")
+    if (last - day).days > MAX_ALL_DAY_SPAN_DAYS:
+      raise ToolError(f"{event.title!r}: an all-day event can last at most {MAX_ALL_DAY_SPAN_DAYS} days.")
     return {"start": {"date": day.isoformat()}, "end": {"date": (last + timedelta(days=1)).isoformat()}}
   if event.last_day is not None:
     raise ToolError(f"{event.title!r}: last_day is only for all-day events; a timed event ends on its own day.")
@@ -345,8 +354,8 @@ async def add_calendar_events(
 
 
 TOOLS: list[ToolSpec] = [
-  read(get_calendar_events, "Calendar events"),
-  read(find_free_time, "Find free time"),
+  read(get_calendar_events, "Calendar events", open_world=True),
+  read(find_free_time, "Find free time", open_world=True),
   read(list_calendars, "Calendars"),
   write(add_calendar_events, "Add calendar events", idempotent=True),
 ]

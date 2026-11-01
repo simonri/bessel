@@ -50,7 +50,9 @@ HEARTBEAT_SECS = 300
 # swayidle, which writes the epoch second inactivity began to this file and
 # removes it on input. swayidle honours idle inhibitors, so there a playing
 # video keeps the user active.
-IDLE_FILE = Path("/tmp/activity-tracker-idle")
+# In the user's own runtime dir: in /tmp another account could create it first, and the monitor would then read its
+# "idle since" and fail to remove it.
+IDLE_FILE = Path(os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}") / "activity-tracker-idle"
 LOCK_CHECK_SECS = 10
 IDLE_RESTART_SECS = 30
 STATUS_CHECK_SECS = 30
@@ -332,8 +334,18 @@ def make_sampler(backend, wayland_idle):
 
 # ─── database ────────────────────────────────────────────────────────────────
 
+def _private_data_dir():
+    """Window titles say what the user read and wrote all day: only they may read them. Files made before this were
+    world-readable, so existing ones are tightened too."""
+    DATA_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
+    DATA_DIR.chmod(0o700)
+    for path in DATA_DIR.iterdir():
+        if path.is_file():
+            path.chmod(0o600)
+
+
 def _open_db():
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    _private_data_dir()
     conn = sqlite3.connect(DB_PATH)
     _migrate(conn)
     return conn
@@ -639,6 +651,8 @@ def push(source: str, reset_cursor: bool) -> None:
 # ─── entry point ─────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
+    # Everything the monitor writes (database, status, cursor) is the user's alone.
+    os.umask(0o077)
     ap = argparse.ArgumentParser(description="Track focused window and active/idle state.")
     ap.add_argument("--push", action="store_true", help="sync unsynced events to the Metron API")
     ap.add_argument("--reset-cursor", action="store_true", help="re-push all events from the start (safe, server dedupes)")

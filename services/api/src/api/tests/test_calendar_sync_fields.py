@@ -1,10 +1,10 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
 import pytest
 from api.calendars.google import WRITE_SCOPE, GoogleCalendarClient, _parse_event
-from api.calendars.icloud import ICalResource, ICloudCalendarClient, expand_events
+from api.calendars.icloud import MAX_OCCURRENCES_PER_RESOURCE, ICalResource, ICloudCalendarClient, expand_events
 from api.calendars.providers import ProviderCalendar
 from api.settings import settings
 
@@ -102,11 +102,11 @@ class TestGoogleCalendarAccess:
     async with httpx.AsyncClient(transport=transport) as http:
       calendars = await GoogleCalendarClient(http).list_calendars("token")
 
-    assert [(c.external_id, c.writable, c.primary) for c in calendars] == [
-      ("me@gmail.com", True, True),
-      ("shared", True, False),
-      ("holidays", False, False),
-      ("busy", False, False),
+    assert [(c.external_id, c.writable, c.owned, c.primary) for c in calendars] == [
+      ("me@gmail.com", True, True, True),
+      ("shared", True, False, False),
+      ("holidays", False, False, False),
+      ("busy", False, False, False),
     ]
 
   @pytest.mark.asyncio
@@ -195,22 +195,39 @@ class TestICloudSyncFields:
     assert {e.series_id for e in standups} == {"series"}
     assert [e.original_start for e in standups] == ["2026-10-05T08:00:00+02:00", "2026-10-06T08:00:00+02:00"]
 
+  def test_a_series_every_minute_stops_at_the_cap(self) -> None:
+    # Anyone can invite into a calendar; expanded whole, this is 40,000+ occurrences on every sync.
+    flood = "\r\n".join(
+      ["BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", "UID:flood", "SUMMARY:Spam", "DTSTART:20261005T000000Z", "DURATION:PT1M", "RRULE:FREQ=MINUTELY"]
+      + ["END:VEVENT", "END:VCALENDAR"]
+    )
+    resource = ICalResource(href="https://p1-caldav.icloud.com/1/calendars/home/flood.ics", etag='"f"', data=flood)
+    events = expand_events([resource], WEEK_START, WEEK_START + timedelta(days=30))
+    assert len(events) == MAX_OCCURRENCES_PER_RESOURCE
+
+  def test_occurrences_stop_at_the_window_end(self) -> None:
+    standups = [e for e in expand_events([ICalResource(href="h", etag=None, data=ICAL)], WEEK_START, WEEK_END) if e.title == "Standup"]
+    assert all(e.start_at is not None and e.start_at < WEEK_END for e in standups)
+
 
 HOME = "https://p42-caldav.icloud.com/1234/calendars/"
 
 
 def _multistatus(*responses: str) -> str:
-  return f'<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/">{"".join(responses)}</d:multistatus>'
+  return f'<?xml version="1.0"?><d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:a="http://apple.com/ns/ical/" xmlns:cs="http://calendarserver.org/ns/">{"".join(responses)}</d:multistatus>'
 
 
 def _response(href: str, prop: str) -> str:
   return f"<d:response><d:href>{href}</d:href><d:propstat><d:prop>{prop}</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response>"
 
 
-def _calendar(name: str, privileges: str) -> str:
+READ_WRITE = "<d:privilege><d:read/></d:privilege><d:privilege><d:write/></d:privilege>"
+
+
+def _calendar(name: str, privileges: str, *, shared: bool = False) -> str:
   return "".join(
     [
-      "<d:resourcetype><d:collection/><c:calendar/></d:resourcetype>",
+      f"<d:resourcetype><d:collection/><c:calendar/>{'<cs:shared/>' if shared else ''}</d:resourcetype>",
       f"<d:displayname>{name}</d:displayname>",
       '<c:supported-calendar-component-set><c:comp name="VEVENT"/></c:supported-calendar-component-set>',
       f"<d:current-user-privilege-set>{privileges}</d:current-user-privilege-set>",
@@ -230,8 +247,8 @@ def _handler(request: httpx.Request) -> httpx.Response:
     return httpx.Response(
       207,
       text=_multistatus(
-        _response("/1234/calendars/home/", _calendar("Home", "<d:privilege><d:read/></d:privilege><d:privilege><d:write/></d:privilege>")),
-        _response("/1234/calendars/shared/", _calendar("Shared with me", "<d:privilege><d:read/></d:privilege>")),
+        _response("/1234/calendars/home/", _calendar("Home", READ_WRITE)),
+        _response("/1234/calendars/shared/", _calendar("Shared with me", READ_WRITE, shared=True)),
       ),
     )
   if request.method == "REPORT":
@@ -248,7 +265,7 @@ class TestICloudClientCapture:
       calendars = await ICloudCalendarClient(http, "me@risberg.eu", "pw").list_calendars()
     assert calendars == [
       ProviderCalendar(external_id=f"{HOME}home/", name="Home", color="#34aadc", writable=True),
-      ProviderCalendar(external_id=f"{HOME}shared/", name="Shared with me", color="#34aadc", writable=False),
+      ProviderCalendar(external_id=f"{HOME}shared/", name="Shared with me", color="#34aadc", writable=True, owned=False),
     ]
 
   @pytest.mark.asyncio

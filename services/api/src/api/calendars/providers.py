@@ -54,6 +54,7 @@ class ProviderCalendar:
   color: str
   hidden_by_default: bool = False
   writable: bool = False
+  owned: bool = True
   primary: bool = False
   # Changes whenever anything in the calendar does (CalDAV ctag); None where
   # the provider pushes changes instead.

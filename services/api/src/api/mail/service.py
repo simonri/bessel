@@ -7,6 +7,7 @@ from collections.abc import Callable, Sequence
 from contextlib import AbstractContextManager
 from datetime import datetime, timedelta
 from email.message import EmailMessage
+from email.utils import getaddresses
 from typing import TypeVar
 
 import anyio
@@ -140,10 +141,12 @@ def new_email_draft(box: Mailbox, own_address: str, to: Sequence[str], subject: 
   return save_draft(box, new_draft(own_address, to, subject, body, cc=cc, now=now))
 
 
-def reply_email_draft(box: Mailbox, own_address: str, folder: str, uid: int, body: str, reply_all: bool, now: datetime) -> tuple[str, str]:
+def reply_email_draft(box: Mailbox, own_address: str, folder: str, uid: int, body: str, reply_all: bool, now: datetime) -> tuple[str, str, list[str]]:
+  """The Drafts folder, the subject and every address the reply goes to."""
   original = read(box, folder, uid)
   mail = reply_draft(own_address, frozenset({own_address.lower()}), original, body, reply_all=reply_all, now=now)
-  return save_draft(box, mail), str(mail["Subject"])
+  recipients = [address for _, address in getaddresses([str(mail["To"] or ""), str(mail["Cc"] or "")]) if address]
+  return save_draft(box, mail), str(mail["Subject"]), recipients
 
 
 class MailService:

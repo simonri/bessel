@@ -214,5 +214,5 @@ async def get_location_history(ctx: Context, start: Day = "today", end: Day = "t
 
 TOOLS: list[ToolSpec] = [
   read(get_places, "Saved places"),
-  read(get_location_history, "Location history"),
+  read(get_location_history, "Location history", open_world=True),
 ]
