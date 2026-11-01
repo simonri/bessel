@@ -393,3 +393,17 @@ class TestFileStorage:
       stub.add_client_error("get_object", service_error_code="AccessDenied", http_status_code=403)
       with pytest.raises(ClientError, match="AccessDenied"):
         await bucket.get("documents/1/original")
+
+
+class TestImageBombs:
+  def test_an_image_over_the_pixel_limit_is_refused_not_decoded(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    # Pillow only refuses past twice the limit; between the two it would warn and decode anyway.
+    from api.exceptions import ValidationError
+    from PIL import Image
+
+    monkeypatch.setattr(Image, "MAX_IMAGE_PIXELS", 1_000)
+    png = io.BytesIO()
+    Image.new("L", (40, 40)).save(png, format="PNG")
+
+    with pytest.raises(ValidationError):
+      previews_module._photo(png.getvalue())
