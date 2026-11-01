@@ -500,8 +500,14 @@ class ICloudEventEditor:
 
     if moving and destination is not None:
       # CalDAV moves are a copy into the other collection plus a delete.
-      await self.client.put_resource(_resource_href(destination, uid), updated, create=True)
-      await self.client.delete_resource(href, etag=etag)
+      moved_href = _resource_href(destination, uid)
+      await self.client.put_resource(moved_href, updated, create=True)
+      try:
+        await self.client.delete_resource(href, etag=etag)
+      except ProviderError:
+        # Don't leave the event in both calendars.
+        await self.client.delete_resource(moved_href, etag=None)
+        raise
     else:
       await self.client.put_resource(href, updated, etag=etag)
     return uid

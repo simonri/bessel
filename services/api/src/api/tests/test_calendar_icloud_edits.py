@@ -18,7 +18,7 @@ from api.calendars.icloud_edits import (
   split_series,
   truncate_series,
 )
-from api.calendars.providers import ProviderConflictError, ProviderEvent, ProviderForbiddenError
+from api.calendars.providers import ProviderConflictError, ProviderEvent, ProviderForbiddenError, ProviderUnavailableError
 from api.tests.calendar_fakes import FakeCalDAV
 
 TZ = "Europe/Stockholm"
@@ -270,6 +270,21 @@ class TestEditor:
     work = "https://p42-caldav.icloud.com/1234/calendars/work/"
     await editor.update(series_target(12, etag=etag), changes(), EditScope.all, destination=work)
     assert list(caldav.resources) == [f"{work}standup.ics"]
+
+  @pytest.mark.asyncio
+  @pytest.mark.parametrize(("status", "error"), [(412, ProviderConflictError), (503, ProviderUnavailableError)])
+  async def test_a_move_whose_original_cant_be_removed_leaves_no_copy_behind(
+    self, caldav: FakeCalDAV, editor: ICloudEventEditor, status: int, error: type[Exception]
+  ) -> None:
+    etag = caldav.put(HREF, SERIES)
+    work = "https://p42-caldav.icloud.com/1234/calendars/work/"
+    caldav.failures[("DELETE", HREF)] = status
+
+    with pytest.raises(error):
+      await editor.update(series_target(12, etag=etag), changes(title="Moved"), EditScope.all, destination=work)
+
+    assert list(caldav.resources) == [HREF]
+    assert caldav.data(HREF) == SERIES
 
   @pytest.mark.asyncio
   async def test_occurrence_cannot_move_calendars(self, caldav: FakeCalDAV, editor: ICloudEventEditor) -> None:
