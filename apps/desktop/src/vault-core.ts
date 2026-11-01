@@ -196,8 +196,8 @@ export function movedRel(
  * Rewrites the links in `content`, the note at `sourceRel`, that lead to
  * `fromRel` (a note, or a note in the folder `fromRel`) so they lead to where
  * it is under `toRel`. `files` are the vault's notes before the rename: a bare
- * [[Name]] that opens another note of the same name is left be, and one whose
- * new name would open another note gets the full path.
+ * [[Name]] that opens another note of the same name is left be, and any link
+ * that would open a different note once renamed gets the full path.
  */
 export function rewriteLinksInContent(
   content: string,
@@ -227,8 +227,10 @@ export function rewriteLinksInContent(
       ) => {
         const target = rawTarget.trim();
         const resolved = resolveLink(files, sourceRel, target);
-        const newRel = resolved === null ? null : moved(resolved);
-        if (newRel === null) return match;
+        if (resolved === null) return match;
+        // A link to another note can change too: the renamed note may now
+        // take its name.
+        const newRel = moved(resolved) ?? resolved;
         if (resolveLink(filesAfter, sourceAfter, target) === newRel)
           return match;
         const newBase = basenameNoExt(newRel);

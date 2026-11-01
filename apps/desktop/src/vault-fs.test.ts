@@ -211,6 +211,17 @@ describe("rewriteLinksAfterRename", () => {
     expect(read("Hamn.md")).toBe("the harbour");
   });
 
+  it("keeps links to a note whose name the renamed one takes", async () => {
+    // Fiske.md was just renamed to Hamn.md, which [[Hamn]] would now open.
+    write("Places/Hamn.md", "the harbour");
+    write("Hamn.md", "the shop, renamed");
+    write("a.md", "see [[Hamn]] and [[Fiske]]");
+
+    await rewriteLinksAfterRename(root, "Fiske.md", "Hamn.md", new Set(), deps);
+
+    expect(read("a.md")).toBe("see [[Places/Hamn]] and [[Hamn]]");
+  });
+
   it("rewrites links into a renamed folder", async () => {
     // "Places" was just renamed to "Ställen".
     write("Ställen/Fiske.md", "see [[Places/Hamn#Öppet]] and [[Hamn]]");
