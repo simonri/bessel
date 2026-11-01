@@ -67,6 +67,21 @@ describe("parseLinkTarget", () => {
     });
   });
 
+  it("reads a table's escaped pipe as the alias separator", () => {
+    expect(parseLinkTarget("Note\\|Alias")).toEqual({
+      target: "Note",
+      heading: null,
+      block: null,
+      alias: "Alias",
+    });
+    expect(parseLinkTarget("Note#Heading\\|Alias")).toEqual({
+      target: "Note",
+      heading: "Heading",
+      block: null,
+      alias: "Alias",
+    });
+  });
+
   it("parses target#heading|alias together", () => {
     expect(parseLinkTarget("Note#Heading|Alias")).toEqual({
       target: "Note",

@@ -24,8 +24,10 @@ export interface LinkTargetParts {
 
 /** Parses the inside of `[[...]]`: "target#heading|alias", "target#^block", "#heading". */
 export function parseLinkTarget(inner: string): LinkTargetParts {
-  const [beforeAlias, ...aliasParts] = inner.split("|");
-  const alias = aliasParts.length ? aliasParts.join("|").trim() : null;
+  // Inside a table Obsidian escapes the separator: [[Note\|alias]].
+  const pipe = /\\?\|/.exec(inner);
+  const beforeAlias = pipe ? inner.slice(0, pipe.index) : inner;
+  const alias = pipe ? inner.slice(pipe.index + pipe[0].length).trim() : null;
   const hashAt = beforeAlias.indexOf("#");
   const target = (
     hashAt === -1 ? beforeAlias : beforeAlias.slice(0, hashAt)
