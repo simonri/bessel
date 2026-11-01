@@ -39,3 +39,14 @@ class TestGetCounters:
     assert second["created_at"] == "2026-10-25T13:00:00+01:00"
 
     assert (await mcp_call(connect, "get_counters", {"timezone": "Europe/Stockholm"}, token="token-b"))["counters"] == []
+
+  @pytest.mark.asyncio
+  async def test_a_reset_from_a_clock_running_ahead_is_zero_days_ago(self, connect: ConnectFixture, save_owned: SaveFixture, mocker: MockerFixture) -> None:
+    mocker.patch("api.mcp.tools.counters.utc_now", return_value=NOW)
+    counter = Counter(name="Coffee", created_at=NOW - timedelta(days=10))
+    await save_owned(counter)
+    await save_owned(CounterReset(counter_id=counter.id, occurred_at=NOW + timedelta(minutes=2)))
+
+    [result] = (await mcp_call(connect, "get_counters", {"timezone": "Europe/Stockholm"}))["counters"]
+
+    assert result["days_since"] == 0
