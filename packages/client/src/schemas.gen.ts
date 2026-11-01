@@ -10441,6 +10441,7 @@ export const TaskCreateSchema = {
       anyOf: [
         {
           type: "string",
+          maxLength: 20000,
         },
         {
           type: "null",
@@ -10488,8 +10489,11 @@ export const TaskCreateSchema = {
         {
           items: {
             type: "string",
+            maxLength: 50,
+            minLength: 1,
           },
           type: "array",
+          maxItems: 20,
         },
         {
           type: "null",
@@ -10527,6 +10531,7 @@ export const TaskCreateSchema = {
       anyOf: [
         {
           type: "integer",
+          maximum: 365,
           minimum: 1,
         },
         {
@@ -10889,6 +10894,7 @@ export const TaskUpdateSchema = {
       anyOf: [
         {
           type: "string",
+          maxLength: 20000,
         },
         {
           type: "null",
@@ -10948,8 +10954,11 @@ export const TaskUpdateSchema = {
         {
           items: {
             type: "string",
+            maxLength: 50,
+            minLength: 1,
           },
           type: "array",
+          maxItems: 20,
         },
         {
           type: "null",
@@ -10993,6 +11002,7 @@ export const TaskUpdateSchema = {
       anyOf: [
         {
           type: "integer",
+          maximum: 365,
           minimum: 1,
         },
         {

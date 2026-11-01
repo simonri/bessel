@@ -23,12 +23,13 @@ from api.models.user import User
 from api.postgres import AsyncSession
 from api.projects.repository import ProjectDeviceConfigRepository, ProjectRepository
 from api.tasks.repository import TaskRepository
-from api.tasks.schemas import OPEN_TASK_STATUSES, RruleFrequency, TaskCreate, TaskStatus
+from api.tasks.schemas import OPEN_TASK_STATUSES, Description, RruleFrequency, Tags, TaskCreate, TaskStatus
 from api.tasks.service import task_service
 
 MAX_BATCH = 50
 MAX_OVERVIEW_GROUP = 30
 MAX_COMPLETED_DAYS = 366
+MAX_NOTES = 20_000
 # A repeated add of the same open task this soon after the first is a retry, not a new task.
 DUPLICATE_WINDOW = timedelta(minutes=10)
 OPEN_STATUSES = OPEN_TASK_STATUSES
@@ -138,12 +139,12 @@ class Repeat(Schema):
 
 class NewTask(Schema):
   title: str = Field(min_length=1, max_length=500)
-  notes: str | None = None
+  notes: Description | None = None
   due: Day | None = None
   priority: Priority = "none"
   project: str | None = Field(default=None, description="An existing project name (loosely matched). See get_task_overview for the list.")
   new_project: bool = Field(default=False, description="Create `project` if it doesn't exist yet. Only when the user asked for a new project.")
-  tags: list[str] | None = None
+  tags: Tags | None = None
   status: Literal["todo", "in_progress"] = "todo"
   repeat: Repeat | None = Field(default=None, description="Makes the task a routine that comes back after each completion.")
 
@@ -151,12 +152,12 @@ class NewTask(Schema):
 class TaskChange(Schema):
   task_id: UUID
   title: str | None = Field(default=None, min_length=1, max_length=500)
-  notes: str | None = Field(default=None, description="Replaces the notes. Prefer append_note to keep what's there.")
-  append_note: str | None = Field(default=None, description="Added to the end of the notes on a new line, dated.")
+  notes: Description | None = Field(default=None, description="Replaces the notes. Prefer append_note to keep what's there.")
+  append_note: str | None = Field(default=None, max_length=5000, description="Added to the end of the notes on a new line, dated.")
   due: str | None = Field(default=None, description="A day (same formats as elsewhere), or 'none' to clear it.")
   priority: Priority | None = None
   project: str | None = Field(default=None, description="An existing project name, or 'none' to remove the task from its project.")
-  tags: list[str] | None = Field(default=None, description="Replaces the tags.")
+  tags: Tags | None = Field(default=None, description="Replaces the tags.")
   status: Literal["todo", "in_progress", "in_review", "cancelled"] | None = Field(
     default=None, description="'in_review' when the work is finished and the user should check it. Use complete_tasks to mark tasks done."
   )
@@ -530,6 +531,8 @@ async def update_tasks(ctx: Context, changes: Annotated[list[TaskChange], Field(
         fields["description"] = change.notes
       if change.append_note:
         fields["description"] = _dated_note(str(fields.get("description", task.description) or ""), change.append_note, today)
+        if len(fields["description"]) > MAX_NOTES:
+          raise ToolError(f"{task.title!r}'s notes would pass {MAX_NOTES} characters; replace them with a summary (notes=...) first.")
       if change.due is not None:
         fields["due_date"] = None if change.due.strip().lower() == "none" else parse_day(change.due, today)
       if change.priority is not None:

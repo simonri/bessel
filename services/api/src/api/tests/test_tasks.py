@@ -72,6 +72,20 @@ class TestTaskTitle:
     assert (await client.get(f"/v1/tasks/{task['id']}")).json()["title"] == "Buy milk"
 
 
+class TestTaskBounds:
+  @pytest.mark.asyncio
+  async def test_what_doesnt_fit_is_turned_away_not_a_500(self, client: AsyncClient) -> None:
+    # A tag is String(50); an interval in the millions overflowed the next occurrence's date on completing.
+    assert (await client.post("/v1/tasks", json={"title": "t", "tags": ["x" * 51]})).status_code == 422
+    assert (await client.post("/v1/tasks", json={"title": "t", "tags": [f"t{i}" for i in range(21)]})).status_code == 422
+    assert (await client.post("/v1/tasks", json={"title": "t", "description": "x" * 20_001})).status_code == 422
+    assert (await client.post("/v1/tasks", json={"title": "t", "is_recurring": True, "rrule_frequency": "daily", "rrule_interval": 10**9})).status_code == 422
+    reorder = [{"id": "00000000-0000-0000-0000-000000000000", "position": i} for i in range(1001)]
+    assert (await client.patch("/v1/tasks/reorder", json=reorder)).status_code == 422
+    fits = {"title": "t", "tags": ["x" * 50], "is_recurring": True, "rrule_frequency": "weekly", "rrule_interval": 2}
+    assert (await client.post("/v1/tasks", json=fits)).status_code == 201
+
+
 class TestRemovedAreas:
   @pytest.mark.asyncio
   async def test_old_clients_still_get_an_empty_list(self, client: AsyncClient) -> None:

@@ -7008,6 +7008,7 @@
                   "$ref": "#/components/schemas/TaskReorderItem"
                 },
                 "type": "array",
+                "maxItems": 1000,
                 "title": "Body"
               }
             }
@@ -19981,7 +19982,8 @@
           "description": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 20000
               },
               {
                 "type": "null"
@@ -20028,9 +20030,12 @@
             "anyOf": [
               {
                 "items": {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 50,
+                  "minLength": 1
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 20
               },
               {
                 "type": "null"
@@ -20068,6 +20073,7 @@
             "anyOf": [
               {
                 "type": "integer",
+                "maximum": 365.0,
                 "minimum": 1.0
               },
               {
@@ -20440,7 +20446,8 @@
           "description": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 20000
               },
               {
                 "type": "null"
@@ -20499,9 +20506,12 @@
             "anyOf": [
               {
                 "items": {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 50,
+                  "minLength": 1
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 20
               },
               {
                 "type": "null"
@@ -20545,6 +20555,7 @@
             "anyOf": [
               {
                 "type": "integer",
+                "maximum": 365.0,
                 "minimum": 1.0
               },
               {
