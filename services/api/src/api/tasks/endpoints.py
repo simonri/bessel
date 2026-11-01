@@ -118,10 +118,9 @@ async def reorder_tasks(
     task = tasks_by_id.get(item.id)
     if task is None:
       continue
-    update: dict = {"position": item.position}
+    await repo.update(task, update_dict={"position": item.position})
     if item.status is not None:
-      update["status"] = item.status
-    await repo.update(task, update_dict=update)
+      await task_service.set_status(session, task, item.status)
 
 
 @router.patch(

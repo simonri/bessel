@@ -54,6 +54,7 @@ class TaskService:
   async def update(self, session: AsyncSession, task: Task, changes: dict[str, Any]) -> Task:
     """Applies `changes` (TaskUpdate fields that were set) to `task`."""
     changes = without_required_nulls(Task, changes)
+    status = changes.pop("status", None)
     if changes.get("title") is not None:
       changes["title"] = _title(changes["title"])
     if "project" in changes:
@@ -62,7 +63,21 @@ class TaskService:
       task.project_obj = project
     if changes:
       await TaskRepository.from_session(session).update(task, update_dict=changes, flush=True)
+    if status is not None:
+      await self.set_status(session, task, status)
     return task
+
+  async def set_status(self, session: AsyncSession, task: Task, status: str) -> None:
+    """Moves `task` to `status`, into and out of done the way completing and reopening do."""
+    if status == task.status:
+      return
+    if status == "done":
+      await self.complete(session, task)
+      return
+    update: dict[str, Any] = {"status": status}
+    if task.status == "done":
+      update["completed_at"] = None
+    await TaskRepository.from_session(session).update(task, update_dict=update, flush=True)
 
   async def complete(self, session: AsyncSession, task: Task) -> Task | None:
     """Marks `task` done and returns the next occurrence it spawned, for a recurring task."""

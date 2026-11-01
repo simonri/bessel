@@ -60,6 +60,41 @@ class TestTaskReorder:
     assert (await client.get(f"/v1/tasks/{task['id']}")).json()["position"] == 4000
 
 
+class TestStatusChanges:
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_dragging_a_task_to_done_completes_it(self, client: AsyncClient) -> None:
+    task = (await client.post("/v1/tasks", json={"title": "Water plants"})).json()
+
+    await client.patch("/v1/tasks/reorder", json=[{"id": task["id"], "position": 1000, "status": "done"}])
+
+    fetched = (await client.get(f"/v1/tasks/{task['id']}")).json()
+    assert fetched["status"] == "done"
+    assert fetched["completed_at"] is not None
+
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_setting_a_routine_done_brings_its_next_occurrence(self, client: AsyncClient) -> None:
+    body = {"title": "Take out bins", "is_recurring": True, "rrule_frequency": "weekly", "due_date": "2027-03-01"}
+    routine = (await client.post("/v1/tasks", json=body)).json()
+
+    fetched = (await client.patch(f"/v1/tasks/{routine['id']}", json={"status": "done"})).json()
+    listed = (await client.get("/v1/tasks", params={"status": "todo"})).json()["items"]
+
+    assert fetched["completed_at"] is not None
+    assert [(task["title"], task["due_date"]) for task in listed] == [("Take out bins", "2027-03-08")]
+
+  @pytest.mark.asyncio
+  @pytest.mark.keep_session_state
+  async def test_moving_a_done_task_back_clears_its_completion(self, client: AsyncClient) -> None:
+    task = (await client.post("/v1/tasks", json={"title": "Water plants"})).json()
+    await client.post(f"/v1/tasks/{task['id']}/complete")
+
+    fetched = (await client.patch(f"/v1/tasks/{task['id']}", json={"status": "in_progress"})).json()
+
+    assert (fetched["status"], fetched["completed_at"]) == ("in_progress", None)
+
+
 class TestTaskTitle:
   @pytest.mark.asyncio
   @pytest.mark.keep_session_state
