@@ -140,13 +140,60 @@ function basenameNoExt(rel: string): string {
   return stripMdExt(base);
 }
 
+function parentFolders(rel: string): string[] {
+  return rel.split("/").slice(0, -1);
+}
+
+function sharedFolderDepth(a: string, b: string): number {
+  const af = parentFolders(a);
+  const bf = parentFolders(b);
+  let i = 0;
+  while (i < af.length && i < bf.length && af[i] === bf[i]) i++;
+  return i;
+}
+
+/**
+ * The note a link target opens, as the vault page resolves it
+ * (apps/web/.../wikilinks.ts resolveLink): an exact vault-relative path, else
+ * the note of that name with the shortest path, then the closest to `fromRel`.
+ */
+export function resolveLink(
+  files: readonly string[],
+  fromRel: string,
+  target: string,
+): string | null {
+  const wanted = target.trim().replace(/^\.?\//, "");
+  if (!wanted) return fromRel;
+  const lower = wanted.toLowerCase();
+  const candidates: string[] = [];
+  for (const rel of files) {
+    const relLower = rel.toLowerCase();
+    if (relLower === lower || relLower === `${lower}.md`) return rel;
+    const base = rel.slice(rel.lastIndexOf("/") + 1).toLowerCase();
+    if (base === lower || base === `${lower}.md`) candidates.push(rel);
+  }
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => {
+    if (a.length !== b.length) return a.length - b.length;
+    return sharedFolderDepth(b, fromRel) - sharedFolderDepth(a, fromRel);
+  });
+  return candidates[0];
+}
+
+/**
+ * Rewrites the links in `content`, the note at `sourceRel`, that lead to
+ * `fromRel` so they lead to `toRel`. `files` are the vault's notes before the
+ * rename: a bare [[Name]] that opens another note of the same name is left be.
+ */
 export function rewriteLinksInContent(
   content: string,
   fromRel: string,
   toRel: string,
+  {
+    sourceRel = "",
+    files = [fromRel],
+  }: { sourceRel?: string; files?: readonly string[] } = {},
 ): { content: string; changed: boolean } {
-  const fromFull = stripMdExt(fromRel);
-  const fromBase = basenameNoExt(fromRel);
   const toFull = stripMdExt(toRel);
   const toBase = basenameNoExt(toRel);
 
@@ -164,18 +211,8 @@ export function rewriteLinksInContent(
         aliasPart: string | undefined,
       ) => {
         const target = rawTarget.trim();
-        const targetNoExt = target.replace(/\.md$/i, "");
-
-        let newTarget: string | null = null;
-        if (targetNoExt.toLowerCase() === fromFull.toLowerCase()) {
-          newTarget = toFull;
-        } else if (
-          !targetNoExt.includes("/") &&
-          targetNoExt.toLowerCase() === fromBase.toLowerCase()
-        ) {
-          newTarget = toBase;
-        }
-        if (newTarget === null) return match;
+        if (resolveLink(files, sourceRel, target) !== fromRel) return match;
+        const newTarget = target.includes("/") ? toFull : toBase;
 
         changed = true;
         return `${embed ?? ""}[[${newTarget}${headingPart ?? ""}${aliasPart ?? ""}]]`;

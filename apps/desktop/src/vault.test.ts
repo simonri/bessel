@@ -132,6 +132,42 @@ describe("rewriteLinksInContent", () => {
     ).toBe(false);
   });
 
+  it("rewrites a bare link only where it opened the renamed note", () => {
+    const files = ["Archive/Deep/Fiske.md", "Places/Fiske.md"];
+    const rename = (from: string, to: string, sourceRel: string) =>
+      rewriteLinksInContent("[[Fiske]]", from, to, { sourceRel, files })
+        .content;
+
+    // The shorter path wins, wherever the link is.
+    expect(
+      rename(
+        "Archive/Deep/Fiske.md",
+        "Archive/Deep/Hamn.md",
+        "Archive/Deep/a.md",
+      ),
+    ).toBe("[[Fiske]]");
+    expect(
+      rename("Places/Fiske.md", "Places/Hamn.md", "Archive/Deep/a.md"),
+    ).toBe("[[Hamn]]");
+    // A note at the vault root is the exact path.
+    expect(
+      rewriteLinksInContent("[[Fiske]]", "Places/Fiske.md", "Places/Hamn.md", {
+        sourceRel: "Places/a.md",
+        files: [...files, "Fiske.md"],
+      }).content,
+    ).toBe("[[Fiske]]");
+
+    // Equally short: the one in the linking note's own folder.
+    const twins = ["Väst/Fiske.md", "Norr/Fiske.md"];
+    const renameVäst = (sourceRel: string) =>
+      rewriteLinksInContent("[[Fiske]]", "Väst/Fiske.md", "Väst/Hamn.md", {
+        sourceRel,
+        files: twins,
+      }).content;
+    expect(renameVäst("Norr/a.md")).toBe("[[Fiske]]");
+    expect(renameVäst("Väst/a.md")).toBe("[[Hamn]]");
+  });
+
   it("leaves non-matching links untouched", () => {
     const { content, changed } = rewriteLinksInContent(
       "[[Somewhere Else]] and [[Fiskehandlaren]]",

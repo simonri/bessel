@@ -178,7 +178,13 @@ export async function rewriteLinksAfterRename(
   let updatedFiles = 0;
   const skippedFiles: string[] = [];
   const failedFiles: string[] = [];
-  for (const { rel } of await listMarkdownEntries(root)) {
+  const rels = (await listMarkdownEntries(root)).map((e) => e.rel);
+  // What links resolved against: the vault as it was before the rename.
+  const filesBefore = [
+    from,
+    ...rels.filter((rel) => rel !== to && rel !== from),
+  ];
+  for (const rel of rels) {
     const abs = resolveInside(root, rel);
     try {
       await lock(abs, async () => {
@@ -189,6 +195,7 @@ export async function rewriteLinksAfterRename(
           content,
           from,
           to,
+          { sourceRel: rel === to ? from : rel, files: filesBefore },
         );
         if (!changed) return;
         if (skip.has(rel)) {

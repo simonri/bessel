@@ -155,6 +155,26 @@ describe("rewriteLinksAfterRename", () => {
     expect(read("c.md")).toBe("unrelated");
   });
 
+  it("leaves links to another note of the same name", async () => {
+    // Archive/Fiske.md was just renamed; [[Fiske]] opens the shorter Fiske.md.
+    write("Fiske.md", "the shop");
+    write("Archive/Fiskebutik.md", "the old shop");
+    write("a.md", "see [[Fiske]] and [[Archive/Fiske]]");
+    write("Archive/b.md", "see [[Fiske]]");
+
+    const result = await rewriteLinksAfterRename(
+      root,
+      "Archive/Fiske.md",
+      "Archive/Fiskebutik.md",
+      new Set(),
+      deps,
+    );
+
+    expect(result.updatedFiles).toBe(1);
+    expect(read("a.md")).toBe("see [[Fiske]] and [[Archive/Fiskebutik]]");
+    expect(read("Archive/b.md")).toBe("see [[Fiske]]");
+  });
+
   it("collects failures instead of aborting the rewrite", async () => {
     write("a.md", "[[Old]]");
     write("b.md", "[[Old]]");
