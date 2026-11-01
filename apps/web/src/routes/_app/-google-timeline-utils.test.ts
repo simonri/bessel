@@ -108,6 +108,11 @@ describe("formatting", () => {
     expect(formatDistance(23_400)).toBe("23 km");
   });
 
+  it("switches unit where a distance rounds up to the next one", () => {
+    expect(formatDistance(995)).toBe("1.0 km");
+    expect(formatDistance(9_960)).toBe("10 km");
+  });
+
   it("names activities from either platform's spelling", () => {
     expect(activityInfo("in passenger vehicle").label).toBe("Driving");
     expect(activityInfo("IN_PASSENGER_VEHICLE").label).toBe("Driving");

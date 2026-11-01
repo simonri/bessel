@@ -85,8 +85,10 @@ export function formatDuration(ms: number): string {
 }
 
 export function formatDistance(meters: number): string {
-  if (meters < 1000) return `${Math.round(meters / 10) * 10} m`;
-  return `${(meters / 1000).toFixed(meters < 10_000 ? 1 : 0)} km`;
+  const tens = Math.round(meters / 10) * 10;
+  if (tens < 1000) return `${tens} m`;
+  const tenths = Math.round(meters / 100) / 10;
+  return tenths < 10 ? `${tenths.toFixed(1)} km` : `${Math.round(meters / 1000)} km`;
 }
 
 const ACTIVITIES: Record<string, { label: string; icon: LucideIcon }> = {
