@@ -1,8 +1,9 @@
+import re
 from typing import Any
 
 import pytest
 from api.mcp.auth import Auth0TokenVerifier
-from api.rate_limit import _authenticate, client_ip
+from api.rate_limit import _PRODUCTION_RULES, _authenticate, client_ip
 from mcp.server.auth.provider import AccessToken
 from pytest_mock import MockerFixture
 
@@ -57,3 +58,18 @@ class TestRateLimitKey:
   async def test_mcp_calls_without_a_token_and_the_rest_api_count_per_address(self) -> None:
     assert await key("/mcp") == "160.79.104.10"
     assert await key("/v1/tasks", "Bearer token-a") == "160.79.104.10"
+
+
+def _zone(path: str) -> str | None:
+  for pattern, rules in _PRODUCTION_RULES.items():
+    if re.match(pattern, path):
+      return rules[0].zone
+  return None
+
+
+class TestProductionRules:
+  def test_weather_has_its_own_budget(self) -> None:
+    # Each new place takes a turn at Nominatim's once-a-second slot that every user shares.
+    assert _zone("/v1/weather") == "weather"
+    assert _zone("/v1/weather/forecast") == "weather"
+    assert _zone("/v1/tasks") == "api"
