@@ -62,6 +62,18 @@ describe("linkify", () => {
     ]);
   });
 
+  it("keeps å, ä and ö in an email address", () => {
+    expect(
+      links(
+        "Mejla åsa@exempel.se, björn@exempel.se eller info@räksmörgås.se",
+      ).map((p) => p.href),
+    ).toEqual([
+      "mailto:åsa@exempel.se",
+      "mailto:björn@exempel.se",
+      "mailto:info@räksmörgås.se",
+    ]);
+  });
+
   it("links only web and email addresses", () => {
     expect(
       links("javascript:alert(1) file:///etc/passwd ftp://x.se www.x.se"),

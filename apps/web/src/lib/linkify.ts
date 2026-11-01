@@ -3,7 +3,7 @@ export type TextPart =
   | { type: "link"; text: string; href: string };
 
 const LINK_RE =
-  /\b(?:https?:\/\/|mailto:)[^\s<>"]+|\b[\w.+-]+@[\w-]+(?:\.[\w-]+)+/gi;
+  /\b(?:https?:\/\/|mailto:)[^\s<>"]+|(?<![\p{L}\p{N}_.+-])[\p{L}\p{N}_.+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+/giu;
 const TRAILING = /[.,;:!?'"*”’»«]+$/;
 const BRACKETS = [
   ["(", ")"],
