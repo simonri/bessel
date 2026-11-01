@@ -81,8 +81,16 @@ def _document(fact: MemoryFact) -> str:
   return f"{fact.area} / {fact.attribute}: {fact.statement}"
 
 
-def _external_only(evidence: Sequence[Evidence]) -> bool:
-  return bool(evidence) and all(item.source.casefold() in EXTERNAL_SOURCES for item in evidence)
+def _external_only(evidence: Sequence[Evidence | dict]) -> bool:
+  sources = [(item["source"] if isinstance(item, dict) else item.source).strip().casefold() for item in evidence]
+  return bool(sources) and all(source in EXTERNAL_SOURCES for source in sources)
+
+
+def _hold_external(fact: MemoryFact) -> None:
+  """A fact seen only in what others wrote stays an unimportant hypothesis whichever way it was changed: update, merge
+  and supersede must not lift what remember() capped."""
+  if fact.status == MemoryStatus.hypothesis and _external_only(fact.evidence):
+    fact.importance = min(fact.importance, EXTERNAL_MAX_IMPORTANCE)
 
 
 def _default_status(kind: MemoryKind, evidence: Sequence[Evidence] = ()) -> MemoryStatus:
@@ -252,7 +260,8 @@ class MemoryService:
       same = next((fact for fact in existing if _normalize(fact.statement) == _normalize(item.statement)), None)
       if same is not None:
         # A conclusion seen a third time, on its own evidence, stops being a guess.
-        _confirm(same, item.evidence, promote=item.kind != MemoryKind.inferred or same.confirm_count + 1 >= INFERRED_CONFIRMATIONS)
+        own = not _external_only(same.evidence) or (bool(item.evidence) and not _external_only(item.evidence))
+        _confirm(same, item.evidence, promote=own and (item.kind != MemoryKind.inferred or same.confirm_count + 1 >= INFERRED_CONFIRMATIONS))
         await session.flush()
         results.append(RememberResult(outcome="known", fact=to_schema(same)))
         continue
@@ -266,7 +275,9 @@ class MemoryService:
         attribute=item.attribute.strip(),
         statement=item.statement.strip(),
         kind=item.kind,
-        status=item.status or _default_status(item.kind, item.evidence),
+        # Only ever down to a hypothesis: a caller choosing "confirmed" would skip the checks below, and "rejected" would
+        # make a fact nobody sees that still holds the attribute's slot.
+        status=MemoryStatus.hypothesis if item.status == MemoryStatus.hypothesis else _default_status(item.kind, item.evidence),
         importance=min(item.importance, EXTERNAL_MAX_IMPORTANCE) if _external_only(item.evidence) else item.importance,
         sensitivity=item.sensitivity,
         evidence=_merged_evidence([], [*item.evidence, *(Evidence(source="memory", ref=str(other.id)) for other in checked)]),
@@ -315,7 +326,9 @@ class MemoryService:
     ended_on = change.ended_on or today
 
     if change.action == "confirm":
-      _confirm(fact, change.evidence, promote=True)
+      # Confirming what only others wrote with more of the same, or with nothing, doesn't make it the user's.
+      external = _external_only(fact.evidence)
+      _confirm(fact, change.evidence, promote=not external or (bool(change.evidence) and not _external_only(change.evidence)))
       await session.flush()
       return fact
 
@@ -326,6 +339,7 @@ class MemoryService:
         if value is not None:
           setattr(fact, field, value.strip() if isinstance(value, str) else value)
       fact.evidence = _merged_evidence(fact.evidence, change.evidence)
+      _hold_external(fact)
       fact.set_modified_at()
       await session.flush()
       return fact
@@ -351,6 +365,7 @@ class MemoryService:
         confirmed_at=utc_now(),
         confirm_count=1,
       )
+      _hold_external(replacement)
       await repository.create(replacement, flush=True)
       fact.superseded_by_id = replacement.id
       await session.flush()
@@ -367,6 +382,7 @@ class MemoryService:
       target.importance = max(target.importance, fact.importance)
       if change.statement is not None:
         target.statement = change.statement.strip()
+      _hold_external(target)
       target.set_modified_at()
       await session.flush()
       return target
