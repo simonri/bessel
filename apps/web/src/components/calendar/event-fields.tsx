@@ -10,7 +10,6 @@ import {
   format,
   isSameDay,
   isSameMonth,
-  startOfDay,
   startOfMonth,
   startOfWeek,
 } from "date-fns";
@@ -91,12 +90,22 @@ interface TimeOption {
   hint?: string;
 }
 
-/** Every slot of `day`, plus `current` when it sits between slots. */
+/** Every slot of `day` on the clock, plus `current` when it sits between
+ *  slots. On a DST day that's the clock's 23 or 25 hours, not 24 elapsed. */
 export function startTimeOptions(current: Date): TimeOption[] {
-  const day = startOfDay(current);
   const options: TimeOption[] = [];
   for (let m = 0; m < DAY_MINUTES; m += SNAP_MINUTES) {
-    options.push({ value: addMinutes(day, m) });
+    const value = new Date(
+      current.getFullYear(),
+      current.getMonth(),
+      current.getDate(),
+      0,
+      m,
+    );
+    // Times the clocks skip resolve to the hour after, already listed.
+    if (value.getHours() * 60 + value.getMinutes() === m) {
+      options.push({ value });
+    }
   }
   return withCurrent(options, current);
 }
