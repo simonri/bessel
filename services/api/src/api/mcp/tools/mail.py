@@ -66,6 +66,8 @@ class MailFolders(Schema):
 class DraftSaved(Schema):
   folder: str
   subject: str
+  # Every address the draft goes to, so a recipient nobody asked for (from a crafted sender or Reply-To) shows.
+  recipients: list[str]
 
 
 def _address(a: Address) -> MailAddress:
@@ -195,7 +197,7 @@ async def draft_email(
   sends it from Mail."""
   async with user_session(ctx) as (session, user):
     folder = await service.mail_service.run(session, user, lambda box, own: service.new_email_draft(box, own, list(to), subject, body, list(cc), utc_now()))
-  return DraftSaved(folder=folder, subject=subject)
+  return DraftSaved(folder=folder, subject=subject, recipients=[*to, *cc])
 
 
 async def draft_reply(
@@ -208,11 +210,11 @@ async def draft_reply(
   """Save a reply to the user's iCloud Drafts, in the original's thread. It is never sent: the user reviews and sends
   it from Mail."""
   async with user_session(ctx) as (session, user):
-    saved, subject = await service.mail_service.run(session, user, partial(_reply, folder=folder, uid=uid, body=body, reply_all=reply_all))
-  return DraftSaved(folder=saved, subject=subject)
+    saved, subject, recipients = await service.mail_service.run(session, user, partial(_reply, folder=folder, uid=uid, body=body, reply_all=reply_all))
+  return DraftSaved(folder=saved, subject=subject, recipients=recipients)
 
 
-def _reply(box: Mailbox, own: str, *, folder: str, uid: int, body: str, reply_all: bool) -> tuple[str, str]:
+def _reply(box: Mailbox, own: str, *, folder: str, uid: int, body: str, reply_all: bool) -> tuple[str, str, list[str]]:
   return service.reply_email_draft(box, own, folder, uid, body, reply_all, utc_now())
 
 

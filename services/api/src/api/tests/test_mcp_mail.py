@@ -271,7 +271,7 @@ class TestDrafts:
 
     saved = await mcp_call(connect, "draft_email", {"to": ["anna@x.se"], "cc": ["bo@y.se"], "subject": "Middag", "body": "Fredag 19?"})
 
-    assert saved == {"folder": "Drafts", "subject": "Middag"}
+    assert saved == {"folder": "Drafts", "subject": "Middag", "recipients": ["anna@x.se", "bo@y.se"]}
     [(folder, flags, _)] = box.appended
     [draft] = drafts(box)
     assert (folder, flags) == ("Drafts", ["\\Draft", "\\Seen"])
@@ -292,7 +292,8 @@ class TestDrafts:
     mailbox["mailbox"] = box
 
     await mcp_call(connect, "draft_reply", {"uid": 1, "body": "Gärna!"})
-    await mcp_call(connect, "draft_reply", {"uid": 1, "body": "Alla välkomna", "reply_all": True})
+    saved = await mcp_call(connect, "draft_reply", {"uid": 1, "body": "Alla välkomna", "reply_all": True})
+    assert saved["recipients"] == ["anna.privat@x.se", "bo@y.se", "cia@z.se"]
 
     only, everyone = drafts(box)
     assert (only["Subject"], only["To"], only["In-Reply-To"], only["References"]) == ("Re: Middag", "anna.privat@x.se", "<m1@x.se>", "<m1@x.se>")
@@ -372,6 +373,20 @@ class TestImapDetails:
     injected, plain = sent
     assert injected == (("SEARCH", "CHARSET", "UTF-8", "SUBJECT"), b'x"\r\nA2 DELETE INBOX')
     assert plain == (("SEARCH", "SUBJECT", '"kvitto"'), None)
+
+  def test_a_senders_display_name_cant_add_a_recipient_to_the_reply(self) -> None:
+    from datetime import UTC, datetime
+    from email.utils import getaddresses
+
+    from api.mail.messages import message, reply_draft
+
+    sender = b'From: "Bob\\", evil@attacker.test, \\"x" <bob@example.se>\r\n'
+    raw = sender + b"To: me@icloud.com\r\nSubject: Hej\r\nMessage-ID: <1@example.se>\r\n\r\nHej!\r\n"
+    original = message("INBOX", 1, frozenset(), raw)
+    reply = reply_draft("me@icloud.com", frozenset({"me@icloud.com"}), original, "Tack", reply_all=True, now=datetime.now(UTC))
+
+    recipients = [address for _, address in getaddresses([str(reply["To"]), str(reply["Cc"] or "")]) if address]
+    assert recipients == ["bob@example.se"]
 
   def test_fetch_responses_give_the_uid_and_flags(self) -> None:
     assert _meta(b"3 (UID 812 FLAGS (\\Seen \\Flagged) BODY[] {120}") == (812, frozenset({"\\Seen", "\\Flagged"}))

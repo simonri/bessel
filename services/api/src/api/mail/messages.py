@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from email import policy
 from email.message import EmailMessage
 from email.parser import BytesParser
-from email.utils import format_datetime, getaddresses, make_msgid, parsedate_to_datetime
+from email.utils import format_datetime, formataddr, getaddresses, make_msgid, parsedate_to_datetime
 
 from bs4 import BeautifulSoup
 
@@ -168,7 +168,8 @@ def _subject_reply(subject: str) -> str:
 
 
 def _format(addresses: Sequence[Address]) -> str:
-  return ", ".join(f'"{a.name}" <{a.address}>' if a.name else a.address for a in addresses)
+  # formataddr quotes the name: a sender named 'Bob", evil@x.com, "' must not become a recipient of the reply.
+  return ", ".join(formataddr((a.name, a.address)) for a in addresses)
 
 
 def draft(sender: str, to: Sequence[str], subject: str, body: str, *, cc: Sequence[str] = (), now: datetime) -> EmailMessage:
