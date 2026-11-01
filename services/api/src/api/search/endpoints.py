@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query
 
+from api.exceptions import ValidationError
 from api.postgres import DBSession
 from api.search.schemas import SearchResponse
 from api.search.service import search_service
@@ -18,4 +19,7 @@ async def search_everything(
   limit: Annotated[int, Query(ge=1, le=20, description="Most results per kind.")] = 5,
 ) -> SearchResponse:
   """Tasks, recipes, calendar events and saved places matching `q`, for the command palette."""
-  return await search_service.search(session, current_user.id, q.strip(), limit=limit)
+  query = q.strip()
+  if len(query) < 2:
+    raise ValidationError("Search for at least two characters.", status_code=422)
+  return await search_service.search(session, current_user.id, query, limit=limit)

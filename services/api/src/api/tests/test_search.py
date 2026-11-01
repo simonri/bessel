@@ -75,3 +75,10 @@ class TestSearch:
   @pytest.mark.asyncio
   async def test_needs_two_characters(self, client: AsyncClient) -> None:
     assert (await client.get("/v1/search", params={"q": "a"})).status_code == 422
+
+  @pytest.mark.asyncio
+  async def test_spaces_around_one_character_are_not_a_search(self, client: AsyncClient) -> None:
+    await _create(client, "/v1/tasks", {"title": "Book dentist", "position": 1.0})
+
+    for q in ("  ", " a "):
+      assert (await client.get("/v1/search", params={"q": q})).status_code == 422
