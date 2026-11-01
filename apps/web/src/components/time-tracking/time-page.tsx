@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@bessel/ui/components/select";
-import { addDays, addHours, format, isSameDay, isSameMonth } from "date-fns";
+import { addDays, format, isSameDay, isSameMonth } from "date-fns";
 import { Check, ChevronLeft, ChevronRight, Moon, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -64,6 +64,32 @@ const DAY_START_HOUR = 4;
 
 function workDay(timeZone: string, now = new Date()): Date {
   return dayStartingAt(toWallClock(now, timeZone), DAY_START_HOUR);
+}
+
+/** From the first day's start hour on the clock to the one after the last day. */
+export function workDaysRange(days: Date[], timeZone: string): [Date, Date] {
+  const first = days[0];
+  const last = days[days.length - 1];
+  return [
+    fromWallClock(
+      new Date(
+        first.getFullYear(),
+        first.getMonth(),
+        first.getDate(),
+        DAY_START_HOUR,
+      ),
+      timeZone,
+    ),
+    fromWallClock(
+      new Date(
+        last.getFullYear(),
+        last.getMonth(),
+        last.getDate() + 1,
+        DAY_START_HOUR,
+      ),
+      timeZone,
+    ),
+  ];
 }
 
 /** Past midnight but before the work day turns, says which day still counts. */
@@ -220,11 +246,7 @@ function CalendarTime({
     setSelection(null);
   }
 
-  const rangeStart = fromWallClock(addHours(days[0], DAY_START_HOUR), timeZone);
-  const rangeEnd = fromWallClock(
-    addHours(addDays(days[days.length - 1], 1), DAY_START_HOUR),
-    timeZone,
-  );
+  const [rangeStart, rangeEnd] = workDaysRange(days, timeZone);
 
   const hasSleep = useHasRecentSleep(timeZone);
   const [showSleep, setShowSleep] = useState(
