@@ -45,6 +45,7 @@ import { accountTypeLabel, problemCopy } from "@/lib/account-labels";
 import { errorDetail } from "@/lib/api-error";
 import { desktopAvanza } from "@/lib/avanza-sync";
 import { client } from "@/lib/client";
+import { fromApiDate } from "@/lib/local-day";
 import { Amount } from "@/lib/privacy";
 
 const LINE = "var(--color-primary-400)";
@@ -404,7 +405,7 @@ function RecentTransactions({ account }: { account: AccountOverview }) {
           {items.map((t) => (
             <li key={t.id} className="flex items-center gap-3 py-2">
               <span className="w-12 shrink-0 type-caption text-white/40">
-                {format(t.transaction_date, "d MMM")}
+                {format(fromApiDate(t.transaction_date), "d MMM")}
               </span>
               <span className="min-w-0 flex-1 truncate text-13 text-white/75">
                 {displayName(t)}

@@ -30,6 +30,7 @@ import { memo, useMemo, useState } from "react";
 import { type BulkSuggestion, CategoryCell } from "@/components/category-cell";
 import { displayName } from "@/components/transactions/transaction-naming";
 import { IconButton, Panel } from "@/components/ui-kit";
+import { fromApiDate } from "@/lib/local-day";
 import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
 
@@ -91,7 +92,7 @@ interface DayGroup {
 export function groupByDay(transactions: TransactionSchema[]): DayGroup[] {
   const groups: DayGroup[] = [];
   for (const transaction of transactions) {
-    const key = format(transaction.transaction_date, "yyyy-MM-dd");
+    const key = format(fromApiDate(transaction.transaction_date), "yyyy-MM-dd");
     const last = groups.at(-1);
     if (last?.key === key) last.transactions.push(transaction);
     else {
