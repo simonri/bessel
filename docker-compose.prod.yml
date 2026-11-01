@@ -224,8 +224,8 @@ services:
       - "traefik.http.routers.bessel-web-public.service=bessel-web"
       - "traefik.http.routers.bessel-web-public.priority=1"
       - "traefik.http.services.bessel-web.loadbalancer.server.port=3000"
+    # Static files only: kept off bessel-internal so it can't reach Postgres or the password-less Redis.
     networks:
-      - bessel-internal
       - web
 
 # The volumes were created under the old project-scoped names; pinning them keeps the same data.
