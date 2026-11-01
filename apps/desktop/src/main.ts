@@ -945,12 +945,17 @@ app.whenReady().then(() => {
       });
     },
   );
-  // Fullscreen (video player) and media (camera/mic prompts some sites show
-  // regardless of use) are the only permissions a browser widget guest can ask for.
+  // Fullscreen (video player) is the only permission a browser widget guest
+  // gets. Never camera or microphone: Electron asks nobody, so any page or ad
+  // frame in the widget could record silently.
   browserSession.setPermissionRequestHandler(
     (_contents, permission, callback) => {
-      callback(permission === "fullscreen" || permission === "media");
+      callback(permission === "fullscreen");
     },
+  );
+  browserSession.setPermissionCheckHandler(
+    (_contents, permission) =>
+      permission === "fullscreen" || permission === "clipboard-sanitized-write",
   );
 
   app.on("web-contents-created", (_event, contents) => {
