@@ -490,7 +490,10 @@ async def add_tasks(ctx: Context, tasks: Annotated[list[NewTask], Field(min_leng
     created: list[Task] = []
     existed: list[Task] = []
     for item, project_name, project_obj, due_date in prepared:
-      duplicate = await repo.find_recent_open_by_title(user.id, item.title.strip(), project_obj.id if project_obj else None, utc_now() - DUPLICATE_WINDOW)
+      # A project that doesn't exist yet holds no task this could repeat.
+      duplicate = None
+      if project_obj is not None or project_name is None:
+        duplicate = await repo.find_recent_open_by_title(user.id, item.title.strip(), project_obj.id if project_obj else None, utc_now() - DUPLICATE_WINDOW)
       if duplicate is not None:
         existed.append(to_task(duplicate, today))
         continue

@@ -188,6 +188,15 @@ class TestAddTasks:
     assert result["created"][0]["project"] == "Uni"
 
   @pytest.mark.asyncio
+  async def test_a_task_for_a_new_project_is_not_a_retry_of_one_without(self, connect: ConnectFixture, stockholm_user: User) -> None:
+    await mcp_call(connect, "add_tasks", {"tasks": [{"title": "Buy milk"}]})
+
+    result = await mcp_call(connect, "add_tasks", {"tasks": [{"title": "Buy milk", "project": "Groceries", "new_project": True}]})
+
+    assert result["already_existed"] == []
+    assert [(t["title"], t["project"]) for t in result["created"]] == [("Buy milk", "Groceries")]
+
+  @pytest.mark.asyncio
   async def test_tasks_belong_to_the_caller(self, connect: ConnectFixture, stockholm_user: User) -> None:
     await mcp_call(connect, "add_tasks", {"tasks": [{"title": "B's task"}], "timezone": TZ}, token="token-b")
     assert (await mcp_call(connect, "find_tasks", {"search": "B's task"}))["tasks"] == []
