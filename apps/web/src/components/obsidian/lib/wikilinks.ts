@@ -94,14 +94,12 @@ export function resolveLink(
   const wanted = target.trim().replace(/^\.?\//, "");
   if (!wanted) return fromRel;
   const lower = wanted.toLowerCase();
-  const hasExt = /\.[a-z0-9]+$/i.test(wanted);
   const candidates: string[] = [];
   for (const rel of files) {
     const relLower = rel.toLowerCase();
     if (relLower === lower || relLower === `${lower}.md`) return rel;
     const base = rel.slice(rel.lastIndexOf("/") + 1).toLowerCase();
-    if (base === lower || (!hasExt && base === `${lower}.md`))
-      candidates.push(rel);
+    if (base === lower || base === `${lower}.md`) candidates.push(rel);
   }
   if (!candidates.length) return null;
   candidates.sort((a, b) => {

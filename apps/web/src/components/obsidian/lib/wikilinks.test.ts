@@ -217,6 +217,16 @@ describe("resolveLink", () => {
     );
   });
 
+  it("resolves a note whose name has a dot in it by basename", () => {
+    const dotted = ["Journal/2026.03.29.md", "Notes/Release v1.2.md"];
+    expect(resolveLink(dotted, "Note.md", "2026.03.29")).toBe(
+      "Journal/2026.03.29.md",
+    );
+    expect(resolveLink(dotted, "Note.md", "Release v1.2")).toBe(
+      "Notes/Release v1.2.md",
+    );
+  });
+
   it("does not match a non-md target against a .md note with the same stem", () => {
     const mixed = ["Diagrams/image.png", "Notes/image.md"];
     expect(resolveLink(mixed, "Note.md", "image.png")).toBe(
