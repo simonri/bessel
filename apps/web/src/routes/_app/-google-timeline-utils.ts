@@ -95,7 +95,9 @@ export function formatDistance(meters: number): string {
   const tens = Math.round(meters / 10) * 10;
   if (tens < 1000) return `${tens} m`;
   const tenths = Math.round(meters / 100) / 10;
-  return tenths < 10 ? `${tenths.toFixed(1)} km` : `${Math.round(meters / 1000)} km`;
+  return tenths < 10
+    ? `${tenths.toFixed(1)} km`
+    : `${Math.round(meters / 1000)} km`;
 }
 
 const ACTIVITIES: Record<string, { label: string; icon: LucideIcon }> = {

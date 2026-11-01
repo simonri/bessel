@@ -189,7 +189,10 @@ describe("moveTiming / resizeTiming", () => {
       };
       expect(resizeStartTiming(timing, 2 * 60).start.getHours()).toBe(3);
       expect(
-        resizeTiming({ ...timing, end: springForward(1) }, 3 * 60).end.getHours(),
+        resizeTiming(
+          { ...timing, end: springForward(1) },
+          3 * 60,
+        ).end.getHours(),
       ).toBe(4);
     });
   });

@@ -22,7 +22,9 @@ describe("useTaskCacheHelpers.removeTask", () => {
     queryClient.setQueryData(doneKey, page(["c"], 7));
     const { result } = renderHook(() => useTaskCacheHelpers(), {
       wrapper: ({ children }: { children: ReactNode }) => (
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
       ),
     });
 
