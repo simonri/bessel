@@ -242,6 +242,12 @@ class TestSummary:
     assert resp.status_code == 422
 
   @pytest.mark.asyncio
+  async def test_an_empty_timezone_is_rejected(self, client: AsyncClient) -> None:
+    resp = await client.get("/v1/healthkit/summary", params={"date": DAY.isoformat(), "tz_name": ""})
+    assert resp.status_code == 422
+    assert resp.json()["detail"] == "Unknown timezone: "
+
+  @pytest.mark.asyncio
   async def test_sleep_samples_can_be_listed_for_one_night(self, client: AsyncClient) -> None:
     await client.post("/v1/healthkit/sleep/sync", json={"samples": _night(DAY) + _night(DAY - timedelta(days=3))})
 

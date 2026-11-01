@@ -185,7 +185,8 @@ async def get_health_summary(
   tz_name: Annotated[str, Query(description="IANA timezone name, e.g. 'Europe/Stockholm'.")],
 ) -> HealthSummaryResponse:
   tz = _parse_tz(tz_name)
-  assert tz is not None
+  if tz is None:
+    raise ValidationError(f"Unknown timezone: {tz_name}", status_code=422)
   now = utc_now()
   if day > now.astimezone(tz).date():
     raise ValidationError("That day hasn't happened yet.", status_code=422)
