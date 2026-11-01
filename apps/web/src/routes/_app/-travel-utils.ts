@@ -47,11 +47,20 @@ export function getCategoryIcon(
   return CATEGORY_ICONS[category] ?? MapPin;
 }
 
+/** The visit day is date-only, which the client reads as UTC midnight; it's
+ *  shown as that same day wherever the viewer is. */
 export function formatVisitedDate(value: unknown): string {
-  if (!value) return "";
-  if (value instanceof Date) return format(value, "MMM d, yyyy");
-  if (typeof value === "string") return format(new Date(value), "MMM d, yyyy");
-  return "";
+  const at =
+    value instanceof Date
+      ? value
+      : typeof value === "string" && value
+        ? new Date(value)
+        : null;
+  if (!at || Number.isNaN(at.getTime())) return "";
+  return format(
+    new Date(at.getUTCFullYear(), at.getUTCMonth(), at.getUTCDate()),
+    "MMM d, yyyy",
+  );
 }
 
 export function getGoogleMapsUrl(place: PlaceSchema): string {
