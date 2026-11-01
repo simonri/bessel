@@ -40,6 +40,20 @@ function atMinutes(day: Date, minutes: number): Date {
   return new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, minutes);
 }
 
+/** `date` moved by whole days and by `minutes` on the clock, as the grid's
+ *  hour rows count them. */
+function shiftWallClock(date: Date, days: number, minutes: number): Date {
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate() + days,
+    date.getHours(),
+    date.getMinutes() + minutes,
+    date.getSeconds(),
+    date.getMilliseconds(),
+  );
+}
+
 /** A new event from a drag in one day column. A double click (no drag) gives
  *  a default-length event starting at the slot. */
 export function createRange(
@@ -86,8 +100,8 @@ export function moveTiming(
   }
   return {
     ...timing,
-    start: addMinutes(addDays(timing.start, days), minutes),
-    end: addMinutes(addDays(timing.end, days), minutes),
+    start: shiftWallClock(timing.start, days, minutes),
+    end: shiftWallClock(timing.end, days, minutes),
   };
 }
 
@@ -96,7 +110,7 @@ export function resizeStartTiming(
   timing: EventDraftTiming,
   minutes: number,
 ): EventDraftTiming {
-  const start = addMinutes(timing.start, minutes);
+  const start = shiftWallClock(timing.start, 0, minutes);
   const maximum = addMinutes(timing.end, -MIN_DURATION_MINUTES);
   return { ...timing, start: start > maximum ? maximum : start };
 }
@@ -106,7 +120,7 @@ export function resizeTiming(
   timing: EventDraftTiming,
   minutes: number,
 ): EventDraftTiming {
-  const end = addMinutes(timing.end, minutes);
+  const end = shiftWallClock(timing.end, 0, minutes);
   const minimum = addMinutes(timing.start, MIN_DURATION_MINUTES);
   return { ...timing, end: end < minimum ? minimum : end };
 }

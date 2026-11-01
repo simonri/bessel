@@ -152,6 +152,48 @@ describe("moveTiming / resizeTiming", () => {
     });
   });
 
+  describe("on DST days", () => {
+    beforeAll(() => {
+      vi.stubEnv("TZ", "Europe/Stockholm");
+    });
+    afterAll(() => {
+      vi.unstubAllEnvs();
+    });
+
+    const springForward = (h: number) => new Date(2026, 2, 29, h);
+    const fallBack = (h: number) => new Date(2026, 9, 25, h);
+
+    it("moves to the hour row dropped on, after the clocks spring forward", () => {
+      const moved = moveTiming(
+        { allDay: false, start: springForward(1), end: springForward(4) },
+        0,
+        2 * 60,
+      );
+      expect([moved.start.getHours(), moved.end.getHours()]).toEqual([3, 6]);
+    });
+
+    it("moves to the hour row dropped on, after the clocks fall back", () => {
+      const moved = moveTiming(
+        { allDay: false, start: fallBack(1), end: fallBack(2) },
+        0,
+        3 * 60,
+      );
+      expect([moved.start.getHours(), moved.end.getHours()]).toEqual([4, 5]);
+    });
+
+    it("resizes to the hour row dropped on", () => {
+      const timing = {
+        allDay: false,
+        start: springForward(1),
+        end: springForward(6),
+      };
+      expect(resizeStartTiming(timing, 2 * 60).start.getHours()).toBe(3);
+      expect(
+        resizeTiming({ ...timing, end: springForward(1) }, 3 * 60).end.getHours(),
+      ).toBe(4);
+    });
+  });
+
   it("detects no-op drags", () => {
     expect(sameTiming(timing, moveTiming(timing, 0, 0))).toBe(true);
     expect(sameTiming(timing, moveTiming(timing, 0, 15))).toBe(false);
