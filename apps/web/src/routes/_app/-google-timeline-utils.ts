@@ -69,6 +69,13 @@ export function localTime(
   return day && onDay !== day ? `${formatDay(onDay, "short")}, ${time}` : time;
 }
 
+/** The viewer's own UTC offset for most of `day`: at its local noon, clear of
+ *  a DST change in the night. */
+export function viewerOffsetOn(day: IsoDay): number {
+  const [year, month, date] = day.split("-").map(Number);
+  return -new Date(year, month - 1, date, 12).getTimezoneOffset();
+}
+
 export function utcOffsetLabel(offsetMinutes: number): string {
   const sign = offsetMinutes < 0 ? "-" : "+";
   const abs = Math.abs(offsetMinutes);

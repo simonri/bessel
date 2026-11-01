@@ -1,5 +1,5 @@
 import type { LocationActivity, LocationVisit } from "@bessel/client";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   activityInfo,
   adjacentDay,
@@ -12,6 +12,7 @@ import {
   isoDay,
   localTime,
   utcOffsetLabel,
+  viewerOffsetOn,
   visitTitle,
 } from "./-google-timeline-utils";
 
@@ -94,6 +95,20 @@ describe("localTime", () => {
     expect(utcOffsetLabel(420)).toBe("GMT+7");
     expect(utcOffsetLabel(330)).toBe("GMT+5:30");
     expect(utcOffsetLabel(-300)).toBe("GMT-5");
+  });
+
+  describe("the viewer's own offset", () => {
+    beforeAll(() => {
+      vi.stubEnv("TZ", "Europe/Stockholm");
+    });
+    afterAll(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("is the one most of a DST day runs on", () => {
+      expect(viewerOffsetOn("2026-03-29")).toBe(120);
+      expect(viewerOffsetOn("2026-10-25")).toBe(60);
+    });
   });
 });
 
