@@ -254,6 +254,25 @@ class TestEndpoints:
     assert await names(search="ANNA@") == ["Dr. Anna Maria Berg Jr."]
 
   @pytest.mark.asyncio
+  async def test_a_number_is_found_however_it_is_written(
+    self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker
+  ) -> None:
+    people.put("people/c1", names=[{"displayName": "Anna Berg"}], phoneNumbers=[PHONE])
+    people.put("people/c2", names=[{"displayName": "Bo Ek"}], phoneNumbers=[{"value": "073-987 65 43"}])
+    people.put("people/c3", names=[{"displayName": "Cia Ny"}], phoneNumbers=[{"value": "+44 20 7946 0958"}])
+    await sync_source(session_maker, (await _source(session, user)).id)
+
+    async def names(search: str) -> list[str]:
+      return [c["display_name"] for c in (await client.get("/v1/contacts", params={"search": search})).json()["items"]]
+
+    for written in ("0701234567", "+46701234567", "070-123 45 67", "0046 70 123 45 67"):
+      assert await names(written) == ["Anna Berg"], written
+    for written in ("0739876543", "+46 73 987 65 43", "0046739876543"):
+      assert await names(written) == ["Bo Ek"], written
+    assert await names("0044 20 7946 0958") == ["Cia Ny"]
+    assert await names("0801234567") == []
+
+  @pytest.mark.asyncio
   async def test_a_contact_reads_with_its_ways_to_reach_and_birthday(
     self, client: AsyncClient, session: AsyncSession, user: User, people: FakePeople, session_maker: SessionMaker
   ) -> None:

@@ -8,8 +8,9 @@ from sqlalchemy.dialects.postgresql import distinct_on, insert
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.common.utils import generate_uuid, utc_now
 from api.contacts.person import ParsedPerson
+from api.contacts.phones import phone_search_digits
 from api.models.calendar_account import CalendarAccount, CalendarProvider
-from api.models.contact import Contact, ContactEventDismissal, ContactInteraction, ContactMethod, ContactSource
+from api.models.contact import Contact, ContactEventDismissal, ContactInteraction, ContactMethod, ContactMethodKind, ContactSource
 
 
 class ContactSourceRepository(RepositoryBase[ContactSource], RepositoryIDMixin[ContactSource, UUID]):
@@ -55,15 +56,20 @@ class ContactRepository(RepositoryBase[Contact], RepositoryIDMixin[Contact, UUID
   def get_filtered_statement(self, user_id: UUID, *, search: str | None = None) -> Select[tuple[Contact]]:
     statement = self.get_base_statement().where(Contact.user_id == user_id, Contact.deleted_at.is_(None))
     if search and (query := search.strip()):
-      statement = statement.where(
-        or_(
-          Contact.display_name.icontains(query, autoescape=True),
-          Contact.nickname.icontains(query, autoescape=True),
-          Contact.organization.icontains(query, autoescape=True),
-          func.array_to_string(Contact.tags, " ").icontains(query, autoescape=True),
-          exists().where(ContactMethod.contact_id == Contact.id, ContactMethod.value.icontains(query, autoescape=True)),
+      matches = [
+        Contact.display_name.icontains(query, autoescape=True),
+        Contact.nickname.icontains(query, autoescape=True),
+        Contact.organization.icontains(query, autoescape=True),
+        func.array_to_string(Contact.tags, " ").icontains(query, autoescape=True),
+        exists().where(ContactMethod.contact_id == Contact.id, ContactMethod.value.icontains(query, autoescape=True)),
+      ]
+      if digits := phone_search_digits(query):
+        # Numbers are saved however the phone or Google wrote them ("+46 70-123 45 67"), so compare digits only.
+        dialled = func.regexp_replace(ContactMethod.value, r"\D", "", "g")
+        matches.append(
+          exists().where(ContactMethod.contact_id == Contact.id, ContactMethod.kind == ContactMethodKind.phone, dialled.contains(digits, autoescape=True))
         )
-      )
+      statement = statement.where(or_(*matches))
     return statement.order_by(func.lower(Contact.display_name), Contact.id)
 
   async def list_for_user(self, user_id: UUID) -> Sequence[Contact]:
