@@ -495,10 +495,7 @@ describe("transcripts", () => {
     );
 
     expect(
-      transcriptPreview("/repo", id)?.exchanges.map((e) => [
-        e.prompt,
-        e.reply,
-      ]),
+      transcriptPreview("/repo", id)?.exchanges.map((e) => [e.prompt, e.reply]),
     ).toEqual([
       ["Rename the button", "Renamed."],
       ["<Button> no longer renders", "Fixed the import."],
