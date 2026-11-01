@@ -19,6 +19,7 @@ import {
   YAxis,
 } from "recharts";
 import { Panel } from "@/components/ui-kit";
+import { fromApiDate } from "@/lib/local-day";
 import { formatAxisKr } from "@/lib/money";
 import { Amount, useAmountsHidden } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,7 @@ function rangeStart(range: Range, today: Date): Date | null {
 export function valueOn(points: NetWorthPoint[], day: Date): number | null {
   let value: number | null = null;
   for (const point of points) {
-    if (startOfDay(point.day) > day) break;
+    if (fromApiDate(point.day) > day) break;
     value = point.value;
   }
   return value;
@@ -65,8 +66,8 @@ export function pointsInRange(
 ): ChartPoint[] {
   const start = rangeStart(range, today);
   const inRange = points
-    .filter((p) => !start || startOfDay(p.day) >= start)
-    .map((p) => ({ time: startOfDay(p.day).getTime(), value: p.value }));
+    .filter((p) => !start || fromApiDate(p.day) >= start)
+    .map((p) => ({ time: fromApiDate(p.day).getTime(), value: p.value }));
   if (!start) return inRange;
   const before = valueOn(points, start);
   if (before === null || inRange[0]?.time === start.getTime()) return inRange;

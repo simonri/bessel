@@ -1,5 +1,6 @@
 import type { AccountOverview, AccountProblem } from "@bessel/client";
 import { format } from "date-fns";
+import { fromApiDate } from "./local-day";
 
 export type AccountKind =
   | "everyday"
@@ -65,8 +66,8 @@ export interface ProblemCopy {
   actionLabel: string;
 }
 
-function day(value: Date | string): string {
-  return format(value, "d MMM");
+function day(value: Date): string {
+  return format(fromApiDate(value), "d MMM");
 }
 
 /**

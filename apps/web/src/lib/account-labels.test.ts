@@ -1,5 +1,5 @@
 import type { AccountOverview, AccountProblem } from "@bessel/client";
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { accountKind, problemCopy } from "./account-labels";
 
 /** A problem as the API sends it, with the fields this case doesn't use left null. */
@@ -49,7 +49,7 @@ describe("problemCopy", () => {
   it("asks for the latest file for an account imported by hand", () => {
     const copy = problemCopy(
       account(),
-      problem({ kind: "import_due", day: new Date("2026-07-02T00:00:00") }),
+      problem({ kind: "import_due", day: new Date("2026-07-02") }),
     );
     expect(copy).toEqual({
       title: "Nothing new since 2 Jul",
@@ -61,7 +61,7 @@ describe("problemCopy", () => {
   it("asks Klarna to be imported again instead of a file", () => {
     const copy = problemCopy(
       account({ kind: "klarna", label: "Klarna" }),
-      problem({ kind: "import_due", day: new Date("2026-07-02T00:00:00") }),
+      problem({ kind: "import_due", day: new Date("2026-07-02") }),
     );
     expect([copy.action, copy.title]).toEqual([
       "import_klarna",
@@ -97,5 +97,24 @@ describe("problemCopy", () => {
         problem({ kind: "balance_mismatch" }),
       ).action,
     ).toBe("import_klarna");
+  });
+});
+
+describe("problemCopy west of UTC", () => {
+  beforeAll(() => {
+    vi.stubEnv("TZ", "America/New_York");
+  });
+  afterAll(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("names the day the API sent", () => {
+    const bank = account({ kind: "bank", label: "Skandia" });
+    expect(
+      problemCopy(
+        bank,
+        problem({ kind: "renew_soon", day: new Date("2026-10-31") }),
+      ).title,
+    ).toBe("Access ends 31 Oct");
   });
 });
