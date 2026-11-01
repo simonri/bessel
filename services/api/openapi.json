@@ -5816,7 +5816,9 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9._:-]+$"
                 },
                 {
                   "type": "null"
@@ -5832,7 +5834,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 100
                 },
                 {
                   "type": "null"
@@ -5888,7 +5891,9 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9._:-]+$"
                 },
                 {
                   "type": "null"
@@ -5904,7 +5909,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 100
                 },
                 {
                   "type": "null"
@@ -5978,7 +5984,9 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9._:-]+$"
                 },
                 {
                   "type": "null"
@@ -5994,7 +6002,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 100
                 },
                 {
                   "type": "null"
@@ -6107,7 +6116,9 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[A-Za-z0-9._:-]+$"
                 },
                 {
                   "type": "null"
@@ -6123,7 +6134,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "maxLength": 100
                 },
                 {
                   "type": "null"

