@@ -276,6 +276,8 @@ class OpenBankingService:
         )
       )
       occurrences[key] += 1
+    # Rows imported while the bank account was linked to another Bessel account follow it here.
+    await transactions.claim_imported(user_id, account.bank_account_id, [t.dedup_hash for t in parsed])
     return await transaction_service.import_transactions(
       session,
       bank_account_id=account.bank_account_id,

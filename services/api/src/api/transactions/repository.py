@@ -407,6 +407,15 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       .values(bank_account_id=to_account_id)
     )
 
+  async def claim_imported(self, user_id: UUID, bank_account_id: UUID, dedup_hashes: Sequence[str]) -> None:
+    """Moves the user's rows with these dedup hashes into the account, for a source now linked to it."""
+    if dedup_hashes:
+      await self.session.execute(
+        update(Transaction)
+        .where(Transaction.user_id == user_id, Transaction.dedup_hash.in_(dedup_hashes), Transaction.bank_account_id != bank_account_id)
+        .values(bank_account_id=bank_account_id)
+      )
+
   async def insert_ignoring_duplicates(self, values: list[dict[str, Any]]) -> int:
     stmt = pg_insert(Transaction).values(values).on_conflict_do_nothing(index_elements=["user_id", "dedup_hash"])
     return await self.execute_for_rowcount(stmt)

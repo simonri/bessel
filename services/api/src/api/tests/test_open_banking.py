@@ -549,6 +549,38 @@ class TestSync:
     assert len(await _transactions(session, other)) == 1
 
   @pytest.mark.asyncio
+  async def test_relinking_brings_what_was_imported_along_to_the_new_account(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    configured: None,
+    bank: FakeEnableBanking,
+    user: User,
+    other_user: User,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    first, other = await _bank_account(save_fixture, user.id), await _bank_account(save_fixture, user.id, "Other")
+    connection = await _connection(save_fixture, user.id, bank_account=first, import_from=date(2026, 9, 1))
+    # Someone else sharing the same (joint) account at the bank.
+    theirs = await _bank_account(save_fixture, other_user.id, "Joint")
+    their_connection = await _connection(save_fixture, other_user.id, bank_account=theirs, import_from=date(2026, 9, 1))
+    bank.transactions["uid-1"] = [transaction("r1", date(2026, 10, 1), "-20.00"), transaction(None, date(2026, 10, 2), "-35.00", text="Kaffe")]
+    await open_banking_service.sync(session_maker, connection.id)
+    await open_banking_service.sync(session_maker, their_connection.id)
+    imported = await _transactions(session, first)
+
+    account_id = (await client.get("/v1/bank-connections")).json()["connections"][0]["accounts"][0]["id"]
+    await client.patch(f"/v1/bank-connections/accounts/{account_id}", json={"bank_account_id": str(other.id)})
+    await open_banking_service.sync(session_maker, connection.id)
+
+    assert len(imported) == 2
+    assert await _transactions(session, other) == imported
+    assert await _transactions(session, first) == []
+    assert await _transactions(session, theirs) == imported
+
+  @pytest.mark.asyncio
   async def test_the_balance_matches_the_bank_however_much_history_bessel_has(
     self, client: AsyncClient, session_maker: SessionMaker, save_fixture: SaveFixture, configured: None, bank: FakeEnableBanking, user: User
   ) -> None:
