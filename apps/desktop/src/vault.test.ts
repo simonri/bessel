@@ -143,6 +143,12 @@ describe("buildFileMeta", () => {
     expect(meta.tags.sort()).toEqual(["project"]);
   });
 
+  it("reads tags in any script and ones that start with a digit", () => {
+    const content = "Plan #måndag and #2024-review, see #café/ideas- too.";
+    const meta = buildFileMeta("note.md", content);
+    expect(meta.tags.sort()).toEqual(["2024-review", "café/ideas", "måndag"]);
+  });
+
   it("reads frontmatter tags as a YAML list", () => {
     const content = [
       "---",

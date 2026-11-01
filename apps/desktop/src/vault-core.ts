@@ -303,11 +303,13 @@ function extractTags(lines: string[], bodyStart: number): string[] {
     line = line.replace(/!?\[\[[^\]]*\]\]/g, " ");
     line = line.replace(/\[[^\]]*\]\([^)]*\)/g, " ");
 
-    const tagRe = /(^|[\s([])#([A-Za-z_][A-Za-z0-9_/-]*)/g;
+    // As the editor highlights them: letters of any script, and not all digits.
+    const tagRe = /(^|[\s([])#([\p{L}\p{N}_/-]+)/gu;
     let m: RegExpExecArray | null;
     // biome-ignore lint/suspicious/noAssignInExpressions: standard exec loop
     while ((m = tagRe.exec(line))) {
-      tags.add(m[2]);
+      const tag = m[2].replace(/[/-]+$/, "");
+      if (/[\p{L}_]/u.test(tag)) tags.add(tag);
     }
   }
   return Array.from(tags);
