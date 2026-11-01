@@ -38,9 +38,13 @@ function systemdQuote(value: string): string {
  * screen redraws constantly, so output goes nowhere. Sessions skip permission
  * prompts, like the ones Bessel starts itself.
  */
-export function unitFileFor(folder: string, name: string): string {
-  if (/[\r\n]/.test(folder))
+export function unitFileFor(folder: string, rawName: string): string {
+  if (/[\r\n\0]/.test(folder))
     throw new Error("A folder path can't hold a line break.");
+  // The name is a project's, from the API: a line break in it would start a
+  // line of the unit file (an ExecStart= of its own) after the quoting.
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: control characters are what it removes
+  const name = rawName.replace(/[\x00-\x1f\x7f]/g, " ");
   const server = [
     "claude remote-control",
     "--spawn same-dir",

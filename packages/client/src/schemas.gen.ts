@@ -9242,6 +9242,7 @@ export const ProjectCreateSchema = {
     name: {
       type: "string",
       maxLength: 100,
+      pattern: "^[^\\x00-\\x1f\\x7f]*$",
       title: "Name",
     },
     path: {
@@ -9249,6 +9250,7 @@ export const ProjectCreateSchema = {
         {
           type: "string",
           maxLength: 500,
+          pattern: "^[^\\x00-\\x1f\\x7f]*$",
         },
         {
           type: "null",
@@ -9282,6 +9284,7 @@ export const ProjectLocationUpdateSchema = {
         {
           type: "string",
           maxLength: 500,
+          pattern: "^[^\\x00-\\x1f\\x7f]*$",
         },
         {
           type: "null",
@@ -9373,6 +9376,7 @@ export const ProjectUpdateSchema = {
         {
           type: "string",
           maxLength: 100,
+          pattern: "^[^\\x00-\\x1f\\x7f]*$",
         },
         {
           type: "null",

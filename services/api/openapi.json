@@ -18713,13 +18713,15 @@
           "name": {
             "type": "string",
             "maxLength": 100,
+            "pattern": "^[^\\x00-\\x1f\\x7f]*$",
             "title": "Name"
           },
           "path": {
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 500
+                "maxLength": 500,
+                "pattern": "^[^\\x00-\\x1f\\x7f]*$"
               },
               {
                 "type": "null"
@@ -18753,7 +18755,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 500
+                "maxLength": 500,
+                "pattern": "^[^\\x00-\\x1f\\x7f]*$"
               },
               {
                 "type": "null"
@@ -18849,7 +18852,8 @@
             "anyOf": [
               {
                 "type": "string",
-                "maxLength": 100
+                "maxLength": 100,
+                "pattern": "^[^\\x00-\\x1f\\x7f]*$"
               },
               {
                 "type": "null"

