@@ -46,6 +46,7 @@ import {
 import { KLARNA_PARTITION, signInToKlarna } from "./klarna.js";
 import { registerPortsHandlers } from "./ports.js";
 import { registerRemoteControlHandlers } from "./remote-control.js";
+import { insideRepo } from "./repo-paths.js";
 import { isRealEncryptionAvailable } from "./secure-storage.js";
 import { registerServiceInstallerHandlers } from "./service-installer.js";
 import {
@@ -1384,9 +1385,7 @@ app.whenReady().then(() => {
   const assertInsideRepo = (repoPath: string, file: unknown): void => {
     if (typeof repoPath !== "string" || typeof file !== "string" || !file)
       throw new Error("Invalid repository path");
-    const repoRoot = path.resolve(repoPath);
-    const target = path.resolve(repoRoot, file);
-    if (!target.startsWith(repoRoot + path.sep))
+    if (!insideRepo(repoPath, file))
       throw new Error(`Refusing to read path outside repository: ${file}`);
   };
 
@@ -1513,10 +1512,10 @@ app.whenReady().then(() => {
       if (trackedFiles.length > 0) {
         await gitRun(["restore", "--", ...trackedFiles], repoPath);
       }
-      const repoRoot = path.resolve(repoPath);
       for (const file of untrackedFiles) {
-        const target = path.resolve(repoRoot, file);
-        if (target === repoRoot || !target.startsWith(repoRoot + path.sep)) {
+        const target =
+          typeof file === "string" ? insideRepo(repoPath, file) : null;
+        if (!target) {
           throw new Error(
             `Refusing to delete path outside repository: ${file}`,
           );
