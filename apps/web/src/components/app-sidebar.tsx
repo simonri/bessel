@@ -20,9 +20,17 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronRight, MoreHorizontal } from "lucide-react";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Fragment,
+  memo,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { ProjectSessions } from "@/components/canvas/project-sessions";
 import {
+  groupSubpages,
   MORE_PAGES,
   movePage,
   orderPrimaryPages,
@@ -185,6 +193,29 @@ function SortablePageItem({
   );
 }
 
+// Under its parent and moved with it: not draggable on its own.
+function SubpageItem({
+  page,
+  isActive,
+  onSelectPage,
+}: {
+  page: PageKey;
+  isActive: boolean;
+  onSelectPage: (page: PageKey) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelectPage(page)}
+      aria-current={isActive ? "page" : undefined}
+      className={cn(NAV_ITEM, "pl-7", isActive ? NAV_ACTIVE : NAV_IDLE)}
+    >
+      <PageIcon page={page} isActive={isActive} />
+      <span className="truncate">{PAGE_REGISTRY[page].title}</span>
+    </button>
+  );
+}
+
 // Secondary pages behind one item. While one of them is open the item takes
 // on that page's icon and title, so the sidebar always shows where you are.
 function MorePagesMenu({
@@ -268,7 +299,9 @@ export const AppSidebar = memo(function AppSidebar({
   const openCanvas = useCallback(() => onSelectPage("canvas"), [onSelectPage]);
   const { settings, update } = useSettings();
   const { isVisible } = usePageVisibility();
-  const pages = orderPrimaryPages(settings.navOrder).filter(isVisible);
+  const groups = groupSubpages(
+    orderPrimaryPages(settings.navOrder).filter(isVisible),
+  );
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
@@ -313,16 +346,25 @@ export const AppSidebar = memo(function AppSidebar({
               onDragEnd={reorder}
             >
               <SortableContext
-                items={pages}
+                items={groups.map((g) => g.page)}
                 strategy={verticalListSortingStrategy}
               >
-                {pages.map((key) => (
-                  <SortablePageItem
-                    key={key}
-                    page={key}
-                    isActive={key === activePage}
-                    onSelectPage={onSelectPage}
-                  />
+                {groups.map(({ page, subpages }) => (
+                  <Fragment key={page}>
+                    <SortablePageItem
+                      page={page}
+                      isActive={page === activePage}
+                      onSelectPage={onSelectPage}
+                    />
+                    {subpages.map((sub) => (
+                      <SubpageItem
+                        key={sub}
+                        page={sub}
+                        isActive={sub === activePage}
+                        onSelectPage={onSelectPage}
+                      />
+                    ))}
+                  </Fragment>
                 ))}
               </SortableContext>
             </DndContext>
