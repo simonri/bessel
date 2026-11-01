@@ -73,15 +73,18 @@ export function formatKr(
 
 /** A chart axis tick in whole units: "950", "340k", "1,2 mn". */
 export function formatAxisKr(minor: number): string {
-  const units = minor / 100;
-  if (Math.abs(units) >= MILLION) {
-    const millions = (units / MILLION).toLocaleString("sv-SE", {
-      maximumFractionDigits: 1,
-    });
-    return `${millions} mn`;
-  }
-  if (Math.abs(units) >= 1000) return `${Math.round(units / 1000)}k`;
-  return Math.round(units).toLocaleString("sv-SE");
+  // Rounded on the magnitude, so negative ticks match positive ones, and a
+  // value that rounds up to the next step is shown in that step.
+  const sign = Math.sign(minor);
+  const units = Math.abs(minor) / 100;
+  const whole = Math.round(units);
+  if (whole < 1000) return (sign * whole || 0).toLocaleString("sv-SE");
+  const thousands = Math.round(units / 1000);
+  if (thousands < 1000) return `${sign * thousands}k`;
+  const millions = ((sign * units) / MILLION).toLocaleString("sv-SE", {
+    maximumFractionDigits: 1,
+  });
+  return `${millions} mn`;
 }
 
 /**

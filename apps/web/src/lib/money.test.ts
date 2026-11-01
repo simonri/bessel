@@ -59,4 +59,15 @@ describe("formatAxisKr", () => {
     expect(formatAxisKr(34_000_000)).toBe("340k");
     expect(plain(formatAxisKr(120_000_000))).toBe("1,2 mn");
   });
+
+  it("moves up to mn instead of showing 1000k", () => {
+    expect(plain(formatAxisKr(99_960_000))).toBe("1 mn");
+    expect(plain(formatAxisKr(-99_960_000))).toBe("-1 mn");
+  });
+
+  it("rounds negative ticks like positive ones and never shows -0", () => {
+    expect(plain(formatAxisKr(-40))).toBe("0");
+    expect(plain(formatAxisKr(-150))).toBe("-2");
+    expect(plain(formatAxisKr(-250_000))).toBe("-3k");
+  });
 });
