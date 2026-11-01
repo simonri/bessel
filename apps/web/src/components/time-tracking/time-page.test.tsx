@@ -32,6 +32,20 @@ describe("WorkDayHint", () => {
     expect(container.textContent).toBe("");
   });
 
+  it("names the day before on the night the clocks fall back", () => {
+    vi.stubEnv("TZ", "Europe/Stockholm");
+    try {
+      // 02:30 UTC is 03:30 in Stockholm, after the clocks went back an hour.
+      vi.setSystemTime(new Date("2026-10-25T02:30:00Z"));
+      render(<WorkDayHint timeZone="Europe/Stockholm" />);
+      expect(
+        screen.getByText("Before 04:00 - still counting Sat 24"),
+      ).toBeTruthy();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("reads the hour in the calendar's time zone, not the instant's", () => {
     // 03:30 in UTC is 04:30 in Stockholm (CET), past the day start there.
     vi.setSystemTime(new Date("2026-10-27T03:30:00Z"));

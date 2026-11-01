@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { IconButton, PeriodNav, SoftButton } from "@/components/ui-kit";
 import { userStorage } from "@/lib/user-storage";
 import { cn } from "@/lib/utils";
+import { dayStartingAt } from "@/routes/_app/-activity-utils";
 import { headerMonth } from "../calendar/calendar-dates";
 import { useCalendarNavigation } from "../calendar/calendar-page";
 import {
@@ -62,7 +63,7 @@ const FALLBACK_COLOR = "#6b7280";
 const DAY_START_HOUR = 4;
 
 function workDay(timeZone: string, now = new Date()): Date {
-  return addHours(toWallClock(now, timeZone), -DAY_START_HOUR);
+  return dayStartingAt(toWallClock(now, timeZone), DAY_START_HOUR);
 }
 
 /** Past midnight but before the work day turns, says which day still counts. */
