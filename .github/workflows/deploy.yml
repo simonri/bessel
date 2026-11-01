@@ -87,9 +87,11 @@ jobs:
 
       - name: Set outputs
         id: set-outputs
+        env:
+          SERVICE_INPUT: ${{ github.event.inputs.service }}
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            SERVICE="${{ github.event.inputs.service }}"
+            SERVICE="$SERVICE_INPUT"
             case "$SERVICE" in
               api)    echo "api=true"  >> $GITHUB_OUTPUT; echo "worker=false" >> $GITHUB_OUTPUT; echo "web=false" >> $GITHUB_OUTPUT ;;
               worker) echo "api=false" >> $GITHUB_OUTPUT; echo "worker=true"  >> $GITHUB_OUTPUT; echo "web=false" >> $GITHUB_OUTPUT ;;
