@@ -663,6 +663,28 @@ class TestImport:
     assert len(await _cash(session, isk_account)) == 5
 
   @pytest.mark.asyncio
+  async def test_holdings_are_dated_by_the_users_day(
+    self,
+    client: AsyncClient,
+    session: AsyncSession,
+    session_maker: SessionMaker,
+    save_fixture: SaveFixture,
+    history: FakeMontrose,
+    user: User,
+    monkeypatch: pytest.MonkeyPatch,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    user.timezone = "Europe/Stockholm"
+    await save_fixture(user)
+    connection_id, bank_account = await _linked(client, save_fixture, history, user)
+
+    # 00:30 on 24 October in Stockholm, still the 23rd in UTC.
+    await _sync(session_maker, connection_id, monkeypatch, at=datetime(2026, 10, 23, 22, 30, tzinfo=UTC))
+
+    days = (await session.execute(select(HoldingSnapshot.snapshot_date).where(HoldingSnapshot.bank_account_id == bank_account.id))).scalars().all()
+    assert set(days) == {date(2026, 10, 24)}
+
+  @pytest.mark.asyncio
   async def test_nothing_is_read_for_accounts_that_arent_brought_in(
     self, client: AsyncClient, session: AsyncSession, session_maker: SessionMaker, history: FakeMontrose, user: User
   ) -> None:

@@ -4,7 +4,7 @@ import secrets
 from collections.abc import Callable
 from contextlib import AbstractAsyncContextManager
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
@@ -16,11 +16,13 @@ from sqlalchemy import func, select
 from api.avanza.repository import HoldingSnapshotRepository, ImportedTradeRepository, SecurityCatalogRepository
 from api.common.encryption import InvalidToken, decrypt, encrypt
 from api.common.utils import utc_now
+from api.contacts.keeping import user_zone
 from api.documents.service import document_service
 from api.logging import Logger
 from api.models.bank_account import BankAccount
 from api.models.montrose import MontroseAccount, MontroseConnection
 from api.models.trade import TradeType
+from api.models.user import User
 from api.models.transaction import TransactionDirection
 from api.montrose import client as montrose
 from api.montrose import parsing
@@ -429,6 +431,8 @@ class MontroseService:
       if connection is None:
         return 0
       self._merge_accounts(connection, fetched.accounts)
+      user = await session.get(User, user_id)
+      today = started.astimezone(user_zone(user) if user else UTC).date()
       by_external_id = {account.external_id: account for account in connection.accounts}
       holdings = {h.account_id: h for h in fetched.holdings}
       transactions = TransactionRepository.from_session(session)
@@ -438,7 +442,7 @@ class MontroseService:
         if bank_account is None:
           continue
         reported = holdings.get(account.external_id)
-        created += await self.import_account(session, user_id, account, fetched, currency=bank_account.currency, today=started.date())
+        created += await self.import_account(session, user_id, account, fetched, currency=bank_account.currency, today=today)
         stored = by_external_id.get(account.external_id)
         if stored is None:
           continue

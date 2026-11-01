@@ -190,6 +190,22 @@ class TestImport:
     assert response.json()["sync_from"] == (TODAY - timedelta(days=14)).isoformat()
 
   @pytest.mark.asyncio
+  async def test_positions_are_dated_by_the_users_day(
+    self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, allowed: None, user: User, monkeypatch: pytest.MonkeyPatch
+  ) -> None:
+    user.timezone = "Europe/Stockholm"
+    await save_fixture(user)
+    bank_account = await _bank_account(save_fixture, user.id)
+    await _connection(save_fixture, user.id, linked=bank_account)
+    # 00:30 on 22 October in Stockholm, still the 21st in UTC.
+    monkeypatch.setattr(service, "utc_now", lambda: datetime(2026, 10, 21, 22, 30, tzinfo=UTC))
+
+    response = await _upload(client, held=positions(position("111", GLOBAL, volume=0.5, value=101.0, acquired=100.0)))
+
+    assert response.status_code == 200, response.text
+    assert [s.snapshot_date for s in await _snapshots(session, bank_account)] == [date(2026, 10, 22)]
+
+  @pytest.mark.asyncio
   async def test_importing_again_adds_nothing_twice(
     self, client: AsyncClient, session: AsyncSession, save_fixture: SaveFixture, allowed: None, user: User
   ) -> None:
