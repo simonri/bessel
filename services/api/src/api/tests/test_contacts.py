@@ -7,14 +7,16 @@ import pytest
 from api.calendars import http as provider_http
 from api.common.encryption import encrypt
 from api.contacts import endpoints as contact_endpoints
+from api.contacts import tasks as contact_tasks
 from api.contacts.person import parse_person
 from api.contacts.repository import ContactSourceRepository
-from api.contacts.service import sync_source
+from api.contacts.service import SYNC_SOURCE_ACTOR, sync_source
 from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.contact import Contact, ContactMethodKind, ContactSource
 from api.models.user import User
 from api.settings import settings
 from api.tests.people_fake import FakePeople
+from api.worker._enqueue import JobQueueManager
 from cryptography.fernet import Fernet
 from httpx import AsyncClient
 from pytest_mock import MockerFixture
@@ -194,6 +196,29 @@ class TestSync:
 
     assert source.sync_error is not None and "Reconnect" in source.sync_error
     assert source.sync_token is None
+
+  @pytest.mark.asyncio
+  async def test_the_cron_still_visits_an_address_book_google_stopped_sharing(
+    self,
+    session: AsyncSession,
+    user: User,
+    people: FakePeople,
+    session_maker: SessionMaker,
+    monkeypatch: pytest.MonkeyPatch,
+    job_queue_manager: JobQueueManager,
+  ) -> None:
+    source = await _source(session, user)
+    # The calendar sync saw the contacts scope revoked.
+    (await ContactSourceRepository.from_session(session).account_for(source)).can_read_people = False
+    await session.flush()
+    monkeypatch.setattr(contact_tasks, "AsyncSessionMaker", session_maker)
+
+    await contact_tasks.sync_all_contact_sources.__wrapped__()  # type: ignore[attr-defined]
+
+    queued = [args for actor, args, _, _ in job_queue_manager._enqueued_jobs if actor == SYNC_SOURCE_ACTOR]
+    assert queued == [(str(source.id),)]
+    await sync_source(session_maker, source.id)
+    assert source.sync_error is not None and "Reconnect" in source.sync_error
 
   @pytest.mark.asyncio
   async def test_only_google_accounts_that_may_read_contacts_get_a_source(self, session: AsyncSession, user: User) -> None:

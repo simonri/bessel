@@ -2,7 +2,7 @@ from collections.abc import Sequence
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Select, delete, exists, func, or_, select
+from sqlalchemy import Select, delete, exists, func, or_, select, union
 from sqlalchemy.dialects.postgresql import distinct_on, insert
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
@@ -38,13 +38,12 @@ class ContactSourceRepository(RepositoryBase[ContactSource], RepositoryIDMixin[C
     return await self.get_all(statement)
 
   async def list_user_ids(self) -> Sequence[UUID]:
-    """Everyone with a Google account that may read contacts."""
-    statement = (
-      select(CalendarAccount.user_id)
-      .where(CalendarAccount.provider == CalendarProvider.google, CalendarAccount.can_read_people.is_(True), CalendarAccount.deleted_at.is_(None))
-      .distinct()
+    """Everyone with a Google account that may read contacts, or with an address book that one could once:
+    its sync is what tells them Google stopped sharing it."""
+    readable = select(CalendarAccount.user_id).where(
+      CalendarAccount.provider == CalendarProvider.google, CalendarAccount.can_read_people.is_(True), CalendarAccount.deleted_at.is_(None)
     )
-    return (await self.session.execute(statement)).scalars().all()
+    return (await self.session.execute(union(readable, select(ContactSource.user_id)))).scalars().all()
 
   async def account_for(self, source: ContactSource) -> CalendarAccount:
     return (await self.session.execute(select(CalendarAccount).where(CalendarAccount.id == source.account_id))).scalar_one()
