@@ -266,7 +266,7 @@ function AccountName({
 function BalanceHistory({ account }: { account: AccountOverview }) {
   const gradientId = `account-fill-${useId().replace(/[^\w-]/g, "")}`;
   const data = account.history.map((p) => ({
-    month: p.month,
+    month: fromApiDate(p.month),
     balance: p.balance,
   }));
   if (data.length < 2) return null;
@@ -490,7 +490,7 @@ function Connection({ account }: { account: AccountOverview }) {
   const updated = source.synced_at
     ? `Updated ${formatDistanceToNow(source.synced_at, { addSuffix: true })}`
     : account.last_transaction
-      ? `Last transaction ${format(account.last_transaction, "d MMM yyyy")}`
+      ? `Last transaction ${format(fromApiDate(account.last_transaction), "d MMM yyyy")}`
       : null;
 
   let body: ReactNode;

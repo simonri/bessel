@@ -12,6 +12,7 @@ import {
   placeholderKeys,
 } from "@/components/ui-kit";
 import { client } from "@/lib/client";
+import { fromApiDate } from "@/lib/local-day";
 import { formatQuantity } from "@/lib/money";
 import { Amount } from "@/lib/privacy";
 import { cn } from "@/lib/utils";
@@ -29,13 +30,14 @@ export function groupByMonth(
 ): { key: string; label: string; trades: TradeSchema[] }[] {
   const groups: { key: string; label: string; trades: TradeSchema[] }[] = [];
   for (const trade of trades) {
-    const key = format(trade.trade_date, "yyyy-MM");
+    const day = fromApiDate(trade.trade_date);
+    const key = format(day, "yyyy-MM");
     const last = groups.at(-1);
     if (last?.key === key) last.trades.push(trade);
     else {
       groups.push({
         key,
-        label: format(trade.trade_date, "MMMM yyyy"),
+        label: format(day, "MMMM yyyy"),
         trades: [trade],
       });
     }
@@ -128,8 +130,8 @@ function TradeRow({ trade }: { trade: TradeSchema }) {
           {buy ? "Bought" : "Sold"} {trade.security_name}
         </p>
         <p className="truncate type-caption text-white/45">
-          {format(trade.trade_date, "d MMM")} - {formatQuantity(trade.quantity)}{" "}
-          ×{" "}
+          {format(fromApiDate(trade.trade_date), "d MMM")} -{" "}
+          {formatQuantity(trade.quantity)} ×{" "}
           <Amount
             value={trade.price_per_unit}
             currency={trade.currency}

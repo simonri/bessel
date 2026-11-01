@@ -6,7 +6,16 @@ import type {
 } from "@bessel/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 const year = new Date().getFullYear();
 
@@ -198,7 +207,8 @@ describe("trades", () => {
   const trade = (date: string, overrides: Partial<TradeSchema> = {}) =>
     ({
       id: date,
-      trade_date: new Date(`${date}T00:00:00`),
+      // The client decodes the API's `date` to UTC midnight.
+      trade_date: new Date(date),
       quantity: 2_500_000,
       price_per_unit: 10050,
       ...overrides,
@@ -216,6 +226,27 @@ describe("trades", () => {
       ["September 2026", 1],
     ]);
     expect(tradeTotal(trade("2026-10-02"))).toBe(25125);
+  });
+
+  describe("west of UTC", () => {
+    beforeAll(() => {
+      vi.stubEnv("TZ", "America/New_York");
+    });
+    afterAll(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("keeps a trade on the 1st in its own month", () => {
+      expect(
+        groupByMonth([trade("2026-10-01"), trade("2026-09-30")]).map((g) => [
+          g.label,
+          g.trades.length,
+        ]),
+      ).toEqual([
+        ["October 2026", 1],
+        ["September 2026", 1],
+      ]);
+    });
   });
 });
 
