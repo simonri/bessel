@@ -1,10 +1,10 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
 import pytest
 from api.calendars.google import WRITE_SCOPE, GoogleCalendarClient, _parse_event
-from api.calendars.icloud import ICalResource, ICloudCalendarClient, expand_events
+from api.calendars.icloud import MAX_OCCURRENCES_PER_RESOURCE, ICalResource, ICloudCalendarClient, expand_events
 from api.calendars.providers import ProviderCalendar
 from api.settings import settings
 
@@ -194,6 +194,20 @@ class TestICloudSyncFields:
     assert [e.external_id for e in standups] == ["series/2026-10-05T08:00:00+02:00", "series/2026-10-06T08:00:00+02:00"]
     assert {e.series_id for e in standups} == {"series"}
     assert [e.original_start for e in standups] == ["2026-10-05T08:00:00+02:00", "2026-10-06T08:00:00+02:00"]
+
+  def test_a_series_every_minute_stops_at_the_cap(self) -> None:
+    # Anyone can invite into a calendar; expanded whole, this is 40,000+ occurrences on every sync.
+    flood = "\r\n".join(
+      ["BEGIN:VCALENDAR", "VERSION:2.0", "BEGIN:VEVENT", "UID:flood", "SUMMARY:Spam", "DTSTART:20261005T000000Z", "DURATION:PT1M", "RRULE:FREQ=MINUTELY"]
+      + ["END:VEVENT", "END:VCALENDAR"]
+    )
+    resource = ICalResource(href="https://p1-caldav.icloud.com/1/calendars/home/flood.ics", etag='"f"', data=flood)
+    events = expand_events([resource], WEEK_START, WEEK_START + timedelta(days=30))
+    assert len(events) == MAX_OCCURRENCES_PER_RESOURCE
+
+  def test_occurrences_stop_at_the_window_end(self) -> None:
+    standups = [e for e in expand_events([ICalResource(href="h", etag=None, data=ICAL)], WEEK_START, WEEK_END) if e.title == "Standup"]
+    assert all(e.start_at is not None and e.start_at < WEEK_END for e in standups)
 
 
 HOME = "https://p42-caldav.icloud.com/1234/calendars/"

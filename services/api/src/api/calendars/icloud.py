@@ -7,7 +7,9 @@ from xml.etree import ElementTree
 
 import httpx
 import recurring_ical_events
+import structlog
 from icalendar import Calendar as ICalendar
+from icalendar import Component
 from icalendar import Event as IEvent
 
 from api.calendars.providers import (
@@ -27,6 +29,8 @@ from api.calendars.providers import (
 
 CALDAV_URL = "https://caldav.icloud.com/"
 DEFAULT_COLOR = "#34aadc"
+log = structlog.get_logger()
+
 NS = {"d": "DAV:", "c": "urn:ietf:params:xml:ns:caldav", "a": "http://apple.com/ns/ical/", "cs": "http://calendarserver.org/ns/"}
 NS_DECL = " ".join(f'xmlns:{prefix}="{uri}"' for prefix, uri in NS.items())
 
@@ -122,6 +126,17 @@ def _occurrence(component: IEvent, recurring: bool, resource: ICalResource, owne
   return ProviderEvent(**common, all_day=True, start_date=start, end_date=end_date)
 
 
+# A daily series over the sync window is ~455; more than this is a broken or hostile series.
+MAX_OCCURRENCES_PER_RESOURCE = 2000
+
+
+def _starts_at(component: Component) -> datetime:
+  value = component["DTSTART"].dt
+  if isinstance(value, datetime):
+    return value if value.tzinfo else value.replace(tzinfo=UTC)
+  return datetime(value.year, value.month, value.day, tzinfo=UTC)
+
+
 def expand_events(
   resources: Iterable[ICalResource],
   start: datetime,
@@ -139,7 +154,14 @@ def expand_events(
     # Expanded occurrences drop RRULE, so note which series repeat up front.
     recurring_uids = {str(c.get("UID")) for c in calendar.walk("VEVENT") if any(c.get(prop) is not None for prop in ("RRULE", "RDATE", "RECURRENCE-ID"))}
     rules = {str(c.get("UID")): _ical_text(c["RRULE"]) for c in calendar.walk("VEVENT") if c.get("RRULE") is not None and c.get("RECURRENCE-ID") is None}
-    for component in recurring_ical_events.of(calendar).between(start, end):
+    # Iterated in start order rather than expanded whole: an invite with RRULE:FREQ=SECONDLY would otherwise become
+    # tens of millions of occurrences in memory, and rows, on every sync of a calendar anyone can invite into.
+    for count, component in enumerate(recurring_ical_events.of(calendar).after(start)):
+      if _starts_at(component) >= end:
+        break
+      if count >= MAX_OCCURRENCES_PER_RESOURCE:
+        log.warning("calendars.icloud.too_many_occurrences", calendar=resource.href, kept=count)
+        break
       if not isinstance(component, IEvent):
         continue
       uid = str(component.get("UID"))
