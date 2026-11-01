@@ -250,10 +250,13 @@ export function rewriteLinksInContent(
     .split("\n")
     .map((line) => {
       if (isCode(line)) return line;
-      return line
-        .split(/(`[^`]*`)/)
-        .map((piece, i) => (i % 2 === 1 ? piece : rewrite(piece)))
-        .join("");
+      let out = "";
+      let at = 0;
+      for (const code of line.matchAll(INLINE_CODE_RE)) {
+        out += rewrite(line.slice(at, code.index)) + code[0];
+        at = code.index + code[0].length;
+      }
+      return out + rewrite(line.slice(at));
     })
     .join("\n");
 
@@ -290,8 +293,12 @@ function fencedCode(): (line: string) => boolean {
   };
 }
 
+// A code span closes on a run of exactly as many backticks as opened it, so
+// ``[[Note]]`` and `` a ` b `` are code throughout.
+const INLINE_CODE_RE = /(?<!`)(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/g;
+
 function stripInlineCode(line: string): string {
-  return line.replace(/`[^`]*`/g, (m) => " ".repeat(m.length));
+  return line.replace(INLINE_CODE_RE, (m) => " ".repeat(m.length));
 }
 
 interface Frontmatter {

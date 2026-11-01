@@ -262,6 +262,25 @@ describe("buildFileMeta", () => {
     expect(meta.headings).toEqual([{ level: 2, text: "After", line: 13 }]);
   });
 
+  it("reads code spans opened with several backticks as code", () => {
+    const content = [
+      "Type ``[[Example]]`` or `` #example ` [[Example]] ``, then [[Real]] #real",
+      // Runs of different lengths never pair up: no code here.
+      "``[[Loose]]``` [[Also]]",
+    ].join("\n");
+    const meta = buildFileMeta("note.md", content);
+    expect(meta.tags).toEqual(["real"]);
+    expect(meta.links.map((l) => l.target)).toEqual(["Real", "Loose", "Also"]);
+
+    expect(
+      rewriteLinksInContent(
+        "Type ``[[Fiske]]``, see [[Fiske]]",
+        "Places/Fiske.md",
+        "Places/Hamn.md",
+      ).content,
+    ).toBe("Type ``[[Fiske]]``, see [[Hamn]]");
+  });
+
   it("reads tags in any script and ones that start with a digit", () => {
     const content = "Plan #måndag and #2024-review, see #café/ideas- too.";
     const meta = buildFileMeta("note.md", content);
