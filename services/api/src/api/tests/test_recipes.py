@@ -143,3 +143,13 @@ class TestRecipePages:
       seen += [r["id"] for r in (await client.get("/v1/recipes", params={"page": page, "limit": 10})).json()["items"]]
 
     assert len(seen) == len(set(seen)) == 60
+
+  @pytest.mark.asyncio
+  async def test_a_page_past_the_end_still_counts_the_recipes(self, client: AsyncClient, save_fixture: SaveFixture, user: User) -> None:
+    for title in ("Gröt", "Pannkakor", "Våfflor"):
+      await save_fixture(Recipe(title=title, content="", recipe_type="other", user_id=user.id))
+
+    data = (await client.get("/v1/recipes", params={"page": 2, "limit": 10})).json()
+
+    assert data["items"] == []
+    assert data["pagination"] == {"total_count": 3, "max_page": 1}

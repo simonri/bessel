@@ -86,6 +86,10 @@ class RepositoryBase[M]:
       item, count = result
       items.append(item)
 
+    if not items and offset > 0:
+      # Past the last page there's no row to carry the count.
+      count = (await self.session.execute(select(func.count()).select_from(statement.order_by(None).subquery()))).scalar_one()
+
     return items, count
 
   async def create(self, item: M, *, flush: bool = False) -> M:
