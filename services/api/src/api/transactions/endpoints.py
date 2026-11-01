@@ -5,6 +5,7 @@ from typing import Annotated
 from uuid import UUID
 
 from api.bank_accounts.repository import BankAccountRepository
+from api.categories.repository import CategoryRepository
 from api.common.pagination import PaginationParamsQuery
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.uploads import read_upload
@@ -53,6 +54,11 @@ async def _schemas(session: AsyncSession, transactions: Sequence[Transaction]) -
     TransactionSchema.model_validate(t).model_copy(update={"document_count": documents.get(t.id, 0), "company_account": t.bank_account_id in company})
     for t in transactions
   ]
+
+
+async def _require_own_category(session: AsyncSession, user_id: UUID, category_id: UUID | None) -> None:
+  if category_id is not None:
+    await CategoryRepository.from_session(session).get_owned_or_404(category_id, user_id, not_found_message="Category not found")
 
 
 async def _schema(session: AsyncSession, transaction: Transaction) -> TransactionSchema:
@@ -182,6 +188,7 @@ async def bulk_update_transactions(
   current_user: CurrentDBUser,
 ) -> BulkUpdateResponse:
   """Update category for a list of transactions by ID."""
+  await _require_own_category(session, current_user.id, body.category_id)
   repo = TransactionRepository.from_session(session)
   updated = await repo.set_category_for_ids(user_id=current_user.id, ids=body.ids, category_id=body.category_id)
   return BulkUpdateResponse(updated=updated)
@@ -204,6 +211,7 @@ async def update_transaction(
 
   update_dict = body.model_dump(exclude_unset=True)
   if "category_id" in update_dict:
+    await _require_own_category(session, current_user.id, update_dict["category_id"])
     # The user's own choice: rules and transfer pairing leave it alone from now on.
     update_dict["category_rule_id"] = None
   if update_dict:
@@ -277,6 +285,7 @@ async def categorize_by_description(
   current_user: CurrentDBUser,
 ) -> BulkCategorizeResponse:
   """Set category for all transactions matching the given description."""
+  await _require_own_category(session, current_user.id, body.category_id)
   repo = TransactionRepository.from_session(session)
   updated = await repo.set_category_for_description(user_id=current_user.id, description=body.description, category_id=body.category_id)
   return BulkCategorizeResponse(updated=updated)
