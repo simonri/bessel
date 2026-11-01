@@ -179,8 +179,13 @@ def _subject_reply(subject: str) -> str:
   return subject if re.match(r"^\s*(re|sv|aw)\s*:", subject, re.IGNORECASE) else f"Re: {subject}".strip()
 
 
+def _quoted(name: str) -> str:
+  escaped = name.replace("\\", "\\\\").replace('"', '\\"')
+  return f'"{escaped}"'
+
+
 def _format(addresses: Sequence[Address]) -> str:
-  return ", ".join(f'"{a.name}" <{a.address}>' if a.name else a.address for a in addresses)
+  return ", ".join(f"{_quoted(a.name)} <{a.address}>" if a.name else a.address for a in addresses)
 
 
 def draft(sender: str, to: Sequence[str], subject: str, body: str, *, cc: Sequence[str] = (), now: datetime) -> EmailMessage:

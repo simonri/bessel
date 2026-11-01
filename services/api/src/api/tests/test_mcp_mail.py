@@ -340,6 +340,17 @@ class TestDrafts:
     assert (everyone["To"], everyone["Cc"]) == ("Anna <anna@x.se>", "bo@y.se")
 
   @pytest.mark.asyncio
+  async def test_a_reply_keeps_a_name_with_quotes_and_a_comma_as_one_recipient(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    original = mail('"Anna \\"Berg, Ek\\"" <anna@x.se>', "Middag", "Ses vi fredag?")
+    box = FakeMailbox({"INBOX": [(original, set())], "Drafts": [], "Sent Messages": []})
+    mailbox["mailbox"] = box
+
+    await mcp_call(connect, "draft_reply", {"uid": 1, "body": "Gärna!"})
+
+    [reply] = drafts(box)
+    assert [(a.display_name, a.addr_spec) for a in reply["To"].addresses] == [('Anna "Berg, Ek"', "anna@x.se")]
+
+  @pytest.mark.asyncio
   async def test_drafts_are_found_by_name_and_sent_by_role(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
     box = FakeMailbox({"INBOX": [], "drafts": [], "Sent Messages": []})
     mailbox["mailbox"] = box
