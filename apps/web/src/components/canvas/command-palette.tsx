@@ -26,6 +26,7 @@ import {
   type PageKey,
   PRIMARY_PAGES,
 } from "@/components/pages";
+import { dueDay } from "@/components/tasks/task-properties";
 import { useProjects } from "@/hooks/use-projects";
 import { useSettings } from "@/hooks/use-settings";
 import { TASK_MUTATION_KEY, useTaskCacheHelpers } from "@/hooks/use-task-cache";
@@ -426,7 +427,7 @@ function CommandPaletteContent({
         client,
         body: {
           title: parsed.title,
-          due_date: parsed.dueDate,
+          due_date: parsed.dueDate && dueDay(parsed.dueDate),
           project: parsed.project ?? null,
           priority: parsed.priority,
           status: "todo",
