@@ -414,9 +414,17 @@ class MemoryService:
     return to_schema(fact)
 
   async def forget(self, session: AsyncSession, user: User, fact_id: UUID) -> None:
-    """The user removed a fact on the web; assistants can't."""
-    fact = await MemoryFactRepository.from_session(session).get_owned_or_404(fact_id, user.id, not_found_message="Fact not found")
-    fact.set_deleted_at()
+    """The user removed a fact on the web; assistants can't. The versions it replaced or merged go too, or search with
+    include_past would still find what the user asked to forget, and none keeps its embedding."""
+    repository = MemoryFactRepository.from_session(session)
+    fact = await repository.get_owned_or_404(fact_id, user.id, not_found_message="Fact not found")
+    gone = [fact]
+    while gone:
+      current = gone.pop()
+      current.set_deleted_at()
+      current.embedding = None
+      current.embedding_key = None
+      gone.extend(await repository.list_replaced_by(user.id, current.id))
     await session.flush()
 
 
