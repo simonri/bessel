@@ -1,8 +1,11 @@
 from datetime import UTC, datetime
 from typing import Any
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
+from api.models.gym import GymExercise
+from api.models.user import User
+from api.postgres import AsyncSession
 from httpx import AsyncClient
 
 
@@ -84,6 +87,20 @@ class TestExercises:
     await _exercise(client, "Plank")
 
     assert [e["name"] for e in await _list(client)] == ["Squat", "Plank", "Leg press"]
+
+  @pytest.mark.asyncio
+  async def test_added_just_after_local_midnight_counts_from_the_local_day(self, client: AsyncClient, session: AsyncSession, user: User) -> None:
+    squat = await _exercise(client, "Squat")
+    await _set(client, squat, "2026-10-14", 80)
+    plank = await _exercise(client, "Plank")
+    # 00:30 on the 15th in Stockholm, still the 14th in UTC.
+    exercise, owner = await session.get(GymExercise, UUID(plank)), await session.get(User, user.id)
+    assert exercise is not None and owner is not None
+    exercise.created_at = datetime(2026, 10, 14, 22, 30, tzinfo=UTC)
+    owner.timezone = "Europe/Stockholm"
+    await session.flush()
+
+    assert [e["name"] for e in await _list(client)] == ["Plank", "Squat"]
 
 
 class TestMuscles:

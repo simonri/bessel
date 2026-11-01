@@ -1,5 +1,6 @@
 from datetime import date
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 from api.exceptions import ConflictError, ResourceNotFound
 from api.gym.repository import GymExerciseRepository, GymTopSetRepository
@@ -18,7 +19,7 @@ def _set_schema(top_set: GymTopSet) -> GymTopSetSchema:
 
 
 class GymService:
-  async def list_exercises(self, exercises: GymExerciseRepository, sets: GymTopSetRepository, user_id: UUID) -> list[GymExerciseSummary]:
+  async def list_exercises(self, exercises: GymExerciseRepository, sets: GymTopSetRepository, user_id: UUID, tz: ZoneInfo) -> list[GymExerciseSummary]:
     recent: dict[UUID, list[GymTopSetSchema]] = {}
     for top_set in await sets.list_recent_by_exercise(user_id):
       recent.setdefault(top_set.exercise_id, []).append(_set_schema(top_set))
@@ -38,7 +39,7 @@ class GymService:
     ]
 
     def last_trained(summary: GymExerciseSummary) -> date:
-      return summary.last_set.performed_on if summary.last_set else summary.created_at.date()
+      return summary.last_set.performed_on if summary.last_set else summary.created_at.astimezone(tz).date()
 
     # On the same day, exercises trained come before ones only added.
     return sorted(summaries, key=lambda s: (last_trained(s), s.last_set is not None, s.created_at), reverse=True)
