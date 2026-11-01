@@ -116,6 +116,23 @@ describe("remarkObsidian — tags", () => {
     const html = render("see foo#bar here", opts);
     expect(html).not.toContain("data-tag");
   });
+
+  it("reads tags like the editor: any script, a leading digit, no trailing - or /", () => {
+    const html = render(
+      "Plan #måndag and #2024-review, see #café/ideas- too.",
+      opts,
+    );
+    expect(html).toContain('data-tag="måndag"');
+    expect(html).toContain(">#måndag<");
+    expect(html).toContain('data-tag="2024-review"');
+    expect(html).toContain('data-tag="café/ideas"');
+    expect(html).toContain(">#café/ideas</a>- too");
+  });
+
+  it("leaves a number like #2024 as text", () => {
+    const html = render("Issue #2024 again", opts);
+    expect(html).not.toContain("data-tag");
+  });
 });
 
 describe("remarkObsidian — highlight", () => {
