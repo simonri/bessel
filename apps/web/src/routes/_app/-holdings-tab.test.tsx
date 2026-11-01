@@ -115,7 +115,7 @@ beforeEach(() => {
   overview.accounts = OVERVIEW;
 });
 
-const { HoldingsTab, allocation, investmentTotals } = await import(
+const { HoldingsTab, allocation, investmentTotals, percent } = await import(
   "./-holdings-tab"
 );
 const { groupByMonth, tradeTotal } = await import("./-trades-tab");
@@ -124,6 +124,20 @@ const plain = (text: string | null) =>
   (text ?? "").replace(/\s/g, " ").replace(/−/g, "-");
 
 afterEach(cleanup);
+
+describe("percent", () => {
+  it("signs a change by its direction", () => {
+    expect(percent(25, 1000)).toBe("+2,5%");
+    expect(percent(-25, 1000)).toBe("-2,5%");
+  });
+
+  it("signs only changes that show as more than zero", () => {
+    expect(percent(-0.4, 1000)).toBe("0,0%");
+    expect(percent(0.4, 1000)).toBe("0,0%");
+    expect(percent(0, 1000)).toBe("0,0%");
+    expect(percent(-0.5, 1000)).toBe("-0,1%");
+  });
+});
 
 describe("investmentTotals", () => {
   it("adds the accounts up, with this year's dividends and whether a company's is among them", () => {
