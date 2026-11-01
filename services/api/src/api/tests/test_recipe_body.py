@@ -97,7 +97,22 @@ class TestIngredientLines:
   def test_parses(self, line: str, expected: RecipeIngredient) -> None:
     assert parse_ingredient_line(line) == expected
 
-  @pytest.mark.parametrize(("amount", "text"), [(0.5, "½"), (1.5, "1½"), (0.75, "¾"), (5, "5"), (2.4, "2.4")])
+  @pytest.mark.parametrize(
+    ("amount", "text"),
+    [
+      (0.5, "½"),
+      (1.5, "1½"),
+      (0.75, "¾"),
+      (5, "5"),
+      (2.4, "2.4"),
+      (2 / 3, "⅔"),
+      (1 + 1 / 3, "1⅓"),
+      (0.2, "0.2"),
+      (0.8, "0.8"),
+      (1.2, "1.2"),
+      (0.55, "0.55"),
+    ],
+  )
   def test_formats_amounts(self, amount: float, text: str) -> None:
     assert format_amount(amount) == text
 

@@ -88,10 +88,15 @@ def _parse_amount(text: str) -> tuple[float | None, str]:
   return float(value), text[match.end() :].strip()
 
 
+_FRACTION_GLYPHS = {Fraction(1, 4): "¼", Fraction(1, 3): "⅓", Fraction(1, 2): "½", Fraction(2, 3): "⅔", Fraction(3, 4): "¾"}
+
+
 def format_amount(amount: float) -> str:
   whole = int(amount)
-  fraction = Fraction(amount - whole).limit_denominator(4)
-  glyph = {Fraction(1, 2): "½", Fraction(1, 4): "¼", Fraction(3, 4): "¾"}.get(fraction)
+  rest = amount - whole
+  fraction = Fraction(rest).limit_denominator(4)
+  # Only an exact fraction gets a glyph: 0.2 is not ¼.
+  glyph = _FRACTION_GLYPHS.get(fraction) if abs(rest - float(fraction)) < 1e-9 else None
   if glyph:
     return f"{whole}{glyph}" if whole else glyph
   return f"{amount:g}"
