@@ -42,7 +42,9 @@ export async function atomicWrite(
     if (typeof data === "string")
       await fs.promises.writeFile(tmp, data, "utf8");
     else await fs.promises.writeFile(tmp, data);
-    if (existing) await fs.promises.chmod(tmp, existing.mode & 0o7777);
+    // Some mounts (FAT, SMB) have no permissions to keep.
+    if (existing)
+      await fs.promises.chmod(tmp, existing.mode & 0o7777).catch(() => {});
     await fs.promises.rename(tmp, abs);
   } catch (err) {
     await fs.promises.unlink(tmp).catch(() => {});
