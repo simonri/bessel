@@ -21,3 +21,8 @@ class UserRepository(RepositoryBase[User], RepositoryIDMixin[User, UUID]):
   async def count(self) -> int:
     result = await self.session.execute(select(func.count()).select_from(User))
     return result.scalar_one()
+
+  async def timezones(self) -> dict[UUID, str]:
+    """Each user's timezone, for those whose apps have reported one."""
+    result = await self.session.execute(select(User.id, User.timezone).where(User.timezone.is_not(None)))
+    return dict(result.tuples().all())

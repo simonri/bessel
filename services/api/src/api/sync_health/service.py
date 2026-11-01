@@ -1,14 +1,16 @@
 """Tells the user when a bank or Avanza stops syncing, so a quiet gap in their transactions can't go unnoticed."""
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta, tzinfo
 from uuid import UUID
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from api.avanza.repository import AvanzaConnectionRepository
 from api.klarna.repository import KlarnaPayLaterRepository
 from api.models.notification import Notification
 from api.open_banking.repository import BankConnectionRepository
 from api.postgres import AsyncSession
+from api.users.repository import UserRepository
 
 # Syncs run twice a day, so a day and a half without one means at least two in a row failed or never ran.
 STALE_AFTER = timedelta(hours=36)
@@ -27,11 +29,22 @@ def _stale(source: Source, now: datetime) -> bool:
   return now - source.synced_at > STALE_AFTER
 
 
-def _warning(source: Source) -> Notification:
+def _zone(name: str | None) -> tzinfo:
+  try:
+    return ZoneInfo(name) if name else UTC
+  except (ZoneInfoNotFoundError, ValueError):
+    return UTC
+
+
+def _day(at: datetime, zone: tzinfo) -> str:
+  return f"{at.astimezone(zone):%-d %B}"
+
+
+def _warning(source: Source, zone: tzinfo) -> Notification:
   return Notification(
     user_id=source.user_id,
     title=f"{source.name} has stopped syncing",
-    body=f"Bessel last read {source.name} on {source.synced_at:%-d %B}. Transactions since then are missing until it syncs again; Accounts shows why.",
+    body=f"Bessel last read {source.name} on {_day(source.synced_at, zone)}. Transactions since then are missing until it syncs again; Accounts shows why.",
     link="/accounts",
     kind="warning",
   )
@@ -39,13 +52,18 @@ def _warning(source: Source) -> Notification:
 
 async def warn_stale(session: AsyncSession, *, now: datetime) -> int:
   """Leaves one notification per linked connection that hasn't synced lately; returns how many."""
+  timezones = await UserRepository.from_session(session).timezones()
+
+  def zone(user_id: UUID) -> tzinfo:
+    return _zone(timezones.get(user_id))
+
   warned = 0
   for connection in await BankConnectionRepository.from_session(session).list_with_accounts():
     if connection.stale_notified_at is not None or not any(a.bank_account_id and a.shared for a in connection.accounts):
       continue
     source = Source(connection.user_id, connection.bank_name, connection.last_synced_at or connection.created_at)
     if _stale(source, now):
-      session.add(_warning(source))
+      session.add(_warning(source, zone(source.user_id)))
       connection.stale_notified_at = now
       warned += 1
   for avanza in await AvanzaConnectionRepository.from_session(session).list_with_accounts():
@@ -53,17 +71,18 @@ async def warn_stale(session: AsyncSession, *, now: datetime) -> int:
       continue
     source = Source(avanza.user_id, "Avanza", avanza.last_synced_at or avanza.created_at)
     if _stale(source, now):
-      session.add(_warning(source))
+      session.add(_warning(source, zone(source.user_id)))
       avanza.stale_notified_at = now
       warned += 1
   for pay_later in await KlarnaPayLaterRepository.from_session(session).list_all():
     if pay_later.stale_notified_at is not None or pay_later.last_imported_at is None or now - pay_later.last_imported_at <= PAY_LATER_STALE_AFTER:
       continue
+    imported = _day(pay_later.last_imported_at, zone(pay_later.user_id))
     session.add(
       Notification(
         user_id=pay_later.user_id,
         title="Import Klarna pay later",
-        body=f"Bessel last imported Klarna pay later on {pay_later.last_imported_at:%-d %B}. Anything bought or paid since is missing until you import again.",
+        body=f"Bessel last imported Klarna pay later on {imported}. Anything bought or paid since is missing until you import again.",
         link="/transactions",
         kind="warning",
       )

@@ -5,6 +5,7 @@ from api.common.encryption import encrypt
 from api.models.avanza import AvanzaAccount, AvanzaConnection
 from api.models.bank_account import BankAccount
 from api.models.bank_connection import BankConnection, BankConnectionAccount
+from api.models.klarna import KlarnaPayLater
 from api.models.notification import Notification
 from api.models.user import User
 from api.postgres import AsyncSession
@@ -80,3 +81,18 @@ class TestStaleSyncs:
 
     assert await warn_stale(session, now=made + timedelta(hours=35)) == 0
     assert await warn_stale(session, now=made + timedelta(hours=37)) == 1
+
+  @pytest.mark.asyncio
+  async def test_the_last_sync_is_dated_in_the_users_timezone(self, session: AsyncSession, save_fixture: SaveFixture, user: User) -> None:
+    user.timezone = "Europe/Stockholm"
+    await save_fixture(user)
+    # 23:30 UTC on the 18th is 01:30 on the 19th in Stockholm.
+    await _bank(save_fixture, user, "Skandia", datetime(2026, 10, 18, 23, 30, tzinfo=UTC), linked=await _bank_account(save_fixture, user))
+    pay_later = await _bank_account(save_fixture, user)
+    await save_fixture(KlarnaPayLater(user_id=user.id, bank_account_id=pay_later.id, last_imported_at=datetime(2026, 9, 1, 22, 30, tzinfo=UTC)))
+
+    assert await warn_stale(session, now=NOW) == 2
+    await session.flush()
+
+    bodies = (await session.execute(select(Notification.body).where(Notification.user_id == user.id))).scalars().all()
+    assert sorted(body.split(" on ")[1].split(".")[0] for body in bodies) == ["19 October", "2 September"]
