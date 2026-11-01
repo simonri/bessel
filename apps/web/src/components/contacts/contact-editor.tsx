@@ -102,6 +102,9 @@ function birthdayOf(
     return "invalid";
   if (y !== null && (!Number.isInteger(y) || y < 1900 || y > 2100))
     return "invalid";
+  // Without a year, 29 February may be someone's birthday.
+  const daysInMonth = new Date(y ?? 2000, m, 0).getDate();
+  if (d > daysInMonth) return "invalid";
   return { day: d, month: m, year: y };
 }
 

@@ -133,6 +133,30 @@ describe("changesFrom", () => {
     );
   });
 
+  it("refuses a day the month doesn't have, allowing 29 February when the year allows it", () => {
+    const before = draftFrom(anna);
+    const birthday = (day: string, month: string, year = "") =>
+      changesFrom(before, {
+        ...before,
+        birthday_day: day,
+        birthday_month: month,
+        birthday_year: year,
+      });
+
+    expect(birthday("31", "4")).toMatch(/isn't a date/);
+    expect(birthday("30", "2")).toMatch(/isn't a date/);
+    expect(birthday("29", "2", "2023")).toMatch(/isn't a date/);
+    expect(birthday("29", "2", "2024")).toEqual({
+      birthday: { day: 29, month: 2, year: 2024 },
+    });
+    expect(birthday("29", "2")).toEqual({
+      birthday: { day: 29, month: 2, year: null },
+    });
+    expect(birthday("31", "12")).toEqual({
+      birthday: { day: 31, month: 12, year: null },
+    });
+  });
+
   it("sends everything filled in for a new contact", () => {
     const after = {
       ...draftFrom(null),
