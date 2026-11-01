@@ -350,8 +350,8 @@ async def add_calendar_events(
 
 
 TOOLS: list[ToolSpec] = [
-  read(get_calendar_events, "Calendar events"),
-  read(find_free_time, "Find free time"),
+  read(get_calendar_events, "Calendar events", open_world=True),
+  read(find_free_time, "Find free time", open_world=True),
   read(list_calendars, "Calendars"),
   write(add_calendar_events, "Add calendar events", idempotent=True),
 ]

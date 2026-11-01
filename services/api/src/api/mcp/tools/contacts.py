@@ -109,6 +109,6 @@ TOOLS: list[ToolSpec] = [
   read(find_contacts, "Find contacts"),
   read(get_contact, "Get contact"),
   read(get_contact_reminders, "Get contact reminders"),
-  read(get_meeting_brief, "Get meeting brief"),
+  read(get_meeting_brief, "Get meeting brief", open_world=True),
   write(log_interaction, "Log contact interaction"),
 ]
