@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   assertNotRoot,
   assertRenameTargetFree,
+  atomicWrite,
   createExclusive,
   listIndexableRels,
   MAX_INDEXED_BYTES,
@@ -41,6 +42,24 @@ describe("assertNotRoot", () => {
     expect(() => assertNotRoot(root, path.resolve(root))).toThrow();
     expect(() => assertNotRoot(`${root}/`, root)).toThrow();
     expect(() => assertNotRoot(root, path.join(root, "a.md"))).not.toThrow();
+  });
+});
+
+describe("atomicWrite", () => {
+  it("keeps the note's permissions", async () => {
+    write("private.md", "before");
+    fs.chmodSync(path.join(root, "private.md"), 0o600);
+    write("shared.md", "before");
+    fs.chmodSync(path.join(root, "shared.md"), 0o664);
+
+    await atomicWrite(path.join(root, "private.md"), "after");
+    await atomicWrite(path.join(root, "shared.md"), "after");
+
+    const mode = (rel: string) =>
+      fs.statSync(path.join(root, rel)).mode & 0o777;
+    expect(read("private.md")).toBe("after");
+    expect(mode("private.md")).toBe(0o600);
+    expect(mode("shared.md")).toBe(0o664);
   });
 });
 

@@ -36,10 +36,13 @@ export async function atomicWrite(
 ): Promise<void> {
   const dir = path.dirname(abs);
   const tmp = path.join(dir, tempFileName(path.basename(abs)));
+  // The replacement keeps the note's permissions: a private note stays private.
+  const existing = await fs.promises.stat(abs).catch(() => null);
   try {
     if (typeof data === "string")
       await fs.promises.writeFile(tmp, data, "utf8");
     else await fs.promises.writeFile(tmp, data);
+    if (existing) await fs.promises.chmod(tmp, existing.mode & 0o7777);
     await fs.promises.rename(tmp, abs);
   } catch (err) {
     await fs.promises.unlink(tmp).catch(() => {});
