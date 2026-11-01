@@ -9,7 +9,7 @@ import pytest
 from api.calendars import http as provider_http
 from api.calendars import people
 from api.calendars.google import PEOPLE_SCOPES, GoogleCalendarClient
-from api.calendars.providers import ProviderAuthError
+from api.calendars.providers import ProviderAuthError, ProviderUnavailableError
 from api.calendars.repository import CalendarEventRepository, CalendarPersonRepository
 from api.common.encryption import encrypt
 from api.common.utils import utc_now
@@ -213,6 +213,21 @@ class TestRefreshPeople:
     await people.refresh_people(_session_maker(session), account.id)
 
     assert (await session.execute(select(CalendarPerson.email).where(CalendarPerson.account_id == account.id))).scalars().all() == ["dan@oh.xyz"]
+
+  @pytest.mark.asyncio
+  @pytest.mark.parametrize("status", [429, 503])
+  async def test_a_busy_people_api_keeps_the_names_it_had(self, session: AsyncSession, save_fixture: SaveFixture, google: FakePeople, status: int) -> None:
+    account, calendar = await _account(save_fixture)
+    await _event(save_fixture, calendar, "dan@oh.xyz")
+    await save_fixture(CalendarPerson(account_id=account.id, email="dan@oh.xyz", name="Dan Gordon"))
+    google.sources[CONNECTIONS] = status
+
+    with pytest.raises(ProviderUnavailableError):
+      await people.refresh_people(_session_maker(session), account.id)
+
+    stored = (await session.execute(select(CalendarPerson.email, CalendarPerson.name).where(CalendarPerson.account_id == account.id))).all()
+    assert stored == [("dan@oh.xyz", "Dan Gordon")]
+    assert account.people_synced_at is None
 
   @pytest.mark.asyncio
   @pytest.mark.parametrize(

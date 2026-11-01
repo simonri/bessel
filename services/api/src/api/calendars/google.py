@@ -365,6 +365,9 @@ class GoogleCalendarClient:
       )
       if response.status_code == 401:
         raise ProviderAuthError("Google rejected the access token")
+      if response.status_code == 429 or response.status_code >= 500:
+        # Unlike a missing source, a busy one would wipe the names it holds until the next refresh.
+        raise ProviderUnavailableError(f"Google People answered {response.status_code}")
       if response.status_code >= 400:
         # Not granted, People API off, or no directory: just this source is missing.
         log.info("google_people_source_skipped", source=key, status=response.status_code)
