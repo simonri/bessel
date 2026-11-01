@@ -83,6 +83,8 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         charged.bank_account_id == Transaction.bank_account_id,
         charged.direction == TransactionDirection.debit,
         charged.description == Transaction.description,
+        # A move to another own account charged nothing.
+        charged.transfer_id.is_(None),
         charged.deleted_at.is_(None),
       ),
       # Filed under what it paid back, such as dinner a friend Swished for.
