@@ -175,6 +175,12 @@ class TestSearchTransactions:
 
   @pytest.mark.asyncio
   @pytest.mark.usefixtures("books")
+  async def test_days_in_reverse_are_refused_rather_than_finding_nothing(self, connect: ConnectFixture) -> None:
+    message = await mcp_call_error(connect, "search_transactions", {"start": "2026-09-30", "end": "2026-09-01"})
+    assert "end day must not be before the start day" in message
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("books")
   async def test_company_money_is_its_accounts_and_costs_paid_privately(self, connect: ConnectFixture) -> None:
     every = (await mcp_call(connect, "search_transactions"))["transactions"]
     assert [(t["bank_text"], t["name"], t["company"]) for t in every] == [

@@ -15,7 +15,7 @@ from sqlalchemy import func, nulls_last
 from api.common.schemas import Schema
 from api.common.utils import utc_now
 from api.mcp.context import user_session
-from api.mcp.dates import Day, TimezoneParam, local_window, parse_day, resolve_timezone, today_in
+from api.mcp.dates import Day, TimezoneParam, check_order, local_window, parse_day, resolve_timezone, today_in
 from api.mcp.tools.common import ToolSpec, read, write
 from api.models.project import Project
 from api.models.task import Task as TaskModel
@@ -381,6 +381,7 @@ async def find_tasks(
       project_id = matched.id
 
     start, end = (parse_day(due_from, today) if due_from else None), (parse_day(due_to, today) if due_to else None)
+    check_order(start, end)
     has_due_date = None
     match due:
       case "overdue":

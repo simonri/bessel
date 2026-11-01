@@ -102,6 +102,11 @@ class TestFindTasks:
     assert sorted(t["title"] for t in tomorrow["tasks"]) == ["Buy milk", "Fix sync bug"]
 
   @pytest.mark.asyncio
+  async def test_due_days_in_reverse_are_refused_rather_than_finding_nothing(self, connect: ConnectFixture, stockholm_user: User) -> None:
+    message = await mcp_call_error(connect, "find_tasks", {"due_from": "2026-12-31", "due_to": "2026-12-01"})
+    assert "end day must not be before the start day" in message
+
+  @pytest.mark.asyncio
   async def test_unknown_project_lists_the_real_ones(self, connect: ConnectFixture, stockholm_user: User, bessel: Project) -> None:
     message = await mcp_call_error(connect, "find_tasks", {"project": "Uni"})
     assert "Bessel" in message

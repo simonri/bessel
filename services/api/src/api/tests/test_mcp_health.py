@@ -57,6 +57,13 @@ class TestHealth:
     assert (await mcp_call(connect, "list_workouts", token="token-b"))["workouts"] == []
 
 
+class TestListWorkouts:
+  @pytest.mark.asyncio
+  async def test_days_in_reverse_are_refused_rather_than_finding_nothing(self, connect: ConnectFixture) -> None:
+    message = await mcp_call_error(connect, "list_workouts", {"start": "2026-10-10", "end": "2026-10-01", "timezone": "Europe/Stockholm"})
+    assert "end day must not be before the start day" in message
+
+
 class TestDailyHealth:
   @pytest.mark.asyncio
   async def test_days_in_range_oldest_first_and_only_the_users_own(self, connect: ConnectFixture, save_owned: SaveFixture) -> None:
