@@ -47,9 +47,9 @@ describe("linkify", () => {
       "https://x.se/c",
       "https://x.se/d",
     ]);
-    expect(
-      links("See http://[::1]/a[1].").map((p) => p.href),
-    ).toEqual(["http://[::1]/a[1]"]);
+    expect(links("See http://[::1]/a[1].").map((p) => p.href)).toEqual([
+      "http://[::1]/a[1]",
+    ]);
   });
 
   it("turns email addresses into mailto links", () => {
