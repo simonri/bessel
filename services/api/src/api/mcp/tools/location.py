@@ -115,13 +115,24 @@ def _offset(segment: LocationSegment) -> fixed_offset:
   return fixed_offset(timedelta(minutes=segment.utc_offset_minutes or 0))
 
 
+def _end_offset(segment: LocationSegment) -> fixed_offset:
+  minutes = segment.utc_offset_minutes if segment.end_utc_offset_minutes is None else segment.end_utc_offset_minutes
+  return fixed_offset(timedelta(minutes=minutes or 0))
+
+
 def _day_parts(segment: LocationSegment, first: date, last: date) -> list[tuple[date, datetime, datetime]]:
-  """The local days `segment` overlaps within first..last, each with the segment cut to that day."""
+  """The local days `segment` overlaps within first..last, each with the segment cut to that day.
+
+  A segment can end at another UTC offset than it began (a flight, or a
+  night over a DST change), so the ends keep their own offsets and a
+  midnight in between is taken at the starting one.
+  """
   parts = []
   day = max(segment.local_start.date(), first)
   while day <= min(segment.local_end.date(), last):
-    start = max(segment.local_start, datetime.combine(day, time.min))
-    end = min(segment.local_end, datetime.combine(day + timedelta(days=1), time.min))
+    day_start, day_end = datetime.combine(day, time.min), datetime.combine(day + timedelta(days=1), time.min)
+    start = segment.start_at.astimezone(_offset(segment)) if segment.local_start >= day_start else day_start.replace(tzinfo=_offset(segment))
+    end = segment.end_at.astimezone(_end_offset(segment)) if segment.local_end <= day_end else day_end.replace(tzinfo=_offset(segment))
     if end > start:
       parts.append((day, start, end))
     day += timedelta(days=1)
@@ -167,8 +178,8 @@ async def get_location_history(ctx: Context, start: Day = "today", end: Day = "t
           label=visit.semantic_type,
           saved=visit.place_id in saved,
           inside_another=nested,
-          start=part_start.replace(tzinfo=_offset(visit)),
-          end=part_end.replace(tzinfo=_offset(visit)),
+          start=part_start,
+          end=part_end,
           duration_secs=round(secs),
         )
       )
@@ -183,8 +194,8 @@ async def get_location_history(ctx: Context, start: Day = "today", end: Day = "t
       days.setdefault(day, LocationDay(date=day, stays=[], trips=[])).trips.append(
         Trip(
           mode=trip.activity_type,
-          start=trip.local_start.replace(tzinfo=_offset(trip)),
-          end=trip.local_end.replace(tzinfo=_offset(trip)),
+          start=trip.start_at.astimezone(_offset(trip)),
+          end=trip.end_at.astimezone(_end_offset(trip)),
           duration_secs=round((trip.end_at - trip.start_at).total_seconds()),
           distance_m=trip.distance_meters,
         )
