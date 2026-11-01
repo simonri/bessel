@@ -334,6 +334,8 @@ class MemoryService:
         if value is not None:
           setattr(fact, field, value.strip() if isinstance(value, str) else value)
       fact.evidence = _merged_evidence(fact.evidence, change.evidence)
+      if change.importance is not None:
+        fact.importance = _importance(change.importance, [Evidence.model_validate(item) for item in fact.evidence])
       fact.set_modified_at()
       await session.flush()
       return fact

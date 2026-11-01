@@ -368,6 +368,23 @@ class TestRevise:
     assert (await mcp_call(connect, "get_profile"))["profile"] == []
 
   @pytest.mark.asyncio
+  async def test_raising_the_importance_of_what_only_others_wrote_keeps_it_out_of_the_profile(self, connect: ConnectFixture) -> None:
+    [emailed, told] = await remember(
+      connect,
+      fact("stad", "Bor i Västerås", area="identitet", importance=2, evidence=[{"source": "gmail", "ref": "x"}]),
+      fact("yrke", "Snickare", area="identitet", importance=2, evidence=[{"source": "user"}]),
+    )
+
+    results = await revise(
+      connect,
+      {"fact_id": emailed["fact"]["id"], "action": "update", "importance": 5},
+      {"fact_id": told["fact"]["id"], "action": "update", "importance": 5},
+    )
+
+    assert [result["fact"]["importance"] for result in results] == [3, 5]
+    assert [f["statement"] for a in (await mcp_call(connect, "get_profile"))["profile"] for f in a["facts"]] == ["Snickare"]
+
+  @pytest.mark.asyncio
   async def test_merging_keeps_one_fact_with_both_facts_evidence(self, connect: ConnectFixture) -> None:
     [keep, fold] = await remember(
       connect,
