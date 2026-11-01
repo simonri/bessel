@@ -249,12 +249,19 @@ interface GitFileEntry {
   status: string;
 }
 
+// Before every command the widget runs. A repo's own .git/config can name a
+// program for git to run (core.fsmonitor runs on every status, and the widget
+// polls status): a cloned or extracted repo must not run code by being looked
+// at. Literal pathspecs: a file named `*` or `:(glob)**` must mean that file
+// when discarded or staged, not every file it matches.
+const GIT_SAFE_ARGS = ["-c", "core.fsmonitor=false", "--literal-pathspecs"];
+
 async function gitRun(
   args: string[],
   cwd: string,
   opts?: { env?: NodeJS.ProcessEnv; timeoutMs?: number },
 ): Promise<string> {
-  const { stdout } = await execFileAsync("git", args, {
+  const { stdout } = await execFileAsync("git", [...GIT_SAFE_ARGS, ...args], {
     cwd,
     maxBuffer: 10 * 1024 * 1024,
     ...(opts?.env ? { env: { ...process.env, ...opts.env } } : {}),
@@ -282,7 +289,7 @@ function toGitError(err: unknown): Error {
 // Raw-byte variant for image previews — gitRun's string stdout is decoded as
 // utf8, which corrupts binary content.
 async function gitRunBuffer(args: string[], cwd: string): Promise<Buffer> {
-  const { stdout } = await execFileAsync("git", args, {
+  const { stdout } = await execFileAsync("git", [...GIT_SAFE_ARGS, ...args], {
     cwd,
     maxBuffer: 10 * 1024 * 1024,
     encoding: "buffer",
