@@ -1,6 +1,9 @@
 from datetime import UTC, datetime
 
 import pytest
+from api.models.recipe import Recipe
+from api.models.user import User
+from api.tests.fixtures.database import SaveFixture
 from httpx import AsyncClient
 from pytest_mock import MockerFixture
 
@@ -127,3 +130,16 @@ class TestRecipeCooks:
     assert tomorrow.status_code == 200, "Already the 9th east of UTC"
     assert after.status_code == 400
     assert (await client.get(f"/v1/recipes/{recipe_id}")).json()["cook_count"] == 1
+
+
+class TestRecipePages:
+  @pytest.mark.asyncio
+  async def test_pages_of_same_titled_recipes_show_each_once(self, client: AsyncClient, save_fixture: SaveFixture, user: User) -> None:
+    for i in range(60):
+      await save_fixture(Recipe(title="Gröt", content=f"Variant {i}", recipe_type="other", user_id=user.id))
+
+    seen: list[str] = []
+    for page in range(1, 7):
+      seen += [r["id"] for r in (await client.get("/v1/recipes", params={"page": page, "limit": 10})).json()["items"]]
+
+    assert len(seen) == len(set(seen)) == 60

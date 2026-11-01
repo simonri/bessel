@@ -74,7 +74,9 @@ class RepositoryBase[M]:
 
   async def paginate(self, statement: Select[M], *, limit: int, page: int) -> tuple[list[M], int]:
     offset = (page - 1) * limit
-    paginated_statement: Select[M, int] = statement.add_columns(over(func.count())).limit(limit).offset(offset)
+    # Rows that tie on the statement's order still need one, or pages overlap and skip rows.
+    tiebreak = cast(Any, self.model).id
+    paginated_statement: Select[M, int] = statement.add_columns(over(func.count())).order_by(tiebreak).limit(limit).offset(offset)
 
     results = await self.session.execute(paginated_statement)
 
