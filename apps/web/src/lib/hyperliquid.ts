@@ -4,7 +4,7 @@
 
 const INFO_URL = "https://api.hyperliquid.xyz/info";
 
-export const ADDRESS_PATTERN = /0x[0-9a-fA-F]{40}/;
+export const ADDRESS_PATTERN = /0x[0-9a-fA-F]{40}(?![0-9a-fA-F])/;
 
 /** The address in a pasted address or explorer link (hypurrscan, app.hyperliquid.xyz…). */
 export function parseAddress(input: string): string | null {
