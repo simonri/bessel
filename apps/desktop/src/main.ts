@@ -22,6 +22,7 @@ import {
   registerAgentUsageHandlers,
   removeLegacyCollector,
 } from "./agent-usage.js";
+import { isLoginAnswer, loopbackAuthState } from "./auth-callback.js";
 import { registerAvanzaHandlers } from "./avanza.js";
 import {
   confirmCloseWithClaudeSessions,
@@ -694,6 +695,9 @@ const AUTH_CALLBACK_PATH = "/callback";
 const AUTH_CALLBACK_TIMEOUT_MS = 5 * 60 * 1000;
 
 let authCallbackServer: http.Server | null = null;
+// The `state` of the login this window just sent to the browser: only a
+// callback carrying it ends the attempt (see isLoginAnswer).
+let expectedAuthState: string | null = null;
 
 function startAuthLogin(): Promise<number> {
   // A stale, abandoned attempt (user closed the login tab and tried again)
@@ -716,10 +720,7 @@ function startAuthLogin(): Promise<number> {
     // the attempt. Auth0 reports a denied or failed login with `error` +
     // `state` instead of `code`, which the renderer still needs to see.
     const { searchParams } = url;
-    if (
-      !searchParams.get("state") ||
-      !(searchParams.get("code") || searchParams.get("error"))
-    ) {
+    if (!isLoginAnswer(searchParams, expectedAuthState)) {
       res.writeHead(400).end();
       return;
     }
@@ -1062,6 +1063,8 @@ app.whenReady().then(() => {
     if (!url.startsWith("https://") && !url.startsWith("http://")) {
       throw new Error("Only http(s) URLs may be opened externally");
     }
+    expectedAuthState =
+      loopbackAuthState(url, AUTH_CALLBACK_PORT) ?? expectedAuthState;
     return shell.openExternal(url);
   });
 
