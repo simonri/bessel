@@ -231,7 +231,7 @@ class CalendarService:
 def _known_zone(name: str | None) -> str | None:
   try:
     return ZoneInfo(name).key if name else None
-  except (ZoneInfoNotFoundError, ValueError):
+  except (ZoneInfoNotFoundError, ValueError, OSError):
     return None
 
 

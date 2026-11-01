@@ -51,7 +51,7 @@ MIN_FIRST_NAME = 3
 def user_zone(user: User) -> ZoneInfo:
   try:
     return ZoneInfo(user.timezone or "UTC")
-  except (ZoneInfoNotFoundError, ValueError):
+  except (ZoneInfoNotFoundError, ValueError, OSError):
     return ZoneInfo("UTC")
 
 

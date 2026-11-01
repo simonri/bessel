@@ -140,6 +140,7 @@ class TestNextOccurrence:
 class TestUserZone:
   def test_falls_back_to_utc_for_a_zone_that_doesnt_exist(self) -> None:
     assert user_zone(User(timezone="Mars/Olympus")) == ZoneInfo("UTC")
+    assert user_zone(User(timezone="Europe")) == ZoneInfo("UTC")
     assert user_zone(User(timezone="Europe/Stockholm")) == ZoneInfo("Europe/Stockholm")
 
 

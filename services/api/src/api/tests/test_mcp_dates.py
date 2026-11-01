@@ -62,5 +62,6 @@ class TestMeTimezone:
     assert (await client.get("/v1/auth/me")).json()["timezone"] == "Europe/Stockholm"
 
   @pytest.mark.asyncio
-  async def test_rejects_unknown_timezones(self, client: AsyncClient) -> None:
-    assert (await client.patch("/v1/auth/me", json={"timezone": "Mars/Olympus"})).status_code == 422
+  @pytest.mark.parametrize("name", ["Mars/Olympus", "Europe"])
+  async def test_rejects_unknown_timezones(self, client: AsyncClient, name: str) -> None:
+    assert (await client.patch("/v1/auth/me", json={"timezone": name})).status_code == 422

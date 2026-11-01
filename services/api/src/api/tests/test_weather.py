@@ -298,6 +298,7 @@ class TestForecast:
     body = response.json()
     assert ([d["date"] for d in body["days"]], body["hours"]) == (["2026-11-10", "2026-11-11"], [])
     assert (await client.get("/v1/weather", params={"lat": 59.61, "lon": 16.54, "timezone": "Mars/Olympus"})).status_code == 400
+    assert (await client.get("/v1/weather", params={"lat": 59.61, "lon": 16.54, "timezone": "Europe"})).status_code == 400
 
 
 @pytest.mark.usefixtures("clock")

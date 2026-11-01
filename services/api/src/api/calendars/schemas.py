@@ -17,7 +17,7 @@ Weekday = Literal["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
 def _check_time_zone(value: str) -> str:
   try:
     ZoneInfo(value)
-  except (ZoneInfoNotFoundError, ValueError) as e:
+  except (ZoneInfoNotFoundError, ValueError, OSError) as e:
     raise ValueError(f"Unknown time zone: {value}") from e
   return value
 

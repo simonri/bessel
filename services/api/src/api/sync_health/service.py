@@ -32,7 +32,7 @@ def _stale(source: Source, now: datetime) -> bool:
 def _zone(name: str | None) -> tzinfo:
   try:
     return ZoneInfo(name) if name else UTC
-  except (ZoneInfoNotFoundError, ValueError):
+  except (ZoneInfoNotFoundError, ValueError, OSError):
     return UTC
 
 

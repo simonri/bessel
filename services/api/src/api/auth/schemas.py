@@ -27,6 +27,6 @@ class MeUpdate(Schema):
   def _known_timezone(cls, value: str) -> str:
     try:
       ZoneInfo(value)
-    except (ZoneInfoNotFoundError, ValueError) as e:
+    except (ZoneInfoNotFoundError, ValueError, OSError) as e:
       raise ValueError(f"Unknown timezone: {value}") from e
     return value

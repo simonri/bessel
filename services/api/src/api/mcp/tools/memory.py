@@ -19,7 +19,7 @@ def _zone(user: User) -> ZoneInfo:
   """Memory works before the user's apps have reported a timezone; dates then fall on UTC days."""
   try:
     return ZoneInfo(user.timezone or "UTC")
-  except (ZoneInfoNotFoundError, ValueError):
+  except (ZoneInfoNotFoundError, ValueError, OSError):
     return ZoneInfo("UTC")
 
 

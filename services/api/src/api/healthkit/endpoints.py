@@ -115,7 +115,7 @@ async def list_healthkit_sleep(
 def _parse_tz(tz_name: str | None) -> ZoneInfo | None:
   try:
     return ZoneInfo(tz_name) if tz_name else None
-  except (ZoneInfoNotFoundError, ValueError) as e:
+  except (ZoneInfoNotFoundError, ValueError, OSError) as e:
     # Don't silently fall back to UTC — that would bucket nights on the wrong boundary.
     raise ValidationError(f"Unknown timezone: {tz_name}", status_code=422) from e
 

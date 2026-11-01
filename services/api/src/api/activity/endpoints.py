@@ -106,7 +106,7 @@ async def get_daily_activity(
 ) -> ActivityDailyResponse:
   try:
     tz = ZoneInfo(tz_name) if tz_name else None
-  except (ZoneInfoNotFoundError, ValueError) as e:
+  except (ZoneInfoNotFoundError, ValueError, OSError) as e:
     # Don't silently fall back to UTC — that would bucket days on the wrong boundary.
     raise ValidationError(f"Unknown timezone: {tz_name}", status_code=422) from e
 

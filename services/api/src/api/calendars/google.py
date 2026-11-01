@@ -169,7 +169,7 @@ def _parse_date_time(value: dict[str, Any]) -> datetime:
     return parsed
   try:
     return parsed.replace(tzinfo=ZoneInfo(value.get("timeZone") or "UTC"))
-  except (ZoneInfoNotFoundError, ValueError):
+  except (ZoneInfoNotFoundError, ValueError, OSError):
     return parsed.replace(tzinfo=UTC)
 
 
