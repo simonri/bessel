@@ -273,6 +273,20 @@ class TestOwedReplies:
 
     assert [(e["sender"]["address"], e["subject"]) for e in found["emails"]] == [("anna@x.se", "Fråga 2")]
 
+  @pytest.mark.asyncio
+  async def test_not_someone_whose_latest_mail_was_answered(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    mailbox["mailbox"] = FakeMailbox(
+      {
+        "INBOX": [
+          (mail("bo@y.se", "Gammal fråga", days_ago=4), set()),
+          (mail("bo@y.se", "Ny fråga", days_ago=2, message_id="<b2@y.se>", headers={"Reply-To": "bo.privat@y.se"}), set()),
+        ],
+        "Sent Messages": [(mail(ME, "Re: Ny fråga", to="bo.privat@y.se", days_ago=1, in_reply_to="<b2@y.se>"), set())],
+      }
+    )
+
+    assert (await mcp_call(connect, "owed_replies", {"days": 7}))["emails"] == []
+
 
 @pytest.mark.usefixtures("icloud")
 class TestDrafts:
