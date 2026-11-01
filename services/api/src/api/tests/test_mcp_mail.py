@@ -353,6 +353,26 @@ class TestImapDetails:
     assert box._server_name("inbox") == "INBOX"
     assert box._server_name("Ny mapp") == "Ny mapp"
 
+  def test_a_search_value_cant_smuggle_another_imap_command(self) -> None:
+    box = ImapMailbox("me", "secret")
+    sent: list[tuple[tuple[str, ...], bytes | None]] = []
+
+    class Conn:
+      literal: bytes | None = None
+
+      def uid(self, *args: str) -> tuple[str, list[bytes]]:
+        sent.append((args, self.literal))
+        self.literal = None  # imaplib sends a literal with one command only
+        return "OK", [b""]
+
+    box._conn = Conn()  # type: ignore[assignment]
+    box._search_one(Criterion("SUBJECT", 'x"\r\nA2 DELETE INBOX'))
+    box._search_one(Criterion("SUBJECT", "kvitto"))
+
+    injected, plain = sent
+    assert injected == (("SEARCH", "CHARSET", "UTF-8", "SUBJECT"), b'x"\r\nA2 DELETE INBOX')
+    assert plain == (("SEARCH", "SUBJECT", '"kvitto"'), None)
+
   def test_fetch_responses_give_the_uid_and_flags(self) -> None:
     assert _meta(b"3 (UID 812 FLAGS (\\Seen \\Flagged) BODY[] {120}") == (812, frozenset({"\\Seen", "\\Flagged"}))
 
