@@ -350,6 +350,8 @@ def _dates(contact: Contact, today: date, days: int) -> list[ContactDateReminder
   found = []
   for label, month, day, year in yearly:
     on = next_occurrence(month, day, today)
+    if year and on.year < year:
+      continue
     if on <= today + timedelta(days=days - 1):
       found.append(ContactDateReminder(contact=_reference(contact), label=label, on=on, years=on.year - year if year else None))
   return found
