@@ -59,6 +59,7 @@ class RecipeBody(RoundTripSchema):
 
 _UNICODE_FRACTIONS = {"½": Fraction(1, 2), "¼": Fraction(1, 4), "¾": Fraction(3, 4), "⅓": Fraction(1, 3), "⅔": Fraction(2, 3)}
 _AMOUNT_RE = re.compile(r"^(\d+(?:[.,]\d+)?)?\s*([½¼¾⅓⅔])?(?=\s|$)")
+_SLASH_AMOUNT_RE = re.compile(r"^(?:(\d+)\s+)?(\d+)/(\d+)(?=\s|$)")
 _UNITS = frozenset(
   {
     "dl", "cl", "ml", "l", "msk", "tsk", "krm", "g", "kg", "hg", "st", "skiva", "skivor", "nypa", "nypor",
@@ -69,6 +70,13 @@ _UNITS = frozenset(
 
 
 def _parse_amount(text: str) -> tuple[float | None, str]:
+  slash = _SLASH_AMOUNT_RE.match(text)
+  if slash:
+    whole, numerator, denominator = slash.groups()
+    if int(denominator) == 0:
+      return None, text
+    value = int(whole or 0) + Fraction(int(numerator), int(denominator))
+    return float(value), text[slash.end() :].strip()
   match = _AMOUNT_RE.match(text)
   if not match or not (match.group(1) or match.group(2)):
     return None, text

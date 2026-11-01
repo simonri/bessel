@@ -88,6 +88,10 @@ class TestIngredientLines:
         "500 g nötfärs, 20 % fetthalt (gärna högrev)",
         RecipeIngredient(amount=500, unit="g", name="nötfärs", note="20 % fetthalt; gärna högrev"),
       ),
+      ("1/2 dl mjölk", RecipeIngredient(amount=0.5, unit="dl", name="mjölk")),
+      ("1 1/2 tsk salt", RecipeIngredient(amount=1.5, unit="tsk", name="salt")),
+      ("12/3 st citroner", RecipeIngredient(amount=4, unit="st", name="citroner")),
+      ("1/0 dl vatten", RecipeIngredient(name="1/0 dl vatten")),
     ],
   )
   def test_parses(self, line: str, expected: RecipeIngredient) -> None:

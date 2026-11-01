@@ -13,6 +13,7 @@ const UNICODE_FRACTIONS: Record<string, number> = {
 };
 
 const AMOUNT_RE = /^(\d+(?:[.,]\d+)?)?\s*([½¼¾⅓⅔])?(?=\s|$)/;
+const SLASH_AMOUNT_RE = /^(?:(\d+)\s+)?(\d+)\/(\d+)(?=\s|$)/;
 const TRAILING_PAREN_RE = /\s*\(([^)]*)\)\s*$/;
 const LIST_MARKER_RE = /^(?:[-*•]\s+|\d+[.)]\s+)/;
 
@@ -24,6 +25,13 @@ const UNITS = new Set([
 ]);
 
 function splitAmount(text: string): [number | null, string] {
+  const slash = SLASH_AMOUNT_RE.exec(text);
+  if (slash) {
+    const [, whole, numerator, denominator] = slash;
+    if (Number(denominator) === 0) return [null, text];
+    const value = Number(whole ?? 0) + Number(numerator) / Number(denominator);
+    return [value, text.slice(slash[0].length).trim()];
+  }
   const match = AMOUNT_RE.exec(text);
   if (!match || !(match[1] || match[2])) return [null, text];
   let value = 0;
