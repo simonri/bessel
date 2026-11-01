@@ -248,6 +248,30 @@ class TestSources:
     assert by_name["Marginalen"]["source"]["access_until"] is None
 
   @pytest.mark.asyncio
+  async def test_days_are_the_users_own(
+    self, client: AsyncClient, save_fixture: SaveFixture, user: User, accounts: _Accounts, just_after_midnight_in_stockholm: date
+  ) -> None:
+    stale, ending = await accounts.account("Skandia"), await accounts.account("Klarna")
+    # 00:30 in Stockholm, still the day before in UTC.
+    synced = datetime(2026, 10, 28, 23, 30, tzinfo=UTC)
+    for bank_account, valid_until in ((stale, synced + timedelta(days=100)), (ending, datetime(2026, 11, 9, 23, 30, tzinfo=UTC))):
+      connection = BankConnection(
+        user_id=user.id,
+        bank_name=bank_account.name,
+        bank_country="SE",
+        encrypted_session_id=encrypt("s"),
+        valid_until=valid_until,
+        last_synced_at=synced if bank_account is stale else datetime(2026, 10, 31, 23, 0, tzinfo=UTC),
+      )
+      await save_fixture(connection)
+      await save_fixture(BankConnectionAccount(connection_id=connection.id, identification_hash="h", uid="u", currency="SEK", bank_account_id=bank_account.id))
+
+    by_name = {a["name"]: a["source"]["issue"] for a in (await _overview(client))["accounts"]}
+
+    assert by_name["Skandia"]["kind"] == "stale" and by_name["Skandia"]["day"] == "2026-10-29"
+    assert by_name["Klarna"]["kind"] == "renew_soon" and by_name["Klarna"]["day"] == "2026-11-10"
+
+  @pytest.mark.asyncio
   @pytest.mark.parametrize(
     ("sync_error", "shared", "synced_ago", "valid_for", "kind"),
     [

@@ -74,8 +74,7 @@ async def list_bank_accounts(
 @router.get("/overview", summary="Accounts Overview", response_model=AccountsOverviewResponse)
 async def get_accounts_overview(session: DBSession, current_user: CurrentDBUser) -> AccountsOverviewResponse:
   """Every account with its balance, history and where its data comes from, plus totals per owner and currency."""
-  now = utc_now()
-  return await accounts_overview.overview(session, current_user.id, now=now, today=now.astimezone(user_zone(current_user)).date())
+  return await accounts_overview.overview(session, current_user.id, now=utc_now(), zone=user_zone(current_user))
 
 
 @router.get("/net-worth", summary="Net Worth History", response_model=NetWorthHistoryResponse)

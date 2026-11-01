@@ -120,8 +120,9 @@ async def get_finances_overview(ctx: Context, timezone: TimezoneParam = None) ->
   renewing before giving money advice. The company's accounts belong to the user's own aktiebolag, not to the user.
   """
   async with user_session(ctx) as (session, user):
-    today = today_in(resolve_timezone(user, timezone))
-    overview = await accounts_overview.overview(session, user.id, now=utc_now(), today=today)
+    zone = resolve_timezone(user, timezone)
+    today = today_in(zone)
+    overview = await accounts_overview.overview(session, user.id, now=utc_now(), zone=zone)
     history = await net_worth_history.history(session, user.id, today=today)
   return FinancesOverview(
     accounts=[
