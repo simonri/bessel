@@ -17,10 +17,11 @@ function event(
   start: Date,
   end: Date,
   myResponse: TimedCalendarEvent["details"]["myResponse"] = null,
+  calendarId = "c",
 ): TimedCalendarEvent {
   return {
     id,
-    calendarId: "c",
+    calendarId,
     title: id,
     allDay: false,
     start,
@@ -30,6 +31,18 @@ function event(
 }
 
 describe("nextEvent", () => {
+  it("skips events on hidden calendars", () => {
+    const next = nextEvent(
+      [
+        event("hidden", at(14, 30), at(15), null, "colleague"),
+        event("mine", at(16), at(17)),
+      ],
+      NOW,
+      new Set(["colleague"]),
+    );
+    expect(next?.event.id).toBe("mine");
+  });
+
   it("prefers what's on now, skipping finished and declined events", () => {
     const next = nextEvent(
       [
