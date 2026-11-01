@@ -148,6 +148,28 @@ const ALL_PAGES = new Set<string>([...PRIMARY_PAGES, ...MORE_PAGES]);
  * PRIMARY_PAGES in the user's saved order. Pages the order doesn't mention
  * (added since it was saved, or desktop-only) keep their default slot.
  */
+/** Pages the sidebar shows indented under the page they belong to. */
+export const SUBPAGES: Partial<Record<PageKey, readonly PageKey[]>> = {
+  timeline: ["activity", "googleTimeline"],
+};
+
+/**
+ * Sidebar entries in order, each with the subpages it carries. A subpage that
+ * isn't shown stays out; one whose parent isn't shown stands on its own.
+ */
+export function groupSubpages(
+  pages: readonly PageKey[],
+): { page: PageKey; subpages: PageKey[] }[] {
+  const shown = new Set(pages);
+  const carried = new Set(pages.flatMap((page) => SUBPAGES[page] ?? []));
+  return pages
+    .filter((page) => !carried.has(page))
+    .map((page) => ({
+      page,
+      subpages: (SUBPAGES[page] ?? []).filter((sub) => shown.has(sub)),
+    }));
+}
+
 export function orderPrimaryPages(order: readonly string[]): PageKey[] {
   const rank = new Map(
     order

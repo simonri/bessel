@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  groupSubpages,
   movePage,
   orderPrimaryPages,
   type PageKey,
@@ -43,5 +44,36 @@ describe("movePage", () => {
     const expected: PageKey[] = order.filter((key) => key !== "recipes");
     expected.splice(order.indexOf("investments"), 0, "recipes");
     expect(moved).toEqual(expected);
+  });
+});
+
+describe("groupSubpages", () => {
+  it("puts Screen time and Location history under Timeline, wherever they were", () => {
+    const pages: PageKey[] = [
+      "today",
+      "activity",
+      "timeline",
+      "tasks",
+      "googleTimeline",
+    ];
+
+    expect(groupSubpages(pages)).toEqual([
+      { page: "today", subpages: [] },
+      { page: "timeline", subpages: ["activity", "googleTimeline"] },
+      { page: "tasks", subpages: [] },
+    ]);
+  });
+
+  it("leaves out a subpage that's hidden", () => {
+    expect(groupSubpages(["timeline", "googleTimeline"])).toEqual([
+      { page: "timeline", subpages: ["googleTimeline"] },
+    ]);
+  });
+
+  it("shows a subpage on its own when its parent is hidden", () => {
+    expect(groupSubpages(["today", "activity"])).toEqual([
+      { page: "today", subpages: [] },
+      { page: "activity", subpages: [] },
+    ]);
   });
 });
