@@ -28,6 +28,16 @@ def _is_public(ip: str) -> bool:
     return False
 
 
+_TAILNET = ipaddress.ip_network("100.64.0.0/10")
+
+
+def _is_tailnet(ip: str) -> bool:
+  try:
+    return ipaddress.ip_address(ip) in _TAILNET
+  except ValueError:
+    return False
+
+
 def client_ip(scope: Scope) -> str | None:
   """The real client IP behind Cloudflare → Traefik.
 
@@ -38,7 +48,8 @@ def client_ip(scope: Scope) -> str | None:
   attacker-controlled and ignored.
   """
   real_ip = _header(scope, b"x-real-ip")
-  if real_ip and _is_public(real_ip):
+  # A tailnet peer reached Traefik directly too; it could otherwise pick any CF-Connecting-IP for itself.
+  if real_ip and (_is_public(real_ip) or _is_tailnet(real_ip)):
     return real_ip
   cf_ip = _header(scope, b"cf-connecting-ip")
   if cf_ip and _is_public(cf_ip):

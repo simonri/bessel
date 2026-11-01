@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 from api.mcp.auth import Auth0TokenVerifier
-from api.rate_limit import _authenticate
+from api.rate_limit import _authenticate, client_ip
 from mcp.server.auth.provider import AccessToken
 from pytest_mock import MockerFixture
 
@@ -43,6 +43,15 @@ class TestRateLimitKey:
     # Otherwise a fresh random token per request would get a fresh budget each time.
     assert await key("/mcp", "Bearer made-up-1") == "160.79.104.10"
     assert await key("/mcp", "Bearer made-up-2") == "160.79.104.10"
+
+  def test_a_tailnet_peer_cant_choose_its_own_address(self) -> None:
+    spoofed = scope("/v1/tasks", ip="100.101.102.103")
+    spoofed["headers"].append((b"cf-connecting-ip", b"81.170.200.12"))
+    assert client_ip(spoofed) == "100.101.102.103"
+
+    through_cloudflare = scope("/v1/tasks", ip="172.18.0.5")
+    through_cloudflare["headers"].append((b"cf-connecting-ip", b"81.170.200.12"))
+    assert client_ip(through_cloudflare) == "81.170.200.12"
 
   @pytest.mark.asyncio
   async def test_mcp_calls_without_a_token_and_the_rest_api_count_per_address(self) -> None:
