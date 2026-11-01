@@ -79,6 +79,21 @@ export function unitFileFor(folder: string, rawName: string): string {
  * Whether `claude` trusts `folder`: it won't serve an untrusted one. Trusting
  * a folder covers everything inside it, as Claude itself treats it.
  */
+/**
+ * Whether trusting `folder` would trust far more than a project: the root, the
+ * home folder or anything above it. Claude trusts every folder beneath a
+ * trusted one, and Bessel's sessions skip permission prompts there.
+ */
+export function isTooBroadToTrust(folder: string, home: string): boolean {
+  const dir = path.resolve(folder);
+  const homeDir = path.resolve(home);
+  return (
+    dir === path.parse(dir).root ||
+    dir === homeDir ||
+    homeDir.startsWith(dir + path.sep)
+  );
+}
+
 export function isTrustedFolder(
   claudeConfig: unknown,
   folder: string,
