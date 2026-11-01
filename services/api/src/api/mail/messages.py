@@ -144,21 +144,29 @@ def envelope(folder: str, uid: int, flags: frozenset[str], raw_headers: bytes) -
   )
 
 
+# Inline styles that keep text from the reader's eyes while it stays in the markup.
+_HIDDEN_STYLE = re.compile(r"display\s*:\s*none|visibility\s*:\s*hidden|font-size\s*:\s*0(?![.\d]*[1-9])|opacity\s*:\s*0(?![.\d]*[1-9])", re.IGNORECASE)
+
+
 def _html_text(html: str) -> str:
   soup = BeautifulSoup(html, "html.parser")
-  for hidden in soup(["script", "style", "head"]):
+  for hidden in soup(["script", "style", "head", "template"]):
     hidden.decompose()
+  for element in soup.find_all(lambda tag: tag.has_attr("hidden") or _HIDDEN_STYLE.search(str(tag.get("style") or ""))):
+    element.decompose()
   return re.sub(r"\n{3,}", "\n\n", soup.get_text("\n")).strip()
 
 
 def message(folder: str, uid: int, flags: frozenset[str], raw: bytes) -> Message:
+  """The text the user sees. Mail apps show the HTML part where there is one, so that comes first, without what its
+  styles hide: a sender could otherwise put instructions only in the plain part, or in hidden markup, that only an
+  assistant reads."""
   parsed = _parser.parsebytes(raw)
-  plain = parsed.get_body(preferencelist=("plain",))
-  text = plain.get_content().strip() if plain is not None else ""
+  html = parsed.get_body(preferencelist=("html",))
+  text = _html_text(html.get_content()) if html is not None else ""
   if not text:
-    # Some mail carries an empty plain part beside the real HTML one.
-    html = parsed.get_body(preferencelist=("html",))
-    text = _html_text(html.get_content()) if html is not None else ""
+    plain = parsed.get_body(preferencelist=("plain",))
+    text = plain.get_content().strip() if plain is not None else ""
   attachments = [Attachment(part.get_filename(), part.get_content_type(), len(part.get_payload(decode=True) or b"")) for part in parsed.iter_attachments()]
   return Message(
     envelope=envelope(folder, uid, flags, raw),
