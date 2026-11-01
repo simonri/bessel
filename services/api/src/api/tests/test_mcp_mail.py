@@ -311,6 +311,19 @@ class TestDrafts:
     assert everyone["Cc"] == "bo@y.se, cia@z.se"
 
   @pytest.mark.asyncio
+  async def test_a_reply_to_your_own_mail_goes_to_whom_it_was_sent(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
+    sent = mail(f"Simon <{ME}>", "Middag", "Ses vi fredag?", to=f"Anna <anna@x.se>, {ME}", message_id="<m1@me.se>", headers={"Cc": "bo@y.se"})
+    box = FakeMailbox({"INBOX": [], "Drafts": [], "Sent Messages": [(sent, {"\\Seen"})]})
+    mailbox["mailbox"] = box
+
+    await mcp_call(connect, "draft_reply", {"uid": 1, "folder": "Sent Messages", "body": "Påminnelse!"})
+    await mcp_call(connect, "draft_reply", {"uid": 1, "folder": "Sent Messages", "body": "Alla", "reply_all": True})
+
+    only, everyone = drafts(box)
+    assert (only["To"], only["Cc"]) == ("Anna <anna@x.se>", None)
+    assert (everyone["To"], everyone["Cc"]) == ("Anna <anna@x.se>", "bo@y.se")
+
+  @pytest.mark.asyncio
   async def test_drafts_are_found_by_name_and_sent_by_role(self, connect: ConnectFixture, mailbox: dict[str, Any]) -> None:
     box = FakeMailbox({"INBOX": [], "drafts": [], "Sent Messages": []})
     mailbox["mailbox"] = box

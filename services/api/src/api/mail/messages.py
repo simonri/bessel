@@ -199,7 +199,11 @@ def draft(sender: str, to: Sequence[str], subject: str, body: str, *, cc: Sequen
 def reply_draft(sender: str, own_addresses: frozenset[str], original: Message, body: str, *, reply_all: bool, now: datetime) -> EmailMessage:
   """A reply in the original's thread, quoting it the way mail apps do."""
   head = original.envelope
-  to = head.reply_to or ([head.sender] if head.sender else [])
+  if head.sender is not None and head.sender.address in own_addresses:
+    # Following up on one's own mail, as mail apps do: to whom it went, not back to oneself.
+    to = [a for a in head.to if a.address not in own_addresses] or [head.sender]
+  else:
+    to = head.reply_to or ([head.sender] if head.sender else [])
   cc: list[Address] = []
   if reply_all:
     seen = {a.address for a in to} | own_addresses
