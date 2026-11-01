@@ -87,6 +87,8 @@ async def decode_access_token(token: str, *, audience: str) -> dict[str, Any]:
       algorithms=settings.AUTH0_ALGORITHMS,
       audience=audience,
       issuer=f"https://{settings.AUTH0_DOMAIN}/",
+      # python-jose skips a check whose claim is missing; a token without them must not pass.
+      options={"require_aud": True, "require_exp": True, "require_iss": True, "require_sub": True},
     )
   except JWTError as e:
     raise InvalidTokenError(str(e)) from e

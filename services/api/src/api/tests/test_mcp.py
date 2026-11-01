@@ -141,6 +141,15 @@ class TestTokenVerifier:
     assert await Auth0TokenVerifier().verify_token(_token(other_key)) is None
 
   @pytest.mark.asyncio
+  @pytest.mark.parametrize("claim", ["aud", "exp", "iss", "sub"])
+  async def test_rejects_token_missing_a_claim(self, signing_key: rsa.RSAPrivateKey, claim: str) -> None:
+    token = _token(signing_key)
+    claims = jwt.get_unverified_claims(token)
+    del claims[claim]
+    pem = signing_key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
+    assert await Auth0TokenVerifier().verify_token(jwt.encode(claims, pem, algorithm="RS256", headers={"kid": "test-kid"})) is None
+
+  @pytest.mark.asyncio
   async def test_rejects_garbage(self, signing_key: rsa.RSAPrivateKey) -> None:
     assert await Auth0TokenVerifier().verify_token("not-a-jwt") is None
 
