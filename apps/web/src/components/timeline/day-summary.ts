@@ -92,13 +92,15 @@ export function visitName(visit: LocationVisit): string {
   return "Somewhere";
 }
 
-/** Visits clipped to the day, each place in its own pastel. */
+/** Visits clipped to the day, each place in its own pastel. A visit inside
+ *  another (a shop in a mall) is part of that stay, not a place of its own. */
 export function placesLane(
   visits: readonly LocationVisit[],
   startTs: number,
   endTs: number,
 ): RibbonLane {
   const blocks = visits
+    .filter((v) => v.hierarchy_level === 0)
     .map((v) => ({
       startTs: Math.max(startTs, toTs(v.start_at)),
       endTs: Math.min(endTs, toTs(v.end_at)),

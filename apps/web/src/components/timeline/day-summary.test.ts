@@ -33,6 +33,7 @@ function visit(
   start: number,
   end: number,
   semantic: string | null = null,
+  hierarchyLevel = 0,
 ): LocationVisit {
   return {
     id: name ?? "v",
@@ -43,6 +44,7 @@ function visit(
     name,
     address: null,
     semantic_type: semantic,
+    hierarchy_level: hierarchyLevel,
   } as LocationVisit;
 }
 
@@ -78,6 +80,20 @@ describe("placesLane", () => {
       ["Home", DAY, at(8)],
       ["Café", at(12), at(13)],
     ]);
+  });
+
+  it("counts a place inside another as part of that stay", () => {
+    const view = placesLane(
+      [
+        visit("Mall", at(10), at(12)),
+        visit("Bookshop", at(10, 30), at(11), null, 1),
+      ],
+      DAY,
+      DAY + 86400,
+    );
+    expect(view.blocks.map((b) => b.name)).toEqual(["Mall"]);
+    expect(view.totalSecs).toBe(2 * 3600);
+    expect(daySentence([view], dur)).toBe("You visited 1 place.");
   });
 });
 
