@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   hitsFromNotes,
   hitsFromSearch,
@@ -38,6 +38,37 @@ describe("hitsFromSearch", () => {
       ["place", "Smile clinic", undefined],
     ]);
     expect(hits[2].at).toBe("2026-12-24T12:00:00");
+  });
+
+  describe("west of UTC", () => {
+    const tz = process.env.TZ;
+    beforeAll(() => {
+      process.env.TZ = "America/New_York";
+    });
+    afterAll(() => {
+      process.env.TZ = tz;
+    });
+
+    it("keeps an all-day event on its own day", () => {
+      const [hit] = hitsFromSearch({
+        tasks: [],
+        events: [
+          {
+            id: "e2",
+            title: "Holiday",
+            all_day: true,
+            start_at: null,
+            start_date: new Date(Date.UTC(2026, 11, 24)),
+          },
+        ],
+        recipes: [],
+        places: [],
+      });
+      expect([hit.sublabel, hit.at]).toEqual([
+        "Thu 24 Dec 2026",
+        "2026-12-24T12:00:00",
+      ]);
+    });
   });
 });
 

@@ -54,7 +54,7 @@ export function hitsFromSearch(
       // All-day events open at noon that day, so no time zone moves them.
       const at = e.all_day
         ? e.start_date
-          ? `${format(e.start_date, "yyyy-MM-dd")}T12:00:00`
+          ? `${e.start_date.toISOString().slice(0, 10)}T12:00:00`
           : undefined
         : e.start_at?.toISOString();
       if (!at) return [];
