@@ -569,6 +569,32 @@ class TestBankingAndTransactions:
     assert (await client.get(f"/v1/bank-accounts/{account['id']}")).json()["name"] == "A checking"
 
   @pytest.mark.asyncio
+  async def test_other_user_cannot_file_their_transactions_under_my_category(
+    self, client: AsyncClient, other_client: AsyncClient, save_owned: SaveFixture, save_fixture: SaveFixture, other_user: User
+  ) -> None:
+    # Reports join categories by id alone: B would see my category's name and my "excluded" flag would change B's totals.
+    mine = Category(name="Groceries", slug="groceries", color="#22c55e")
+    await save_owned(mine)
+    account = await _create(other_client, "/v1/bank-accounts", {"name": "B checking", "currency": "SEK", "subtype": "checking"})
+    tx = Transaction(
+      user_id=other_user.id,
+      amount=5_000,
+      currency="SEK",
+      transaction_date=datetime.now(UTC).date(),
+      direction=TransactionDirection.debit,
+      dedup_hash=f"b-{uuid4().hex}",
+      description="B's shop",
+      bank_account_id=UUID(account["id"]),
+    )
+    await save_fixture(tx)
+
+    assert (await other_client.patch(f"/v1/transactions/{tx.id}", json={"category_id": str(mine.id)})).status_code == 404
+    assert (await other_client.patch("/v1/transactions/bulk", json={"ids": [str(tx.id)], "category_id": str(mine.id)})).status_code == 404
+    categorize = await other_client.post("/v1/transactions/categorize-by-description", json={"description": "B's shop", "category_id": str(mine.id)})
+    assert categorize.status_code == 404
+    assert (await other_client.get("/v1/transactions")).json()["items"][0]["category_id"] is None
+
+  @pytest.mark.asyncio
   async def test_other_user_cannot_read_or_change_transactions(
     self, client: AsyncClient, other_client: AsyncClient, save_owned: SaveFixture, other_user: User
   ) -> None:

@@ -101,7 +101,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         Category.color,
         refund.label("refund"),
       )
-      .outerjoin(Category, Transaction.category_id == Category.id)
+      .outerjoin(Category, (Transaction.category_id == Category.id) & (Category.user_id == Transaction.user_id))
       .where(
         Transaction.user_id == user_id,
         Transaction.deleted_at.is_(None),
@@ -494,7 +494,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         Category.color,
         func.sum(Transaction.amount).label("total"),
       )
-      .join(Category, Transaction.category_id == Category.id)
+      .join(Category, (Transaction.category_id == Category.id) & (Category.user_id == Transaction.user_id))
       .where(
         Transaction.user_id == user_id,
         Transaction.direction == "debit",
@@ -515,7 +515,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
         Transaction.direction,
         func.sum(Transaction.amount).label("total"),
       )
-      .outerjoin(Category, Transaction.category_id == Category.id)
+      .outerjoin(Category, (Transaction.category_id == Category.id) & (Category.user_id == Transaction.user_id))
       .where(Transaction.user_id == user_id)
       .where(Transaction.transaction_date >= start)
       .group_by("yr", "mo", Transaction.direction)
