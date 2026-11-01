@@ -317,6 +317,16 @@ class TestRevise:
     assert (closed["valid_to"], closed["superseded_by_id"]) == ("2026-03-01", new["id"])
 
   @pytest.mark.asyncio
+  async def test_a_rejected_guess_was_never_true(self, connect: ConnectFixture) -> None:
+    [conclusion] = await remember(connect, guess("kronotyp", "Kvällsmänniska", [await known(connect)], area="rytm", valid_from="2026-01-01"))
+    await revise(connect, {"fact_id": conclusion["fact"]["id"], "action": "reject", "ended_on": "2026-03-01"})
+
+    assert await search(connect, area="rytm", as_of="2026-02-01") == []
+    assert await search(connect, query="kvällsmänniska", as_of="2026-02-01") == []
+    [rejected] = await search(connect, area="rytm", status="rejected", as_of="2026-02-01")
+    assert rejected["id"] == conclusion["fact"]["id"]
+
+  @pytest.mark.asyncio
   async def test_a_replacement_only_others_wrote_stays_out_of_the_profile(self, connect: ConnectFixture) -> None:
     [old] = await remember(connect, fact("stad", "Bor i Västerås", area="identitet", importance=5))
 
