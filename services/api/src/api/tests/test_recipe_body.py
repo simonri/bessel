@@ -165,6 +165,11 @@ class TestParseMarkdown:
 
     assert parse_markdown(render_markdown(body)) == body
 
+  def test_a_time_with_parentheses_round_trips(self) -> None:
+    body = RecipeBody(steps=[RecipeStep(title="Grädda", text="Mitt i ugnen.", time_label="20 min (lite längre i varmluft)")])
+
+    assert parse_markdown(render_markdown(body)) == body
+
   def test_an_untitled_step_among_titled_ones_round_trips(self) -> None:
     body = RecipeBody(
       steps=[
