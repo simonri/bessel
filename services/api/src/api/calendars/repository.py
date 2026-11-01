@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta, tzinfo
 from typing import Any
 from uuid import UUID
 
@@ -317,8 +317,9 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
     )
     return await self.get_all(statement)
 
-  async def list_attended(self, user_id: UUID, since: datetime, before: datetime) -> Sequence[CalendarEvent]:
-    """Events on visible calendars that started in [since, before) and that the user didn't decline, newest first."""
+  async def list_attended(self, user_id: UUID, since: datetime, before: datetime, zone: tzinfo) -> Sequence[CalendarEvent]:
+    """Events on visible calendars that the user didn't decline, newest first: timed ones that started in [since, before),
+    all-day ones from the day of `since` up to the day of `before`, both read in `zone`, the user's timezone."""
     starts = func.coalesce(CalendarEvent.start_at, func.cast(CalendarEvent.start_date, CalendarEvent.start_at.type))
     statement = (
       self.get_base_statement()
@@ -330,7 +331,11 @@ class CalendarEventRepository(RepositoryBase[CalendarEvent]):
         or_(CalendarEvent.my_response.is_(None), CalendarEvent.my_response != "declined"),
         or_(
           and_(CalendarEvent.all_day.is_(False), CalendarEvent.start_at >= since, CalendarEvent.start_at < before),
-          and_(CalendarEvent.all_day.is_(True), CalendarEvent.start_date >= since.date(), CalendarEvent.start_date < before.date()),
+          and_(
+            CalendarEvent.all_day.is_(True),
+            CalendarEvent.start_date >= since.astimezone(zone).date(),
+            CalendarEvent.start_date < before.astimezone(zone).date(),
+          ),
         ),
       )
       .order_by(starts.desc(), CalendarEvent.id)

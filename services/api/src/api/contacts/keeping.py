@@ -166,7 +166,7 @@ class _Context:
 
   async def attended(self, since: timedelta) -> Sequence[CalendarEvent]:
     """Past events the user didn't decline, newest first."""
-    return await CalendarEventRepository.from_session(self.session).list_attended(self.user.id, self.now - since, self.now)
+    return await CalendarEventRepository.from_session(self.session).list_attended(self.user.id, self.now - since, self.now, self.zone)
 
   async def matcher(self, contacts: Iterable[Contact]) -> Matcher:
     return Matcher(contacts, await self.own_emails())

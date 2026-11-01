@@ -344,6 +344,21 @@ class TestFollowUps:
     ]
 
   @pytest.mark.asyncio
+  async def test_an_all_day_event_that_ended_at_midnight_asks_for_a_note_in_the_users_timezone(
+    self, client: AsyncClient, session: AsyncSession, stockholm: User, mocker: MockerFixture
+  ) -> None:
+    # 00:30 on Wednesday in Stockholm, still Tuesday in UTC.
+    mocker.patch("api.contacts.keeping.utc_now", return_value=datetime(2027, 3, 9, 23, 30, tzinfo=UTC))
+    calendar = await _calendar(session, await _account(session, stockholm))
+    await _contact(session, stockholm, "Anna Berg", emails=("anna@example.com",))
+    trip = await calendar.event("Trip", date(2027, 3, 9), attendees=[{"email": "anna@example.com"}])
+    await calendar.event("Day off", date(2027, 3, 10), attendees=[{"email": "anna@example.com"}])
+
+    follow_ups = (await client.get("/v1/contacts/follow-ups")).json()
+
+    assert [(f["kind"], f["event"]["id"], f["event"]["on"]) for f in follow_ups] == [("note", str(trip.id), "2027-03-09")]
+
+  @pytest.mark.asyncio
   async def test_asks_whether_someone_named_by_first_name_was_there_for_a_month(self, client: AsyncClient, session: AsyncSession, stockholm: User) -> None:
     calendar = await _calendar(session, await _account(session, stockholm))
     await _contact(session, stockholm, "Anna Berg", given_name="Anna")
