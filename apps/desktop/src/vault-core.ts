@@ -180,11 +180,24 @@ export function resolveLink(
   return candidates[0];
 }
 
+/** Where `rel` is after moving `fromRel` (a note or a folder) to `toRel`. */
+export function movedRel(
+  rel: string,
+  fromRel: string,
+  toRel: string,
+): string | null {
+  if (rel === fromRel) return toRel;
+  return rel.startsWith(`${fromRel}/`)
+    ? `${toRel}${rel.slice(fromRel.length)}`
+    : null;
+}
+
 /**
  * Rewrites the links in `content`, the note at `sourceRel`, that lead to
- * `fromRel` so they lead to `toRel`. `files` are the vault's notes before the
- * rename: a bare [[Name]] that opens another note of the same name is left be,
- * and one whose new name would open another note gets the full path.
+ * `fromRel` (a note, or a note in the folder `fromRel`) so they lead to where
+ * it is under `toRel`. `files` are the vault's notes before the rename: a bare
+ * [[Name]] that opens another note of the same name is left be, and one whose
+ * new name would open another note gets the full path.
  */
 export function rewriteLinksInContent(
   content: string,
@@ -195,9 +208,9 @@ export function rewriteLinksInContent(
     files = [fromRel],
   }: { sourceRel?: string; files?: readonly string[] } = {},
 ): { content: string; changed: boolean } {
-  const toFull = stripMdExt(toRel);
-  const toBase = basenameNoExt(toRel);
-  const filesAfter = files.map((rel) => (rel === fromRel ? toRel : rel));
+  const moved = (rel: string) => movedRel(rel, fromRel, toRel);
+  const filesAfter = files.map((rel) => moved(rel) ?? rel);
+  const sourceAfter = moved(sourceRel) ?? sourceRel;
 
   let changed = false;
   // In a table the alias pipe is written `\|`; it stays with the alias.
@@ -213,12 +226,17 @@ export function rewriteLinksInContent(
         aliasPart: string | undefined,
       ) => {
         const target = rawTarget.trim();
-        if (resolveLink(files, sourceRel, target) !== fromRel) return match;
+        const resolved = resolveLink(files, sourceRel, target);
+        const newRel = resolved === null ? null : moved(resolved);
+        if (newRel === null) return match;
+        if (resolveLink(filesAfter, sourceAfter, target) === newRel)
+          return match;
+        const newBase = basenameNoExt(newRel);
         const newTarget =
           !target.includes("/") &&
-          resolveLink(filesAfter, sourceRel, toBase) === toRel
-            ? toBase
-            : toFull;
+          resolveLink(filesAfter, sourceAfter, newBase) === newRel
+            ? newBase
+            : stripMdExt(newRel);
 
         changed = true;
         return `${embed ?? ""}[[${newTarget}${headingPart ?? ""}${aliasPart ?? ""}]]`;

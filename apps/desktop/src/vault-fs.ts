@@ -7,6 +7,7 @@ import {
   autoSuffixName,
   kindForRel,
   MAX_WRITE_BYTES,
+  movedRel,
   resolveInside,
   resolveInsideReal,
   rewriteLinksInContent,
@@ -180,10 +181,10 @@ export async function rewriteLinksAfterRename(
   const failedFiles: string[] = [];
   const rels = (await listMarkdownEntries(root)).map((e) => e.rel);
   // What links resolved against: the vault as it was before the rename.
-  const filesBefore = [
-    from,
-    ...rels.filter((rel) => rel !== to && rel !== from),
-  ];
+  const relBefore = (rel: string) => movedRel(rel, to, from) ?? rel;
+  const filesBefore = rels.map(relBefore);
+  if (kindForRel(from) === "md" && !filesBefore.includes(from))
+    filesBefore.push(from);
   for (const rel of rels) {
     const abs = resolveInside(root, rel);
     try {
@@ -195,10 +196,10 @@ export async function rewriteLinksAfterRename(
           content,
           from,
           to,
-          { sourceRel: rel === to ? from : rel, files: filesBefore },
+          { sourceRel: relBefore(rel), files: filesBefore },
         );
         if (!changed) return;
-        if (skip.has(rel)) {
+        if (skip.has(rel) || skip.has(relBefore(rel))) {
           skippedFiles.push(rel);
           return;
         }

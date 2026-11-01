@@ -192,6 +192,38 @@ describe("rewriteLinksAfterRename", () => {
     expect(read("Hamn.md")).toBe("the harbour");
   });
 
+  it("rewrites links into a renamed folder", async () => {
+    // "Places" was just renamed to "Ställen".
+    write("Ställen/Fiske.md", "see [[Places/Hamn#Öppet]] and [[Hamn]]");
+    write("Ställen/Hamn.md", "back to [[Places/Fiske]]");
+    write("Placesbook.md", "not in the folder");
+    write("b.md", "[[fiske]]");
+    write("a.md", "[[Places/Fiske|the shop]], [[Fiske]], [[Placesbook]]");
+
+    // Open with unsaved edits under its old path.
+    const result = await rewriteLinksAfterRename(
+      root,
+      "Places",
+      "Ställen",
+      new Set(["Places/Hamn.md"]),
+      deps,
+    );
+
+    expect(result).toEqual({
+      updatedFiles: 2,
+      skippedFiles: ["Ställen/Hamn.md"],
+      failedFiles: [],
+    });
+    expect(read("Ställen/Hamn.md")).toBe("back to [[Places/Fiske]]");
+    expect(read("b.md")).toBe("[[fiske]]");
+    expect(read("a.md")).toBe(
+      "[[Ställen/Fiske|the shop]], [[Fiske]], [[Placesbook]]",
+    );
+    expect(read("Ställen/Fiske.md")).toBe(
+      "see [[Ställen/Hamn#Öppet]] and [[Hamn]]",
+    );
+  });
+
   it("collects failures instead of aborting the rewrite", async () => {
     write("a.md", "[[Old]]");
     write("b.md", "[[Old]]");
