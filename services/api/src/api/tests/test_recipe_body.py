@@ -160,6 +160,11 @@ class TestParseMarkdown:
 
     assert [s.text for s in body.steps] == ["Vispa äggen.", "Stek i smör.", "Ät."]
 
+  def test_untitled_steps_of_several_lines_round_trip(self) -> None:
+    body = RecipeBody(steps=[RecipeStep(text="Blanda mjöl och ägg.\n\nLåt vila i 10 min."), RecipeStep(text="Stek.\nVänd en gång.")])
+
+    assert parse_markdown(render_markdown(body)) == body
+
   def test_an_untitled_step_among_titled_ones_round_trips(self) -> None:
     body = RecipeBody(
       steps=[

@@ -307,7 +307,8 @@ def render_markdown(body: RecipeBody) -> str:
       out.append("")
   if body.steps:
     out += ["## Gör så här", ""]
-    titled = any(s.title for s in body.steps)
+    # A list item holds one line, so a step of several lines needs a numbered heading.
+    titled = any(s.title or "\n" in s.text for s in body.steps)
     for i, step in enumerate(body.steps, 1):
       if titled:
         heading = f"### {i}. {step.title or ''}".rstrip()
