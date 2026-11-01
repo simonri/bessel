@@ -155,6 +155,11 @@ class TestParseMarkdown:
     body = parse_markdown(markdown)
     assert parse_markdown(render_markdown(body)) == body
 
+  def test_numbered_steps_lose_their_numbers(self) -> None:
+    body = parse_markdown("## Ingredienser\n- 2 ägg\n\n## Gör så här\n1. Vispa äggen.\n2) Stek i smör.\n10. Ät.")
+
+    assert [s.text for s in body.steps] == ["Vispa äggen.", "Stek i smör.", "Ät."]
+
   def test_an_untitled_step_among_titled_ones_round_trips(self) -> None:
     body = RecipeBody(
       steps=[

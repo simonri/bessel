@@ -133,6 +133,7 @@ def format_ingredient(item: RecipeIngredient) -> str:
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*)$")
 _LIST_RE = re.compile(r"^\s*[-*]\s+(.*)$")
+_STEP_ITEM_RE = re.compile(r"^\s*(?:[-*]|\d+[.)])\s+(.*)$")
 _BOLD_LABEL_RE = re.compile(r"^\*\*(.+?):?\*\*:?$")
 _TIME_RE = re.compile(r"\s*\*\(([^)]*)\)\*\s*$")
 _STEP_NUMBER_RE = re.compile(r"^\d+[.)](?:\s+|$)")
@@ -252,7 +253,7 @@ def parse_markdown(content: str) -> RecipeBody:
           kind: Literal["tip", "warning"] = "warning" if label and _WARNING_RE.search(label) else "tip"
           target.callouts.append(RecipeCallout(kind=kind, label=label, text=callout.group(2).strip()))
         continue
-      item = _LIST_RE.match(stripped)
+      item = _STEP_ITEM_RE.match(stripped)
       if headed is None:
         # Without numbered headings, steps are one list item (or line) each.
         step = RecipeStep(text=item.group(1) if item else stripped)
