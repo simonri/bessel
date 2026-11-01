@@ -164,4 +164,5 @@ def _field(field: str, person: dict[str, Any], changes: dict[str, Any]) -> list[
     date = {"month": birthday["month"], "day": birthday["day"], **({"year": birthday["year"]} if birthday.get("year") else {})}
     return [{"date": date}]
   key = next(k for k, f in _PERSON_FIELD.items() if f == field)
-  return _methods(field, current, changes[key])
+  # null clears the list, as an empty one does.
+  return _methods(field, current, changes[key] or [])

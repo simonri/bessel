@@ -3306,6 +3306,7 @@ export const ContactCreateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -3320,6 +3321,7 @@ export const ContactCreateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -3334,6 +3336,7 @@ export const ContactCreateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -3348,6 +3351,7 @@ export const ContactCreateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -4239,6 +4243,7 @@ export const ContactUpdateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -4253,6 +4258,7 @@ export const ContactUpdateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -4267,6 +4273,7 @@ export const ContactUpdateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",
@@ -4281,6 +4288,7 @@ export const ContactUpdateSchema = {
             $ref: "#/components/schemas/ContactMethodInput",
           },
           type: "array",
+          maxItems: 50,
         },
         {
           type: "null",

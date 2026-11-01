@@ -87,6 +87,17 @@ async def _contact(session: AsyncSession, resource_name: str) -> Contact:
 
 
 class TestBuildUpdate:
+  def test_lists_are_bounded_and_null_clears(self) -> None:
+    from api.contacts.schemas import MAX_METHODS, ContactUpdate
+    from pydantic import ValidationError as SchemaError
+
+    # Each list goes to Google whole; an address with a place also adds a row here.
+    with pytest.raises(SchemaError):
+      ContactUpdate(phones=[{"value": f"070-{i}"} for i in range(MAX_METHODS + 1)])
+    person = {"resourceName": "people/c1", "etag": "%E1", "phoneNumbers": [MOBILE, WORK]}
+    body, fields = build_update(person, {"phones": None})
+    assert (fields, body["phoneNumbers"]) == (["phoneNumbers"], [])
+
   def test_changing_one_number_keeps_the_other_and_its_label(self) -> None:
     person = {"resourceName": "people/c1", "etag": "%E1", "phoneNumbers": [MOBILE, WORK], "names": [{"givenName": "Anna"}]}
 

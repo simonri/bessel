@@ -12672,7 +12672,8 @@
                 "items": {
                   "$ref": "#/components/schemas/ContactMethodInput"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 50
               },
               {
                 "type": "null"
@@ -12686,7 +12687,8 @@
                 "items": {
                   "$ref": "#/components/schemas/ContactMethodInput"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 50
               },
               {
                 "type": "null"
@@ -12700,7 +12702,8 @@
                 "items": {
                   "$ref": "#/components/schemas/ContactMethodInput"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 50
               },
               {
                 "type": "null"
@@ -12714,7 +12717,8 @@
                 "items": {
                   "$ref": "#/components/schemas/ContactMethodInput"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 50
               },
               {
                 "type": "null"
@@ -13645,7 +13649,8 @@
                 "items": {
                   "$ref": "#/components/schemas/ContactMethodInput"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 50
               },
               {
                 "type": "null"
@@ -13659,7 +13664,8 @@
                 "items": {
                   "$ref": "#/components/schemas/ContactMethodInput"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 50
               },
               {
                 "type": "null"
@@ -13673,7 +13679,8 @@
                 "items": {
                   "$ref": "#/components/schemas/ContactMethodInput"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 50
               },
               {
                 "type": "null"
@@ -13687,7 +13694,8 @@
                 "items": {
                   "$ref": "#/components/schemas/ContactMethodInput"
                 },
-                "type": "array"
+                "type": "array",
+                "maxItems": 50
               },
               {
                 "type": "null"
