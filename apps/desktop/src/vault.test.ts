@@ -87,6 +87,18 @@ describe("rewriteLinksInContent", () => {
     expect(content).toBe("![[Fiskebutik]]");
   });
 
+  it("rewrites a link in a table, its alias pipe escaped", () => {
+    const { content, changed } = rewriteLinksInContent(
+      "| [[Fiske\\|the fish place]] | [[Fiske#Opening hours\\|hours]] |",
+      "Places/Fiske.md",
+      "Places/Fiskebutik.md",
+    );
+    expect(changed).toBe(true);
+    expect(content).toBe(
+      "| [[Fiskebutik\\|the fish place]] | [[Fiskebutik#Opening hours\\|hours]] |",
+    );
+  });
+
   it("leaves non-matching links untouched", () => {
     const { content, changed } = rewriteLinksInContent(
       "[[Somewhere Else]] and [[Fiskehandlaren]]",
@@ -99,6 +111,19 @@ describe("rewriteLinksInContent", () => {
 });
 
 describe("buildFileMeta", () => {
+  it("reads a table link whose alias pipe is escaped", () => {
+    const meta = buildFileMeta("note.md", "| [[Third#Part\\|alias]] |");
+    expect(meta.links).toEqual([
+      {
+        target: "Third",
+        heading: "Part",
+        alias: "alias",
+        embed: false,
+        line: 0,
+      },
+    ]);
+  });
+
   it("collects wikilinks with 0-based line numbers", () => {
     const content = [
       "Intro line",

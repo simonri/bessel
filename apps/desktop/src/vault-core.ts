@@ -151,7 +151,8 @@ export function rewriteLinksInContent(
   const toBase = basenameNoExt(toRel);
 
   let changed = false;
-  const wikilinkRe = /(!)?\[\[([^\]|#]+?)(#[^\]|]+)?(\|[^\]]+)?\]\]/g;
+  // In a table the alias pipe is written `\|`; it stays with the alias.
+  const wikilinkRe = /(!)?\[\[([^\]|#]+?)(#[^\]|]+)?(\\?\|[^\]]+)?\]\]/g;
   const newContent = content.replace(
     wikilinkRe,
     (
@@ -271,7 +272,7 @@ function extractWikilinks(lines: string[], bodyStart: number): VaultLink[] {
     if (inFence) continue;
     const line = stripInlineCode(raw);
     const wikilinkRe =
-      /(!)?\[\[([^\]|#]+?)(?:#([^\]|]+?))?(?:\|([^\]]+?))?\]\]/g;
+      /(!)?\[\[([^\]|#]+?)(?:#([^\]|]+?))?(?:\\?\|([^\]]+?))?\]\]/g;
     let m: RegExpExecArray | null;
     // biome-ignore lint/suspicious/noAssignInExpressions: standard exec loop
     while ((m = wikilinkRe.exec(line))) {
