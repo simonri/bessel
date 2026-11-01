@@ -317,6 +317,18 @@ class TestRevise:
     assert (closed["valid_to"], closed["superseded_by_id"]) == ("2026-03-01", new["id"])
 
   @pytest.mark.asyncio
+  async def test_a_replacement_only_others_wrote_stays_out_of_the_profile(self, connect: ConnectFixture) -> None:
+    [old] = await remember(connect, fact("stad", "Bor i Västerås", area="identitet", importance=5))
+
+    [result] = await revise(
+      connect,
+      {"fact_id": old["fact"]["id"], "action": "supersede", "statement": "Bor i Malmö", "kind": "observed", "evidence": [{"source": "gmail", "ref": "x"}]},
+    )
+
+    assert (result["fact"]["status"], result["fact"]["importance"]) == ("hypothesis", 3)
+    assert (await mcp_call(connect, "get_profile"))["profile"] == []
+
+  @pytest.mark.asyncio
   async def test_merging_keeps_one_fact_with_both_facts_evidence(self, connect: ConnectFixture) -> None:
     [keep, fold] = await remember(
       connect,

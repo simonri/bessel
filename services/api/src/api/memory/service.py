@@ -91,6 +91,10 @@ def _default_status(kind: MemoryKind, evidence: Sequence[Evidence] = ()) -> Memo
   return MemoryStatus.confirmed
 
 
+def _importance(importance: int, evidence: Sequence[Evidence]) -> int:
+  return min(importance, EXTERNAL_MAX_IMPORTANCE) if _external_only(evidence) else importance
+
+
 def _merged_evidence(existing: Sequence[dict[str, Any]], added: Sequence[Evidence]) -> list[dict[str, Any]]:
   merged = list(existing)
   for item in added:
@@ -270,7 +274,7 @@ class MemoryService:
         statement=item.statement.strip(),
         kind=item.kind,
         status=item.status or _default_status(item.kind, item.evidence),
-        importance=min(item.importance, EXTERNAL_MAX_IMPORTANCE) if _external_only(item.evidence) else item.importance,
+        importance=_importance(item.importance, item.evidence),
         sensitivity=item.sensitivity,
         evidence=_merged_evidence([], [*item.evidence, *(Evidence(source="memory", ref=str(other.id)) for other in checked)]),
         valid_from=item.valid_from or today,
@@ -347,7 +351,7 @@ class MemoryService:
         statement=change.statement.strip(),
         kind=kind,
         status=_default_status(kind, change.evidence),
-        importance=change.importance or fact.importance,
+        importance=_importance(change.importance or fact.importance, change.evidence),
         sensitivity=change.sensitivity or fact.sensitivity,
         evidence=_merged_evidence([], change.evidence),
         valid_from=ended_on,
