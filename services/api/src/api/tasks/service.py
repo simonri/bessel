@@ -1,6 +1,7 @@
 from typing import Any
 from uuid import UUID
 
+from api.common.repository.base import without_required_nulls
 from api.common.utils import utc_now
 from api.exceptions import ValidationError
 from api.models.project import Project
@@ -52,7 +53,7 @@ class TaskService:
 
   async def update(self, session: AsyncSession, task: Task, changes: dict[str, Any]) -> Task:
     """Applies `changes` (TaskUpdate fields that were set) to `task`."""
-    changes = dict(changes)
+    changes = without_required_nulls(Task, changes)
     if changes.get("title") is not None:
       changes["title"] = _title(changes["title"])
     if "project" in changes:

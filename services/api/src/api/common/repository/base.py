@@ -13,6 +13,12 @@ from sqlalchemy.sql.base import ExecutableOption
 type Options = Sequence[ExecutableOption]
 
 
+def without_required_nulls(model: type, changes: dict[str, Any]) -> dict[str, Any]:
+  """`changes` minus the nulls sent for columns that can't hold one: an update leaves those as they are."""
+  columns = model.__table__.columns  # type: ignore[attr-defined]
+  return {key: value for key, value in changes.items() if value is not None or key not in columns or columns[key].nullable}
+
+
 class RepositoryProtocol[M](Protocol):
   model: type[M]
 

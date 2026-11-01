@@ -5,6 +5,7 @@ from uuid import UUID
 import httpx
 import structlog
 from api.common.pagination import PaginationParamsQuery
+from api.common.repository.base import without_required_nulls
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.exceptions import ServiceUnavailableError
 from api.models.place import Place
@@ -213,7 +214,7 @@ async def update_place(
   repo = PlaceRepository.from_session(session)
   place = await repo.get_owned_or_404(place_id, current_user.id, not_found_message="Place not found")
 
-  update_dict = body.model_dump(exclude_unset=True)
+  update_dict = without_required_nulls(Place, body.model_dump(exclude_unset=True))
   if update_dict:
     await repo.update(place, update_dict=update_dict)
 

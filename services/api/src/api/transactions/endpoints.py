@@ -7,6 +7,7 @@ from uuid import UUID
 from api.bank_accounts.repository import BankAccountRepository
 from api.categories.repository import CategoryRepository
 from api.common.pagination import PaginationParamsQuery
+from api.common.repository.base import without_required_nulls
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.uploads import read_upload
 from api.common.utils import utc_now
@@ -211,7 +212,7 @@ async def update_transaction(
   repo = TransactionRepository.from_session(session)
   transaction = await repo.get_owned_or_404(transaction_id, current_user.id, not_found_message="Transaction not found")
 
-  update_dict = body.model_dump(exclude_unset=True)
+  update_dict = without_required_nulls(Transaction, body.model_dump(exclude_unset=True))
   if "category_id" in update_dict:
     await _require_own_category(session, current_user.id, update_dict["category_id"])
     # The user's own choice: rules and transfer pairing leave it alone from now on.

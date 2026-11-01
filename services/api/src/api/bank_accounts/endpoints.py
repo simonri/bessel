@@ -15,6 +15,7 @@ from api.bank_accounts.schemas import (
 )
 from api.bank_accounts.service import accounts_overview, net_worth_history
 from api.common.pagination import PaginationParamsQuery
+from api.common.repository.base import without_required_nulls
 from api.common.sorting import Sorting, SortingGetter, apply_sorting
 from api.common.utils import utc_now
 from api.contacts.keeping import user_zone
@@ -141,7 +142,7 @@ async def update_bank_account(
   repo = BankAccountRepository.from_session(session)
   account = await repo.get_owned_or_404(bank_account_id, current_user.id, not_found_message="Bank account not found")
 
-  update_dict = body.model_dump(exclude_unset=True)
+  update_dict = without_required_nulls(BankAccount, body.model_dump(exclude_unset=True))
   if update_dict:
     await repo.update(account, update_dict=update_dict)
 
