@@ -74,8 +74,8 @@ importers:
         specifier: ^10.0.6
         version: 10.0.6
       electron:
-        specifier: ^45.0.0
-        version: 45.0.0
+        specifier: ^45.2.1
+        version: 45.2.1
       electron-builder:
         specifier: ^26.18.0
         version: 26.18.0(electron-builder-squirrel-windows@26.18.0)
@@ -1030,8 +1030,8 @@ packages:
   '@dotenvx/primitives@0.8.0':
     resolution: {integrity: sha512-VYJy0uhFm9zTJ1TxBaW/pA8bjbOM/OttaNMwZ1RHG4JKyRG7DhSdiqD1ipQoAyoD22olUtxbP78W9xY3Wd11bg==}
 
-  '@electron-internal/extract-zip@1.0.6':
-    resolution: {integrity: sha512-/aQLgFDdCSnwChfUwqekSmE1q2dCTzhUy5saIHBb5vyYn5LzWaKPaIz1wM0lDMCZYBoIG4svJNvAJb6vkI8BuA==}
+  '@electron-internal/extract-zip@1.0.8':
+    resolution: {integrity: sha512-8iajeLFbzNwM0m3AsQZSZgYREWglAImyGvvFSWU34FgMW8sHlzdwj9QKvv9dgN7jMP591EFUF/sLOC3Jl9YIjQ==}
     engines: {node: '>=22.12.0'}
 
   '@electron/asar@3.4.1':
@@ -4856,8 +4856,8 @@ packages:
     resolution: {integrity: sha512-bO3y10YikuUwUuDUQRM4KfwNkKhnpVO7IPdbsrejwN9/AABJzzTQ4GeHwyzNSrVO+tEH3/Np255a3sVZpZDjvg==}
     engines: {node: '>=8.0.0'}
 
-  electron@45.0.0:
-    resolution: {integrity: sha512-yjz4uhMBcO6L5X7CWgRMobf2EMJPnb9j4zuf+nu/TU/6E4Sqfx7fn/a2eACo4qngjml/0JnsoZhxYroJLxLd2w==}
+  electron@45.2.1:
+    resolution: {integrity: sha512-t433yuo8Kh8WG/mTStnPRT/NtpWw8A+caNLJgeU0tS/FlfOkeNEntFsac4ViLgDxZOmDe7BeSkOANVqrqNHhDA==}
     engines: {node: '>= 22.12.0'}
     hasBin: true
 
@@ -8277,7 +8277,7 @@ snapshots:
 
   '@dotenvx/primitives@0.8.0': {}
 
-  '@electron-internal/extract-zip@1.0.6': {}
+  '@electron-internal/extract-zip@1.0.8': {}
 
   '@electron/asar@3.4.1':
     dependencies:
@@ -10942,7 +10942,7 @@ snapshots:
       pathe: 2.0.3
       sirv: 3.0.2
       tinyrainbow: 3.2.0
-      vitest: 5.0.5(@opentelemetry/api@1.10.0)(@types/node@26.6.5)(@vitest/browser-preview@5.0.5)(@vitest/ui@5.0.5(vitest@5.0.5))(@voidzero-dev/vite-plus-core@1.4.0(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.1)(tsx@4.23.0)(typescript@7.0.2)(yaml@2.8.3))(jsdom@30.1.3(@noble/hashes@2.4.0))
+      vitest: 5.0.5(@opentelemetry/api@1.10.0)(@types/node@26.6.5)(@vitest/browser-preview@5.0.5)(@vitest/ui@5.0.5)(jsdom@30.1.3(@noble/hashes@2.4.0))(vite@7.3.1(@types/node@26.6.5)(jiti@2.7.0)(lightningcss@1.33.0)(terser@5.46.1)(tsx@4.23.0)(yaml@2.8.3))
 
   '@vitest/utils@5.0.5':
     dependencies:
@@ -11779,9 +11779,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  electron@45.0.0:
+  electron@45.2.1:
     dependencies:
-      '@electron-internal/extract-zip': 1.0.6
+      '@electron-internal/extract-zip': 1.0.8
       '@electron/get': 5.1.0
       '@types/node': 24.19.2
     transitivePeerDependencies:
