@@ -54,11 +54,17 @@ const NEWLINE = 0x0a;
  *
  * Transcripts are append-only and can run to gigabytes, so each file is read
  * from where the last scan stopped. Messages are counted once by id: resumed
- * conversations repeat earlier messages in their new transcript.
+ * conversations repeat earlier messages in their new transcript, and Claude
+ * Code writes a line per content block of one message, the earlier ones
+ * sometimes with the output counted so far. A message counts its largest
+ * usage, under the day and model it was first seen with.
  */
 export class TranscriptScanner {
   private readonly offsets = new Map<string, number>();
-  private readonly seen = new Set<string>();
+  private readonly seen = new Map<
+    string,
+    { key: string | null; counts: TokenCounts }
+  >();
   private readonly totals = new Map<string, TokenCounts>();
 
   constructor(private readonly projectsDir: string) {}
@@ -153,26 +159,42 @@ export class TranscriptScanner {
       | undefined;
     if (!usage || typeof usage !== "object") return;
 
+    const counts: TokenCounts = {
+      input_tokens: int(usage.input_tokens),
+      output_tokens: int(usage.output_tokens),
+      cache_read_tokens: int(usage.cache_read_input_tokens),
+      cache_creation_tokens: int(usage.cache_creation_input_tokens),
+    };
     const id = String(message.id ?? entry.uuid ?? "");
-    if (id) {
-      if (this.seen.has(id)) return;
-      this.seen.add(id);
+    const earlier = id ? this.seen.get(id) : undefined;
+    if (earlier) {
+      const added = { ...counts };
+      for (const field of Object.keys(counts) as (keyof TokenCounts)[]) {
+        added[field] = Math.max(0, counts[field] - earlier.counts[field]);
+        earlier.counts[field] += added[field];
+      }
+      if (earlier.key) this.add(earlier.key, added);
+      return;
     }
     const day = dayOf(entry.timestamp ?? message.timestamp);
-    if (day < cutoffDay) return;
+    const key =
+      day < cutoffDay ? null : `${day}\t${String(message.model ?? "claude")}`;
+    if (id) this.seen.set(id, { key, counts: { ...counts } });
+    if (key) this.add(key, counts);
+  }
 
-    const key = `${day}\t${String(message.model ?? "claude")}`;
-    const counts = this.totals.get(key) ?? {
+  private add(key: string, counts: TokenCounts): void {
+    const total = this.totals.get(key) ?? {
       input_tokens: 0,
       output_tokens: 0,
       cache_read_tokens: 0,
       cache_creation_tokens: 0,
     };
-    counts.input_tokens += int(usage.input_tokens);
-    counts.output_tokens += int(usage.output_tokens);
-    counts.cache_read_tokens += int(usage.cache_read_input_tokens);
-    counts.cache_creation_tokens += int(usage.cache_creation_input_tokens);
-    this.totals.set(key, counts);
+    total.input_tokens += counts.input_tokens;
+    total.output_tokens += counts.output_tokens;
+    total.cache_read_tokens += counts.cache_read_tokens;
+    total.cache_creation_tokens += counts.cache_creation_tokens;
+    this.totals.set(key, total);
   }
 }
 
