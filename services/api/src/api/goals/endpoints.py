@@ -5,9 +5,19 @@ from fastapi import APIRouter, Query
 from pydantic import ValidationError as PydanticValidationError
 
 from api.common.utils import utc_now
-from api.exceptions import ValidationError
-from api.goals.repository import GoalCheckinRepository, GoalPlanRepository, GoalRepository
-from api.goals.schemas import GoalCheckinCreate, GoalCreate, GoalPlanSchema, GoalSchema, GoalScoreboard, GoalUpdate, TypicalDay
+from api.exceptions import ResourceNotFound, ValidationError
+from api.goals.repository import GoalCheckinRepository, GoalPlanRepository, GoalRepository, ReflectionRepository
+from api.goals.schemas import (
+  GoalCheckinCreate,
+  GoalCreate,
+  GoalPlanSchema,
+  GoalSchema,
+  GoalScoreboard,
+  GoalUpdate,
+  ReflectionAnswer,
+  ReflectionSchema,
+  TypicalDay,
+)
 from api.goals.service import goal_service
 from api.goals.typical import typical_day
 from api.models.goal import Goal, GoalCheckin, GoalMetric, GoalPlan
@@ -99,7 +109,7 @@ async def save_goal_plan(body: GoalPlanSchema, session: DBSession, current_user:
   """The user's own words; empty fields clear."""
   repo = GoalPlanRepository.from_session(session)
   plan = await repo.get_for_user(current_user.id)
-  fields = {key: (value.strip() or None) if isinstance(value, str) else None for key, value in body.model_dump().items()}
+  fields = {key: (value.strip() or None) if isinstance(value, str) else value for key, value in body.model_dump().items()}
   if plan is None:
     plan = await repo.create(GoalPlan(user_id=current_user.id, **fields), flush=True)
   else:
@@ -120,3 +130,25 @@ async def get_typical_day(
   today = utc_now().astimezone(zone).date()
   data = await PatternsService().load(session, current_user.id, zone, today, weeks * 7 + 1)
   return typical_day(data, weekday, weeks)
+
+
+@router.get("/reflections", summary="List Reflections", response_model=list[ReflectionSchema])
+async def list_reflections(
+  session: DBSession,
+  current_user: CurrentDBUser,
+  unanswered: bool = Query(default=False),
+  limit: int = Query(default=30, ge=1, le=200),
+) -> list[ReflectionSchema]:
+  """The questions asked during the user's days, newest first."""
+  rows = await ReflectionRepository.from_session(session).list_for_user(current_user.id, unanswered=unanswered, limit=limit)
+  return [ReflectionSchema.model_validate(r) for r in rows]
+
+
+@router.put("/reflections/{reflection_id}", summary="Answer Reflection", response_model=ReflectionSchema)
+async def answer_reflection(reflection_id: UUID, body: ReflectionAnswer, session: DBSession, current_user: CurrentDBUser) -> ReflectionSchema:
+  repo = ReflectionRepository.from_session(session)
+  reflection = await repo.get_by_id(reflection_id)
+  if reflection is None or reflection.user_id != current_user.id or reflection.deleted_at is not None:
+    raise ResourceNotFound("Question not found")
+  await repo.update(reflection, update_dict={"answer": body.answer.strip(), "answered_at": utc_now()}, flush=True)
+  return ReflectionSchema.model_validate(reflection)

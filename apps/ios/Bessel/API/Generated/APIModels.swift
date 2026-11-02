@@ -1017,6 +1017,7 @@ enum API {
         var oneYear: String?
         var oneMonth: String?
         var rules: String?
+        var questionsPerDay: Int = 0
     }
 
     struct GoalPlanSchemaOutput: Codable, Hashable {
@@ -1026,6 +1027,7 @@ enum API {
         var oneYear: String?
         var oneMonth: String?
         var rules: String?
+        var questionsPerDay: Int = 0
     }
 
     struct GoalSchema: Codable, Hashable {
@@ -1935,6 +1937,19 @@ enum API {
         var byWeekday: [String] = []
         var count: Int?
         var until: String?
+    }
+
+    struct ReflectionAnswer: Codable, Hashable {
+        var answer: String
+    }
+
+    struct ReflectionSchema: Codable, Hashable {
+        var id: UUID
+        var question: String
+        var askedAt: Date
+        var context: [String: JSONValue]
+        var answer: String?
+        var answeredAt: Date?
     }
 
     enum RruleFrequency: String, Codable, Hashable, CaseIterable, LenientEnum {
@@ -6140,6 +6155,7 @@ extension API.GoalPlanSchemaInput {
         case oneYear
         case oneMonth
         case rules
+        case questionsPerDay
     }
 
     init(from decoder: Decoder) throws {
@@ -6150,6 +6166,7 @@ extension API.GoalPlanSchemaInput {
         self.oneYear = try container.decodeIfPresent(String.self, forKey: .oneYear)
         self.oneMonth = try container.decodeIfPresent(String.self, forKey: .oneMonth)
         self.rules = try container.decodeIfPresent(String.self, forKey: .rules)
+        self.questionsPerDay = try container.decodeIfPresent(Int.self, forKey: .questionsPerDay) ?? 0
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -6159,6 +6176,7 @@ extension API.GoalPlanSchemaInput {
         case oneYear = "one_year"
         case oneMonth = "one_month"
         case rules
+        case questionsPerDay = "questions_per_day"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -6169,6 +6187,7 @@ extension API.GoalPlanSchemaInput {
         try container.encodeIfPresent(self.oneYear, forKey: .oneYear)
         try container.encodeIfPresent(self.oneMonth, forKey: .oneMonth)
         try container.encodeIfPresent(self.rules, forKey: .rules)
+        try container.encode(self.questionsPerDay, forKey: .questionsPerDay)
     }
 }
 
@@ -6180,6 +6199,7 @@ extension API.GoalPlanSchemaOutput {
         case oneYear
         case oneMonth
         case rules
+        case questionsPerDay
     }
 
     init(from decoder: Decoder) throws {
@@ -6190,6 +6210,7 @@ extension API.GoalPlanSchemaOutput {
         self.oneYear = try container.decodeIfPresent(String.self, forKey: .oneYear)
         self.oneMonth = try container.decodeIfPresent(String.self, forKey: .oneMonth)
         self.rules = try container.decodeIfPresent(String.self, forKey: .rules)
+        self.questionsPerDay = try container.decodeIfPresent(Int.self, forKey: .questionsPerDay) ?? 0
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -6199,6 +6220,7 @@ extension API.GoalPlanSchemaOutput {
         case oneYear = "one_year"
         case oneMonth = "one_month"
         case rules
+        case questionsPerDay = "questions_per_day"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -6209,6 +6231,7 @@ extension API.GoalPlanSchemaOutput {
         try container.encodeIfPresent(self.oneYear, forKey: .oneYear)
         try container.encodeIfPresent(self.oneMonth, forKey: .oneMonth)
         try container.encodeIfPresent(self.rules, forKey: .rules)
+        try container.encode(self.questionsPerDay, forKey: .questionsPerDay)
     }
 }
 
@@ -9694,6 +9717,66 @@ extension API.RecurrenceSchema {
         try container.encode(self.byWeekday, forKey: .byWeekday)
         try container.encodeIfPresent(self.count, forKey: .count)
         try container.encodeIfPresent(self.until, forKey: .until)
+    }
+}
+
+extension API.ReflectionAnswer {
+    private enum DecodingKeys: String, CodingKey {
+        case answer
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.answer = try container.decode(String.self, forKey: .answer)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case answer
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.answer, forKey: .answer)
+    }
+}
+
+extension API.ReflectionSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case question
+        case askedAt
+        case context
+        case answer
+        case answeredAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.question = try container.decode(String.self, forKey: .question)
+        self.askedAt = try container.decode(Date.self, forKey: .askedAt)
+        self.context = try container.decode([String: API.JSONValue].self, forKey: .context)
+        self.answer = try container.decodeIfPresent(String.self, forKey: .answer)
+        self.answeredAt = try container.decodeIfPresent(Date.self, forKey: .answeredAt)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case question
+        case askedAt = "asked_at"
+        case context
+        case answer
+        case answeredAt = "answered_at"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.question, forKey: .question)
+        try container.encode(API.Instant(self.askedAt), forKey: .askedAt)
+        try container.encode(self.context, forKey: .context)
+        try container.encodeIfPresent(self.answer, forKey: .answer)
+        try container.encodeIfPresent(self.answeredAt.map(API.Instant.init), forKey: .answeredAt)
     }
 }
 

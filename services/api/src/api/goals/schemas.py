@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Annotated, Any, Literal
 
 from pydantic import Field, model_validator
@@ -114,6 +114,19 @@ class GoalPlanSchema(Schema):
   one_year: PlanText = Field(default=None, description="What has to be true in a year.")
   one_month: PlanText = Field(default=None, description="This month's project.")
   rules: PlanText = Field(default=None, description="What you won't give up on the way.")
+  questions_per_day: int = Field(default=0, ge=0, le=6, description="Questions to ask at random moments of the day; 0 is off.")
+
+
+class ReflectionSchema(IDSchema):
+  question: str
+  asked_at: datetime
+  context: dict[str, Any] = Field(description="What the data showed for the hours before: apps used and minutes.")
+  answer: str | None
+  answered_at: datetime | None
+
+
+class ReflectionAnswer(Schema):
+  answer: str = Field(min_length=1, max_length=2000)
 
 
 class TypicalDay(Schema):

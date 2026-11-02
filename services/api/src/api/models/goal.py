@@ -1,9 +1,9 @@
-from datetime import date
+from datetime import date, datetime
 from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Date, Enum, Float, ForeignKey, Integer, String, Text, Uuid
+from sqlalchemy import TIMESTAMP, Date, Enum, Float, ForeignKey, Integer, String, Text, Uuid
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -92,3 +92,19 @@ class GoalPlan(RecordModel):
   one_month: Mapped[str | None] = mapped_column(Text, nullable=True)
   # What they won't give up on the way.
   rules: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # Questions to ask at random moments of the day, breaking autopilot; 0 is off.
+  questions_per_day: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+
+
+class Reflection(RecordModel):
+  """A question asked at a random moment of the user's day, with what they were doing then and their answer."""
+
+  __tablename__ = "reflections"
+
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
+  question: Mapped[str] = mapped_column(String(300), nullable=False)
+  asked_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+  # What the data showed for the hours before: the apps used and for how long.
+  context: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+  answer: Mapped[str | None] = mapped_column(Text, nullable=True)
+  answered_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)

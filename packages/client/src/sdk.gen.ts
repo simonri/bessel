@@ -11,6 +11,7 @@ import {
 } from "./client/index.js";
 import {
   addTransactionDocumentResponseTransformer,
+  answerReflectionResponseTransformer,
   completeBankConnectionResponseTransformer,
   completeGoogleConnectResponseTransformer,
   completeMontroseResponseTransformer,
@@ -80,6 +81,7 @@ import {
   listProjectsResponseTransformer,
   listRecipeCooksResponseTransformer,
   listRecipesResponseTransformer,
+  listReflectionsResponseTransformer,
   listResetsResponseTransformer,
   listTasksResponseTransformer,
   listTimeEntriesResponseTransformer,
@@ -120,6 +122,9 @@ import type {
   AddTransactionDocumentData,
   AddTransactionDocumentErrors,
   AddTransactionDocumentResponses,
+  AnswerReflectionData,
+  AnswerReflectionErrors,
+  AnswerReflectionResponses,
   AuthorizeBankConnectionData,
   AuthorizeBankConnectionErrors,
   AuthorizeBankConnectionResponses,
@@ -466,6 +471,9 @@ import type {
   ListRecipesData,
   ListRecipesErrors,
   ListRecipesResponses,
+  ListReflectionsData,
+  ListReflectionsErrors,
+  ListReflectionsResponses,
   ListResetsData,
   ListResetsErrors,
   ListResetsResponses,
@@ -2513,6 +2521,54 @@ export const getTypicalDay = <ThrowOnError extends boolean = false>(
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/goals/typical-day",
     ...options,
+  });
+
+/**
+ * List Reflections
+ *
+ * The questions asked during the user's days, newest first.
+ */
+export const listReflections = <ThrowOnError extends boolean = false>(
+  options?: Options<ListReflectionsData, ThrowOnError>,
+): RequestResult<
+  ListReflectionsResponses,
+  ListReflectionsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ListReflectionsResponses,
+    ListReflectionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listReflectionsResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals/reflections",
+    ...options,
+  });
+
+/**
+ * Answer Reflection
+ */
+export const answerReflection = <ThrowOnError extends boolean = false>(
+  options: Options<AnswerReflectionData, ThrowOnError>,
+): RequestResult<
+  AnswerReflectionResponses,
+  AnswerReflectionErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).put<
+    AnswerReflectionResponses,
+    AnswerReflectionErrors,
+    ThrowOnError
+  >({
+    responseTransformer: answerReflectionResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals/reflections/{reflection_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

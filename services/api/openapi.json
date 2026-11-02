@@ -4256,6 +4256,129 @@
         }
       }
     },
+    "/v1/goals/reflections": {
+      "get": {
+        "tags": [
+          "goals"
+        ],
+        "summary": "List Reflections",
+        "description": "The questions asked during the user's days, newest first.",
+        "operationId": "list_reflections",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "unanswered",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Unanswered"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 30,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ReflectionSchema"
+                  },
+                  "title": "Response List Reflections"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/goals/reflections/{reflection_id}": {
+      "put": {
+        "tags": [
+          "goals"
+        ],
+        "summary": "Answer Reflection",
+        "operationId": "answer_reflection",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "reflection_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Reflection Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReflectionAnswer"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReflectionSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/devices": {
       "get": {
         "tags": [
@@ -15346,6 +15469,14 @@
             ],
             "title": "Rules",
             "description": "What you won't give up on the way."
+          },
+          "questions_per_day": {
+            "type": "integer",
+            "maximum": 6.0,
+            "minimum": 0.0,
+            "title": "Questions Per Day",
+            "description": "Questions to ask at random moments of the day; 0 is off.",
+            "default": 0
           }
         },
         "type": "object",
@@ -15430,6 +15561,14 @@
             ],
             "title": "Rules",
             "description": "What you won't give up on the way."
+          },
+          "questions_per_day": {
+            "type": "integer",
+            "maximum": 6.0,
+            "minimum": 0.0,
+            "title": "Questions Per Day",
+            "description": "Questions to ask at random moments of the day; 0 is off.",
+            "default": 0
           }
         },
         "type": "object",
@@ -15439,7 +15578,8 @@
           "identity",
           "one_year",
           "one_month",
-          "rules"
+          "rules",
+          "questions_per_day"
         ],
         "title": "GoalPlanSchema"
       },
@@ -20604,6 +20744,79 @@
           "frequency"
         ],
         "title": "RecurrenceSchema"
+      },
+      "ReflectionAnswer": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Answer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer"
+        ],
+        "title": "ReflectionAnswer"
+      },
+      "ReflectionSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "The ID of the object."
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "asked_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Asked At"
+          },
+          "context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Context",
+            "description": "What the data showed for the hours before: apps used and minutes."
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "answered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answered At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "question",
+          "asked_at",
+          "context",
+          "answer",
+          "answered_at"
+        ],
+        "title": "ReflectionSchema"
       },
       "RruleFrequency": {
         "type": "string",

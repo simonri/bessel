@@ -5501,6 +5501,14 @@ export const GoalPlanSchema_InputSchema = {
       title: "Rules",
       description: "What you won't give up on the way.",
     },
+    questions_per_day: {
+      type: "integer",
+      maximum: 6,
+      minimum: 0,
+      title: "Questions Per Day",
+      description: "Questions to ask at random moments of the day; 0 is off.",
+      default: 0,
+    },
   },
   type: "object",
   title: "GoalPlanSchema",
@@ -5586,6 +5594,14 @@ export const GoalPlanSchema_OutputSchema = {
       title: "Rules",
       description: "What you won't give up on the way.",
     },
+    questions_per_day: {
+      type: "integer",
+      maximum: 6,
+      minimum: 0,
+      title: "Questions Per Day",
+      description: "Questions to ask at random moments of the day; 0 is off.",
+      default: 0,
+    },
   },
   type: "object",
   required: [
@@ -5595,6 +5611,7 @@ export const GoalPlanSchema_OutputSchema = {
     "one_year",
     "one_month",
     "rules",
+    "questions_per_day",
   ],
   title: "GoalPlanSchema",
 } as const;
@@ -10674,6 +10691,73 @@ export const RecurrenceSchemaSchema = {
   type: "object",
   required: ["frequency"],
   title: "RecurrenceSchema",
+} as const;
+
+export const ReflectionAnswerSchema = {
+  properties: {
+    answer: {
+      type: "string",
+      maxLength: 2000,
+      minLength: 1,
+      title: "Answer",
+    },
+  },
+  type: "object",
+  required: ["answer"],
+  title: "ReflectionAnswer",
+} as const;
+
+export const ReflectionSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    question: {
+      type: "string",
+      title: "Question",
+    },
+    asked_at: {
+      type: "string",
+      format: "date-time",
+      title: "Asked At",
+    },
+    context: {
+      additionalProperties: true,
+      type: "object",
+      title: "Context",
+      description:
+        "What the data showed for the hours before: apps used and minutes.",
+    },
+    answer: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Answer",
+    },
+    answered_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Answered At",
+    },
+  },
+  type: "object",
+  required: ["id", "question", "asked_at", "context", "answer", "answered_at"],
+  title: "ReflectionSchema",
 } as const;
 
 export const RruleFrequencySchema = {

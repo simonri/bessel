@@ -11,6 +11,7 @@ import {
 import { client } from "../client.gen.js";
 import {
   addTransactionDocument,
+  answerReflection,
   authorizeBankConnection,
   authorizeContactEditing,
   authorizeGoogle,
@@ -136,6 +137,7 @@ import {
   listProjects,
   listRecipeCooks,
   listRecipes,
+  listReflections,
   listResets,
   listTasks,
   listTimeEntries,
@@ -201,6 +203,9 @@ import type {
   AddTransactionDocumentData,
   AddTransactionDocumentError,
   AddTransactionDocumentResponse,
+  AnswerReflectionData,
+  AnswerReflectionError,
+  AnswerReflectionResponse,
   AuthorizeBankConnectionData,
   AuthorizeBankConnectionError,
   AuthorizeBankConnectionResponse,
@@ -542,6 +547,9 @@ import type {
   ListRecipesData,
   ListRecipesError,
   ListRecipesResponse,
+  ListReflectionsData,
+  ListReflectionsError,
+  ListReflectionsResponse,
   ListResetsData,
   ListResetsError,
   ListResetsResponse,
@@ -3466,6 +3474,63 @@ export const getTypicalDayOptions = (options: Options<GetTypicalDayData>) =>
     },
     queryKey: getTypicalDayQueryKey(options),
   });
+
+export const listReflectionsQueryKey = (
+  options?: Options<ListReflectionsData>,
+) => createQueryKey("listReflections", options);
+
+/**
+ * List Reflections
+ *
+ * The questions asked during the user's days, newest first.
+ */
+export const listReflectionsOptions = (
+  options?: Options<ListReflectionsData>,
+) =>
+  queryOptions<
+    ListReflectionsResponse,
+    ListReflectionsError,
+    ListReflectionsResponse,
+    ReturnType<typeof listReflectionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listReflections({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listReflectionsQueryKey(options),
+  });
+
+/**
+ * Answer Reflection
+ */
+export const answerReflectionMutation = (
+  options?: Partial<Options<AnswerReflectionData>>,
+): UseMutationOptions<
+  AnswerReflectionResponse,
+  AnswerReflectionError,
+  Options<AnswerReflectionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AnswerReflectionResponse,
+    AnswerReflectionError,
+    Options<AnswerReflectionData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await answerReflection({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 export const listDevicesQueryKey = (options?: Options<ListDevicesData>) =>
   createQueryKey("listDevices", options);

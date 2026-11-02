@@ -35,7 +35,8 @@ def weekly_review() -> str:
 before, plainly: what moved, what didn't, and where what I did differs from what I said I want. For a goal far \
 off, name the step to aim for next week (its `step`), not the final target. If I wrote down rules for myself \
 (get_goal_plan, then search_memory), check the ones my data can show. Set one weekday from get_typical_day beside \
-my plan's vision and anti-vision: which of the two is it closer to?
+my plan's vision and anti-vision: which of the two is it closer to? If get_reflections has answers from the \
+week, name the pattern in them.
     2. Call find_completed_tasks for the last 7 days and summarise what I got done, grouped by project.
     3. Call get_task_overview and list what's overdue or has slipped, and what's coming up next week.
     4. For each overdue task, suggest one of: a new day, a lower priority, or cancelling it. Check \

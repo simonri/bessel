@@ -2,6 +2,7 @@
 
 import type {
   AddTransactionDocumentResponse,
+  AnswerReflectionResponse,
   CompleteBankConnectionResponse,
   CompleteGoogleConnectResponse,
   CompleteMontroseResponse,
@@ -71,6 +72,7 @@ import type {
   ListProjectsResponse,
   ListRecipeCooksResponse,
   ListRecipesResponse,
+  ListReflectionsResponse,
   ListResetsResponse,
   ListTasksResponse,
   ListTimeEntriesResponse,
@@ -901,6 +903,30 @@ export const updateGoalResponseTransformer = async (
   data: any,
 ): Promise<UpdateGoalResponse> => {
   data = goalSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+const reflectionSchemaSchemaResponseTransformer = (data: any) => {
+  data.asked_at = new Date(data.asked_at);
+  if (data.answered_at) {
+    data.answered_at = new Date(data.answered_at);
+  }
+  return data;
+};
+
+export const listReflectionsResponseTransformer = async (
+  data: any,
+): Promise<ListReflectionsResponse> => {
+  data = data.map((item: any) =>
+    reflectionSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const answerReflectionResponseTransformer = async (
+  data: any,
+): Promise<AnswerReflectionResponse> => {
+  data = reflectionSchemaSchemaResponseTransformer(data);
   return data;
 };
 

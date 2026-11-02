@@ -1,5 +1,6 @@
 """Goals: what the user is working toward, measured from their own data."""
 
+from datetime import timedelta
 from typing import Annotated
 from uuid import UUID
 
@@ -8,9 +9,10 @@ from mcp.server.mcpserver.exceptions import ToolError
 from pydantic import Field
 
 from api.common.schemas import Schema
+from api.common.utils import utc_now
 from api.exceptions import ResourceNotFound
-from api.goals.repository import GoalCheckinRepository, GoalPlanRepository, GoalRepository
-from api.goals.schemas import GoalCreate, GoalPlanSchema, GoalSchema, GoalScoreboard, TypicalDay
+from api.goals.repository import GoalCheckinRepository, GoalPlanRepository, GoalRepository, ReflectionRepository
+from api.goals.schemas import GoalCreate, GoalPlanSchema, GoalSchema, GoalScoreboard, ReflectionSchema, TypicalDay
 from api.goals.service import goal_service
 from api.goals.typical import typical_day
 from api.mcp.context import user_session
@@ -149,8 +151,22 @@ async def get_typical_day(
   return typical_day(data, weekday, weeks)
 
 
+class Reflections(Schema):
+  reflections: list[ReflectionSchema] = Field(description="Newest first.")
+
+
+async def get_reflections(ctx: Context, days: Annotated[int, Field(ge=1, le=90, description="How many days back.")] = 7) -> Reflections:
+  """The questions Bessel asked at random moments of the user's days, what their computer showed for the two hours
+  before (`context`), and what they answered. Look for patterns across them (what they avoid, when they feel most
+  alive) and reflect those back; the answers are theirs, so quote rather than reinterpret."""
+  async with user_session(ctx) as (session, user):
+    rows = await ReflectionRepository.from_session(session).list_for_user(user.id, since=utc_now() - timedelta(days=days), limit=200)
+  return Reflections(reflections=[ReflectionSchema.model_validate(r) for r in rows])
+
+
 TOOLS: list[ToolSpec] = [
   read(get_goal_scoreboard, "Goal scoreboard"),
+  read(get_reflections, "Reflections"),
   read(get_goal_plan, "Goal plan"),
   read(get_typical_day, "Typical day"),
   write(add_goals, "Add goals"),

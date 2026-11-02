@@ -3390,6 +3390,12 @@ export type GoalPlanSchemaInput = {
    * What you won't give up on the way.
    */
   rules?: string | null;
+  /**
+   * Questions Per Day
+   *
+   * Questions to ask at random moments of the day; 0 is off.
+   */
+  questions_per_day?: number;
 };
 
 /**
@@ -3432,6 +3438,12 @@ export type GoalPlanSchemaOutput = {
    * What you won't give up on the way.
    */
   rules: string | null;
+  /**
+   * Questions Per Day
+   *
+   * Questions to ask at random moments of the day; 0 is off.
+   */
+  questions_per_day: number;
 };
 
 /**
@@ -6504,6 +6516,52 @@ export type RecurrenceSchema = {
    * Last day that may hold an occurrence (inclusive), YYYY-MM-DD.
    */
   until?: string | null;
+};
+
+/**
+ * ReflectionAnswer
+ */
+export type ReflectionAnswer = {
+  /**
+   * Answer
+   */
+  answer: string;
+};
+
+/**
+ * ReflectionSchema
+ */
+export type ReflectionSchema = {
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Question
+   */
+  question: string;
+  /**
+   * Asked At
+   */
+  asked_at: Date;
+  /**
+   * Context
+   *
+   * What the data showed for the hours before: apps used and minutes.
+   */
+  context: {
+    [key: string]: unknown;
+  };
+  /**
+   * Answer
+   */
+  answer: string | null;
+  /**
+   * Answered At
+   */
+  answered_at: Date | null;
 };
 
 /**
@@ -11388,6 +11446,76 @@ export type GetTypicalDayResponses = {
 
 export type GetTypicalDayResponse =
   GetTypicalDayResponses[keyof GetTypicalDayResponses];
+
+export type ListReflectionsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Unanswered
+     */
+    unanswered?: boolean;
+    /**
+     * Limit
+     */
+    limit?: number;
+  };
+  url: "/v1/goals/reflections";
+};
+
+export type ListReflectionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListReflectionsError =
+  ListReflectionsErrors[keyof ListReflectionsErrors];
+
+export type ListReflectionsResponses = {
+  /**
+   * Response List Reflections
+   *
+   * Successful Response
+   */
+  200: Array<ReflectionSchema>;
+};
+
+export type ListReflectionsResponse =
+  ListReflectionsResponses[keyof ListReflectionsResponses];
+
+export type AnswerReflectionData = {
+  body: ReflectionAnswer;
+  path: {
+    /**
+     * Reflection Id
+     */
+    reflection_id: string;
+  };
+  query?: never;
+  url: "/v1/goals/reflections/{reflection_id}";
+};
+
+export type AnswerReflectionErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type AnswerReflectionError =
+  AnswerReflectionErrors[keyof AnswerReflectionErrors];
+
+export type AnswerReflectionResponses = {
+  /**
+   * Successful Response
+   */
+  200: ReflectionSchema;
+};
+
+export type AnswerReflectionResponse =
+  AnswerReflectionResponses[keyof AnswerReflectionResponses];
 
 export type ListDevicesData = {
   body?: never;
