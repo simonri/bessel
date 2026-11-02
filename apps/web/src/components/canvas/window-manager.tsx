@@ -29,6 +29,7 @@ export type ModuleKey =
   | "travel"
   | "activity"
   | "sleep"
+  | "goals"
   | "timeline"
   | "googleTimeline"
   | "hyperliquid"

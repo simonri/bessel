@@ -14,6 +14,7 @@ import {
   Moon,
   Route,
   SquareTerminal,
+  Target,
   Thermometer,
   Timer,
   TrendingUp,
@@ -94,6 +95,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/activity").then((m) => ({
         default: m.Route.options.component as React.ComponentType,
+      })),
+    ),
+    ...COMPACT_SIZE,
+  },
+  goals: {
+    title: "Goals",
+    icon: Target,
+    component: lazy(() =>
+      import("@/components/goals/goals-page").then((m) => ({
+        default: m.GoalsPage,
       })),
     ),
     ...COMPACT_SIZE,
