@@ -5249,6 +5249,478 @@ export const EvidenceSchema = {
   title: "Evidence",
 } as const;
 
+export const GoalCheckinCreateSchema = {
+  properties: {
+    day: {
+      type: "string",
+      format: "date",
+      title: "Day",
+    },
+    value: {
+      type: "number",
+      maximum: 1000000000,
+      minimum: 0,
+      title: "Value",
+      default: 1,
+    },
+  },
+  type: "object",
+  required: ["day"],
+  title: "GoalCheckinCreate",
+} as const;
+
+export const GoalComparisonSchema = {
+  type: "string",
+  enum: ["at_least", "at_most"],
+  title: "GoalComparison",
+} as const;
+
+export const GoalCreateSchema = {
+  properties: {
+    title: {
+      type: "string",
+      maxLength: 200,
+      minLength: 1,
+      title: "Title",
+    },
+    metric: {
+      $ref: "#/components/schemas/GoalMetric",
+    },
+    params: {
+      $ref: "#/components/schemas/GoalParams",
+    },
+    target: {
+      type: "number",
+      maximum: 1000000000000,
+      minimum: 0,
+      title: "Target",
+    },
+    comparison: {
+      $ref: "#/components/schemas/GoalComparison",
+      default: "at_least",
+    },
+    period: {
+      $ref: "#/components/schemas/GoalPeriod",
+      default: "week",
+    },
+    deadline: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Deadline",
+    },
+    sensitivity: {
+      $ref: "#/components/schemas/GoalSensitivity",
+      default: "normal",
+    },
+    why: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 2000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Why",
+    },
+  },
+  type: "object",
+  required: ["title", "metric", "target"],
+  title: "GoalCreate",
+} as const;
+
+export const GoalMetricSchema = {
+  type: "string",
+  enum: [
+    "sleep_before",
+    "wake_before",
+    "gym_sessions",
+    "tasks_completed",
+    "people_met",
+    "net_worth",
+    "manual",
+  ],
+  title: "GoalMetric",
+  description:
+    "What a goal is measured by. All but `manual` come from data Bessel already has.",
+} as const;
+
+export const GoalParamsSchema = {
+  properties: {
+    time: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+          description: "Local time as HH:MM.",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Time",
+    },
+    project: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Project",
+    },
+    exclude_tags: {
+      items: {
+        type: "string",
+        maxLength: 50,
+      },
+      type: "array",
+      maxItems: 10,
+      title: "Exclude Tags",
+    },
+    currency: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 3,
+          minLength: 3,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Currency",
+    },
+    owner: {
+      type: "string",
+      enum: ["personal", "company", "all"],
+      title: "Owner",
+      default: "all",
+    },
+  },
+  type: "object",
+  title: "GoalParams",
+  description:
+    "What a metric needs: `time` for sleep_before and wake_before; `project` for tasks_completed; `exclude_tags` for\npeople_met; `currency` and `owner` for net_worth.",
+} as const;
+
+export const GoalPeriodSchema = {
+  type: "string",
+  enum: ["week", "month", "none"],
+  title: "GoalPeriod",
+} as const;
+
+export const GoalSchemaSchema = {
+  properties: {
+    created_at: {
+      type: "string",
+      format: "date-time",
+      title: "Created At",
+      description: "Creation timestamp of the object.",
+    },
+    modified_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Modified At",
+      description: "Last modification timestamp of the object.",
+    },
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    title: {
+      type: "string",
+      title: "Title",
+    },
+    metric: {
+      $ref: "#/components/schemas/GoalMetric",
+    },
+    params: {
+      additionalProperties: true,
+      type: "object",
+      title: "Params",
+    },
+    target: {
+      type: "number",
+      title: "Target",
+    },
+    comparison: {
+      $ref: "#/components/schemas/GoalComparison",
+    },
+    period: {
+      $ref: "#/components/schemas/GoalPeriod",
+    },
+    deadline: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Deadline",
+    },
+    sensitivity: {
+      $ref: "#/components/schemas/GoalSensitivity",
+    },
+    why: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Why",
+    },
+    position: {
+      type: "integer",
+      title: "Position",
+    },
+  },
+  type: "object",
+  required: [
+    "created_at",
+    "modified_at",
+    "id",
+    "title",
+    "metric",
+    "params",
+    "target",
+    "comparison",
+    "period",
+    "deadline",
+    "sensitivity",
+    "why",
+    "position",
+  ],
+  title: "GoalSchema",
+} as const;
+
+export const GoalScoreSchema = {
+  properties: {
+    goal: {
+      $ref: "#/components/schemas/GoalSchema",
+    },
+    unit: {
+      type: "string",
+      title: "Unit",
+      description: "What the value counts, e.g. 'nights', 'sessions', 'SEK'.",
+    },
+    current: {
+      $ref: "#/components/schemas/PeriodResult",
+      description:
+        "This week or month so far, or the level today for period 'none'.",
+    },
+    history: {
+      items: {
+        $ref: "#/components/schemas/PeriodResult",
+      },
+      type: "array",
+      title: "History",
+      description: "The finished periods before it, oldest first.",
+    },
+    streak: {
+      type: "integer",
+      title: "Streak",
+      description:
+        "Finished periods in a row that met the target, up to the current one.",
+    },
+    step: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Step",
+      description:
+        "The rung to aim for now when the target is still far off; None when the target itself is.",
+    },
+    step_met: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Step Met",
+      description: "Whether the current period has reached the step so far.",
+    },
+    measured: {
+      type: "boolean",
+      title: "Measured",
+      description:
+        "False when there is no data for this metric yet (e.g. no sleep synced).",
+    },
+  },
+  type: "object",
+  required: [
+    "goal",
+    "unit",
+    "current",
+    "history",
+    "streak",
+    "step",
+    "step_met",
+    "measured",
+  ],
+  title: "GoalScore",
+} as const;
+
+export const GoalScoreboardSchema = {
+  properties: {
+    today: {
+      type: "string",
+      format: "date",
+      title: "Today",
+    },
+    goals: {
+      items: {
+        $ref: "#/components/schemas/GoalScore",
+      },
+      type: "array",
+      title: "Goals",
+    },
+  },
+  type: "object",
+  required: ["today", "goals"],
+  title: "GoalScoreboard",
+} as const;
+
+export const GoalSensitivitySchema = {
+  type: "string",
+  enum: ["normal", "private"],
+  title: "GoalSensitivity",
+} as const;
+
+export const GoalUpdateSchema = {
+  properties: {
+    title: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 200,
+          minLength: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Title",
+    },
+    params: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/GoalParams",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    target: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 1000000000000,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Target",
+    },
+    comparison: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/GoalComparison",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    deadline: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Deadline",
+    },
+    sensitivity: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/GoalSensitivity",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    why: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 2000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Why",
+    },
+    position: {
+      anyOf: [
+        {
+          type: "integer",
+          maximum: 10000,
+          minimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Position",
+    },
+  },
+  type: "object",
+  title: "GoalUpdate",
+} as const;
+
 export const GoogleAuthorizeResponseSchema = {
   properties: {
     url: {
@@ -8610,6 +9082,35 @@ export const PaginationSchema = {
   type: "object",
   required: ["total_count", "max_page"],
   title: "Pagination",
+} as const;
+
+export const PeriodResultSchema = {
+  properties: {
+    start: {
+      type: "string",
+      format: "date",
+      title: "Start",
+    },
+    end: {
+      type: "string",
+      format: "date",
+      title: "End",
+      description: "The period's last day.",
+    },
+    value: {
+      type: "number",
+      title: "Value",
+    },
+    met: {
+      type: "boolean",
+      title: "Met",
+      description:
+        "Whether the value reached the target (for the current period: so far).",
+    },
+  },
+  type: "object",
+  required: ["start", "end", "value", "met"],
+  title: "PeriodResult",
 } as const;
 
 export const PlaceCreateSchema = {

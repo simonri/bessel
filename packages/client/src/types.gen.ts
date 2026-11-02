@@ -3231,6 +3231,284 @@ export type Evidence = {
 };
 
 /**
+ * GoalCheckinCreate
+ */
+export type GoalCheckinCreate = {
+  /**
+   * Day
+   */
+  day: Date;
+  /**
+   * Value
+   */
+  value?: number;
+};
+
+/**
+ * GoalComparison
+ */
+export const GoalComparison = {
+  AT_LEAST: "at_least",
+  AT_MOST: "at_most",
+} as const;
+
+/**
+ * GoalComparison
+ */
+export type GoalComparison =
+  (typeof GoalComparison)[keyof typeof GoalComparison];
+
+/**
+ * GoalCreate
+ */
+export type GoalCreate = {
+  /**
+   * Title
+   */
+  title: string;
+  metric: GoalMetric;
+  params?: GoalParams;
+  /**
+   * Target
+   */
+  target: number;
+  comparison?: GoalComparison;
+  period?: GoalPeriod;
+  /**
+   * Deadline
+   */
+  deadline?: Date | null;
+  sensitivity?: GoalSensitivity;
+  /**
+   * Why
+   */
+  why?: string | null;
+};
+
+/**
+ * GoalMetric
+ *
+ * What a goal is measured by. All but `manual` come from data Bessel already has.
+ */
+export const GoalMetric = {
+  SLEEP_BEFORE: "sleep_before",
+  WAKE_BEFORE: "wake_before",
+  GYM_SESSIONS: "gym_sessions",
+  TASKS_COMPLETED: "tasks_completed",
+  PEOPLE_MET: "people_met",
+  NET_WORTH: "net_worth",
+  MANUAL: "manual",
+} as const;
+
+/**
+ * GoalMetric
+ *
+ * What a goal is measured by. All but `manual` come from data Bessel already has.
+ */
+export type GoalMetric = (typeof GoalMetric)[keyof typeof GoalMetric];
+
+/**
+ * GoalParams
+ *
+ * What a metric needs: `time` for sleep_before and wake_before; `project` for tasks_completed; `exclude_tags` for
+ * people_met; `currency` and `owner` for net_worth.
+ */
+export type GoalParams = {
+  /**
+   * Time
+   */
+  time?: string | null;
+  /**
+   * Project
+   */
+  project?: string | null;
+  /**
+   * Exclude Tags
+   */
+  exclude_tags?: Array<string>;
+  /**
+   * Currency
+   */
+  currency?: string | null;
+  /**
+   * Owner
+   */
+  owner?: "personal" | "company" | "all";
+};
+
+/**
+ * GoalPeriod
+ */
+export const GoalPeriod = {
+  WEEK: "week",
+  MONTH: "month",
+  NONE: "none",
+} as const;
+
+/**
+ * GoalPeriod
+ */
+export type GoalPeriod = (typeof GoalPeriod)[keyof typeof GoalPeriod];
+
+/**
+ * GoalSchema
+ */
+export type GoalSchema = {
+  /**
+   * Created At
+   *
+   * Creation timestamp of the object.
+   */
+  created_at: Date;
+  /**
+   * Modified At
+   *
+   * Last modification timestamp of the object.
+   */
+  modified_at: Date | null;
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Title
+   */
+  title: string;
+  metric: GoalMetric;
+  /**
+   * Params
+   */
+  params: {
+    [key: string]: unknown;
+  };
+  /**
+   * Target
+   */
+  target: number;
+  comparison: GoalComparison;
+  period: GoalPeriod;
+  /**
+   * Deadline
+   */
+  deadline: Date | null;
+  sensitivity: GoalSensitivity;
+  /**
+   * Why
+   */
+  why: string | null;
+  /**
+   * Position
+   */
+  position: number;
+};
+
+/**
+ * GoalScore
+ */
+export type GoalScore = {
+  goal: GoalSchema;
+  /**
+   * Unit
+   *
+   * What the value counts, e.g. 'nights', 'sessions', 'SEK'.
+   */
+  unit: string;
+  /**
+   * This week or month so far, or the level today for period 'none'.
+   */
+  current: PeriodResult;
+  /**
+   * History
+   *
+   * The finished periods before it, oldest first.
+   */
+  history: Array<PeriodResult>;
+  /**
+   * Streak
+   *
+   * Finished periods in a row that met the target, up to the current one.
+   */
+  streak: number;
+  /**
+   * Step
+   *
+   * The rung to aim for now when the target is still far off; None when the target itself is.
+   */
+  step: number | null;
+  /**
+   * Step Met
+   *
+   * Whether the current period has reached the step so far.
+   */
+  step_met: boolean | null;
+  /**
+   * Measured
+   *
+   * False when there is no data for this metric yet (e.g. no sleep synced).
+   */
+  measured: boolean;
+};
+
+/**
+ * GoalScoreboard
+ */
+export type GoalScoreboard = {
+  /**
+   * Today
+   */
+  today: Date;
+  /**
+   * Goals
+   */
+  goals: Array<GoalScore>;
+};
+
+/**
+ * GoalSensitivity
+ */
+export const GoalSensitivity = {
+  NORMAL: "normal",
+  PRIVATE: "private",
+} as const;
+
+/**
+ * GoalSensitivity
+ */
+export type GoalSensitivity =
+  (typeof GoalSensitivity)[keyof typeof GoalSensitivity];
+
+/**
+ * GoalUpdate
+ */
+export type GoalUpdate = {
+  /**
+   * Title
+   */
+  title?: string | null;
+  params?: GoalParams | null;
+  /**
+   * Target
+   */
+  target?: number | null;
+  comparison?: GoalComparison | null;
+  /**
+   * Deadline
+   */
+  deadline?: Date | null;
+  sensitivity?: GoalSensitivity | null;
+  /**
+   * Why
+   */
+  why?: string | null;
+  /**
+   * Position
+   */
+  position?: number | null;
+};
+
+/**
  * GoogleAuthorizeResponse
  */
 export type GoogleAuthorizeResponse = {
@@ -5366,6 +5644,32 @@ export type Pagination = {
    * Max Page
    */
   max_page: number;
+};
+
+/**
+ * PeriodResult
+ */
+export type PeriodResult = {
+  /**
+   * Start
+   */
+  start: Date;
+  /**
+   * End
+   *
+   * The period's last day.
+   */
+  end: Date;
+  /**
+   * Value
+   */
+  value: number;
+  /**
+   * Met
+   *
+   * Whether the value reached the target (for the current period: so far).
+   */
+  met: boolean;
 };
 
 /**
@@ -10680,6 +10984,174 @@ export type UndoResetResponses = {
 };
 
 export type UndoResetResponse = UndoResetResponses[keyof UndoResetResponses];
+
+export type ListGoalsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/goals";
+};
+
+export type ListGoalsResponses = {
+  /**
+   * Response List Goals
+   *
+   * Successful Response
+   */
+  200: Array<GoalSchema>;
+};
+
+export type ListGoalsResponse = ListGoalsResponses[keyof ListGoalsResponses];
+
+export type CreateGoalData = {
+  body: GoalCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/goals";
+};
+
+export type CreateGoalErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateGoalError = CreateGoalErrors[keyof CreateGoalErrors];
+
+export type CreateGoalResponses = {
+  /**
+   * Successful Response
+   */
+  201: GoalSchema;
+};
+
+export type CreateGoalResponse = CreateGoalResponses[keyof CreateGoalResponses];
+
+export type GoalScoreboardData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Include Private
+     *
+     * Include goals marked private.
+     */
+    include_private?: boolean;
+  };
+  url: "/v1/goals/scoreboard";
+};
+
+export type GoalScoreboardErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GoalScoreboardError =
+  GoalScoreboardErrors[keyof GoalScoreboardErrors];
+
+export type GoalScoreboardResponses = {
+  /**
+   * Successful Response
+   */
+  200: GoalScoreboard;
+};
+
+export type GoalScoreboardResponse =
+  GoalScoreboardResponses[keyof GoalScoreboardResponses];
+
+export type DeleteGoalData = {
+  body?: never;
+  path: {
+    /**
+     * Goal Id
+     */
+    goal_id: string;
+  };
+  query?: never;
+  url: "/v1/goals/{goal_id}";
+};
+
+export type DeleteGoalErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteGoalError = DeleteGoalErrors[keyof DeleteGoalErrors];
+
+export type DeleteGoalResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteGoalResponse = DeleteGoalResponses[keyof DeleteGoalResponses];
+
+export type UpdateGoalData = {
+  body: GoalUpdate;
+  path: {
+    /**
+     * Goal Id
+     */
+    goal_id: string;
+  };
+  query?: never;
+  url: "/v1/goals/{goal_id}";
+};
+
+export type UpdateGoalErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateGoalError = UpdateGoalErrors[keyof UpdateGoalErrors];
+
+export type UpdateGoalResponses = {
+  /**
+   * Successful Response
+   */
+  200: GoalSchema;
+};
+
+export type UpdateGoalResponse = UpdateGoalResponses[keyof UpdateGoalResponses];
+
+export type CheckInGoalData = {
+  body: GoalCheckinCreate;
+  path: {
+    /**
+     * Goal Id
+     */
+    goal_id: string;
+  };
+  query?: never;
+  url: "/v1/goals/{goal_id}/checkins";
+};
+
+export type CheckInGoalErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CheckInGoalError = CheckInGoalErrors[keyof CheckInGoalErrors];
+
+export type CheckInGoalResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type CheckInGoalResponse =
+  CheckInGoalResponses[keyof CheckInGoalResponses];
 
 export type ListDevicesData = {
   body?: never;

@@ -955,6 +955,112 @@ enum API {
         var note: String?
     }
 
+    struct GoalCheckinCreate: Codable, Hashable {
+        var day: Date
+        var value: Double = 1
+    }
+
+    enum GoalComparison: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case atLeast = "at_least"
+        case atMost = "at_most"
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [GoalComparison] = [.atLeast, .atMost]
+    }
+
+    struct GoalCreate: Codable, Hashable {
+        var title: String
+        var metric: GoalMetric
+        var params: GoalParams?
+        var target: Double
+        var comparison: GoalComparison = .atLeast
+        var period: GoalPeriod = .week
+        var deadline: Date?
+        var sensitivity: GoalSensitivity = .normal
+        var why: String?
+    }
+
+    enum GoalMetric: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case sleepBefore = "sleep_before"
+        case wakeBefore = "wake_before"
+        case gymSessions = "gym_sessions"
+        case tasksCompleted = "tasks_completed"
+        case peopleMet = "people_met"
+        case netWorth = "net_worth"
+        case manual
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [GoalMetric] = [.sleepBefore, .wakeBefore, .gymSessions, .tasksCompleted, .peopleMet, .netWorth, .manual]
+    }
+
+    struct GoalParams: Codable, Hashable {
+        var time: String?
+        var project: String?
+        var excludeTags: [String] = []
+        var currency: String?
+        var owner: String = "all"
+    }
+
+    enum GoalPeriod: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case week
+        case month
+        case none
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [GoalPeriod] = [.week, .month, .none]
+    }
+
+    struct GoalSchema: Codable, Hashable {
+        var createdAt: Date
+        var modifiedAt: Date?
+        var id: UUID
+        var title: String
+        var metric: GoalMetric
+        var params: [String: JSONValue]
+        var target: Double
+        var comparison: GoalComparison
+        var period: GoalPeriod
+        var deadline: Date?
+        var sensitivity: GoalSensitivity
+        var why: String?
+        var position: Int
+    }
+
+    struct GoalScore: Codable, Hashable {
+        var goal: GoalSchema
+        var unit: String
+        var current: PeriodResult
+        @Lossy var history: [PeriodResult]
+        var streak: Int
+        var step: Double?
+        var stepMet: Bool?
+        var measured: Bool
+    }
+
+    struct GoalScoreboard: Codable, Hashable {
+        var today: Date
+        @Lossy var goals: [GoalScore]
+    }
+
+    enum GoalSensitivity: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case normal
+        case `private`
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [GoalSensitivity] = [.normal, .`private`]
+    }
+
+    struct GoalUpdate: Encodable, Hashable {
+        var title: String??
+        var params: GoalParams??
+        var target: Double??
+        var comparison: GoalComparison??
+        var deadline: Date??
+        var sensitivity: GoalSensitivity??
+        var why: String??
+        var position: Int??
+    }
+
     struct GoogleAuthorizeResponse: Codable, Hashable {
         var url: String
     }
@@ -1564,6 +1670,13 @@ enum API {
     struct Pagination: Codable, Hashable {
         var totalCount: Int
         var maxPage: Int
+    }
+
+    struct PeriodResult: Codable, Hashable {
+        var start: Date
+        var end: Date
+        var value: Double
+        var met: Bool
     }
 
     struct PlaceCreate: Codable, Hashable {
@@ -5875,6 +5988,283 @@ extension API.Evidence {
     }
 }
 
+extension API.GoalCheckinCreate {
+    private enum DecodingKeys: String, CodingKey {
+        case day
+        case value
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.day = try container.decode(Date.self, forKey: .day)
+        self.value = try container.decodeIfPresent(Double.self, forKey: .value) ?? 1
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case day
+        case value
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(API.Day(self.day), forKey: .day)
+        try container.encode(self.value, forKey: .value)
+    }
+}
+
+extension API.GoalCreate {
+    private enum DecodingKeys: String, CodingKey {
+        case title
+        case metric
+        case params
+        case target
+        case comparison
+        case period
+        case deadline
+        case sensitivity
+        case why
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.title = try container.decode(String.self, forKey: .title)
+        self.metric = try container.decode(API.GoalMetric.self, forKey: .metric)
+        self.params = try container.decodeIfPresent(API.GoalParams.self, forKey: .params)
+        self.target = try container.decode(Double.self, forKey: .target)
+        self.comparison = try container.decodeIfPresent(API.GoalComparison.self, forKey: .comparison) ?? .atLeast
+        self.period = try container.decodeIfPresent(API.GoalPeriod.self, forKey: .period) ?? .week
+        self.deadline = try container.decodeIfPresent(Date.self, forKey: .deadline)
+        self.sensitivity = try container.decodeIfPresent(API.GoalSensitivity.self, forKey: .sensitivity) ?? .normal
+        self.why = try container.decodeIfPresent(String.self, forKey: .why)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case title
+        case metric
+        case params
+        case target
+        case comparison
+        case period
+        case deadline
+        case sensitivity
+        case why
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.title, forKey: .title)
+        try container.encode(self.metric, forKey: .metric)
+        try container.encodeIfPresent(self.params, forKey: .params)
+        try container.encode(self.target, forKey: .target)
+        try container.encode(self.comparison, forKey: .comparison)
+        try container.encode(self.period, forKey: .period)
+        try container.encodeIfPresent(self.deadline.map(API.Day.init), forKey: .deadline)
+        try container.encode(self.sensitivity, forKey: .sensitivity)
+        try container.encodeIfPresent(self.why, forKey: .why)
+    }
+}
+
+extension API.GoalParams {
+    private enum DecodingKeys: String, CodingKey {
+        case time
+        case project
+        case excludeTags
+        case currency
+        case owner
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.time = try container.decodeIfPresent(String.self, forKey: .time)
+        self.project = try container.decodeIfPresent(String.self, forKey: .project)
+        self.excludeTags = try container.decodeIfPresent([String].self, forKey: .excludeTags) ?? []
+        self.currency = try container.decodeIfPresent(String.self, forKey: .currency)
+        self.owner = try container.decodeIfPresent(String.self, forKey: .owner) ?? "all"
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case time
+        case project
+        case excludeTags = "exclude_tags"
+        case currency
+        case owner
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.time, forKey: .time)
+        try container.encodeIfPresent(self.project, forKey: .project)
+        try container.encode(self.excludeTags, forKey: .excludeTags)
+        try container.encodeIfPresent(self.currency, forKey: .currency)
+        try container.encode(self.owner, forKey: .owner)
+    }
+}
+
+extension API.GoalSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case createdAt
+        case modifiedAt
+        case id
+        case title
+        case metric
+        case params
+        case target
+        case comparison
+        case period
+        case deadline
+        case sensitivity
+        case why
+        case position
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.createdAt = try container.decode(Date.self, forKey: .createdAt)
+        self.modifiedAt = try container.decodeIfPresent(Date.self, forKey: .modifiedAt)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.title = try container.decode(String.self, forKey: .title)
+        self.metric = try container.decode(API.GoalMetric.self, forKey: .metric)
+        self.params = try container.decode([String: API.JSONValue].self, forKey: .params)
+        self.target = try container.decode(Double.self, forKey: .target)
+        self.comparison = try container.decode(API.GoalComparison.self, forKey: .comparison)
+        self.period = try container.decode(API.GoalPeriod.self, forKey: .period)
+        self.deadline = try container.decodeIfPresent(Date.self, forKey: .deadline)
+        self.sensitivity = try container.decode(API.GoalSensitivity.self, forKey: .sensitivity)
+        self.why = try container.decodeIfPresent(String.self, forKey: .why)
+        self.position = try container.decode(Int.self, forKey: .position)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case createdAt = "created_at"
+        case modifiedAt = "modified_at"
+        case id
+        case title
+        case metric
+        case params
+        case target
+        case comparison
+        case period
+        case deadline
+        case sensitivity
+        case why
+        case position
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(API.Instant(self.createdAt), forKey: .createdAt)
+        try container.encodeIfPresent(self.modifiedAt.map(API.Instant.init), forKey: .modifiedAt)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.title, forKey: .title)
+        try container.encode(self.metric, forKey: .metric)
+        try container.encode(self.params, forKey: .params)
+        try container.encode(self.target, forKey: .target)
+        try container.encode(self.comparison, forKey: .comparison)
+        try container.encode(self.period, forKey: .period)
+        try container.encodeIfPresent(self.deadline.map(API.Day.init), forKey: .deadline)
+        try container.encode(self.sensitivity, forKey: .sensitivity)
+        try container.encodeIfPresent(self.why, forKey: .why)
+        try container.encode(self.position, forKey: .position)
+    }
+}
+
+extension API.GoalScore {
+    private enum DecodingKeys: String, CodingKey {
+        case goal
+        case unit
+        case current
+        case history
+        case streak
+        case step
+        case stepMet
+        case measured
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.goal = try container.decode(API.GoalSchema.self, forKey: .goal)
+        self.unit = try container.decode(String.self, forKey: .unit)
+        self.current = try container.decode(API.PeriodResult.self, forKey: .current)
+        self._history = try container.decode(Lossy<API.PeriodResult>.self, forKey: .history)
+        self.streak = try container.decode(Int.self, forKey: .streak)
+        self.step = try container.decodeIfPresent(Double.self, forKey: .step)
+        self.stepMet = try container.decodeIfPresent(Bool.self, forKey: .stepMet)
+        self.measured = try container.decode(Bool.self, forKey: .measured)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case goal
+        case unit
+        case current
+        case history
+        case streak
+        case step
+        case stepMet = "step_met"
+        case measured
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.goal, forKey: .goal)
+        try container.encode(self.unit, forKey: .unit)
+        try container.encode(self.current, forKey: .current)
+        try container.encode(self.history, forKey: .history)
+        try container.encode(self.streak, forKey: .streak)
+        try container.encodeIfPresent(self.step, forKey: .step)
+        try container.encodeIfPresent(self.stepMet, forKey: .stepMet)
+        try container.encode(self.measured, forKey: .measured)
+    }
+}
+
+extension API.GoalScoreboard {
+    private enum DecodingKeys: String, CodingKey {
+        case today
+        case goals
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.today = try container.decode(Date.self, forKey: .today)
+        self._goals = try container.decode(Lossy<API.GoalScore>.self, forKey: .goals)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case today
+        case goals
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(API.Day(self.today), forKey: .today)
+        try container.encode(self.goals, forKey: .goals)
+    }
+}
+
+extension API.GoalUpdate {
+    private enum EncodingKeys: String, CodingKey {
+        case title
+        case params
+        case target
+        case comparison
+        case deadline
+        case sensitivity
+        case why
+        case position
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.title { try container.encode(value, forKey: .title) }
+        if let value = self.params { try container.encode(value, forKey: .params) }
+        if let value = self.target { try container.encode(value, forKey: .target) }
+        if let value = self.comparison { try container.encode(value, forKey: .comparison) }
+        if let value = self.deadline { try container.encode(value.map(API.Day.init), forKey: .deadline) }
+        if let value = self.sensitivity { try container.encode(value, forKey: .sensitivity) }
+        if let value = self.why { try container.encode(value, forKey: .why) }
+        if let value = self.position { try container.encode(value, forKey: .position) }
+    }
+}
+
 extension API.GoogleAuthorizeResponse {
     private enum DecodingKeys: String, CodingKey {
         case url
@@ -8331,6 +8721,38 @@ extension API.Pagination {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.totalCount, forKey: .totalCount)
         try container.encode(self.maxPage, forKey: .maxPage)
+    }
+}
+
+extension API.PeriodResult {
+    private enum DecodingKeys: String, CodingKey {
+        case start
+        case end
+        case value
+        case met
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.start = try container.decode(Date.self, forKey: .start)
+        self.end = try container.decode(Date.self, forKey: .end)
+        self.value = try container.decode(Double.self, forKey: .value)
+        self.met = try container.decode(Bool.self, forKey: .met)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case start
+        case end
+        case value
+        case met
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(API.Day(self.start), forKey: .start)
+        try container.encode(API.Day(self.end), forKey: .end)
+        try container.encode(self.value, forKey: .value)
+        try container.encode(self.met, forKey: .met)
     }
 }
 

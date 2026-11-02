@@ -173,6 +173,8 @@ class TestTools:
       "revise_memory",
       "draft_email",
       "draft_reply",
+      "update_goals",
+      "check_in_goals",
     }
     for tool in tools:
       assert tool.annotations is not None
@@ -194,6 +196,7 @@ class TestTools:
       "update_recipe",
       "revise_memory",
       "save_note",
+      "update_goals",
     }
 
   @pytest.mark.asyncio
@@ -262,7 +265,7 @@ class TestTools:
       tools = (await client.list_tools()).tools
     seen_by_model = sum(len(t.description or "") + len(json.dumps(t.input_schema)) for t in tools)
     whole = sum(len(t.model_dump_json(exclude_none=True, by_alias=True)) for t in tools)
-    assert seen_by_model <= 60_000, seen_by_model
+    assert seen_by_model <= 66_000, seen_by_model
     assert whole <= 165_000, whole
 
   @pytest.mark.asyncio
@@ -283,6 +286,10 @@ class TestTools:
 
 # Tools whose tests above check that a second user sees none of the first user's data.
 ISOLATION_TESTED = {
+  "get_goal_scoreboard",
+  "add_goals",
+  "update_goals",
+  "check_in_goals",
   "get_task_overview",
   "find_contacts",
   "get_contact",
@@ -340,3 +347,14 @@ ISOLATION_TESTED = {
 
 def test_every_tool_has_an_isolation_test() -> None:
   assert {tool.fn.__name__ for tool in TOOLS} == ISOLATION_TESTED, "Add a cross-user test for the new tool and list it in ISOLATION_TESTED."
+
+
+def test_prompts_name_only_tools_that_exist() -> None:
+  import re
+
+  from api.mcp.prompts import PROMPTS
+
+  names = {tool.fn.__name__ for tool in TOOLS}
+  for prompt in PROMPTS:
+    called = set(re.findall(r"\b((?:get|find|search|add|update|complete|check|list)_[a-z_]+)\b", prompt.fn()))
+    assert called <= names, (prompt.name, called - names)

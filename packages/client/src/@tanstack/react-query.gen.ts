@@ -17,6 +17,7 @@ import {
   authorizeMontrose,
   bulkUpdateTransactions,
   categorizeByDescription,
+  checkInGoal,
   completeBankConnection,
   completeGoogleConnect,
   completeMontrose,
@@ -28,6 +29,7 @@ import {
   createCategoryRule,
   createContact,
   createCounter,
+  createGoal,
   createIngestToken,
   createNotification,
   createPlace,
@@ -44,6 +46,7 @@ import {
   deleteContactInteraction,
   deleteCounter,
   deleteDevice,
+  deleteGoal,
   deleteGymExercise,
   deleteGymTopSet,
   deletePlace,
@@ -95,6 +98,7 @@ import {
   getTimeSummary,
   getTransactionSummary,
   getWeatherForecast,
+  goalScoreboard,
   healthz,
   importAvanza,
   importKlarnaTransactions,
@@ -118,6 +122,7 @@ import {
   listContactSources,
   listCounters,
   listDevices,
+  listGoals,
   listGymExercises,
   listGymTopSets,
   listHealthkitSleep,
@@ -176,6 +181,7 @@ import {
   updateContactTags,
   updateCounter,
   updateDevice,
+  updateGoal,
   updateMe,
   updatePlace,
   updateProject,
@@ -209,6 +215,9 @@ import type {
   CategorizeByDescriptionData,
   CategorizeByDescriptionError,
   CategorizeByDescriptionResponse,
+  CheckInGoalData,
+  CheckInGoalError,
+  CheckInGoalResponse,
   CompleteBankConnectionData,
   CompleteBankConnectionError,
   CompleteBankConnectionResponse,
@@ -242,6 +251,9 @@ import type {
   CreateCounterData,
   CreateCounterError,
   CreateCounterResponse,
+  CreateGoalData,
+  CreateGoalError,
+  CreateGoalResponse,
   CreateIngestTokenData,
   CreateIngestTokenError,
   CreateIngestTokenResponse,
@@ -290,6 +302,9 @@ import type {
   DeleteDeviceData,
   DeleteDeviceError,
   DeleteDeviceResponse,
+  DeleteGoalData,
+  DeleteGoalError,
+  DeleteGoalResponse,
   DeleteGymExerciseData,
   DeleteGymExerciseError,
   DeleteGymExerciseResponse,
@@ -427,6 +442,9 @@ import type {
   GetWeatherForecastData,
   GetWeatherForecastError,
   GetWeatherForecastResponse,
+  GoalScoreboardData,
+  GoalScoreboardError,
+  GoalScoreboardResponse,
   HealthzData,
   ImportAvanzaData,
   ImportAvanzaError,
@@ -485,6 +503,8 @@ import type {
   ListCountersResponse,
   ListDevicesData,
   ListDevicesResponse,
+  ListGoalsData,
+  ListGoalsResponse,
   ListGymExercisesData,
   ListGymExercisesResponse,
   ListGymTopSetsData,
@@ -644,6 +664,9 @@ import type {
   UpdateDeviceData,
   UpdateDeviceError,
   UpdateDeviceResponse,
+  UpdateGoalData,
+  UpdateGoalError,
+  UpdateGoalResponse,
   UpdateMeData,
   UpdateMeError,
   UpdateMeResponse,
@@ -3181,6 +3204,166 @@ export const undoResetMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await undoReset({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listGoalsQueryKey = (options?: Options<ListGoalsData>) =>
+  createQueryKey("listGoals", options);
+
+/**
+ * List Goals
+ */
+export const listGoalsOptions = (options?: Options<ListGoalsData>) =>
+  queryOptions<
+    ListGoalsResponse,
+    DefaultError,
+    ListGoalsResponse,
+    ReturnType<typeof listGoalsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listGoals({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listGoalsQueryKey(options),
+  });
+
+/**
+ * Create Goal
+ */
+export const createGoalMutation = (
+  options?: Partial<Options<CreateGoalData>>,
+): UseMutationOptions<
+  CreateGoalResponse,
+  CreateGoalError,
+  Options<CreateGoalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateGoalResponse,
+    CreateGoalError,
+    Options<CreateGoalData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createGoal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const goalScoreboardQueryKey = (options?: Options<GoalScoreboardData>) =>
+  createQueryKey("goalScoreboard", options);
+
+/**
+ * Goal Scoreboard
+ *
+ * Each goal measured for this week or month so far and the periods before it, from the user's own data.
+ */
+export const goalScoreboardOptions = (options?: Options<GoalScoreboardData>) =>
+  queryOptions<
+    GoalScoreboardResponse,
+    GoalScoreboardError,
+    GoalScoreboardResponse,
+    ReturnType<typeof goalScoreboardQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await goalScoreboard({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: goalScoreboardQueryKey(options),
+  });
+
+/**
+ * Delete Goal
+ */
+export const deleteGoalMutation = (
+  options?: Partial<Options<DeleteGoalData>>,
+): UseMutationOptions<
+  DeleteGoalResponse,
+  DeleteGoalError,
+  Options<DeleteGoalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteGoalResponse,
+    DeleteGoalError,
+    Options<DeleteGoalData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteGoal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Goal
+ */
+export const updateGoalMutation = (
+  options?: Partial<Options<UpdateGoalData>>,
+): UseMutationOptions<
+  UpdateGoalResponse,
+  UpdateGoalError,
+  Options<UpdateGoalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateGoalResponse,
+    UpdateGoalError,
+    Options<UpdateGoalData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateGoal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Check In Goal
+ */
+export const checkInGoalMutation = (
+  options?: Partial<Options<CheckInGoalData>>,
+): UseMutationOptions<
+  CheckInGoalResponse,
+  CheckInGoalError,
+  Options<CheckInGoalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CheckInGoalResponse,
+    CheckInGoalError,
+    Options<CheckInGoalData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await checkInGoal({
         ...options,
         ...fnOptions,
         throwOnError: true,
