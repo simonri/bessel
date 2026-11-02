@@ -22,6 +22,7 @@ import {
   createCategoryRuleResponseTransformer,
   createContactResponseTransformer,
   createCounterResponseTransformer,
+  createGoalResponseTransformer,
   createIngestTokenResponseTransformer,
   createNotificationResponseTransformer,
   createPlaceResponseTransformer,
@@ -48,6 +49,7 @@ import {
   getRecipeResponseTransformer,
   getTaskResponseTransformer,
   getWeatherForecastResponseTransformer,
+  goalScoreboardResponseTransformer,
   importAvanzaResponseTransformer,
   importLocationHistoryResponseTransformer,
   linkAvanzaAccountResponseTransformer,
@@ -66,6 +68,7 @@ import {
   listContactsResponseTransformer,
   listCountersResponseTransformer,
   listDevicesResponseTransformer,
+  listGoalsResponseTransformer,
   listGymExercisesResponseTransformer,
   listGymTopSetsResponseTransformer,
   listHealthkitSleepResponseTransformer,
@@ -102,6 +105,7 @@ import {
   updateContactTagsResponseTransformer,
   updateCounterResponseTransformer,
   updateDeviceResponseTransformer,
+  updateGoalResponseTransformer,
   updatePlaceResponseTransformer,
   updateProjectResponseTransformer,
   updateRecipeResponseTransformer,
@@ -133,6 +137,9 @@ import type {
   CategorizeByDescriptionData,
   CategorizeByDescriptionErrors,
   CategorizeByDescriptionResponses,
+  CheckInGoalData,
+  CheckInGoalErrors,
+  CheckInGoalResponses,
   CompleteBankConnectionData,
   CompleteBankConnectionErrors,
   CompleteBankConnectionResponses,
@@ -166,6 +173,9 @@ import type {
   CreateCounterData,
   CreateCounterErrors,
   CreateCounterResponses,
+  CreateGoalData,
+  CreateGoalErrors,
+  CreateGoalResponses,
   CreateIngestTokenData,
   CreateIngestTokenErrors,
   CreateIngestTokenResponses,
@@ -214,6 +224,9 @@ import type {
   DeleteDeviceData,
   DeleteDeviceErrors,
   DeleteDeviceResponses,
+  DeleteGoalData,
+  DeleteGoalErrors,
+  DeleteGoalResponses,
   DeleteGymExerciseData,
   DeleteGymExerciseErrors,
   DeleteGymExerciseResponses,
@@ -355,6 +368,9 @@ import type {
   GetWeatherForecastData,
   GetWeatherForecastErrors,
   GetWeatherForecastResponses,
+  GoalScoreboardData,
+  GoalScoreboardErrors,
+  GoalScoreboardResponses,
   HealthzData,
   HealthzResponses,
   ImportAvanzaData,
@@ -414,6 +430,8 @@ import type {
   ListCountersResponses,
   ListDevicesData,
   ListDevicesResponses,
+  ListGoalsData,
+  ListGoalsResponses,
   ListGymExercisesData,
   ListGymExercisesResponses,
   ListGymTopSetsData,
@@ -577,6 +595,9 @@ import type {
   UpdateDeviceData,
   UpdateDeviceErrors,
   UpdateDeviceResponses,
+  UpdateGoalData,
+  UpdateGoalErrors,
+  UpdateGoalResponses,
   UpdateMeData,
   UpdateMeErrors,
   UpdateMeResponses,
@@ -2321,6 +2342,116 @@ export const undoReset = <ThrowOnError extends boolean = false>(
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/counters/{counter_id}/resets/{reset_id}",
     ...options,
+  });
+
+/**
+ * List Goals
+ */
+export const listGoals = <ThrowOnError extends boolean = false>(
+  options?: Options<ListGoalsData, ThrowOnError>,
+): RequestResult<ListGoalsResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<ListGoalsResponses, unknown, ThrowOnError>({
+    responseTransformer: listGoalsResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals",
+    ...options,
+  });
+
+/**
+ * Create Goal
+ */
+export const createGoal = <ThrowOnError extends boolean = false>(
+  options: Options<CreateGoalData, ThrowOnError>,
+): RequestResult<CreateGoalResponses, CreateGoalErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CreateGoalResponses,
+    CreateGoalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createGoalResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Goal Scoreboard
+ *
+ * Each goal measured for this week or month so far and the periods before it, from the user's own data.
+ */
+export const goalScoreboard = <ThrowOnError extends boolean = false>(
+  options?: Options<GoalScoreboardData, ThrowOnError>,
+): RequestResult<GoalScoreboardResponses, GoalScoreboardErrors, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GoalScoreboardResponses,
+    GoalScoreboardErrors,
+    ThrowOnError
+  >({
+    responseTransformer: goalScoreboardResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals/scoreboard",
+    ...options,
+  });
+
+/**
+ * Delete Goal
+ */
+export const deleteGoal = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteGoalData, ThrowOnError>,
+): RequestResult<DeleteGoalResponses, DeleteGoalErrors, ThrowOnError> =>
+  (options.client ?? client).delete<
+    DeleteGoalResponses,
+    DeleteGoalErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals/{goal_id}",
+    ...options,
+  });
+
+/**
+ * Update Goal
+ */
+export const updateGoal = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateGoalData, ThrowOnError>,
+): RequestResult<UpdateGoalResponses, UpdateGoalErrors, ThrowOnError> =>
+  (options.client ?? client).patch<
+    UpdateGoalResponses,
+    UpdateGoalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateGoalResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals/{goal_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Check In Goal
+ */
+export const checkInGoal = <ThrowOnError extends boolean = false>(
+  options: Options<CheckInGoalData, ThrowOnError>,
+): RequestResult<CheckInGoalResponses, CheckInGoalErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CheckInGoalResponses,
+    CheckInGoalErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals/{goal_id}/checkins",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**

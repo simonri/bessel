@@ -14,6 +14,7 @@ from api.counters.endpoints import router as counters_router
 from api.devices.endpoints import router as devices_router
 from api.diagnostics.endpoints import router as diagnostics_router
 from api.documents.endpoints import router as documents_router
+from api.goals.endpoints import router as goals_router
 from api.gym.endpoints import router as gym_router
 from api.healthkit.endpoints import router as healthkit_router
 from api.ingest_tokens.endpoints import router as ingest_tokens_router
@@ -52,6 +53,7 @@ router.include_router(contacts_router)
 router.include_router(open_banking_router)
 router.include_router(categories_router)
 router.include_router(counters_router)
+router.include_router(goals_router)
 router.include_router(devices_router)
 router.include_router(diagnostics_router)
 router.include_router(gym_router)

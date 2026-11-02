@@ -135,6 +135,12 @@ AUDITED: set[str] = {
   "POST /v1/notifications",
   "POST /v1/notifications/read-all",
   "POST /v1/notifications/{notification_id}/read",
+  "GET /v1/goals",
+  "GET /v1/goals/scoreboard",
+  "POST /v1/goals",
+  "PATCH /v1/goals/{goal_id}",
+  "DELETE /v1/goals/{goal_id}",
+  "POST /v1/goals/{goal_id}/checkins",
   "GET /v1/places",
   "POST /v1/places",
   "DELETE /v1/places/{place_id}",
@@ -308,6 +314,20 @@ class TestProjects:
 
 
 class TestPlaces:
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_see_or_change_goals(self, client: AsyncClient, other_client: AsyncClient) -> None:
+    goal = await _create(client, "/v1/goals", {"title": "A's private goal", "metric": "manual", "target": 3, "sensitivity": "private"})
+    await client.post(f"/v1/goals/{goal['id']}/checkins", json={"day": "2026-11-02"})
+
+    assert (await other_client.get("/v1/goals")).json() == []
+    assert (await other_client.get("/v1/goals/scoreboard")).json()["goals"] == []
+    assert (await other_client.patch(f"/v1/goals/{goal['id']}", json={"title": "pwned"})).status_code == 404
+    assert (await other_client.post(f"/v1/goals/{goal['id']}/checkins", json={"day": "2026-11-02"})).status_code == 404
+    assert (await other_client.delete(f"/v1/goals/{goal['id']}")).status_code == 404
+
+    [mine] = (await client.get("/v1/goals/scoreboard")).json()["goals"]
+    assert (mine["goal"]["title"], mine["current"]["value"] >= 0) == ("A's private goal", True)
+
   @pytest.mark.asyncio
   async def test_saving_a_place_says_nothing_about_who_else_saved_it(self, client: AsyncClient, other_client: AsyncClient) -> None:
     # It was unique across users: the second to save a clinic got a 500, learning someone else had.

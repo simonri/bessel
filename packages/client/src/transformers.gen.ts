@@ -13,6 +13,7 @@ import type {
   CreateCategoryRuleResponse,
   CreateContactResponse,
   CreateCounterResponse,
+  CreateGoalResponse,
   CreateIngestTokenResponse,
   CreateNotificationResponse,
   CreatePlaceResponse,
@@ -39,6 +40,7 @@ import type {
   GetRecipeResponse,
   GetTaskResponse,
   GetWeatherForecastResponse,
+  GoalScoreboardResponse,
   ImportAvanzaResponse,
   ImportLocationHistoryResponse,
   LinkAvanzaAccountResponse,
@@ -57,6 +59,7 @@ import type {
   ListContactsResponse,
   ListCountersResponse,
   ListDevicesResponse,
+  ListGoalsResponse,
   ListGymExercisesResponse,
   ListGymTopSetsResponse,
   ListHealthkitSleepResponse,
@@ -93,6 +96,7 @@ import type {
   UpdateContactTagsResponse,
   UpdateCounterResponse,
   UpdateDeviceResponse,
+  UpdateGoalResponse,
   UpdatePlaceResponse,
   UpdateProjectResponse,
   UpdateRecipeResponse,
@@ -835,6 +839,68 @@ export const createResetResponseTransformer = async (
   data: any,
 ): Promise<CreateResetResponse> => {
   data = counterResetSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+const goalSchemaSchemaResponseTransformer = (data: any) => {
+  data.created_at = new Date(data.created_at);
+  if (data.modified_at) {
+    data.modified_at = new Date(data.modified_at);
+  }
+  if (data.deadline) {
+    data.deadline = new Date(data.deadline);
+  }
+  return data;
+};
+
+export const listGoalsResponseTransformer = async (
+  data: any,
+): Promise<ListGoalsResponse> => {
+  data = data.map((item: any) => goalSchemaSchemaResponseTransformer(item));
+  return data;
+};
+
+export const createGoalResponseTransformer = async (
+  data: any,
+): Promise<CreateGoalResponse> => {
+  data = goalSchemaSchemaResponseTransformer(data);
+  return data;
+};
+
+const periodResultSchemaResponseTransformer = (data: any) => {
+  data.start = new Date(data.start);
+  data.end = new Date(data.end);
+  return data;
+};
+
+const goalScoreSchemaResponseTransformer = (data: any) => {
+  data.goal = goalSchemaSchemaResponseTransformer(data.goal);
+  data.current = periodResultSchemaResponseTransformer(data.current);
+  data.history = data.history.map((item: any) =>
+    periodResultSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const goalScoreboardSchemaResponseTransformer = (data: any) => {
+  data.today = new Date(data.today);
+  data.goals = data.goals.map((item: any) =>
+    goalScoreSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const goalScoreboardResponseTransformer = async (
+  data: any,
+): Promise<GoalScoreboardResponse> => {
+  data = goalScoreboardSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateGoalResponseTransformer = async (
+  data: any,
+): Promise<UpdateGoalResponse> => {
+  data = goalSchemaSchemaResponseTransformer(data);
   return data;
 };
 
