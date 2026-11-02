@@ -286,6 +286,8 @@ class TestTools:
 
 # Tools whose tests above check that a second user sees none of the first user's data.
 ISOLATION_TESTED = {
+  "get_goal_plan",
+  "get_typical_day",
   "get_goal_scoreboard",
   "add_goals",
   "update_goals",

@@ -3351,6 +3351,90 @@ export const GoalPeriod = {
 export type GoalPeriod = (typeof GoalPeriod)[keyof typeof GoalPeriod];
 
 /**
+ * GoalPlanSchema
+ */
+export type GoalPlanSchemaInput = {
+  /**
+   * Vision
+   *
+   * The life you're building toward.
+   */
+  vision?: string | null;
+  /**
+   * Anti Vision
+   *
+   * The life you refuse to end up in.
+   */
+  anti_vision?: string | null;
+  /**
+   * Identity
+   *
+   * I am the type of person who ...
+   */
+  identity?: string | null;
+  /**
+   * One Year
+   *
+   * What has to be true in a year.
+   */
+  one_year?: string | null;
+  /**
+   * One Month
+   *
+   * This month's project.
+   */
+  one_month?: string | null;
+  /**
+   * Rules
+   *
+   * What you won't give up on the way.
+   */
+  rules?: string | null;
+};
+
+/**
+ * GoalPlanSchema
+ */
+export type GoalPlanSchemaOutput = {
+  /**
+   * Vision
+   *
+   * The life you're building toward.
+   */
+  vision: string | null;
+  /**
+   * Anti Vision
+   *
+   * The life you refuse to end up in.
+   */
+  anti_vision: string | null;
+  /**
+   * Identity
+   *
+   * I am the type of person who ...
+   */
+  identity: string | null;
+  /**
+   * One Year
+   *
+   * What has to be true in a year.
+   */
+  one_year: string | null;
+  /**
+   * One Month
+   *
+   * This month's project.
+   */
+  one_month: string | null;
+  /**
+   * Rules
+   *
+   * What you won't give up on the way.
+   */
+  rules: string | null;
+};
+
+/**
  * GoalSchema
  */
 export type GoalSchema = {
@@ -7921,6 +8005,78 @@ export type TransactionUpdateResponse = {
 };
 
 /**
+ * TypicalDay
+ */
+export type TypicalDay = {
+  /**
+   * Weekday
+   *
+   * 0 is Monday.
+   */
+  weekday: number;
+  /**
+   * Weeks
+   *
+   * How many weeks back it is read from.
+   */
+  weeks: number;
+  /**
+   * Days
+   *
+   * Days of that weekday with any data.
+   */
+  days: number;
+  /**
+   * Wake
+   *
+   * Median time woken, HH:MM.
+   */
+  wake: string | null;
+  /**
+   * Asleep
+   *
+   * Median time the night that began that day started, HH:MM.
+   */
+  asleep: string | null;
+  /**
+   * Computer From
+   *
+   * Median first use of the computer, HH:MM.
+   */
+  computer_from: string | null;
+  /**
+   * Computer Until
+   *
+   * Median last use, counted into the night after, HH:MM.
+   */
+  computer_until: string | null;
+  /**
+   * Computer Hours
+   *
+   * Median hours at the computer.
+   */
+  computer_hours: number | null;
+  /**
+   * Tasks Completed
+   *
+   * Average tasks completed.
+   */
+  tasks_completed: number;
+  /**
+   * Gym Share
+   *
+   * Share of those days with a gym session, 0-1.
+   */
+  gym_share: number;
+  /**
+   * Steps
+   *
+   * Median steps.
+   */
+  steps: number | null;
+};
+
+/**
  * ValidationError
  */
 export type ValidationError = {
@@ -11152,6 +11308,86 @@ export type CheckInGoalResponses = {
 
 export type CheckInGoalResponse =
   CheckInGoalResponses[keyof CheckInGoalResponses];
+
+export type GetGoalPlanData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/goals/plan";
+};
+
+export type GetGoalPlanResponses = {
+  /**
+   * Successful Response
+   */
+  200: GoalPlanSchemaOutput;
+};
+
+export type GetGoalPlanResponse =
+  GetGoalPlanResponses[keyof GetGoalPlanResponses];
+
+export type SaveGoalPlanData = {
+  body: GoalPlanSchemaInput;
+  path?: never;
+  query?: never;
+  url: "/v1/goals/plan";
+};
+
+export type SaveGoalPlanErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SaveGoalPlanError = SaveGoalPlanErrors[keyof SaveGoalPlanErrors];
+
+export type SaveGoalPlanResponses = {
+  /**
+   * Successful Response
+   */
+  200: GoalPlanSchemaOutput;
+};
+
+export type SaveGoalPlanResponse =
+  SaveGoalPlanResponses[keyof SaveGoalPlanResponses];
+
+export type GetTypicalDayData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Weekday
+     *
+     * 0 is Monday.
+     */
+    weekday: number;
+    /**
+     * Weeks
+     */
+    weeks?: number;
+  };
+  url: "/v1/goals/typical-day";
+};
+
+export type GetTypicalDayErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTypicalDayError = GetTypicalDayErrors[keyof GetTypicalDayErrors];
+
+export type GetTypicalDayResponses = {
+  /**
+   * Successful Response
+   */
+  200: TypicalDay;
+};
+
+export type GetTypicalDayResponse =
+  GetTypicalDayResponses[keyof GetTypicalDayResponses];
 
 export type ListDevicesData = {
   body?: never;

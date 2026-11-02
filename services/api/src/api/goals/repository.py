@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin, RepositoryUserMixin
 from api.models.contact import Contact, ContactInteraction, ContactInteractionKind
-from api.models.goal import Goal, GoalCheckin
+from api.models.goal import Goal, GoalCheckin, GoalPlan
 
 
 class GoalRepository(RepositoryBase[Goal], RepositoryIDMixin[Goal, UUID], RepositoryUserMixin[Goal]):
@@ -42,3 +42,10 @@ class GoalCheckinRepository(RepositoryBase[GoalCheckin], RepositoryIDMixin[GoalC
       )
     )
     return [(day, list(tags or [])) for day, tags in (await self.session.execute(statement)).all()]
+
+
+class GoalPlanRepository(RepositoryBase[GoalPlan], RepositoryIDMixin[GoalPlan, UUID]):
+  model = GoalPlan
+
+  async def get_for_user(self, user_id: UUID) -> GoalPlan | None:
+    return await self.get_one_or_none(self.get_base_statement().where(GoalPlan.user_id == user_id, GoalPlan.deleted_at.is_(None)))

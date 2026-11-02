@@ -9,13 +9,15 @@ from pydantic import Field
 
 from api.common.schemas import Schema
 from api.exceptions import ResourceNotFound
-from api.goals.repository import GoalCheckinRepository, GoalRepository
-from api.goals.schemas import GoalCreate, GoalSchema, GoalScoreboard
+from api.goals.repository import GoalCheckinRepository, GoalPlanRepository, GoalRepository
+from api.goals.schemas import GoalCreate, GoalPlanSchema, GoalSchema, GoalScoreboard, TypicalDay
 from api.goals.service import goal_service
+from api.goals.typical import typical_day
 from api.mcp.context import user_session
 from api.mcp.dates import Day, TimezoneParam, parse_day, resolve_timezone, today_in
 from api.mcp.tools.common import ToolSpec, read, write
 from api.models.goal import Goal, GoalCheckin, GoalMetric
+from api.patterns.service import PatternsService
 
 MAX_GOALS = 50
 MAX_BATCH = 20
@@ -123,8 +125,34 @@ async def check_in_goals(
     return CheckedIn(checked_in=len(check_ins))
 
 
+async def get_goal_plan(ctx: Context) -> GoalPlanSchema:
+  """The user's own words for where they're headed: vision, anti-vision (the life they refuse), the identity they're
+  growing into ("I am the type of person who..."), the one-year and one-month aims, and their rules. Measure their
+  days against it and quote it back; never rewrite it for them: it only works in their words."""
+  async with user_session(ctx) as (session, user):
+    plan = await GoalPlanRepository.from_session(session).get_for_user(user.id)
+    return GoalPlanSchema.model_validate(plan) if plan else GoalPlanSchema()
+
+
+async def get_typical_day(
+  ctx: Context,
+  weekday: Annotated[int, Field(ge=0, le=6, description="0 is Monday.")],
+  weeks: Annotated[int, Field(ge=2, le=26)] = 6,
+  timezone: TimezoneParam = None,
+) -> TypicalDay:
+  """What that weekday has actually looked like lately, from the user's data: when they woke and fell asleep, first
+  and last use of the computer and hours at it, tasks done, gym and steps. Set it beside their plan to show where
+  their days are heading, without judging it for them."""
+  async with user_session(ctx) as (session, user):
+    zone = resolve_timezone(user, timezone)
+    data = await PatternsService().load(session, user.id, zone, today_in(zone), weeks * 7 + 1)
+  return typical_day(data, weekday, weeks)
+
+
 TOOLS: list[ToolSpec] = [
   read(get_goal_scoreboard, "Goal scoreboard"),
+  read(get_goal_plan, "Goal plan"),
+  read(get_typical_day, "Typical day"),
   write(add_goals, "Add goals"),
   write(update_goals, "Update goals", overwrites=True),
   write(check_in_goals, "Check in goals"),

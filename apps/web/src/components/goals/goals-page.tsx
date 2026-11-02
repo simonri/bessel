@@ -31,6 +31,7 @@ import {
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { dayParam } from "@/routes/_app/-google-timeline-utils";
+import { GoalPlanSection } from "./goal-plan";
 import {
   EMPTY_DRAFT,
   type GoalDraft,
@@ -383,6 +384,7 @@ export function GoalsPage() {
           ))}
         </div>
       )}
+      <GoalPlanSection />
       <AddGoalDialog open={adding} onOpenChange={setAdding} />
     </div>
   );

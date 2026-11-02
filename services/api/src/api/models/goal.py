@@ -74,3 +74,21 @@ class GoalCheckin(RecordModel):
   goal_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("goals.id", ondelete="CASCADE"), nullable=False, index=True)
   day: Mapped[date] = mapped_column(Date, nullable=False)
   value: Mapped[float] = mapped_column(Float, nullable=False, default=1)
+
+
+class GoalPlan(RecordModel):
+  """The user's own words for where they're headed: one per user, written by them, never by an assistant."""
+
+  __tablename__ = "goal_plans"
+
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, unique=True)
+  # The life they're building toward.
+  vision: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # The life they refuse to end up in.
+  anti_vision: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # "I am the type of person who ..."
+  identity: Mapped[str | None] = mapped_column(Text, nullable=True)
+  one_year: Mapped[str | None] = mapped_column(Text, nullable=True)
+  one_month: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # What they won't give up on the way.
+  rules: Mapped[str | None] = mapped_column(Text, nullable=True)

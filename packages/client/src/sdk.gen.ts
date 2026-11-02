@@ -312,6 +312,8 @@ import type {
   GetDailySleepData,
   GetDailySleepErrors,
   GetDailySleepResponses,
+  GetGoalPlanData,
+  GetGoalPlanResponses,
   GetHealthSummaryData,
   GetHealthSummaryErrors,
   GetHealthSummaryResponses,
@@ -365,6 +367,9 @@ import type {
   GetTransactionSummaryData,
   GetTransactionSummaryErrors,
   GetTransactionSummaryResponses,
+  GetTypicalDayData,
+  GetTypicalDayErrors,
+  GetTypicalDayResponses,
   GetWeatherForecastData,
   GetWeatherForecastErrors,
   GetWeatherForecastResponses,
@@ -522,6 +527,9 @@ import type {
   RevokeIngestTokenData,
   RevokeIngestTokenErrors,
   RevokeIngestTokenResponses,
+  SaveGoalPlanData,
+  SaveGoalPlanErrors,
+  SaveGoalPlanResponses,
   SearchEverythingData,
   SearchEverythingErrors,
   SearchEverythingResponses,
@@ -2452,6 +2460,59 @@ export const checkInGoal = <ThrowOnError extends boolean = false>(
       "Content-Type": "application/json",
       ...options.headers,
     },
+  });
+
+/**
+ * Get Goal Plan
+ */
+export const getGoalPlan = <ThrowOnError extends boolean = false>(
+  options?: Options<GetGoalPlanData, ThrowOnError>,
+): RequestResult<GetGoalPlanResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<GetGoalPlanResponses, unknown, ThrowOnError>({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals/plan",
+    ...options,
+  });
+
+/**
+ * Save Goal Plan
+ *
+ * The user's own words; empty fields clear.
+ */
+export const saveGoalPlan = <ThrowOnError extends boolean = false>(
+  options: Options<SaveGoalPlanData, ThrowOnError>,
+): RequestResult<SaveGoalPlanResponses, SaveGoalPlanErrors, ThrowOnError> =>
+  (options.client ?? client).put<
+    SaveGoalPlanResponses,
+    SaveGoalPlanErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals/plan",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Typical Day
+ *
+ * What that weekday has looked like over the last weeks, from the user's data: when they woke and slept, their
+ * time at the computer, tasks done, gym and steps.
+ */
+export const getTypicalDay = <ThrowOnError extends boolean = false>(
+  options: Options<GetTypicalDayData, ThrowOnError>,
+): RequestResult<GetTypicalDayResponses, GetTypicalDayErrors, ThrowOnError> =>
+  (options.client ?? client).get<
+    GetTypicalDayResponses,
+    GetTypicalDayErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/goals/typical-day",
+    ...options,
   });
 
 /**

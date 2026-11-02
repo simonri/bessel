@@ -102,3 +102,29 @@ class GoalScore(Schema):
 class GoalScoreboard(Schema):
   today: date
   goals: list[GoalScore]
+
+
+PlanText = Annotated[str | None, Field(default=None, max_length=5000)]
+
+
+class GoalPlanSchema(Schema):
+  vision: PlanText = Field(default=None, description="The life you're building toward.")
+  anti_vision: PlanText = Field(default=None, description="The life you refuse to end up in.")
+  identity: PlanText = Field(default=None, description="I am the type of person who ...")
+  one_year: PlanText = Field(default=None, description="What has to be true in a year.")
+  one_month: PlanText = Field(default=None, description="This month's project.")
+  rules: PlanText = Field(default=None, description="What you won't give up on the way.")
+
+
+class TypicalDay(Schema):
+  weekday: int = Field(description="0 is Monday.")
+  weeks: int = Field(description="How many weeks back it is read from.")
+  days: int = Field(description="Days of that weekday with any data.")
+  wake: str | None = Field(description="Median time woken, HH:MM.")
+  asleep: str | None = Field(description="Median time the night that began that day started, HH:MM.")
+  computer_from: str | None = Field(description="Median first use of the computer, HH:MM.")
+  computer_until: str | None = Field(description="Median last use, counted into the night after, HH:MM.")
+  computer_hours: float | None = Field(description="Median hours at the computer.")
+  tasks_completed: float = Field(description="Average tasks completed.")
+  gym_share: float = Field(description="Share of those days with a gym session, 0-1.")
+  steps: int | None = Field(description="Median steps.")
