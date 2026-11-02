@@ -491,12 +491,16 @@ class TestSync:
     await open_banking_service.sync(session_maker, connection.id)
     await open_banking_service.sync(session_maker, connection.id)
 
-    assert await _transactions(session, bank_account) == [
-      (day, 9900, TransactionDirection.debit, "Kortköp ICA KVANTUM"),
-      (day, 9900, TransactionDirection.debit, "ICA KVANTUM SÖDER"),
-      (day, 9900, TransactionDirection.credit, "Swish från Anna"),
-      (date(2026, 10, 16), 9900, TransactionDirection.debit, "ICA KVANTUM SÖDER"),
-    ]
+    # Same day and amount: the database may return them in any order.
+    assert sorted(await _transactions(session, bank_account), key=str) == sorted(
+      [
+        (day, 9900, TransactionDirection.debit, "Kortköp ICA KVANTUM"),
+        (day, 9900, TransactionDirection.debit, "ICA KVANTUM SÖDER"),
+        (day, 9900, TransactionDirection.credit, "Swish från Anna"),
+        (date(2026, 10, 16), 9900, TransactionDirection.debit, "ICA KVANTUM SÖDER"),
+      ],
+      key=str,
+    )
 
   @pytest.mark.asyncio
   async def test_switchover_day_counts_only_hand_imported_rows_against_late_bookings(
