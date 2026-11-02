@@ -59,7 +59,11 @@ function useRefresh() {
 
 function History({ score }: { score: GoalScore }) {
   return (
-    <div className="flex items-center gap-1" aria-label="Earlier periods">
+    <div
+      role="img"
+      className="flex items-center gap-1"
+      aria-label="Earlier periods: filled when the target was met"
+    >
       {score.history.map((period) => (
         <span
           key={String(period.start)}

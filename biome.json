@@ -44,7 +44,7 @@
         "noLabelWithoutControl": {
           "level": "error",
           "options": {
-            "inputComponents": ["Checkbox"]
+            "inputComponents": ["Checkbox", "TextInput"]
           }
         }
       },
