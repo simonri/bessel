@@ -20,6 +20,8 @@ class GoalParams(Schema):
   owner: Literal["personal", "company", "all"] = "all"
 
 
+LEVEL_METRICS = frozenset({GoalMetric.net_worth, GoalMetric.body_weight, GoalMetric.body_fat})
+
 _NEEDS: dict[GoalMetric, tuple[str, ...]] = {
   GoalMetric.sleep_before: ("time",),
   GoalMetric.wake_before: ("time",),
@@ -43,8 +45,8 @@ class GoalFields(Schema):
     missing = [name for name in _NEEDS.get(self.metric, ()) if getattr(self.params, name) is None]
     if missing:
       raise ValueError(f"{self.metric.value} needs params.{', params.'.join(missing)}")
-    if self.metric == GoalMetric.net_worth and self.period != GoalPeriod.none:
-      raise ValueError("net_worth is a level to reach: use period 'none'")
+    if self.metric in LEVEL_METRICS and self.period != GoalPeriod.none:
+      raise ValueError(f"{self.metric.value} is a level to reach: use period 'none'")
     return self
 
 

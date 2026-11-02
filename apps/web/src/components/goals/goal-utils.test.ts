@@ -109,6 +109,16 @@ describe("toGoalCreate", () => {
       period: "none",
       params: { currency: "SEK", owner: "company" },
     });
+    // A weight is a level too, with no currency.
+    expect(
+      toGoalCreate({
+        ...EMPTY_DRAFT,
+        title: "Weight",
+        metric: "body_weight",
+        target: "77",
+        atMost: true,
+      }),
+    ).toMatchObject({ period: "none", comparison: "at_most", params: {} });
   });
 
   it("says what's missing instead of sending it", () => {

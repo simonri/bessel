@@ -987,10 +987,12 @@ enum API {
         case tasksCompleted = "tasks_completed"
         case peopleMet = "people_met"
         case netWorth = "net_worth"
+        case bodyWeight = "body_weight"
+        case bodyFat = "body_fat"
         case manual
         /// A value added on the server after this build.
         case unknown
-        static let allCases: [GoalMetric] = [.sleepBefore, .wakeBefore, .gymSessions, .tasksCompleted, .peopleMet, .netWorth, .manual]
+        static let allCases: [GoalMetric] = [.sleepBefore, .wakeBefore, .gymSessions, .tasksCompleted, .peopleMet, .netWorth, .bodyWeight, .bodyFat, .manual]
     }
 
     struct GoalParams: Codable, Hashable {
@@ -1175,6 +1177,8 @@ enum API {
         var exerciseMinutes: Double?
         var restingHeartRate: Double?
         var hrvMs: Double?
+        var bodyMassKg: Double?
+        var bodyFatPct: Double?
     }
 
     struct HealthKitDailyMetricsSyncRequest: Codable, Hashable {
@@ -6736,6 +6740,8 @@ extension API.HealthKitDailyMetricUpload {
         case exerciseMinutes
         case restingHeartRate
         case hrvMs
+        case bodyMassKg
+        case bodyFatPct
     }
 
     init(from decoder: Decoder) throws {
@@ -6746,6 +6752,8 @@ extension API.HealthKitDailyMetricUpload {
         self.exerciseMinutes = try container.decodeIfPresent(Double.self, forKey: .exerciseMinutes)
         self.restingHeartRate = try container.decodeIfPresent(Double.self, forKey: .restingHeartRate)
         self.hrvMs = try container.decodeIfPresent(Double.self, forKey: .hrvMs)
+        self.bodyMassKg = try container.decodeIfPresent(Double.self, forKey: .bodyMassKg)
+        self.bodyFatPct = try container.decodeIfPresent(Double.self, forKey: .bodyFatPct)
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -6755,6 +6763,8 @@ extension API.HealthKitDailyMetricUpload {
         case exerciseMinutes = "exercise_minutes"
         case restingHeartRate = "resting_heart_rate"
         case hrvMs = "hrv_ms"
+        case bodyMassKg = "body_mass_kg"
+        case bodyFatPct = "body_fat_pct"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -6765,6 +6775,8 @@ extension API.HealthKitDailyMetricUpload {
         try container.encodeIfPresent(self.exerciseMinutes, forKey: .exerciseMinutes)
         try container.encodeIfPresent(self.restingHeartRate, forKey: .restingHeartRate)
         try container.encodeIfPresent(self.hrvMs, forKey: .hrvMs)
+        try container.encodeIfPresent(self.bodyMassKg, forKey: .bodyMassKg)
+        try container.encodeIfPresent(self.bodyFatPct, forKey: .bodyFatPct)
     }
 }
 

@@ -5346,6 +5346,8 @@ export const GoalMetricSchema = {
     "tasks_completed",
     "people_met",
     "net_worth",
+    "body_weight",
+    "body_fat",
     "manual",
   ],
   title: "GoalMetric",
@@ -6386,6 +6388,34 @@ export const HealthKitDailyMetricUploadSchema = {
       ],
       title: "Hrv Ms",
       description: "Heart rate variability (SDNN), milliseconds.",
+    },
+    body_mass_kg: {
+      anyOf: [
+        {
+          type: "number",
+          maximum: 700,
+          exclusiveMinimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Body Mass Kg",
+      description: "Average weight that day, kilograms.",
+    },
+    body_fat_pct: {
+      anyOf: [
+        {
+          type: "number",
+          exclusiveMaximum: 100,
+          exclusiveMinimum: 0,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Body Fat Pct",
+      description: "Average body fat that day, percent.",
     },
   },
   type: "object",

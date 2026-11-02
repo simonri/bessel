@@ -21,6 +21,8 @@ UNITS = {
   GoalMetric.tasks_completed: "tasks",
   GoalMetric.people_met: "days",
   GoalMetric.manual: "",
+  GoalMetric.body_weight: "kg",
+  GoalMetric.body_fat: "%",
 }
 
 
@@ -44,6 +46,8 @@ class ScoreData:
   checkins: dict[object, list[tuple[date, float]]] = field(default_factory=dict)
   # project name (lowercase) -> id
   projects: dict[str, object] = field(default_factory=dict)
+  # (day, kg, %) from Apple Health, oldest first; either may be missing on a day.
+  body: list[tuple[date, float | None, float | None]] = field(default_factory=list)
 
 
 def _anchored(clock: str, anchor_hour: int) -> int:
@@ -97,8 +101,16 @@ def _measured(goal: GoalSchema, data: ScoreData) -> bool:
       return bool(data.met)
     case GoalMetric.net_worth:
       return any(currency == goal.params["currency"].upper() for _, currency in data.net_worth)
+    case GoalMetric.body_weight | GoalMetric.body_fat:
+      return _latest_body(goal, data) is not None
     case _:
       return True
+
+
+def _latest_body(goal: GoalSchema, data: ScoreData) -> float | None:
+  index = 1 if goal.metric == GoalMetric.body_weight else 2
+  values = [row[index] for row in data.body if row[index] is not None]
+  return values[-1] if values else None
 
 
 def _met(goal: GoalSchema, value: float, *, finished: bool, target: float | None = None) -> bool:
@@ -128,6 +140,8 @@ def score(goal: GoalSchema, data: ScoreData) -> GoalScore:
     if goal.metric == GoalMetric.net_worth:
       owner, currency = goal.params.get("owner", "all"), goal.params["currency"].upper()
       value = sum(v for (o, c), v in data.net_worth.items() if c == currency and owner in ("all", o)) / 100
+    elif goal.metric in (GoalMetric.body_weight, GoalMetric.body_fat):
+      value = _latest_body(goal, data) or 0.0
     else:
       value = _counter(goal, data)(date.min, data.today)
     current = PeriodResult(start=data.today, end=goal.deadline or data.today, value=value, met=_met(goal, value, finished=True))

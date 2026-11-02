@@ -35,11 +35,28 @@ export const METRICS: { value: Metric; label: string; hint: string }[] = [
     hint: "Cash and investments minus debt in one currency: a level to reach.",
   },
   {
+    value: "body_weight",
+    label: "Weight",
+    hint: "Your latest weigh-in this month, from Apple Health: a level to reach.",
+  },
+  {
+    value: "body_fat",
+    label: "Body fat",
+    hint: "Your latest body fat percent this month, from Apple Health: a level to reach.",
+  },
+  {
     value: "manual",
     label: "Check in yourself",
     hint: "Anything else: you check in when you do it.",
   },
 ];
+
+/** Metrics measured as where you are now, not as a count per week or month. */
+export function isLevel(metric: Metric): boolean {
+  return (
+    metric === "net_worth" || metric === "body_weight" || metric === "body_fat"
+  );
+}
 
 const PERIOD_WORD: Record<GoalScore["goal"]["period"], string> = {
   week: "this week",
@@ -119,7 +136,7 @@ export function toGoalCreate(draft: GoalDraft): GoalCreate | string {
   const target = Number(draft.target);
   if (!title) return "Give it a name.";
   if (!Number.isFinite(target) || target < 0) return "The target is a number.";
-  const level = draft.metric === "net_worth";
+  const level = isLevel(draft.metric);
   const params: NonNullable<GoalCreate["params"]> = {};
   if (draft.metric === "sleep_before" || draft.metric === "wake_before") {
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(draft.time))
@@ -134,7 +151,7 @@ export function toGoalCreate(draft: GoalDraft): GoalCreate | string {
       .map((tag) => tag.trim())
       .filter(Boolean);
   }
-  if (level) {
+  if (draft.metric === "net_worth") {
     if (!/^[A-Za-z]{3}$/.test(draft.currency))
       return "The currency is a three-letter code.";
     params.currency = draft.currency.toUpperCase();

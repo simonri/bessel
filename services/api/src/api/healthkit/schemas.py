@@ -148,6 +148,8 @@ class HealthKitDailyMetricUpload(Schema):
   exercise_minutes: float | None = Field(default=None, ge=0, le=1440)
   resting_heart_rate: float | None = Field(default=None, gt=0, le=250, description="Beats per minute.")
   hrv_ms: float | None = Field(default=None, gt=0, le=500, description="Heart rate variability (SDNN), milliseconds.")
+  body_mass_kg: float | None = Field(default=None, gt=0, le=700, description="Average weight that day, kilograms.")
+  body_fat_pct: float | None = Field(default=None, gt=0, lt=100, description="Average body fat that day, percent.")
 
 
 class HealthKitDailyMetricsSyncRequest(Schema):
