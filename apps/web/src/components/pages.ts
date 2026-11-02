@@ -94,6 +94,9 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   },
 };
 
+/** Dispatched with a page key as `detail` to switch to that page, e.g. from a notification. */
+export const OPEN_PAGE_EVENT = "bessel:open-page";
+
 /** Shown as top-level sidebar items. */
 export const PRIMARY_PAGES: PageKey[] = [
   "today",

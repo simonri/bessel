@@ -12,7 +12,12 @@ import { ShowCanvasContext } from "@/components/claude-sessions/show-canvas-cont
 import { MobileNavDrawer } from "@/components/mobile-nav-drawer";
 import { NewSessionPage } from "@/components/new-session-page";
 import { OpenPageContext } from "@/components/open-page-context";
-import { isPageKey, PAGE_REGISTRY, type PageKey } from "@/components/pages";
+import {
+  isPageKey,
+  OPEN_PAGE_EVENT,
+  PAGE_REGISTRY,
+  type PageKey,
+} from "@/components/pages";
 import { SettingsDialogProvider } from "@/components/settings-dialog";
 import { ShortcutsDialog } from "@/components/shortcuts-dialog";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
@@ -152,6 +157,16 @@ export function AppShell() {
   );
   const showCanvas = useCallback(() => selectPage("canvas"), [selectPage]);
   useHiddenPageFallback(activePage, setActivePage);
+
+  // A notification (such as a question asked during the day) can open a page.
+  useEffect(() => {
+    const open = (event: Event) => {
+      const page = (event as CustomEvent<string>).detail;
+      if (isPageKey(page)) selectPage(page);
+    };
+    window.addEventListener(OPEN_PAGE_EVENT, open);
+    return () => window.removeEventListener(OPEN_PAGE_EVENT, open);
+  }, [selectPage]);
 
   useEffect(() => {
     userStorage.setItem(ACTIVE_PAGE_KEY, activePage);

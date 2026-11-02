@@ -92,6 +92,12 @@ vi.mock("@bessel/client", async (importOriginal) => ({
     }),
   }),
   saveGoalPlanMutation: () => ({ mutationFn: async () => ({}) }),
+  listReflectionsQueryKey: () => ["reflections"],
+  listReflectionsOptions: () => ({
+    queryKey: ["reflections"],
+    queryFn: async () => [],
+  }),
+  answerReflectionMutation: () => ({ mutationFn: async () => undefined }),
 }));
 
 const { GoalsPage } = await import("./goals-page");
