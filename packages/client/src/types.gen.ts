@@ -3297,6 +3297,8 @@ export const GoalMetric = {
   TASKS_COMPLETED: "tasks_completed",
   PEOPLE_MET: "people_met",
   NET_WORTH: "net_worth",
+  BODY_WEIGHT: "body_weight",
+  BODY_FAT: "body_fat",
   MANUAL: "manual",
 } as const;
 
@@ -3917,6 +3919,18 @@ export type HealthKitDailyMetricUpload = {
    * Heart rate variability (SDNN), milliseconds.
    */
   hrv_ms?: number | null;
+  /**
+   * Body Mass Kg
+   *
+   * Average weight that day, kilograms.
+   */
+  body_mass_kg?: number | null;
+  /**
+   * Body Fat Pct
+   *
+   * Average body fat that day, percent.
+   */
+  body_fat_pct?: number | null;
 };
 
 /**

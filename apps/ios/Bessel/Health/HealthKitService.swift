@@ -29,6 +29,8 @@ final class HealthKitService {
         HKQuantityType(.appleExerciseTime),
         HKQuantityType(.restingHeartRate),
         HKQuantityType(.heartRateVariabilitySDNN),
+        HKQuantityType(.bodyMass),
+        HKQuantityType(.bodyFatPercentage),
     ]
 
     /// Shows the permission sheet for any type not asked about yet, so people
@@ -46,9 +48,13 @@ final class HealthKitService {
         async let exercise = dailyValues(.appleExerciseTime, .cumulativeSum, unit: .minute(), in: days)
         async let resting = dailyValues(.restingHeartRate, .discreteAverage, unit: .count().unitDivided(by: .minute()), in: days)
         async let hrv = dailyValues(.heartRateVariabilitySDNN, .discreteAverage, unit: .secondUnit(with: .milli), in: days)
+        async let mass = dailyValues(.bodyMass, .discreteAverage, unit: .gramUnit(with: .kilo), in: days)
+        async let fat = dailyValues(.bodyFatPercentage, .discreteAverage, unit: .percent(), in: days)
         let (stepsByDay, energyByDay, exerciseByDay, restingByDay, hrvByDay) = try await (steps, energy, exercise, resting, hrv)
+        let (massByDay, fatByDay) = try await (mass, fat)
 
         let dates = Set(stepsByDay.keys).union(energyByDay.keys).union(exerciseByDay.keys).union(restingByDay.keys).union(hrvByDay.keys)
+            .union(massByDay.keys).union(fatByDay.keys)
         return dates.sorted().map { day in
             HealthKitDailyMetricUpload(
                 date: day,
@@ -56,7 +62,10 @@ final class HealthKitService {
                 activeEnergyKcal: energyByDay[day],
                 exerciseMinutes: exerciseByDay[day],
                 restingHeartRate: restingByDay[day],
-                hrvMs: hrvByDay[day]
+                hrvMs: hrvByDay[day],
+                bodyMassKg: massByDay[day],
+                // HealthKit's percent unit is a fraction.
+                bodyFatPct: fatByDay[day].map { $0 * 100 }
             )
         }
     }

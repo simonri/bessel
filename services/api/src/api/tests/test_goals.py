@@ -95,6 +95,15 @@ class TestScoring:
     assert (company.current.value, company.current.met, company.unit) == (3_000_000, False, "SEK")
     assert (everything.current.value, everything.current.met) == (3_500_000, True)
 
+  def test_body_goals_read_the_latest_weigh_in_of_their_own_kind(self) -> None:
+    body = [(date(2026, 10, 20), 81.0, 18.0), (date(2026, 10, 30), 79.5, None), (date(2026, 11, 3), None, 16.5)]
+    weight = score(goal(GoalMetric.body_weight, 77, comparison=GoalComparison.at_most, period=GoalPeriod.none), ScoreData(today=TODAY, body=body))
+    fat = score(goal(GoalMetric.body_fat, 17, comparison=GoalComparison.at_most, period=GoalPeriod.none), ScoreData(today=TODAY, body=body))
+    assert (weight.current.value, weight.current.met, weight.unit, weight.measured) == (79.5, False, "kg", True)
+    assert (fat.current.value, fat.current.met, fat.unit) == (16.5, True, "%")
+    unweighed = score(goal(GoalMetric.body_fat, 17, period=GoalPeriod.none), ScoreData(today=TODAY, body=[(date(2026, 11, 3), 79.0, None)]))
+    assert unweighed.measured is False
+
   def test_monthly_goals_look_back_six_months(self) -> None:
     result = score(goal(GoalMetric.gym_sessions, 12, period=GoalPeriod.month), ScoreData(today=TODAY, strength_days={date(2026, 10, 5)}))
     assert (result.current.start, result.history[-1].start, len(result.history)) == (date(2026, 11, 1), date(2026, 10, 1), 6)
@@ -126,6 +135,24 @@ class TestGoalEndpoints:
     assert (await client.post("/v1/goals", json={"title": "Money", "metric": "net_worth", "target": 1, "params": {"currency": "SEK"}})).status_code == 422
     ok = {"title": "Money", "metric": "net_worth", "target": 1, "params": {"currency": "SEK"}, "period": "none"}
     assert (await client.post("/v1/goals", json=ok)).status_code == 201
+
+  @pytest.mark.asyncio
+  async def test_a_weight_goal_reads_this_months_weigh_ins(self, client: AsyncClient) -> None:
+    assert (await client.post("/v1/goals", json={"title": "Weight", "metric": "body_weight", "target": 77})).status_code == 422
+    created = await client.post("/v1/goals", json={"title": "Weight", "metric": "body_weight", "target": 77, "comparison": "at_most", "period": "none"})
+    assert created.status_code == 201
+
+    recent, old = date.today() - timedelta(days=2), date.today() - timedelta(days=40)
+    await client.post("/v1/goals", json={"title": "Fat", "metric": "body_fat", "target": 15, "comparison": "at_most", "period": "none"})
+    days = [{"date": str(old), "body_mass_kg": 76.0, "body_fat_pct": 14.0}, {"date": str(recent), "steps": 5000, "body_mass_kg": 78.4}]
+    await client.post("/v1/healthkit/daily-metrics/sync", json={"days": days})
+    # A build that doesn't read weight sends the same day again without it.
+    await client.post("/v1/healthkit/daily-metrics/sync", json={"days": [{"date": str(recent), "steps": 9000}]})
+
+    weight, fat = (await client.get("/v1/goals/scoreboard")).json()["goals"]
+    assert (weight["current"]["value"], weight["current"]["met"], weight["unit"]) == (78.4, False, "kg")
+    # The only body fat reading is over a month old: it says nothing about now.
+    assert fat["measured"] is False
 
   @pytest.mark.asyncio
   async def test_private_goals_stay_out_unless_asked_for(self, client: AsyncClient) -> None:

@@ -25,6 +25,9 @@ class GoalMetric(StrEnum):
   people_met = "people_met"
   # Net worth (cash + investments - debt) in `currency`, for `owner` personal, company or all.
   net_worth = "net_worth"
+  # The latest weight (kg) or body fat (%) from Apple Health within the last month: a level, like net worth.
+  body_weight = "body_weight"
+  body_fat = "body_fat"
   # What the user checks in themselves.
   manual = "manual"
 

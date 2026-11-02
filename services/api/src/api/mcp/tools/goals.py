@@ -57,7 +57,8 @@ async def add_goals(ctx: Context, goals: Annotated[list[GoalCreate], Field(min_l
 
   Metrics: sleep_before / wake_before (params.time), gym_sessions, tasks_completed (params.project optional),
   people_met (days with a "met" interaction logged; params.exclude_tags e.g. ["family"]), net_worth (params.currency,
-  params.owner personal/company/all; period none: a level to reach by `deadline`), and manual for anything else
+  params.owner personal/company/all; period none: a level to reach by `deadline`), body_weight (kg) and body_fat (%) from Apple Health (period none, the latest
+  weigh-in of the last 30 days; comparison at_most to get down to it), and manual for anything else
   (the user checks in with check_in_goals). comparison at_most for a limit ("at most 3 days a week").
   Mark a goal private when the user wouldn't want it shown outside talks about it. Only add goals the user chose.
   """

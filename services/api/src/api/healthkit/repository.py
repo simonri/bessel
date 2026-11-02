@@ -3,7 +3,7 @@ from datetime import UTC, date, datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Select, update
+from sqlalchemy import Select, func, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin
@@ -25,6 +25,8 @@ SLEEP_UPSERT_COLUMNS = [
 ]
 
 DAILY_METRIC_COLUMNS = ["steps", "active_energy_kcal", "exercise_minutes", "resting_heart_rate", "hrv_ms"]
+# Weighed in now and then, and only sent by builds that read them: a day sent without one keeps what was stored.
+KEPT_DAILY_METRIC_COLUMNS = ["body_mass_kg", "body_fat_pct"]
 
 UPSERT_COLUMNS = [
   "workout_activity_type",
@@ -124,6 +126,7 @@ class HealthKitDailyMetricRepository(RepositoryBase[HealthKitDailyMetric], Repos
       # The device sends the whole day's values each time; replace, never add.
       set_={
         **{column: statement.excluded[column] for column in DAILY_METRIC_COLUMNS},
+        **{column: func.coalesce(statement.excluded[column], getattr(HealthKitDailyMetric, column)) for column in KEPT_DAILY_METRIC_COLUMNS},
         "modified_at": utc_now(),
         "deleted_at": None,
       },

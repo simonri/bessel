@@ -9,7 +9,7 @@ from api.goals.repository import GoalCheckinRepository, GoalRepository
 from api.goals.schemas import GoalSchema, GoalScore, GoalScoreboard
 from api.goals.scoring import HISTORY, Met, ScoreData, period_of, score
 from api.gym.repository import GymTopSetRepository
-from api.healthkit.repository import HealthKitSleepSampleRepository, HealthKitWorkoutRepository
+from api.healthkit.repository import HealthKitDailyMetricRepository, HealthKitSleepSampleRepository, HealthKitWorkoutRepository
 from api.healthkit.service import healthkit_sleep_service
 from api.models.goal import Goal, GoalMetric, GoalPeriod, GoalSensitivity
 from api.patterns.service import Night
@@ -17,6 +17,9 @@ from api.postgres import AsyncSession
 from api.projects.repository import ProjectRepository
 from api.tasks.repository import TaskRepository
 from api.tasks.schemas import TaskStatus
+
+# A weight older than this says nothing about now.
+BODY_LOOKBACK_DAYS = 30
 
 
 def _local(day: date, hour: int, tz: ZoneInfo) -> datetime:
@@ -87,6 +90,9 @@ class GoalService:
     manual = [g.id for g in goals if g.metric == GoalMetric.manual]
     for checkin in await checkins.list_since(user_id, manual, date.min if any(g.period == GoalPeriod.none for g in goals) else first):
       data.checkins.setdefault(checkin.goal_id, []).append((checkin.day, checkin.value))
+    if metrics & {GoalMetric.body_weight, GoalMetric.body_fat}:
+      days = await HealthKitDailyMetricRepository.from_session(session).list_between(user_id, today - timedelta(days=BODY_LOOKBACK_DAYS), today)
+      data.body = [(m.date, m.body_mass_kg, m.body_fat_pct) for m in days]
     if GoalMetric.net_worth in metrics:
       overview = await accounts_overview.overview(session, user_id, now=utc_now(), zone=tz)
       data.net_worth = {(t.owner, t.currency.upper()): t.net for t in overview.totals}

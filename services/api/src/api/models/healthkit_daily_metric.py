@@ -23,5 +23,8 @@ class HealthKitDailyMetric(RecordModel):
   exercise_minutes: Mapped[float | None] = mapped_column(Float, nullable=True)
   resting_heart_rate: Mapped[float | None] = mapped_column(Float, nullable=True)
   hrv_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
+  # The day's average of what the user weighed in at, and body fat percent (0-100).
+  body_mass_kg: Mapped[float | None] = mapped_column(Float, nullable=True)
+  body_fat_pct: Mapped[float | None] = mapped_column(Float, nullable=True)
 
   __table_args__ = (UniqueConstraint("user_id", "date", name="healthkit_daily_metrics_user_id_date_key"),)

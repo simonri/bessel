@@ -15312,6 +15312,8 @@
           "tasks_completed",
           "people_met",
           "net_worth",
+          "body_weight",
+          "body_fat",
           "manual"
         ],
         "title": "GoalMetric",
@@ -16355,6 +16357,34 @@
             ],
             "title": "Hrv Ms",
             "description": "Heart rate variability (SDNN), milliseconds."
+          },
+          "body_mass_kg": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 700.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Mass Kg",
+            "description": "Average weight that day, kilograms."
+          },
+          "body_fat_pct": {
+            "anyOf": [
+              {
+                "type": "number",
+                "exclusiveMaximum": 100.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Body Fat Pct",
+            "description": "Average body fat that day, percent."
           }
         },
         "type": "object",

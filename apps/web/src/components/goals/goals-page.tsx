@@ -35,6 +35,7 @@ import { GoalPlanSection } from "./goal-plan";
 import {
   EMPTY_DRAFT,
   type GoalDraft,
+  isLevel,
   METRICS,
   progressLine,
   stepLine,
@@ -183,7 +184,7 @@ function AddGoalDialog({
   });
   const body = toGoalCreate(draft);
   const metric = METRICS.find((m) => m.value === draft.metric);
-  const level = draft.metric === "net_worth";
+  const level = isLevel(draft.metric);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -256,7 +257,7 @@ function AddGoalDialog({
               />
             </label>
           )}
-          {level && (
+          {draft.metric === "net_worth" && (
             <div className="grid grid-cols-2 gap-2">
               <label className={FIELD}>
                 Currency
