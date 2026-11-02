@@ -1,9 +1,9 @@
-from datetime import date
+from datetime import date, datetime
 from enum import StrEnum
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Date, Enum, Float, ForeignKey, Integer, String, Text, Uuid
+from sqlalchemy import TIMESTAMP, Date, Enum, Float, ForeignKey, Integer, String, Text, Uuid
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -74,3 +74,37 @@ class GoalCheckin(RecordModel):
   goal_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("goals.id", ondelete="CASCADE"), nullable=False, index=True)
   day: Mapped[date] = mapped_column(Date, nullable=False)
   value: Mapped[float] = mapped_column(Float, nullable=False, default=1)
+
+
+class GoalPlan(RecordModel):
+  """The user's own words for where they're headed: one per user, written by them, never by an assistant."""
+
+  __tablename__ = "goal_plans"
+
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, unique=True)
+  # The life they're building toward.
+  vision: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # The life they refuse to end up in.
+  anti_vision: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # "I am the type of person who ..."
+  identity: Mapped[str | None] = mapped_column(Text, nullable=True)
+  one_year: Mapped[str | None] = mapped_column(Text, nullable=True)
+  one_month: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # What they won't give up on the way.
+  rules: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # Questions to ask at random moments of the day, breaking autopilot; 0 is off.
+  questions_per_day: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+
+
+class Reflection(RecordModel):
+  """A question asked at a random moment of the user's day, with what they were doing then and their answer."""
+
+  __tablename__ = "reflections"
+
+  user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
+  question: Mapped[str] = mapped_column(String(300), nullable=False)
+  asked_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), nullable=False)
+  # What the data showed for the hours before: the apps used and for how long.
+  context: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+  answer: Mapped[str | None] = mapped_column(Text, nullable=True)
+  answered_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True), nullable=True)

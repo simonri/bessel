@@ -11,6 +11,7 @@ import {
 import { client } from "../client.gen.js";
 import {
   addTransactionDocument,
+  answerReflection,
   authorizeBankConnection,
   authorizeContactEditing,
   authorizeGoogle,
@@ -77,6 +78,7 @@ import {
   getCryptoPrice,
   getDailyActivity,
   getDailySleep,
+  getGoalPlan,
   getHealthSummary,
   getHoldings,
   getIntradayActivity,
@@ -97,6 +99,7 @@ import {
   getTimeline,
   getTimeSummary,
   getTransactionSummary,
+  getTypicalDay,
   getWeatherForecast,
   goalScoreboard,
   healthz,
@@ -134,6 +137,7 @@ import {
   listProjects,
   listRecipeCooks,
   listRecipes,
+  listReflections,
   listResets,
   listTasks,
   listTimeEntries,
@@ -156,6 +160,7 @@ import {
   reportAvanzaSyncFailed,
   respondToCalendarEvent,
   revokeIngestToken,
+  saveGoalPlan,
   searchEverything,
   searchGooglePlaces,
   setProjectLocation,
@@ -198,6 +203,9 @@ import type {
   AddTransactionDocumentData,
   AddTransactionDocumentError,
   AddTransactionDocumentResponse,
+  AnswerReflectionData,
+  AnswerReflectionError,
+  AnswerReflectionResponse,
   AuthorizeBankConnectionData,
   AuthorizeBankConnectionError,
   AuthorizeBankConnectionResponse,
@@ -387,6 +395,8 @@ import type {
   GetDailySleepData,
   GetDailySleepError,
   GetDailySleepResponse,
+  GetGoalPlanData,
+  GetGoalPlanResponse,
   GetHealthSummaryData,
   GetHealthSummaryError,
   GetHealthSummaryResponse,
@@ -439,6 +449,9 @@ import type {
   GetTransactionSummaryData,
   GetTransactionSummaryError,
   GetTransactionSummaryResponse,
+  GetTypicalDayData,
+  GetTypicalDayError,
+  GetTypicalDayResponse,
   GetWeatherForecastData,
   GetWeatherForecastError,
   GetWeatherForecastResponse,
@@ -534,6 +547,9 @@ import type {
   ListRecipesData,
   ListRecipesError,
   ListRecipesResponse,
+  ListReflectionsData,
+  ListReflectionsError,
+  ListReflectionsResponse,
   ListResetsData,
   ListResetsError,
   ListResetsResponse,
@@ -595,6 +611,9 @@ import type {
   RevokeIngestTokenData,
   RevokeIngestTokenError,
   RevokeIngestTokenResponse,
+  SaveGoalPlanData,
+  SaveGoalPlanError,
+  SaveGoalPlanResponse,
   SearchEverythingData,
   SearchEverythingError,
   SearchEverythingResponse,
@@ -3364,6 +3383,145 @@ export const checkInGoalMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await checkInGoal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getGoalPlanQueryKey = (options?: Options<GetGoalPlanData>) =>
+  createQueryKey("getGoalPlan", options);
+
+/**
+ * Get Goal Plan
+ */
+export const getGoalPlanOptions = (options?: Options<GetGoalPlanData>) =>
+  queryOptions<
+    GetGoalPlanResponse,
+    DefaultError,
+    GetGoalPlanResponse,
+    ReturnType<typeof getGoalPlanQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getGoalPlan({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getGoalPlanQueryKey(options),
+  });
+
+/**
+ * Save Goal Plan
+ *
+ * The user's own words; empty fields clear.
+ */
+export const saveGoalPlanMutation = (
+  options?: Partial<Options<SaveGoalPlanData>>,
+): UseMutationOptions<
+  SaveGoalPlanResponse,
+  SaveGoalPlanError,
+  Options<SaveGoalPlanData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SaveGoalPlanResponse,
+    SaveGoalPlanError,
+    Options<SaveGoalPlanData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await saveGoalPlan({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getTypicalDayQueryKey = (options: Options<GetTypicalDayData>) =>
+  createQueryKey("getTypicalDay", options);
+
+/**
+ * Typical Day
+ *
+ * What that weekday has looked like over the last weeks, from the user's data: when they woke and slept, their
+ * time at the computer, tasks done, gym and steps.
+ */
+export const getTypicalDayOptions = (options: Options<GetTypicalDayData>) =>
+  queryOptions<
+    GetTypicalDayResponse,
+    GetTypicalDayError,
+    GetTypicalDayResponse,
+    ReturnType<typeof getTypicalDayQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getTypicalDay({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getTypicalDayQueryKey(options),
+  });
+
+export const listReflectionsQueryKey = (
+  options?: Options<ListReflectionsData>,
+) => createQueryKey("listReflections", options);
+
+/**
+ * List Reflections
+ *
+ * The questions asked during the user's days, newest first.
+ */
+export const listReflectionsOptions = (
+  options?: Options<ListReflectionsData>,
+) =>
+  queryOptions<
+    ListReflectionsResponse,
+    ListReflectionsError,
+    ListReflectionsResponse,
+    ReturnType<typeof listReflectionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listReflections({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listReflectionsQueryKey(options),
+  });
+
+/**
+ * Answer Reflection
+ */
+export const answerReflectionMutation = (
+  options?: Partial<Options<AnswerReflectionData>>,
+): UseMutationOptions<
+  AnswerReflectionResponse,
+  AnswerReflectionError,
+  Options<AnswerReflectionData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AnswerReflectionResponse,
+    AnswerReflectionError,
+    Options<AnswerReflectionData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await answerReflection({
         ...options,
         ...fnOptions,
         throwOnError: true,

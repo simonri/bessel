@@ -142,3 +142,64 @@ class TestGoalEndpoints:
 
     assert (await client.delete(f"/v1/goals/{created['id']}")).status_code == 204
     assert (await client.get("/v1/goals")).json() == []
+
+
+class TestTypicalDay:
+  def test_reads_the_weekday_from_the_users_data(self) -> None:
+    from types import SimpleNamespace
+
+    from api.goals.typical import typical_day
+    from api.patterns.service import PatternData
+
+    end = date(2026, 11, 4)
+    tuesdays = [date(2026, 10, 27), date(2026, 10, 20)]
+    nights = {}
+    for day in tuesdays:
+      nights.update([night(day - timedelta(days=1), "03:00", "12:00"), night(day, "04:00", "12:30")])
+
+    def at(day: date, clock: str) -> int:
+      return int(datetime.fromisoformat(f"{day}T{clock}").replace(tzinfo=STOCKHOLM).timestamp())
+
+    # Computer from 13:00 to 02:00 the next night: the session after midnight belongs to Tuesday.
+    periods = [(at(d, "13:00"), at(d, "17:00")) for d in tuesdays] + [(at(d, "22:00"), at(d + timedelta(days=1), "02:00")) for d in tuesdays]
+    done = [SimpleNamespace(completed_at=datetime.fromisoformat(f"{tuesdays[0]}T15:00").replace(tzinfo=STOCKHOLM))] * 2
+    data = PatternData(
+      start=end - timedelta(days=43),
+      end=end,
+      tz=STOCKHOLM,
+      nights=nights,
+      steps={tuesdays[0]: 3000, tuesdays[1]: 5000},
+      strength_days={tuesdays[0]},
+      workouts=[],
+      completed=done,
+      due=[],
+      overdue=0,
+      periods=sorted(periods),
+      activity_days=set(tuesdays),
+    )
+
+    day = typical_day(data, weekday=1, weeks=6)
+
+    assert (day.wake, day.asleep) == ("12:00", "04:00")
+    assert (day.computer_from, day.computer_until, day.computer_hours) == ("13:00", "02:00", 8.0)
+    assert (day.steps, day.gym_share) == (4000, round(1 / 6, 2))
+    assert day.tasks_completed == round(2 / 6, 1)
+    assert day.days == 2
+
+
+class TestGoalPlan:
+  @pytest.mark.asyncio
+  async def test_saved_in_the_users_words_and_cleared_when_emptied(self, client: AsyncClient) -> None:
+    assert (await client.get("/v1/goals/plan")).json()["vision"] is None
+    saved = (await client.put("/v1/goals/plan", json={"vision": "  Fri och frisk ", "anti_vision": "Vaken till 04", "rules": "Hälsan först"})).json()
+    assert (saved["vision"], saved["anti_vision"]) == ("Fri och frisk", "Vaken till 04")
+
+    cleared = (await client.put("/v1/goals/plan", json={"vision": "", "rules": "Hälsan först"})).json()
+    assert (cleared["vision"], cleared["anti_vision"], cleared["rules"]) == (None, None, "Hälsan först")
+    assert (await client.get("/v1/goals/plan")).json()["rules"] == "Hälsan först"
+
+  @pytest.mark.asyncio
+  async def test_typical_day_answers_with_no_data(self, client: AsyncClient) -> None:
+    day = (await client.get("/v1/goals/typical-day", params={"weekday": 1})).json()
+    assert (day["days"], day["wake"], day["tasks_completed"]) == (0, None, 0)
+    assert (await client.get("/v1/goals/typical-day", params={"weekday": 7})).status_code == 422

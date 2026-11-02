@@ -31,6 +31,7 @@ import {
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import { dayParam } from "@/routes/_app/-google-timeline-utils";
+import { GoalPlanSection } from "./goal-plan";
 import {
   EMPTY_DRAFT,
   type GoalDraft,
@@ -39,6 +40,7 @@ import {
   stepLine,
   toGoalCreate,
 } from "./goal-utils";
+import { ReflectionsSection } from "./reflections";
 
 const CARD = "rounded-2xl bg-white/[0.04] p-4 ring-1 ring-white/[0.06]";
 const FIELD = "flex flex-col gap-1 text-12 text-white/50";
@@ -383,6 +385,8 @@ export function GoalsPage() {
           ))}
         </div>
       )}
+      <ReflectionsSection />
+      <GoalPlanSection />
       <AddGoalDialog open={adding} onOpenChange={setAdding} />
     </div>
   );

@@ -25,6 +25,7 @@ from api.models.calendar_account import CalendarAccount, CalendarProvider
 from api.models.calendar_event import CalendarEvent
 from api.models.category import Category
 from api.models.contact import Contact, ContactMethod, ContactMethodKind, ContactSource
+from api.models.goal import Reflection
 from api.models.memory_fact import MemoryFact, MemoryKind, MemoryStatus
 from api.models.security import AssetType, Security
 from api.models.trade import Trade, TradeType
@@ -141,6 +142,11 @@ AUDITED: set[str] = {
   "PATCH /v1/goals/{goal_id}",
   "DELETE /v1/goals/{goal_id}",
   "POST /v1/goals/{goal_id}/checkins",
+  "GET /v1/goals/plan",
+  "PUT /v1/goals/plan",
+  "GET /v1/goals/typical-day",
+  "GET /v1/goals/reflections",
+  "PUT /v1/goals/reflections/{reflection_id}",
   "GET /v1/places",
   "POST /v1/places",
   "DELETE /v1/places/{place_id}",
@@ -315,7 +321,7 @@ class TestProjects:
 
 class TestPlaces:
   @pytest.mark.asyncio
-  async def test_other_user_cannot_see_or_change_goals(self, client: AsyncClient, other_client: AsyncClient) -> None:
+  async def test_other_user_cannot_see_or_change_goals(self, client: AsyncClient, other_client: AsyncClient, save_fixture: SaveFixture, user: User) -> None:
     goal = await _create(client, "/v1/goals", {"title": "A's private goal", "metric": "manual", "target": 3, "sensitivity": "private"})
     await client.post(f"/v1/goals/{goal['id']}/checkins", json={"day": "2026-11-02"})
 
@@ -324,6 +330,18 @@ class TestPlaces:
     assert (await other_client.patch(f"/v1/goals/{goal['id']}", json={"title": "pwned"})).status_code == 404
     assert (await other_client.post(f"/v1/goals/{goal['id']}/checkins", json={"day": "2026-11-02"})).status_code == 404
     assert (await other_client.delete(f"/v1/goals/{goal['id']}")).status_code == 404
+
+    await client.put("/v1/goals/plan", json={"anti_vision": "A's private words"})
+    assert (await other_client.get("/v1/goals/plan")).json()["anti_vision"] is None
+    await other_client.put("/v1/goals/plan", json={"vision": "B's"})
+    assert (await client.get("/v1/goals/plan")).json() == {**(await client.get("/v1/goals/plan")).json(), "anti_vision": "A's private words", "vision": None}
+    assert (await other_client.get("/v1/goals/typical-day", params={"weekday": 0})).json()["days"] == 0
+
+    question = Reflection(user_id=user.id, question="What are you avoiding?", asked_at=datetime.now(UTC), context={})
+    await save_fixture(question)
+    assert (await other_client.get("/v1/goals/reflections")).json() == []
+    assert (await other_client.put(f"/v1/goals/reflections/{question.id}", json={"answer": "pwned"})).status_code == 404
+    assert (await client.get("/v1/goals/reflections")).json()[0]["answer"] is None
 
     [mine] = (await client.get("/v1/goals/scoreboard")).json()["goals"]
     assert (mine["goal"]["title"], mine["current"]["value"] >= 0) == ("A's private goal", True)

@@ -3351,6 +3351,102 @@ export const GoalPeriod = {
 export type GoalPeriod = (typeof GoalPeriod)[keyof typeof GoalPeriod];
 
 /**
+ * GoalPlanSchema
+ */
+export type GoalPlanSchemaInput = {
+  /**
+   * Vision
+   *
+   * The life you're building toward.
+   */
+  vision?: string | null;
+  /**
+   * Anti Vision
+   *
+   * The life you refuse to end up in.
+   */
+  anti_vision?: string | null;
+  /**
+   * Identity
+   *
+   * I am the type of person who ...
+   */
+  identity?: string | null;
+  /**
+   * One Year
+   *
+   * What has to be true in a year.
+   */
+  one_year?: string | null;
+  /**
+   * One Month
+   *
+   * This month's project.
+   */
+  one_month?: string | null;
+  /**
+   * Rules
+   *
+   * What you won't give up on the way.
+   */
+  rules?: string | null;
+  /**
+   * Questions Per Day
+   *
+   * Questions to ask at random moments of the day; 0 is off.
+   */
+  questions_per_day?: number;
+};
+
+/**
+ * GoalPlanSchema
+ */
+export type GoalPlanSchemaOutput = {
+  /**
+   * Vision
+   *
+   * The life you're building toward.
+   */
+  vision: string | null;
+  /**
+   * Anti Vision
+   *
+   * The life you refuse to end up in.
+   */
+  anti_vision: string | null;
+  /**
+   * Identity
+   *
+   * I am the type of person who ...
+   */
+  identity: string | null;
+  /**
+   * One Year
+   *
+   * What has to be true in a year.
+   */
+  one_year: string | null;
+  /**
+   * One Month
+   *
+   * This month's project.
+   */
+  one_month: string | null;
+  /**
+   * Rules
+   *
+   * What you won't give up on the way.
+   */
+  rules: string | null;
+  /**
+   * Questions Per Day
+   *
+   * Questions to ask at random moments of the day; 0 is off.
+   */
+  questions_per_day: number;
+};
+
+/**
  * GoalSchema
  */
 export type GoalSchema = {
@@ -6423,6 +6519,52 @@ export type RecurrenceSchema = {
 };
 
 /**
+ * ReflectionAnswer
+ */
+export type ReflectionAnswer = {
+  /**
+   * Answer
+   */
+  answer: string;
+};
+
+/**
+ * ReflectionSchema
+ */
+export type ReflectionSchema = {
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Question
+   */
+  question: string;
+  /**
+   * Asked At
+   */
+  asked_at: Date;
+  /**
+   * Context
+   *
+   * What the data showed for the hours before: apps used and minutes.
+   */
+  context: {
+    [key: string]: unknown;
+  };
+  /**
+   * Answer
+   */
+  answer: string | null;
+  /**
+   * Answered At
+   */
+  answered_at: Date | null;
+};
+
+/**
  * RruleFrequency
  */
 export const RruleFrequency = {
@@ -7918,6 +8060,78 @@ export type TransactionUpdateResponse = {
    * For a broker's movement, what it is, such as a buy or a tax.
    */
   readonly investment_kind: InvestmentKind | null;
+};
+
+/**
+ * TypicalDay
+ */
+export type TypicalDay = {
+  /**
+   * Weekday
+   *
+   * 0 is Monday.
+   */
+  weekday: number;
+  /**
+   * Weeks
+   *
+   * How many weeks back it is read from.
+   */
+  weeks: number;
+  /**
+   * Days
+   *
+   * Days of that weekday with any data.
+   */
+  days: number;
+  /**
+   * Wake
+   *
+   * Median time woken, HH:MM.
+   */
+  wake: string | null;
+  /**
+   * Asleep
+   *
+   * Median time the night that began that day started, HH:MM.
+   */
+  asleep: string | null;
+  /**
+   * Computer From
+   *
+   * Median first use of the computer, HH:MM.
+   */
+  computer_from: string | null;
+  /**
+   * Computer Until
+   *
+   * Median last use, counted into the night after, HH:MM.
+   */
+  computer_until: string | null;
+  /**
+   * Computer Hours
+   *
+   * Median hours at the computer.
+   */
+  computer_hours: number | null;
+  /**
+   * Tasks Completed
+   *
+   * Average tasks completed.
+   */
+  tasks_completed: number;
+  /**
+   * Gym Share
+   *
+   * Share of those days with a gym session, 0-1.
+   */
+  gym_share: number;
+  /**
+   * Steps
+   *
+   * Median steps.
+   */
+  steps: number | null;
 };
 
 /**
@@ -11152,6 +11366,156 @@ export type CheckInGoalResponses = {
 
 export type CheckInGoalResponse =
   CheckInGoalResponses[keyof CheckInGoalResponses];
+
+export type GetGoalPlanData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/goals/plan";
+};
+
+export type GetGoalPlanResponses = {
+  /**
+   * Successful Response
+   */
+  200: GoalPlanSchemaOutput;
+};
+
+export type GetGoalPlanResponse =
+  GetGoalPlanResponses[keyof GetGoalPlanResponses];
+
+export type SaveGoalPlanData = {
+  body: GoalPlanSchemaInput;
+  path?: never;
+  query?: never;
+  url: "/v1/goals/plan";
+};
+
+export type SaveGoalPlanErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SaveGoalPlanError = SaveGoalPlanErrors[keyof SaveGoalPlanErrors];
+
+export type SaveGoalPlanResponses = {
+  /**
+   * Successful Response
+   */
+  200: GoalPlanSchemaOutput;
+};
+
+export type SaveGoalPlanResponse =
+  SaveGoalPlanResponses[keyof SaveGoalPlanResponses];
+
+export type GetTypicalDayData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Weekday
+     *
+     * 0 is Monday.
+     */
+    weekday: number;
+    /**
+     * Weeks
+     */
+    weeks?: number;
+  };
+  url: "/v1/goals/typical-day";
+};
+
+export type GetTypicalDayErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetTypicalDayError = GetTypicalDayErrors[keyof GetTypicalDayErrors];
+
+export type GetTypicalDayResponses = {
+  /**
+   * Successful Response
+   */
+  200: TypicalDay;
+};
+
+export type GetTypicalDayResponse =
+  GetTypicalDayResponses[keyof GetTypicalDayResponses];
+
+export type ListReflectionsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Unanswered
+     */
+    unanswered?: boolean;
+    /**
+     * Limit
+     */
+    limit?: number;
+  };
+  url: "/v1/goals/reflections";
+};
+
+export type ListReflectionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListReflectionsError =
+  ListReflectionsErrors[keyof ListReflectionsErrors];
+
+export type ListReflectionsResponses = {
+  /**
+   * Response List Reflections
+   *
+   * Successful Response
+   */
+  200: Array<ReflectionSchema>;
+};
+
+export type ListReflectionsResponse =
+  ListReflectionsResponses[keyof ListReflectionsResponses];
+
+export type AnswerReflectionData = {
+  body: ReflectionAnswer;
+  path: {
+    /**
+     * Reflection Id
+     */
+    reflection_id: string;
+  };
+  query?: never;
+  url: "/v1/goals/reflections/{reflection_id}";
+};
+
+export type AnswerReflectionErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type AnswerReflectionError =
+  AnswerReflectionErrors[keyof AnswerReflectionErrors];
+
+export type AnswerReflectionResponses = {
+  /**
+   * Successful Response
+   */
+  200: ReflectionSchema;
+};
+
+export type AnswerReflectionResponse =
+  AnswerReflectionResponses[keyof AnswerReflectionResponses];
 
 export type ListDevicesData = {
   body?: never;

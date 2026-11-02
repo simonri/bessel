@@ -7,6 +7,7 @@ import { useEffect } from "react";
 import { AppShell } from "@/components/app-shell";
 import { EventReminders } from "@/components/calendar/event-reminders";
 import { WindowManager } from "@/components/canvas/window-manager";
+import { QuestionAlerts } from "@/components/goals/reflections";
 import { useReportTimezone } from "@/hooks/use-report-timezone";
 import { SettingsProvider } from "@/hooks/use-settings";
 import { WorkspaceTemplatesProvider } from "@/hooks/use-workspace-templates";
@@ -48,6 +49,7 @@ function AppLayout() {
   return (
     <SettingsProvider key={user.sub}>
       <EventReminders />
+      <QuestionAlerts />
       <WindowManager>
         <WorkspaceTemplatesProvider>
           <AppShell />

@@ -76,6 +76,28 @@ vi.mock("@bessel/client", async (importOriginal) => ({
     },
   }),
   deleteGoalMutation: () => ({ mutationFn: async () => undefined }),
+  getGoalPlanQueryKey: () => ["goal-plan"],
+  getGoalPlanOptions: () => ({
+    queryKey: ["goal-plan"],
+    queryFn: async () => ({}),
+  }),
+  getTypicalDayOptions: () => ({
+    queryKey: ["typical-day"],
+    queryFn: async () => ({
+      weekday: 1,
+      weeks: 6,
+      days: 0,
+      tasks_completed: 0,
+      gym_share: 0,
+    }),
+  }),
+  saveGoalPlanMutation: () => ({ mutationFn: async () => ({}) }),
+  listReflectionsQueryKey: () => ["reflections"],
+  listReflectionsOptions: () => ({
+    queryKey: ["reflections"],
+    queryFn: async () => [],
+  }),
+  answerReflectionMutation: () => ({ mutationFn: async () => undefined }),
 }));
 
 const { GoalsPage } = await import("./goals-page");

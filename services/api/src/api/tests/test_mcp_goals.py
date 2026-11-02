@@ -1,5 +1,10 @@
 import pytest
+from api.common.utils import utc_now
+from api.models.goal import Reflection
+from api.models.user import User
+from api.tests.fixtures.database import SaveFixture
 from api.tests.fixtures.mcp import ConnectFixture, mcp_call, mcp_call_error
+from httpx import AsyncClient
 
 TZ = {"timezone": "Europe/Stockholm"}
 
@@ -32,6 +37,22 @@ class TestGoalTools:
     await _add(connect, {"title": "Mine alone", "metric": "manual", "target": 3, "comparison": "at_most", "sensitivity": "private"})
     assert (await mcp_call(connect, "get_goal_scoreboard", TZ))["goals"] == []
     assert len((await mcp_call(connect, "get_goal_scoreboard", {"include_private": True, **TZ}))["goals"]) == 1
+
+  @pytest.mark.asyncio
+  async def test_the_plan_and_typical_day_are_the_users_own(self, connect: ConnectFixture, client: AsyncClient) -> None:
+    await client.put("/v1/goals/plan", json={"anti_vision": "Awake until four"})
+
+    assert (await mcp_call(connect, "get_goal_plan"))["anti_vision"] == "Awake until four"
+    assert (await mcp_call(connect, "get_goal_plan", token="token-b"))["anti_vision"] is None
+    assert (await mcp_call(connect, "get_typical_day", {"weekday": 1, **TZ}, token="token-b"))["days"] == 0
+
+  @pytest.mark.asyncio
+  async def test_reflections_are_the_users_own(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
+    await save_fixture(Reflection(user_id=user.id, question="What are you avoiding?", asked_at=utc_now(), context={}, answer="Taxes"))
+
+    [mine] = (await mcp_call(connect, "get_reflections"))["reflections"]
+    assert (mine["question"], mine["answer"]) == ("What are you avoiding?", "Taxes")
+    assert (await mcp_call(connect, "get_reflections", token="token-b"))["reflections"] == []
 
   @pytest.mark.asyncio
   async def test_another_user_cant_see_change_or_check_in(self, connect: ConnectFixture) -> None:

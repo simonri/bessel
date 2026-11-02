@@ -1010,6 +1010,26 @@ enum API {
         static let allCases: [GoalPeriod] = [.week, .month, .none]
     }
 
+    struct GoalPlanSchemaInput: Codable, Hashable {
+        var vision: String?
+        var antiVision: String?
+        var identity: String?
+        var oneYear: String?
+        var oneMonth: String?
+        var rules: String?
+        var questionsPerDay: Int = 0
+    }
+
+    struct GoalPlanSchemaOutput: Codable, Hashable {
+        var vision: String?
+        var antiVision: String?
+        var identity: String?
+        var oneYear: String?
+        var oneMonth: String?
+        var rules: String?
+        var questionsPerDay: Int = 0
+    }
+
     struct GoalSchema: Codable, Hashable {
         var createdAt: Date
         var modifiedAt: Date?
@@ -1919,6 +1939,19 @@ enum API {
         var until: String?
     }
 
+    struct ReflectionAnswer: Codable, Hashable {
+        var answer: String
+    }
+
+    struct ReflectionSchema: Codable, Hashable {
+        var id: UUID
+        var question: String
+        var askedAt: Date
+        var context: [String: JSONValue]
+        var answer: String?
+        var answeredAt: Date?
+    }
+
     enum RruleFrequency: String, Codable, Hashable, CaseIterable, LenientEnum {
         case daily
         case weekly
@@ -2362,6 +2395,20 @@ enum API {
         var transferId: UUID?
         var sameDescriptionCount: Int = 0
         var investmentKind: InvestmentKind?
+    }
+
+    struct TypicalDay: Codable, Hashable {
+        var weekday: Int
+        var weeks: Int
+        var days: Int
+        var wake: String?
+        var asleep: String?
+        var computerFrom: String?
+        var computerUntil: String?
+        var computerHours: Double?
+        var tasksCompleted: Double
+        var gymShare: Double
+        var steps: Int?
     }
 
     struct ValidationError: Codable, Hashable {
@@ -6100,6 +6147,94 @@ extension API.GoalParams {
     }
 }
 
+extension API.GoalPlanSchemaInput {
+    private enum DecodingKeys: String, CodingKey {
+        case vision
+        case antiVision
+        case identity
+        case oneYear
+        case oneMonth
+        case rules
+        case questionsPerDay
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.vision = try container.decodeIfPresent(String.self, forKey: .vision)
+        self.antiVision = try container.decodeIfPresent(String.self, forKey: .antiVision)
+        self.identity = try container.decodeIfPresent(String.self, forKey: .identity)
+        self.oneYear = try container.decodeIfPresent(String.self, forKey: .oneYear)
+        self.oneMonth = try container.decodeIfPresent(String.self, forKey: .oneMonth)
+        self.rules = try container.decodeIfPresent(String.self, forKey: .rules)
+        self.questionsPerDay = try container.decodeIfPresent(Int.self, forKey: .questionsPerDay) ?? 0
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case vision
+        case antiVision = "anti_vision"
+        case identity
+        case oneYear = "one_year"
+        case oneMonth = "one_month"
+        case rules
+        case questionsPerDay = "questions_per_day"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.vision, forKey: .vision)
+        try container.encodeIfPresent(self.antiVision, forKey: .antiVision)
+        try container.encodeIfPresent(self.identity, forKey: .identity)
+        try container.encodeIfPresent(self.oneYear, forKey: .oneYear)
+        try container.encodeIfPresent(self.oneMonth, forKey: .oneMonth)
+        try container.encodeIfPresent(self.rules, forKey: .rules)
+        try container.encode(self.questionsPerDay, forKey: .questionsPerDay)
+    }
+}
+
+extension API.GoalPlanSchemaOutput {
+    private enum DecodingKeys: String, CodingKey {
+        case vision
+        case antiVision
+        case identity
+        case oneYear
+        case oneMonth
+        case rules
+        case questionsPerDay
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.vision = try container.decodeIfPresent(String.self, forKey: .vision)
+        self.antiVision = try container.decodeIfPresent(String.self, forKey: .antiVision)
+        self.identity = try container.decodeIfPresent(String.self, forKey: .identity)
+        self.oneYear = try container.decodeIfPresent(String.self, forKey: .oneYear)
+        self.oneMonth = try container.decodeIfPresent(String.self, forKey: .oneMonth)
+        self.rules = try container.decodeIfPresent(String.self, forKey: .rules)
+        self.questionsPerDay = try container.decodeIfPresent(Int.self, forKey: .questionsPerDay) ?? 0
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case vision
+        case antiVision = "anti_vision"
+        case identity
+        case oneYear = "one_year"
+        case oneMonth = "one_month"
+        case rules
+        case questionsPerDay = "questions_per_day"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.vision, forKey: .vision)
+        try container.encodeIfPresent(self.antiVision, forKey: .antiVision)
+        try container.encodeIfPresent(self.identity, forKey: .identity)
+        try container.encodeIfPresent(self.oneYear, forKey: .oneYear)
+        try container.encodeIfPresent(self.oneMonth, forKey: .oneMonth)
+        try container.encodeIfPresent(self.rules, forKey: .rules)
+        try container.encode(self.questionsPerDay, forKey: .questionsPerDay)
+    }
+}
+
 extension API.GoalSchema {
     private enum DecodingKeys: String, CodingKey {
         case createdAt
@@ -9585,6 +9720,66 @@ extension API.RecurrenceSchema {
     }
 }
 
+extension API.ReflectionAnswer {
+    private enum DecodingKeys: String, CodingKey {
+        case answer
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.answer = try container.decode(String.self, forKey: .answer)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case answer
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.answer, forKey: .answer)
+    }
+}
+
+extension API.ReflectionSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case question
+        case askedAt
+        case context
+        case answer
+        case answeredAt
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.question = try container.decode(String.self, forKey: .question)
+        self.askedAt = try container.decode(Date.self, forKey: .askedAt)
+        self.context = try container.decode([String: API.JSONValue].self, forKey: .context)
+        self.answer = try container.decodeIfPresent(String.self, forKey: .answer)
+        self.answeredAt = try container.decodeIfPresent(Date.self, forKey: .answeredAt)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case question
+        case askedAt = "asked_at"
+        case context
+        case answer
+        case answeredAt = "answered_at"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.question, forKey: .question)
+        try container.encode(API.Instant(self.askedAt), forKey: .askedAt)
+        try container.encode(self.context, forKey: .context)
+        try container.encodeIfPresent(self.answer, forKey: .answer)
+        try container.encodeIfPresent(self.answeredAt.map(API.Instant.init), forKey: .answeredAt)
+    }
+}
+
 extension API.SearchResponse {
     private enum DecodingKeys: String, CodingKey {
         case tasks
@@ -11086,6 +11281,66 @@ extension API.TransactionUpdateResponse {
         try container.encodeIfPresent(self.transferId, forKey: .transferId)
         try container.encode(self.sameDescriptionCount, forKey: .sameDescriptionCount)
         try container.encodeIfPresent(self.investmentKind, forKey: .investmentKind)
+    }
+}
+
+extension API.TypicalDay {
+    private enum DecodingKeys: String, CodingKey {
+        case weekday
+        case weeks
+        case days
+        case wake
+        case asleep
+        case computerFrom
+        case computerUntil
+        case computerHours
+        case tasksCompleted
+        case gymShare
+        case steps
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.weekday = try container.decode(Int.self, forKey: .weekday)
+        self.weeks = try container.decode(Int.self, forKey: .weeks)
+        self.days = try container.decode(Int.self, forKey: .days)
+        self.wake = try container.decodeIfPresent(String.self, forKey: .wake)
+        self.asleep = try container.decodeIfPresent(String.self, forKey: .asleep)
+        self.computerFrom = try container.decodeIfPresent(String.self, forKey: .computerFrom)
+        self.computerUntil = try container.decodeIfPresent(String.self, forKey: .computerUntil)
+        self.computerHours = try container.decodeIfPresent(Double.self, forKey: .computerHours)
+        self.tasksCompleted = try container.decode(Double.self, forKey: .tasksCompleted)
+        self.gymShare = try container.decode(Double.self, forKey: .gymShare)
+        self.steps = try container.decodeIfPresent(Int.self, forKey: .steps)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case weekday
+        case weeks
+        case days
+        case wake
+        case asleep
+        case computerFrom = "computer_from"
+        case computerUntil = "computer_until"
+        case computerHours = "computer_hours"
+        case tasksCompleted = "tasks_completed"
+        case gymShare = "gym_share"
+        case steps
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.weekday, forKey: .weekday)
+        try container.encode(self.weeks, forKey: .weeks)
+        try container.encode(self.days, forKey: .days)
+        try container.encodeIfPresent(self.wake, forKey: .wake)
+        try container.encodeIfPresent(self.asleep, forKey: .asleep)
+        try container.encodeIfPresent(self.computerFrom, forKey: .computerFrom)
+        try container.encodeIfPresent(self.computerUntil, forKey: .computerUntil)
+        try container.encodeIfPresent(self.computerHours, forKey: .computerHours)
+        try container.encode(self.tasksCompleted, forKey: .tasksCompleted)
+        try container.encode(self.gymShare, forKey: .gymShare)
+        try container.encodeIfPresent(self.steps, forKey: .steps)
     }
 }
 

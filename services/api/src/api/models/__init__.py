@@ -27,7 +27,7 @@ from .contact import (
 from .counter import Counter, CounterReset
 from .device import Device
 from .document import Document, TransactionDocument
-from .goal import Goal, GoalCheckin, GoalComparison, GoalMetric, GoalPeriod, GoalSensitivity
+from .goal import Goal, GoalCheckin, GoalComparison, GoalMetric, GoalPeriod, GoalPlan, GoalSensitivity, Reflection
 from .gym import GymExercise, GymTopSet
 from .healthkit_daily_metric import HealthKitDailyMetric
 from .healthkit_sleep_sample import HealthKitSleepSample
@@ -93,6 +93,8 @@ __all__ = [
   "GoalComparison",
   "GoalMetric",
   "GoalPeriod",
+  "GoalPlan",
+  "Reflection",
   "GoalSensitivity",
   "GymExercise",
   "GymTopSet",

@@ -5421,6 +5421,201 @@ export const GoalPeriodSchema = {
   title: "GoalPeriod",
 } as const;
 
+export const GoalPlanSchema_InputSchema = {
+  properties: {
+    vision: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Vision",
+      description: "The life you're building toward.",
+    },
+    anti_vision: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Anti Vision",
+      description: "The life you refuse to end up in.",
+    },
+    identity: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Identity",
+      description: "I am the type of person who ...",
+    },
+    one_year: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "One Year",
+      description: "What has to be true in a year.",
+    },
+    one_month: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "One Month",
+      description: "This month's project.",
+    },
+    rules: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rules",
+      description: "What you won't give up on the way.",
+    },
+    questions_per_day: {
+      type: "integer",
+      maximum: 6,
+      minimum: 0,
+      title: "Questions Per Day",
+      description: "Questions to ask at random moments of the day; 0 is off.",
+      default: 0,
+    },
+  },
+  type: "object",
+  title: "GoalPlanSchema",
+} as const;
+
+export const GoalPlanSchema_OutputSchema = {
+  properties: {
+    vision: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Vision",
+      description: "The life you're building toward.",
+    },
+    anti_vision: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Anti Vision",
+      description: "The life you refuse to end up in.",
+    },
+    identity: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Identity",
+      description: "I am the type of person who ...",
+    },
+    one_year: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "One Year",
+      description: "What has to be true in a year.",
+    },
+    one_month: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "One Month",
+      description: "This month's project.",
+    },
+    rules: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 5000,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rules",
+      description: "What you won't give up on the way.",
+    },
+    questions_per_day: {
+      type: "integer",
+      maximum: 6,
+      minimum: 0,
+      title: "Questions Per Day",
+      description: "Questions to ask at random moments of the day; 0 is off.",
+      default: 0,
+    },
+  },
+  type: "object",
+  required: [
+    "vision",
+    "anti_vision",
+    "identity",
+    "one_year",
+    "one_month",
+    "rules",
+    "questions_per_day",
+  ],
+  title: "GoalPlanSchema",
+} as const;
+
 export const GoalSchemaSchema = {
   properties: {
     created_at: {
@@ -10498,6 +10693,73 @@ export const RecurrenceSchemaSchema = {
   title: "RecurrenceSchema",
 } as const;
 
+export const ReflectionAnswerSchema = {
+  properties: {
+    answer: {
+      type: "string",
+      maxLength: 2000,
+      minLength: 1,
+      title: "Answer",
+    },
+  },
+  type: "object",
+  required: ["answer"],
+  title: "ReflectionAnswer",
+} as const;
+
+export const ReflectionSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    question: {
+      type: "string",
+      title: "Question",
+    },
+    asked_at: {
+      type: "string",
+      format: "date-time",
+      title: "Asked At",
+    },
+    context: {
+      additionalProperties: true,
+      type: "object",
+      title: "Context",
+      description:
+        "What the data showed for the hours before: apps used and minutes.",
+    },
+    answer: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Answer",
+    },
+    answered_at: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date-time",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Answered At",
+    },
+  },
+  type: "object",
+  required: ["id", "question", "asked_at", "context", "answer", "answered_at"],
+  title: "ReflectionSchema",
+} as const;
+
 export const RruleFrequencySchema = {
   type: "string",
   enum: ["daily", "weekly", "monthly", "yearly"],
@@ -12992,6 +13254,123 @@ export const TransactionUpdateResponseSchema = {
     "investment_kind",
   ],
   title: "TransactionUpdateResponse",
+} as const;
+
+export const TypicalDaySchema = {
+  properties: {
+    weekday: {
+      type: "integer",
+      title: "Weekday",
+      description: "0 is Monday.",
+    },
+    weeks: {
+      type: "integer",
+      title: "Weeks",
+      description: "How many weeks back it is read from.",
+    },
+    days: {
+      type: "integer",
+      title: "Days",
+      description: "Days of that weekday with any data.",
+    },
+    wake: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Wake",
+      description: "Median time woken, HH:MM.",
+    },
+    asleep: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Asleep",
+      description: "Median time the night that began that day started, HH:MM.",
+    },
+    computer_from: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Computer From",
+      description: "Median first use of the computer, HH:MM.",
+    },
+    computer_until: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Computer Until",
+      description: "Median last use, counted into the night after, HH:MM.",
+    },
+    computer_hours: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Computer Hours",
+      description: "Median hours at the computer.",
+    },
+    tasks_completed: {
+      type: "number",
+      title: "Tasks Completed",
+      description: "Average tasks completed.",
+    },
+    gym_share: {
+      type: "number",
+      title: "Gym Share",
+      description: "Share of those days with a gym session, 0-1.",
+    },
+    steps: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Steps",
+      description: "Median steps.",
+    },
+  },
+  type: "object",
+  required: [
+    "weekday",
+    "weeks",
+    "days",
+    "wake",
+    "asleep",
+    "computer_from",
+    "computer_until",
+    "computer_hours",
+    "tasks_completed",
+    "gym_share",
+    "steps",
+  ],
+  title: "TypicalDay",
 } as const;
 
 export const ValidationErrorSchema = {
