@@ -146,7 +146,7 @@ function RuleRow({
             {category?.name ?? "Unknown category"}
           </span>
         </span>
-        <span className="truncate type-caption text-white/40">
+        <span className="max-w-full truncate type-caption text-white/40">
           {[...conditions, plural(rule.transaction_count, "transaction")].join(
             " - ",
           )}

@@ -136,9 +136,11 @@ function CategoryRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  const flags = [
+  const details = [
     category.income && "Income",
     category.excluded && "Kept out of reports",
+    plural(category.transaction_count, "transaction"),
+    category.rule_count > 0 && plural(category.rule_count, "rule"),
   ].filter(Boolean);
   return (
     <div className="flex min-w-0 items-center gap-3 px-4 py-2.5">
@@ -151,19 +153,15 @@ function CategoryRow({
           className="size-2 shrink-0 rounded-full"
           style={{ backgroundColor: category.color }}
         />
-        <span className="min-w-0 truncate text-13 text-white/85">
-          {category.name}
-        </span>
-        {flags.length > 0 && (
-          <span className="hidden shrink-0 type-caption text-white/40 sm:inline">
-            {flags.join(" - ")}
+        <span className="flex min-w-0 flex-col">
+          <span className="truncate text-13 text-white/85">
+            {category.name}
           </span>
-        )}
+          <span className="truncate type-caption tabular-nums text-white/40">
+            {details.join(" - ")}
+          </span>
+        </span>
       </button>
-      <span className="shrink-0 type-caption tabular-nums text-white/40">
-        {plural(category.transaction_count, "transaction")}
-        {category.rule_count > 0 && ` - ${plural(category.rule_count, "rule")}`}
-      </span>
       <IconButton title={`Edit ${category.name}`} onClick={onEdit}>
         <Pencil />
       </IconButton>
