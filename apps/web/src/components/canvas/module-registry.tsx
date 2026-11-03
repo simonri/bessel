@@ -12,6 +12,7 @@ import {
   Landmark,
   MapPin,
   Moon,
+  Repeat,
   Route,
   SquareTerminal,
   Target,
@@ -44,6 +45,16 @@ export const MODULE_REGISTRY: Record<ModuleKey, ModuleConfig> = {
     component: lazy(() =>
       import("@/routes/_app/transactions").then((m) => ({
         default: m.Route.options.component as React.ComponentType,
+      })),
+    ),
+    ...COMPACT_SIZE,
+  },
+  recurring: {
+    title: "Recurring",
+    icon: Repeat,
+    component: lazy(() =>
+      import("@/components/recurring/recurring-page").then((m) => ({
+        default: m.RecurringPage,
       })),
     ),
     ...COMPACT_SIZE,

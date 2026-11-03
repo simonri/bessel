@@ -45,6 +45,7 @@ from .project import Project
 from .project_device_config import ProjectDeviceConfig
 from .raw_transaction import RawTransaction
 from .recipe import Recipe, RecipeCook
+from .recurring_series import RecurringSeries
 from .security import Security
 from .security_price import SecurityPrice
 from .task import Task
@@ -70,6 +71,7 @@ __all__ = [
   "AddressLocation",
   "AssistantNote",
   "User",
+  "RecurringSeries",
   "BankAccount",
   "BankProfile",
   "Calendar",

@@ -8,6 +8,7 @@ from api.mcp.tools import money
 from api.models.avanza import AvanzaAccount, AvanzaConnection, HoldingSnapshot
 from api.models.bank_account import BankAccount
 from api.models.category import Category
+from api.models.recurring_series import RecurringDecision, RecurringSeries
 from api.models.security import AssetType, Security
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
@@ -56,7 +57,6 @@ async def _transaction(
 ) -> Transaction:
   transaction = Transaction(
     amount=amount,
-    currency="SEK",
     transaction_date=day,
     direction=direction,
     dedup_hash=uuid4().hex,
@@ -64,7 +64,7 @@ async def _transaction(
     category_id=category.id if category else None,
     bank_account_id=account.id,
     user_id=account.user_id,
-    **fields,
+    **{"currency": "SEK", **fields},
   )
   await save_fixture(transaction)
   return transaction
@@ -232,6 +232,48 @@ class TestSearchTransactions:
     )
 
 
+class TestTags:
+  @pytest_asyncio.fixture
+  async def trip(self, save_fixture: SaveFixture, user: User, other_user: User) -> None:
+    skandia = await _account(save_fixture, user, "Skandia")
+    await _transaction(save_fixture, skandia, date(2026, 9, 3), 150_000, DEBIT, "HOTEL", tags=["Lisbon"])
+    await _transaction(save_fixture, skandia, date(2026, 9, 4), 40_000, DEBIT, "DINNER", currency="EUR", tags=["Lisbon", "Friends"])
+    await _transaction(save_fixture, skandia, date(2026, 9, 6), 15_000, CREDIT, "SWISH", currency="EUR", tags=["Lisbon"])
+    await _transaction(save_fixture, skandia, date(2026, 10, 1), 9_900, DEBIT, "ICA")
+    secret = await _account(save_fixture, other_user, "Secret")
+    await _transaction(save_fixture, secret, date(2026, 9, 4), 99_900, DEBIT, "SECRET HOTEL", tags=["Lisbon"])
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("trip")
+  async def test_search_finds_a_tag_in_any_case_and_says_each_ones_tags(self, connect: ConnectFixture) -> None:
+    found = await mcp_call(connect, "search_transactions", {"tag": "lisbon"})
+
+    assert [(t["bank_text"], t["tags"]) for t in found["transactions"]] == [("SWISH", ["Lisbon"]), ("DINNER", ["Lisbon", "Friends"]), ("HOTEL", ["Lisbon"])]
+    assert await mcp_call_error(connect, "search_transactions", {"tag": "Rome"}) == "No tag called 'Rome'. The user's tags: Friends, Lisbon."
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("trip")
+  async def test_spending_per_tag_and_currency_in_currency_units(self, connect: ConnectFixture) -> None:
+    spending = await mcp_call(connect, "get_tag_spending", {"start": "2026-09-01", "end": "2026-09-30"})
+
+    assert spending["tags"] == [
+      {
+        "tag": "Lisbon",
+        "transactions": 3,
+        "currencies": [{"currency": "SEK", "spent": 1500.0, "received": 0.0}, {"currency": "EUR", "spent": 400.0, "received": 150.0}],
+      },
+      {"tag": "Friends", "transactions": 1, "currencies": [{"currency": "EUR", "spent": 400.0, "received": 0.0}]},
+    ]
+    assert (await mcp_call(connect, "get_tag_spending", {"start": "2026-10-01"}))["tags"] == []
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("trip")
+  async def test_another_user_sees_only_their_own_tags(self, connect: ConnectFixture) -> None:
+    [lisbon] = (await mcp_call(connect, "get_tag_spending", token="token-b"))["tags"]
+    assert lisbon["currencies"] == [{"currency": "SEK", "spent": 999.0, "received": 0.0}]
+    assert await mcp_call_error(connect, "search_transactions", {"tag": "Friends"}, token="token-b") == "No tag called 'Friends'. The user's tags: Lisbon."
+
+
 class TestInvestments:
   @pytest.mark.asyncio
   async def test_accounts_and_positions_in_currency_units(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
@@ -331,3 +373,47 @@ class TestInvestments:
     [allocation] = investments["allocation"]
     assert allocation["by_type"] == [{"name": "Funds", "value": 10_000.0, "pct": 83.33}, {"name": "Cash", "value": 2_000.0, "pct": 16.67}]
     assert allocation["by_account"] == [{"name": "ISK", "value": 12_000.0, "pct": 100.0}]
+
+
+class TestRecurringPayments:
+  @pytest_asyncio.fixture
+  async def subscriptions(self, save_fixture: SaveFixture, user: User) -> None:
+    """Monthly, from May to September: a streaming service, a gym the user dismissed, and the company's hosting."""
+    skandia = await _account(save_fixture, user, "Skandia")
+    company = await _account(save_fixture, user, "Företaget", business=True)
+    for month in range(5, 10):
+      await _transaction(save_fixture, skandia, date(2026, month, 20), 11_900, DEBIT, f"NETFLIX.COM {month}")
+      await _transaction(save_fixture, skandia, date(2026, month, 2), 39_900, DEBIT, "GYMMET")
+      await _transaction(save_fixture, company, date(2026, month, 8), 50_000, DEBIT, "SERVERHALL")
+    await save_fixture(RecurringSeries(user_id=user.id, key="debit|SEK|personal|gymmet", typical_amount=39_900, decision=RecurringDecision.dismissed))
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("subscriptions")
+  async def test_series_due_and_totals_in_currency_units_without_dismissed_ones(self, connect: ConnectFixture) -> None:
+    result = await mcp_call(connect, "get_recurring_payments")
+
+    assert [(s["name"], s["kind"], s["owner"], s["account"], s["amount"], s["status"], s["next_due"]) for s in result["series"]] == [
+      ("NETFLIX.COM", "subscription", "personal", "Skandia", 119.0, "active", "2026-10-20"),
+      ("SERVERHALL", "bill", "company", "Företaget", 500.0, "late", "2026-10-08"),
+    ]
+    assert [(d["date"], d["name"], d["late"]) for d in result["due"]] == [
+      ("2026-10-08", "SERVERHALL", True),
+      ("2026-10-20", "NETFLIX.COM", False),
+      # The 8th is a Sunday.
+      ("2026-11-09", "SERVERHALL", False),
+    ]
+    totals = [(t["owner"], t["money_out_per_month"], t["subscriptions_per_month"]) for t in result["totals"]]
+    assert totals == [("personal", 119.0, 119.0), ("company", 500.0, 0.0)]
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("subscriptions")
+  async def test_filters_by_kind_and_days(self, connect: ConnectFixture) -> None:
+    result = await mcp_call(connect, "get_recurring_payments", {"kind": "subscription", "days": 5})
+
+    assert [s["name"] for s in result["series"]] == ["NETFLIX.COM"]
+    assert result["due"] == []
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("subscriptions")
+  async def test_another_user_sees_none(self, connect: ConnectFixture) -> None:
+    assert (await mcp_call(connect, "get_recurring_payments", token="token-b"))["series"] == []

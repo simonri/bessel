@@ -26,6 +26,9 @@ import {
 import { MeetingBrief } from "@/components/contacts/meeting-brief";
 import { useOpenPage } from "@/components/open-page-context";
 import type { PageKey } from "@/components/pages";
+import { billsDueSoon } from "@/components/recurring/recurring-utils";
+import { UpcomingList } from "@/components/recurring/upcoming-list";
+import { useRecurring } from "@/components/recurring/use-recurring";
 import { useOpenSettings } from "@/components/settings-dialog";
 import { localNightBounds } from "@/components/sleep/sleep-summary";
 import { TaskDetailDialogController } from "@/components/task-detail-dialog";
@@ -348,6 +351,21 @@ export function PeopleBlock() {
   );
 }
 
+const BILLS_DAYS = 7;
+
+/** Bills and subscriptions due this week, and any that are late; hidden when there are none. */
+export function BillsBlock() {
+  const today = useLocalDay();
+  const { data } = useRecurring();
+  const due = billsDueSoon(data?.upcoming ?? [], today, BILLS_DAYS);
+  if (due.length === 0) return null;
+  return (
+    <Block title="Bills this week" page="recurring" linkLabel="Recurring">
+      <UpcomingList payments={due} today={today} />
+    </Block>
+  );
+}
+
 /** Sleep and screen time, each only while its page is shown in the sidebar. */
 export function HealthBlocks({ now }: { now: Date }) {
   const { isVisible } = usePageVisibility();
@@ -373,6 +391,7 @@ export function TodayPage() {
       <NextUp now={now} />
       <TasksBlock now={now} />
       <PeopleBlock />
+      <BillsBlock />
       <HealthBlocks now={now} />
     </div>
   );

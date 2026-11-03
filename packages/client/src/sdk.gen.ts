@@ -20,6 +20,7 @@ import {
   correctMemoryFactResponseTransformer,
   createBankAccountResponseTransformer,
   createCalendarEventResponseTransformer,
+  createCategoryResponseTransformer,
   createCategoryRuleResponseTransformer,
   createContactResponseTransformer,
   createCounterResponseTransformer,
@@ -82,6 +83,7 @@ import {
   listProjectsResponseTransformer,
   listRecipeCooksResponseTransformer,
   listRecipesResponseTransformer,
+  listRecurringPaymentsResponseTransformer,
   listReflectionsResponseTransformer,
   listResetsResponseTransformer,
   listTasksResponseTransformer,
@@ -93,6 +95,7 @@ import {
   logContactInteractionResponseTransformer,
   logRecipeCookedResponseTransformer,
   markNotificationReadResponseTransformer,
+  previewCategoryRuleResponseTransformer,
   putGymTopSetResponseTransformer,
   removeRecipeCookedResponseTransformer,
   renameTransactionResponseTransformer,
@@ -103,6 +106,8 @@ import {
   undoCompleteTaskResponseTransformer,
   updateBankAccountResponseTransformer,
   updateCalendarEventResponseTransformer,
+  updateCategoryResponseTransformer,
+  updateCategoryRuleResponseTransformer,
   updateContactPhotoResponseTransformer,
   updateContactResponseTransformer,
   updateContactTagsResponseTransformer,
@@ -170,6 +175,9 @@ import type {
   CreateCalendarEventData,
   CreateCalendarEventErrors,
   CreateCalendarEventResponses,
+  CreateCategoryData,
+  CreateCategoryErrors,
+  CreateCategoryResponses,
   CreateCategoryRuleData,
   CreateCategoryRuleErrors,
   CreateCategoryRuleResponses,
@@ -197,6 +205,9 @@ import type {
   CreateRecipeData,
   CreateRecipeErrors,
   CreateRecipeResponses,
+  CreateRecurringReviewData,
+  CreateRecurringReviewErrors,
+  CreateRecurringReviewResponses,
   CreateResetData,
   CreateResetErrors,
   CreateResetResponses,
@@ -215,6 +226,9 @@ import type {
   DeleteCalendarEventData,
   DeleteCalendarEventErrors,
   DeleteCalendarEventResponses,
+  DeleteCategoryData,
+  DeleteCategoryErrors,
+  DeleteCategoryResponses,
   DeleteCategoryRuleData,
   DeleteCategoryRuleErrors,
   DeleteCategoryRuleResponses,
@@ -248,6 +262,9 @@ import type {
   DeleteRecipeData,
   DeleteRecipeErrors,
   DeleteRecipeResponses,
+  DeleteRecurringReviewData,
+  DeleteRecurringReviewErrors,
+  DeleteRecurringReviewResponses,
   DeleteTaskAttachmentData,
   DeleteTaskAttachmentErrors,
   DeleteTaskAttachmentResponses,
@@ -282,6 +299,12 @@ import type {
   DownloadDocumentData,
   DownloadDocumentErrors,
   DownloadDocumentResponses,
+  ExportTransactionsData,
+  ExportTransactionsErrors,
+  ExportTransactionsResponses,
+  ExportTransactionsWithReceiptsData,
+  ExportTransactionsWithReceiptsErrors,
+  ExportTransactionsWithReceiptsResponses,
   ForgetMemoryFactData,
   ForgetMemoryFactErrors,
   ForgetMemoryFactResponses,
@@ -476,6 +499,9 @@ import type {
   ListRecipesData,
   ListRecipesErrors,
   ListRecipesResponses,
+  ListRecurringPaymentsData,
+  ListRecurringPaymentsErrors,
+  ListRecurringPaymentsResponses,
   ListReflectionsData,
   ListReflectionsErrors,
   ListReflectionsResponses,
@@ -499,6 +525,9 @@ import type {
   ListTransactionsData,
   ListTransactionsErrors,
   ListTransactionsResponses,
+  ListTransactionTagsData,
+  ListTransactionTagsErrors,
+  ListTransactionTagsResponses,
   LogContactInteractionData,
   LogContactInteractionErrors,
   LogContactInteractionResponses,
@@ -513,6 +542,9 @@ import type {
   NameTransactionsData,
   NameTransactionsErrors,
   NameTransactionsResponses,
+  PreviewCategoryRuleData,
+  PreviewCategoryRuleErrors,
+  PreviewCategoryRuleResponses,
   PutGymTopSetData,
   PutGymTopSetErrors,
   PutGymTopSetResponses,
@@ -537,6 +569,9 @@ import type {
   RespondToCalendarEventData,
   RespondToCalendarEventErrors,
   RespondToCalendarEventResponses,
+  ReviewTransactionsData,
+  ReviewTransactionsErrors,
+  ReviewTransactionsResponses,
   RevokeIngestTokenData,
   RevokeIngestTokenErrors,
   RevokeIngestTokenResponses,
@@ -583,6 +618,9 @@ import type {
   SyncHealthkitWorkoutsResponses,
   SyncMontroseData,
   SyncMontroseResponses,
+  TagTransactionsData,
+  TagTransactionsErrors,
+  TagTransactionsResponses,
   UndoCompleteTaskData,
   UndoCompleteTaskErrors,
   UndoCompleteTaskResponses,
@@ -601,6 +639,12 @@ import type {
   UpdateCalendarEventErrors,
   UpdateCalendarEventResponses,
   UpdateCalendarResponses,
+  UpdateCategoryData,
+  UpdateCategoryErrors,
+  UpdateCategoryResponses,
+  UpdateCategoryRuleData,
+  UpdateCategoryRuleErrors,
+  UpdateCategoryRuleResponses,
   UpdateContactData,
   UpdateContactErrors,
   UpdateContactPhotoData,
@@ -631,6 +675,9 @@ import type {
   UpdateRecipeData,
   UpdateRecipeErrors,
   UpdateRecipeResponses,
+  UpdateRecurringReviewData,
+  UpdateRecurringReviewErrors,
+  UpdateRecurringReviewResponses,
   UpdateTaskData,
   UpdateTaskErrors,
   UpdateTaskResponses,
@@ -2171,6 +2218,29 @@ export const listCategories = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Create Category
+ *
+ * A new category in a group, or a new group when it has no parent.
+ */
+export const createCategory = <ThrowOnError extends boolean = false>(
+  options: Options<CreateCategoryData, ThrowOnError>,
+): RequestResult<CreateCategoryResponses, CreateCategoryErrors, ThrowOnError> =>
+  (options.client ?? client).post<
+    CreateCategoryResponses,
+    CreateCategoryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: createCategoryResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/categories",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
  * List Category Rules
  */
 export const listCategoryRules = <ThrowOnError extends boolean = false>(
@@ -2215,9 +2285,36 @@ export const createCategoryRule = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Preview Category Rule
+ *
+ * The existing transactions a rule with these settings matches, and which of them it would sort. Changes nothing.
+ */
+export const previewCategoryRule = <ThrowOnError extends boolean = false>(
+  options: Options<PreviewCategoryRuleData, ThrowOnError>,
+): RequestResult<
+  PreviewCategoryRuleResponses,
+  PreviewCategoryRuleErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    PreviewCategoryRuleResponses,
+    PreviewCategoryRuleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: previewCategoryRuleResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/categories/rules/preview",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
  * Delete Category Rule
  *
- * Stops sorting new imports by it; transactions it already sorted keep their category.
+ * Stops sorting new imports by it; by default transactions it already sorted keep their category.
  */
 export const deleteCategoryRule = <ThrowOnError extends boolean = false>(
   options: Options<DeleteCategoryRuleData, ThrowOnError>,
@@ -2234,6 +2331,72 @@ export const deleteCategoryRule = <ThrowOnError extends boolean = false>(
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/categories/rules/{rule_id}",
     ...options,
+  });
+
+/**
+ * Update Category Rule
+ *
+ * Transactions the rule sorted follow its new settings; a category the user chose is never touched.
+ */
+export const updateCategoryRule = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCategoryRuleData, ThrowOnError>,
+): RequestResult<
+  UpdateCategoryRuleResponses,
+  UpdateCategoryRuleErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    UpdateCategoryRuleResponses,
+    UpdateCategoryRuleErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCategoryRuleResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/categories/rules/{rule_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Category
+ *
+ * Refused while it holds transactions or rules, unless told where they go; a group must be empty first.
+ */
+export const deleteCategory = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteCategoryData, ThrowOnError>,
+): RequestResult<DeleteCategoryResponses, DeleteCategoryErrors, ThrowOnError> =>
+  (options.client ?? client).delete<
+    DeleteCategoryResponses,
+    DeleteCategoryErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/categories/{category_id}",
+    ...options,
+  });
+
+/**
+ * Update Category
+ */
+export const updateCategory = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateCategoryData, ThrowOnError>,
+): RequestResult<UpdateCategoryResponses, UpdateCategoryErrors, ThrowOnError> =>
+  (options.client ?? client).patch<
+    UpdateCategoryResponses,
+    UpdateCategoryErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateCategoryResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/categories/{category_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**
@@ -3657,6 +3820,101 @@ export const logRecipeCooked = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * List Recurring Payments
+ *
+ * Bills, subscriptions and income that repeat, detected from the transactions, with what's due next.
+ */
+export const listRecurringPayments = <ThrowOnError extends boolean = false>(
+  options?: Options<ListRecurringPaymentsData, ThrowOnError>,
+): RequestResult<
+  ListRecurringPaymentsResponses,
+  ListRecurringPaymentsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ListRecurringPaymentsResponses,
+    ListRecurringPaymentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listRecurringPaymentsResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recurring",
+    ...options,
+  });
+
+/**
+ * Review Recurring Series
+ *
+ * Confirms, dismisses, renames or changes the kind of a detected series, found by its key and typical amount.
+ */
+export const createRecurringReview = <ThrowOnError extends boolean = false>(
+  options: Options<CreateRecurringReviewData, ThrowOnError>,
+): RequestResult<
+  CreateRecurringReviewResponses,
+  CreateRecurringReviewErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateRecurringReviewResponses,
+    CreateRecurringReviewErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recurring/reviews",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Recurring Review
+ *
+ * Back to the series as detected.
+ */
+export const deleteRecurringReview = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteRecurringReviewData, ThrowOnError>,
+): RequestResult<
+  DeleteRecurringReviewResponses,
+  DeleteRecurringReviewErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteRecurringReviewResponses,
+    DeleteRecurringReviewErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recurring/reviews/{review_id}",
+    ...options,
+  });
+
+/**
+ * Update Recurring Review
+ */
+export const updateRecurringReview = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateRecurringReviewData, ThrowOnError>,
+): RequestResult<
+  UpdateRecurringReviewResponses,
+  UpdateRecurringReviewErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    UpdateRecurringReviewResponses,
+    UpdateRecurringReviewErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recurring/reviews/{review_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
  * Search
  *
  * Tasks, recipes, calendar events and saved places matching `q`, for the command palette.
@@ -4153,6 +4411,52 @@ export const listTransactions = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Export Transactions
+ *
+ * The transactions the same filters list, oldest first, as a spreadsheet: UTF-8 with a byte order mark, money out negative.
+ */
+export const exportTransactions = <ThrowOnError extends boolean = false>(
+  options?: Options<ExportTransactionsData, ThrowOnError>,
+): RequestResult<
+  ExportTransactionsResponses,
+  ExportTransactionsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ExportTransactionsResponses,
+    ExportTransactionsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/export",
+    ...options,
+  });
+
+/**
+ * Export Transactions With Receipts
+ *
+ * A zip of the transactions' CSV and every invoice and receipt kept with them, such as a month's company costs for the bookkeeper.
+ */
+export const exportTransactionsWithReceipts = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ExportTransactionsWithReceiptsData, ThrowOnError>,
+): RequestResult<
+  ExportTransactionsWithReceiptsResponses,
+  ExportTransactionsWithReceiptsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ExportTransactionsWithReceiptsResponses,
+    ExportTransactionsWithReceiptsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/export/receipts",
+    ...options,
+  });
+
+/**
  * Import Transactions
  *
  * Import transactions from a bank export (CSV or XLSX).
@@ -4200,6 +4504,80 @@ export const bulkUpdateTransactions = <ThrowOnError extends boolean = false>(
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/bulk",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Transaction Tags
+ *
+ * The user's tags with what was spent under each per currency, for picking a tag or seeing what a trip or project cost.
+ */
+export const listTransactionTags = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTransactionTagsData, ThrowOnError>,
+): RequestResult<
+  ListTransactionTagsResponses,
+  ListTransactionTagsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ListTransactionTagsResponses,
+    ListTransactionTagsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/tags",
+    ...options,
+  });
+
+/**
+ * Tag Transactions
+ *
+ * Adds and takes off tags on several transactions at once; their other tags stay.
+ */
+export const tagTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<TagTransactionsData, ThrowOnError>,
+): RequestResult<
+  TagTransactionsResponses,
+  TagTransactionsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    TagTransactionsResponses,
+    TagTransactionsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/tags",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Review Transactions
+ *
+ * Marks several transactions reviewed, or puts them back to be reviewed.
+ */
+export const reviewTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<ReviewTransactionsData, ThrowOnError>,
+): RequestResult<
+  ReviewTransactionsResponses,
+  ReviewTransactionsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ReviewTransactionsResponses,
+    ReviewTransactionsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/review",
     ...options,
     headers: {
       "Content-Type": "application/json",

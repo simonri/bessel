@@ -1,6 +1,6 @@
 import json
 from datetime import date
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from api.categories.rules import best_rule
@@ -66,8 +66,36 @@ class _Setup:
     await self.save_fixture(category)
     return category
 
-  async def rule(self, category: Category, pattern: str, **kwargs: object) -> None:
-    await self.save_fixture(CategoryRule(user_id=self.user.id, category_id=category.id, pattern=pattern, **kwargs))
+  async def rule(self, category: Category, pattern: str, **kwargs: object) -> CategoryRule:
+    rule = CategoryRule(user_id=self.user.id, category_id=category.id, pattern=pattern, **kwargs)
+    await self.save_fixture(rule)
+    return rule
+
+  async def transaction(
+    self,
+    account: BankAccount,
+    text: str,
+    *,
+    category: Category | None = None,
+    rule: CategoryRule | None = None,
+    direction: TransactionDirection = DEBIT,
+    **kwargs: object,
+  ) -> Transaction:
+    transaction = Transaction(
+      amount=100,
+      currency="SEK",
+      transaction_date=DAY,
+      direction=direction,
+      dedup_hash=uuid4().hex,
+      description=text,
+      bank_account_id=account.id,
+      category_id=category.id if category else None,
+      category_rule_id=rule.id if rule else None,
+      user_id=self.user.id,
+      **kwargs,
+    )
+    await self.save_fixture(transaction)
+    return transaction
 
 
 @pytest.fixture
@@ -210,3 +238,150 @@ class TestRulesAndTransfers:
     await client.post("/v1/transactions/categorize-by-description", json={"description": second.description, "category_id": str(gifts.id)})
 
     assert (await session.execute(select(Transaction.category_rule_id))).scalars().all() == [None, None]
+
+
+async def _rule_ids(session: AsyncSession, account: BankAccount) -> dict[str | None, UUID | None]:
+  rows = await session.execute(select(Transaction.description, Transaction.category_rule_id).where(Transaction.bank_account_id == account.id))
+  return dict(rows.all())
+
+
+class TestCreatingFromScratch:
+  @pytest.mark.asyncio
+  async def test_applying_a_new_rule_sorts_only_what_it_wins(self, client: AsyncClient, session: AsyncSession, setup: _Setup) -> None:
+    skandia = await setup.account("Skandia")
+    food, fuel = await setup.category("Mat"), await setup.category("Bensin")
+    # Saved without applying it to what was here, so its matches still wait for the user.
+    await setup.rule(fuel, "ICA Bensin")
+    for text in ("ICA Kvantum", "ICA Bensin Kista"):
+      await setup.transaction(skandia, text)
+
+    response = await client.post("/v1/categories/rules", json={"category_id": str(food.id), "pattern": "ICA"})
+
+    assert (response.json()["categorized"], response.json()["transaction_count"]) == (1, 1)
+    assert await _categories(session, skandia) == {"ICA Kvantum": ("Mat", False), "ICA Bensin Kista": (None, False)}
+
+  @pytest.mark.asyncio
+  async def test_lists_how_many_each_rule_has_sorted(self, client: AsyncClient, setup: _Setup) -> None:
+    skandia = await setup.account("Skandia")
+    food = await setup.category("Mat")
+    ica = await setup.rule(food, "ICA")
+    await setup.rule(food, "Coop")
+    await setup.transaction(skandia, "ICA Kvantum", category=food, rule=ica)
+    await setup.transaction(skandia, "ICA Maxi", category=food, rule=ica)
+    await setup.transaction(skandia, "ICA Nära", category=food)
+
+    listed = {r["pattern"]: r["transaction_count"] for r in (await client.get("/v1/categories/rules")).json()["items"]}
+
+    assert listed == {"Coop": 0, "ICA": 2}
+
+
+class TestPreview:
+  @pytest.mark.asyncio
+  async def test_shows_what_it_matches_and_what_it_would_sort(self, client: AsyncClient, setup: _Setup) -> None:
+    skandia, company, isk = await setup.account("Skandia"), await setup.account("Marginalen", business=True), await setup.account("ISK", subtype="isk")
+    fuel, gifts = await setup.category("Bensin"), await setup.category("Gåvor")
+    await setup.rule(fuel, "ICA Bensin", scope=RuleScope.private, direction=DEBIT)
+    await setup.transaction(skandia, "ICA Kvantum")
+    await setup.transaction(skandia, "ica maxi", direction=CREDIT)
+    await setup.transaction(skandia, "ICA Bensin Kista")
+    await setup.transaction(skandia, "ICA Nära", category=gifts)
+    await setup.transaction(skandia, "ICA Transfer", transfer_id=uuid4())
+    await setup.transaction(company, "ICA Företag")
+    await setup.transaction(isk, "ICA aktie")
+    await setup.transaction(skandia, "Coop")
+
+    preview = (await client.post("/v1/categories/rules/preview", json={"pattern": "ica", "scope": "private", "direction": "debit"})).json()
+
+    by_text = {item["description"]: (item["category_id"], item["would_sort"]) for item in preview["items"]}
+    assert by_text == {"ICA Kvantum": (None, True), "ICA Bensin Kista": (None, False), "ICA Nära": (str(gifts.id), False)}
+    assert (preview["match_count"], preview["sortable_count"]) == (3, 1)
+
+  @pytest.mark.asyncio
+  async def test_editing_a_rule_previews_its_own_sorted_ones_as_sorted_again(self, client: AsyncClient, setup: _Setup) -> None:
+    skandia = await setup.account("Skandia")
+    food = await setup.category("Mat")
+    ica = await setup.rule(food, "ICA")
+    await setup.transaction(skandia, "ICA Kvantum", category=food, rule=ica)
+    await setup.transaction(skandia, "ICA Maxi", category=food)
+
+    preview = (await client.post("/v1/categories/rules/preview", json={"pattern": "ICA", "rule_id": str(ica.id)})).json()
+
+    assert {item["description"]: (item["by_rule"], item["would_sort"]) for item in preview["items"]} == {
+      "ICA Kvantum": (True, True),
+      "ICA Maxi": (False, False),
+    }
+    assert preview["sortable_count"] == 0
+
+
+class TestEditing:
+  @pytest.mark.asyncio
+  async def test_what_a_rule_sorted_follows_it_but_the_users_choice_stays(self, client: AsyncClient, session: AsyncSession, setup: _Setup) -> None:
+    skandia = await setup.account("Skandia")
+    food, eating_out = await setup.category("Mat"), await setup.category("Restaurang")
+    ica = await setup.rule(food, "ICA")
+    await setup.transaction(skandia, "ICA Kvantum", category=food, rule=ica)
+    await setup.transaction(skandia, "ICA Maxi", category=food)
+    await setup.transaction(skandia, "ICA Nära")
+
+    response = await client.patch(f"/v1/categories/rules/{ica.id}", json={"category_id": str(eating_out.id)})
+
+    assert response.status_code == 200
+    assert (response.json()["categorized"], response.json()["transaction_count"]) == (0, 1)
+    assert await _categories(session, skandia) == {"ICA Kvantum": ("Restaurang", False), "ICA Maxi": ("Mat", False), "ICA Nära": (None, False)}
+    assert (await _rule_ids(session, skandia))["ICA Kvantum"] == ica.id
+
+  @pytest.mark.asyncio
+  async def test_ones_it_no_longer_fits_go_to_another_rule_or_back_to_sort(self, client: AsyncClient, session: AsyncSession, setup: _Setup) -> None:
+    skandia = await setup.account("Skandia")
+    food, fuel = await setup.category("Mat"), await setup.category("Bensin")
+    ica = await setup.rule(food, "ICA")
+    await setup.rule(fuel, "Bensin")
+    await setup.transaction(skandia, "ICA Kvantum", category=food, rule=ica)
+    await setup.transaction(skandia, "ICA Bensin Kista", category=food, rule=ica)
+    await setup.transaction(skandia, "ICA Maxi", category=food, rule=ica)
+    await setup.transaction(skandia, "ICA Kvantum Liljeholmen")
+
+    response = await client.patch(f"/v1/categories/rules/{ica.id}", json={"pattern": "ICA Kvantum", "apply_now": True})
+
+    assert response.json()["categorized"] == 1
+    assert await _categories(session, skandia) == {
+      "ICA Kvantum": ("Mat", False),
+      "ICA Bensin Kista": ("Bensin", False),
+      "ICA Maxi": (None, False),
+      "ICA Kvantum Liljeholmen": ("Mat", False),
+    }
+
+  @pytest.mark.asyncio
+  async def test_a_null_direction_matches_both_again(self, client: AsyncClient, setup: _Setup) -> None:
+    salary = await setup.rule(await setup.category("Lön"), "LÖN", direction=CREDIT, scope=RuleScope.private)
+
+    response = (await client.patch(f"/v1/categories/rules/{salary.id}", json={"direction": None})).json()
+
+    assert (response["direction"], response["scope"], response["pattern"]) == (None, "private", "LÖN")
+
+
+class TestDeleting:
+  @pytest.mark.asyncio
+  async def test_releasing_sorts_its_transactions_again(self, client: AsyncClient, session: AsyncSession, setup: _Setup) -> None:
+    skandia = await setup.account("Skandia")
+    food, fuel = await setup.category("Mat"), await setup.category("Bensin")
+    ica = await setup.rule(food, "ICA")
+    await setup.rule(fuel, "Bensin")
+    await setup.transaction(skandia, "ICA Kvantum", category=food, rule=ica)
+    await setup.transaction(skandia, "ICA Bensin Kista", category=food, rule=ica)
+    await setup.transaction(skandia, "ICA Maxi", category=food)
+
+    assert (await client.delete(f"/v1/categories/rules/{ica.id}", params={"release": True})).status_code == 204
+
+    assert await _categories(session, skandia) == {"ICA Kvantum": (None, False), "ICA Bensin Kista": ("Bensin", False), "ICA Maxi": ("Mat", False)}
+
+  @pytest.mark.asyncio
+  async def test_by_default_its_transactions_keep_their_category(self, client: AsyncClient, session: AsyncSession, setup: _Setup) -> None:
+    skandia = await setup.account("Skandia")
+    food = await setup.category("Mat")
+    ica = await setup.rule(food, "ICA")
+    await setup.transaction(skandia, "ICA Kvantum", category=food, rule=ica)
+
+    assert (await client.delete(f"/v1/categories/rules/{ica.id}")).status_code == 204
+
+    assert await _categories(session, skandia) == {"ICA Kvantum": ("Mat", False)}

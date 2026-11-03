@@ -7,8 +7,9 @@ import {
   listBankAccountsOptions,
   listBankAccountsQueryKey,
   listCategoriesOptions,
-  listTransactionsOptions,
+  listCategoryRulesQueryKey,
   listTransactionsQueryKey,
+  reviewTransactionsMutation,
   unpairTransferMutation,
   updateTransactionMutation,
 } from "@bessel/client";
@@ -37,21 +38,43 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { ArrowLeftRight, ChevronDown, Tag, Trash2 } from "lucide-react";
+import {
+  ArrowLeftRight,
+  CheckCheck,
+  ChevronDown,
+  ListFilter,
+  Tag,
+  Trash2,
+} from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { CategorizationPage } from "@/components/categorization/categorization-page";
 import type { BulkSuggestion } from "@/components/category-cell";
 import { ImportDialog } from "@/components/import-dialog";
 import {
   type TransactionFilters,
   TransactionFiltersBar,
+  transactionFilterQuery,
 } from "@/components/transaction-filters";
 import { MonthSummary } from "@/components/transactions/month-summary";
+import {
+  exportFileName,
+  TransactionExportMenu,
+} from "@/components/transactions/transaction-export";
 import {
   type TransactionHandlers,
   TransactionList,
 } from "@/components/transactions/transaction-list";
+import { listTransactionPages } from "@/components/transactions/transaction-pages";
 import { TransactionPanel } from "@/components/transactions/transaction-panel";
+import {
+  BulkTags,
+  TagFilterSummary,
+  TagTotals,
+  ToReview,
+  useTagNames,
+  useToReviewCount,
+} from "@/components/transactions/transaction-tags";
 import {
   EmptyState,
   PageHeader,
@@ -103,6 +126,9 @@ function parseFilters(raw: Record<string, unknown>): TransactionFilters {
         ? true
         : undefined,
     search: typeof raw.search === "string" ? raw.search : undefined,
+    tag: asArr(raw.tag),
+    to_review:
+      raw.to_review === "true" || raw.to_review === true ? true : undefined,
     transfers:
       raw.transfers === "hide" || raw.transfers === "only"
         ? raw.transfers
@@ -119,7 +145,7 @@ export const Route = createFileRoute("/_app/transactions")({
   component: Transactions,
 });
 
-const MONTH_LIMIT = 500;
+const SEARCH_LIMIT = 500;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -133,6 +159,7 @@ function Transactions() {
   const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(
     null,
   );
+  const [managingRules, setManagingRules] = useState(false);
   const queryClient = useQueryClient();
 
   const year = filters.year ?? now.getFullYear();
@@ -144,6 +171,11 @@ function Transactions() {
   const lastDayStr = `${year}-${mm}-${String(daysInMonth).padStart(2, "0")}`;
   const dateFrom = useMemo(() => apiDate(firstDayStr), [firstDayStr]);
   const dateTo = useMemo(() => apiDate(lastDayStr), [lastDayStr]);
+  const filterQuery = useMemo(
+    () =>
+      transactionFilterQuery(filters, { from: firstDayStr, to: lastDayStr }),
+    [filters, firstDayStr, lastDayStr],
+  );
   const isCurrentMonth =
     year === now.getFullYear() && month === now.getMonth() + 1;
 
@@ -182,6 +214,10 @@ function Transactions() {
 
   // A search reaches across every month: "when did I last pay X?"
   const searching = !!filters.search;
+  // So do a tag, a trip or a project being its own period, and what's left to review.
+  const reviewing = !!filters.to_review;
+  const tagged = !!filters.tag?.length;
+  const allMonths = searching || reviewing || tagged;
   const summaryActions = useMemo(
     () => ({
       onPickMonth: (y: number, m: number) => {
@@ -201,32 +237,23 @@ function Transactions() {
     [setFilters, handleFiltersChange],
   );
 
+  const listQuery = useMemo<Parameters<typeof listTransactionPages>[0]>(
+    () => ({ sorting: ["-transaction_date", "description"], ...filterQuery }),
+    [filterQuery],
+  );
+  // The whole month, however busy; a search across every month stops at the newest SEARCH_LIMIT.
   const { data, isLoading } = useQuery({
-    ...listTransactionsOptions({
-      client,
-      query: {
-        limit: MONTH_LIMIT,
-        page: 1,
-        sorting: ["-transaction_date", "description"],
-        bank_account_id: filters.bank_account_id,
-        category_id: filters.category_id,
-        uncategorized: filters.uncategorized,
-        direction: filters.direction,
-        is_business: filters.is_business,
-        missing_documents: filters.missing_documents,
-        search: filters.search,
-        transfers:
-          filters.transfers === "only"
-            ? true
-            : filters.transfers === "hide"
-              ? false
-              : undefined,
-        date_from: searching ? undefined : dateFrom,
-        date_to: searching ? undefined : dateTo,
-      },
-    }),
+    queryKey: listTransactionsQueryKey({ client, query: listQuery }),
+    queryFn: ({ signal }) =>
+      listTransactionPages(listQuery, {
+        max: allMonths ? SEARCH_LIMIT : undefined,
+        signal,
+      }),
     placeholderData: keepPreviousData,
   });
+
+  const tagNames = useTagNames();
+  const toReviewCount = useToReviewCount();
 
   const { data: categoriesData } = useQuery(
     listCategoriesOptions({
@@ -398,6 +425,45 @@ function Transactions() {
     [toggleBusinessMutation.mutate],
   );
 
+  const reviewMutation = useMutation({
+    ...reviewTransactionsMutation({ client }),
+    ...transactionWrites,
+    onMutate: async ({ body }) => {
+      const previous = await snapshot();
+      const ids = new Set(body.ids);
+      const reviewed = body.reviewed ?? true;
+      queryClient.setQueriesData({ queryKey }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((t: any) =>
+            ids.has(t.id) ? { ...t, reviewed } : t,
+          ),
+        };
+      });
+      setSelected(new Set());
+      return { previous, ids };
+    },
+    onError: (_err, _vars, context) => {
+      restoreItemFields<TransactionSchema>(
+        queryClient,
+        context?.previous,
+        context?.ids ?? new Set(),
+        ["reviewed"],
+      );
+      toast.error("Couldn't mark them reviewed");
+    },
+    onSettled: settle,
+  });
+
+  const handleReview = useCallback(
+    (ids: string[], reviewed: boolean) => {
+      if (ids.length === 0) return;
+      reviewMutation.mutate({ client, body: { ids, reviewed } });
+    },
+    [reviewMutation.mutate],
+  );
+
   const unpairMutation = useMutation({
     ...unpairTransferMutation({
       client,
@@ -435,6 +501,10 @@ function Transactions() {
     onSuccess: () =>
       toast.success("New ones like this will be sorted automatically"),
     onError: () => toast.error("Couldn't save the rule"),
+    onSettled: () =>
+      void queryClient.invalidateQueries({
+        queryKey: listCategoryRulesQueryKey({ client }),
+      }),
   });
 
   const handleConfirmBulk = () => {
@@ -465,21 +535,27 @@ function Transactions() {
       onToggleBusiness: handleToggleBusiness,
       onUnpair: handleUnpair,
       onBulkSuggestion: handleBulkSuggestion,
+      onReview: handleReview,
     }),
     [
       handleBulkSuggestion,
       handleDeleteRows,
+      handleReview,
       handleToggleBusiness,
       handleUnpair,
     ],
   );
 
-  const transactions = data?.items ?? [];
+  // One marked reviewed leaves the queue at once, before the list comes back; its open panel stays live.
+  const transactions = useMemo(
+    () => (data?.items ?? []).filter((t) => !reviewing || t.reviewed === false),
+    [data, reviewing],
+  );
   const totalCount = data?.pagination.total_count ?? 0;
   const selectedCount = selected.size;
-  const open = useKeptOpen(transactions, openId);
+  const open = useKeptOpen(data?.items ?? transactions, openId);
   const monthLabel = format(firstDay, "MMMM yyyy");
-  const shown = Math.min(totalCount, MONTH_LIMIT);
+  const shown = Math.min(totalCount, SEARCH_LIMIT);
 
   const list = (
     <div className="min-w-0 space-y-3">
@@ -488,7 +564,31 @@ function Transactions() {
         onFiltersChange={handleFiltersChange}
         accounts={accountsData?.items ?? []}
         categories={categories}
+        tags={tagNames}
+        toReviewCount={toReviewCount}
       />
+
+      {tagged && <TagFilterSummary tags={filters.tag ?? []} />}
+
+      {reviewing && transactions.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary-500/20 bg-primary-500/[0.05] px-3 py-2">
+          <span className="mr-auto text-12 text-white/60">
+            Check each one, then mark it reviewed. New imports land here.
+          </span>
+          <SoftButton
+            onClick={() =>
+              handleReview(
+                transactions.map((t) => t.id),
+                true,
+              )
+            }
+            disabled={reviewMutation.isPending}
+          >
+            <CheckCheck />
+            Mark all {transactions.length} shown as reviewed
+          </SoftButton>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-1.5">
@@ -500,10 +600,15 @@ function Transactions() {
           ))}
         </div>
       ) : transactions.length === 0 ? (
-        <EmptyState icon={<ArrowLeftRight />} title="No transactions">
-          {Object.keys(filters).length > 0
-            ? "No transactions match your current filters."
-            : "Import a bank export to get started."}
+        <EmptyState
+          icon={reviewing ? <CheckCheck /> : <ArrowLeftRight />}
+          title={reviewing ? "All reviewed" : "No transactions"}
+        >
+          {reviewing
+            ? "Nothing new to look over. New imports will show up here."
+            : Object.keys(filters).length > 0
+              ? "No transactions match your current filters."
+              : "Import a bank export to get started."}
         </EmptyState>
       ) : (
         <>
@@ -568,6 +673,18 @@ function Transactions() {
                 </PopoverContent>
               </Popover>
 
+              <BulkTags
+                transactions={transactions.filter((t) => selected.has(t.id))}
+              />
+
+              <SoftButton
+                onClick={() => handleReview([...selected], true)}
+                disabled={reviewMutation.isPending}
+              >
+                <CheckCheck />
+                Mark reviewed
+              </SoftButton>
+
               <SoftButton
                 onClick={() => handleDeleteRows([...selected])}
                 disabled={deleteMutation.isPending}
@@ -586,25 +703,39 @@ function Transactions() {
             selected={selected}
             onSelectedChange={setSelected}
             handlers={handlers}
+            reviewing={reviewing}
           />
         </>
       )}
     </div>
   );
 
+  if (managingRules)
+    return <CategorizationPage onBack={() => setManagingRules(false)} />;
+
   return (
     <div className="@container flex flex-col gap-4">
       <PageHeader
-        title={searching ? "Search" : "Transactions"}
+        title={
+          searching
+            ? "Search"
+            : reviewing
+              ? "To review"
+              : tagged
+                ? (filters.tag ?? []).join(", ")
+                : "Transactions"
+        }
         summary={
           isLoading
             ? null
             : searching
               ? `${totalCount} match${totalCount !== 1 ? "es" : ""} for "${filters.search}" across all months${totalCount > shown ? `, newest ${shown} shown` : ""}`
-              : `${totalCount} in ${format(firstDay, "MMMM")}`
+              : allMonths
+                ? `${totalCount} across all months${totalCount > shown ? `, newest ${shown} shown` : ""}`
+                : `${totalCount} in ${format(firstDay, "MMMM")}`
         }
       >
-        {!searching && (
+        {!allMonths && (
           <PeriodNav
             label={monthLabel}
             onPrev={() => navigateMonth(-1)}
@@ -613,12 +744,39 @@ function Transactions() {
           />
         )}
         <HideAmountsButton />
+        <SoftButton onClick={() => setManagingRules(true)}>
+          <ListFilter />
+          Rules
+        </SoftButton>
+        <TransactionExportMenu
+          query={filterQuery}
+          fileName={exportFileName(filters, firstDayStr)}
+        />
         <ImportDialog />
       </PageHeader>
 
       {/* The summary covers all your own accounts, so it'd mislead next to one account's list. */}
-      {!searching && !filters.bank_account_id?.length ? (
-        <MonthSummary year={year} month={month} actions={summaryActions}>
+      {!allMonths && !filters.bank_account_id?.length ? (
+        <MonthSummary
+          year={year}
+          month={month}
+          actions={summaryActions}
+          aside={
+            <>
+              {!!toReviewCount && (
+                <ToReview
+                  count={toReviewCount}
+                  onReview={() => handleFiltersChange({ to_review: true })}
+                />
+              )}
+              <TagTotals
+                dateFrom={dateFrom}
+                dateTo={dateTo}
+                onPickTag={(tag) => handleFiltersChange({ tag: [tag] })}
+              />
+            </>
+          }
+        >
           {list}
         </MonthSummary>
       ) : (

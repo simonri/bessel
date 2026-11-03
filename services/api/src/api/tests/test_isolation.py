@@ -6,7 +6,9 @@ through any write. TestCoverage fails when an API route isn't covered here.
 """
 
 import base64
+import io
 import json
+import zipfile
 from collections.abc import AsyncIterator
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
@@ -36,6 +38,7 @@ from api.redis import create_redis, get_redis
 from api.settings import settings
 from api.tests.fixtures.database import SaveFixture
 from cryptography.fernet import Fernet
+from dateutil.relativedelta import relativedelta
 from httpx import AsyncClient
 from sqlalchemy import select
 
@@ -91,6 +94,10 @@ AUDITED: set[str] = {
   "PUT /v1/calendars/events/{event_id}/response",
   "POST /v1/calendars/google/callback",
   "GET /v1/categories",
+  "GET /v1/recurring",
+  "POST /v1/recurring/reviews",
+  "PATCH /v1/recurring/reviews/{review_id}",
+  "DELETE /v1/recurring/reviews/{review_id}",
   "GET /v1/counters",
   "POST /v1/counters",
   "DELETE /v1/counters/{counter_id}",
@@ -198,12 +205,17 @@ AUDITED: set[str] = {
   "GET /v1/timeline",
   "DELETE /v1/transactions",
   "GET /v1/transactions",
+  "GET /v1/transactions/export",
+  "GET /v1/transactions/export/receipts",
   "PATCH /v1/transactions/bulk",
   "POST /v1/transactions/categorize-by-description",
   "POST /v1/transactions/import",
   "GET /v1/transactions/monthly-flow",
   "GET /v1/transactions/spending-by-category",
   "GET /v1/transactions/summary",
+  "GET /v1/transactions/tags",
+  "POST /v1/transactions/tags",
+  "POST /v1/transactions/review",
   "GET /v1/bank-accounts/overview",
   "GET /v1/bank-accounts/net-worth",
   "GET /v1/transactions/{transaction_id}/documents",
@@ -218,6 +230,11 @@ AUDITED: set[str] = {
   "GET /v1/categories/rules",
   "POST /v1/categories/rules",
   "DELETE /v1/categories/rules/{rule_id}",
+  "PATCH /v1/categories/rules/{rule_id}",
+  "POST /v1/categories/rules/preview",
+  "POST /v1/categories",
+  "PATCH /v1/categories/{category_id}",
+  "DELETE /v1/categories/{category_id}",
   "PATCH /v1/transactions/{transaction_id}",
   "DELETE /v1/transactions/{transaction_id}/transfer",
   "PUT /v1/transactions/{transaction_id}/name",
@@ -522,6 +539,39 @@ class TestCounters:
     assert len((await client.get(f"/v1/counters/{counter['id']}/resets")).json()) == 1
 
 
+class TestRecurring:
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_see_or_review_recurring_payments(
+    self, client: AsyncClient, other_client: AsyncClient, save_fixture: SaveFixture, user: User
+  ) -> None:
+    account = BankAccount(name="A's", currency="SEK", base_balance=0, subtype="checking", user_id=user.id)
+    await save_fixture(account)
+    for months in range(1, 5):
+      day = date.today() - relativedelta(months=months)
+      await save_fixture(
+        Transaction(
+          amount=11_900,
+          currency="SEK",
+          transaction_date=day,
+          direction=TransactionDirection.debit,
+          dedup_hash=uuid4().hex,
+          description="A's subscription",
+          bank_account_id=account.id,
+          user_id=user.id,
+        )
+      )
+    [series] = (await client.get("/v1/recurring")).json()["series"]
+    review = await _create(client, "/v1/recurring/reviews", {"key": series["key"], "typical_amount": series["typical_amount"], "name": "Mine"})
+
+    assert (await other_client.get("/v1/recurring")).json()["series"] == []
+    assert (await other_client.patch(f"/v1/recurring/reviews/{review['id']}", json={"name": "pwned"})).status_code == 404
+    assert (await other_client.delete(f"/v1/recurring/reviews/{review['id']}")).status_code == 404
+    await _create(other_client, "/v1/recurring/reviews", {"key": series["key"], "typical_amount": series["typical_amount"], "decision": "dismissed"})
+
+    [after] = (await client.get("/v1/recurring")).json()["series"]
+    assert (after["name"], after["decision"]) == ("Mine", None)
+
+
 class TestTimeTracking:
   @pytest.mark.asyncio
   async def test_other_user_cannot_see_or_use_time_tracking(self, client: AsyncClient, other_client: AsyncClient) -> None:
@@ -660,6 +710,7 @@ class TestBankingAndTransactions:
       bank_account_id=UUID(account["id"]),
       category_id=category.id,
       transfer_id=uuid4(),
+      tags=["A's trip"],
     )
     await save_owned(tx)
     tx_id = str(tx.id)
@@ -669,6 +720,10 @@ class TestBankingAndTransactions:
     assert all(m["income"] == 0 and m["expenses"] == 0 for m in (await other_client.get("/v1/transactions/monthly-flow")).json()["items"])
     spending = await other_client.get("/v1/transactions/spending-by-category", params={"year": today.year, "month": today.month})
     assert spending.json()["items"] == []
+    exported = (await other_client.get("/v1/transactions/export")).content.decode("utf-8-sig")
+    assert "A's grocery store" not in exported and len(exported.splitlines()) == 1
+    with_receipts = zipfile.ZipFile(io.BytesIO((await other_client.get("/v1/transactions/export/receipts")).content))
+    assert len(with_receipts.read("transactions.csv").decode("utf-8-sig").splitlines()) == 1
 
     assert (await other_client.patch(f"/v1/transactions/{tx_id}", json={"is_business": True})).status_code == 404
     assert (await other_client.delete(f"/v1/transactions/{tx_id}/transfer")).status_code == 404
@@ -680,6 +735,11 @@ class TestBankingAndTransactions:
     assert categorize.status_code == 404 or categorize.json()["updated"] == 0
     delete = await other_client.request("DELETE", "/v1/transactions", json={"ids": [tx_id]})
     assert delete.status_code == 404 or delete.json().get("deleted", 0) == 0
+    assert (await other_client.get("/v1/transactions/tags")).json() == {"items": [], "names": []}
+    assert (await other_client.get("/v1/transactions", params={"tag": "A's trip"})).json()["items"] == []
+    tagged = await other_client.post("/v1/transactions/tags", json={"ids": [tx_id], "add": ["Mine now"], "remove": ["A's trip"]})
+    assert tagged.json()["updated"] == 0
+    assert (await other_client.post("/v1/transactions/review", json={"ids": [tx_id]})).json()["updated"] == 0
 
     imported = await other_client.post(
       "/v1/transactions/import",
@@ -694,6 +754,8 @@ class TestBankingAndTransactions:
     assert own[0]["is_business"] is False
     assert own[0]["transfer_id"] == str(tx.transfer_id)
     assert own[0]["name"] is None
+    assert own[0]["tags"] == ["A's trip"]
+    assert own[0]["reviewed"] is False
 
   @pytest.mark.asyncio
   async def test_other_user_cannot_file_their_transactions_under_this_users_category(
@@ -724,6 +786,46 @@ class TestBankingAndTransactions:
 
     [own] = (await other_client.get("/v1/transactions")).json()["items"]
     assert own["category_id"] is None
+
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_change_use_or_preview_against_my_categories_and_rules(
+    self, client: AsyncClient, other_client: AsyncClient, save_owned: SaveFixture
+  ) -> None:
+    account = await _create(client, "/v1/bank-accounts", {"name": "A checking", "currency": "SEK", "subtype": "checking"})
+    group = await _create(client, "/v1/categories", {"name": "A group"})
+    mine = await _create(client, "/v1/categories", {"name": "A food", "parent_id": group["id"]})
+    await save_owned(
+      Transaction(
+        amount=5_000,
+        currency="SEK",
+        transaction_date=datetime.now(UTC).date(),
+        direction=TransactionDirection.debit,
+        dedup_hash=f"a-{uuid4().hex}",
+        description="A corner shop",
+        bank_account_id=UUID(account["id"]),
+      )
+    )
+    rule = await _create(client, "/v1/categories/rules", {"category_id": mine["id"], "pattern": "corner"})
+    their_group = await _create(other_client, "/v1/categories", {"name": "B group"})
+    theirs = await _create(other_client, "/v1/categories", {"name": "B food", "parent_id": their_group["id"]})
+    their_rule = await _create(other_client, "/v1/categories/rules", {"category_id": theirs["id"], "pattern": "shop"})
+
+    assert (await other_client.patch(f"/v1/categories/{mine['id']}", json={"name": "pwned"})).status_code == 404
+    assert (await other_client.delete(f"/v1/categories/{mine['id']}", params={"leave_uncategorized": True})).status_code == 404
+    assert (await other_client.post("/v1/categories", json={"name": "B in A's group", "parent_id": group["id"]})).status_code == 404
+    assert (await other_client.patch(f"/v1/categories/{theirs['id']}", json={"parent_id": group["id"]})).status_code == 404
+    assert (await other_client.delete(f"/v1/categories/{theirs['id']}", params={"move_to": mine["id"]})).status_code == 404
+    assert (await other_client.patch(f"/v1/categories/rules/{rule['id']}", json={"pattern": "pwned"})).status_code == 404
+    assert (await other_client.patch(f"/v1/categories/rules/{their_rule['id']}", json={"category_id": mine["id"]})).status_code == 404
+    assert (await other_client.post("/v1/categories/rules/preview", json={"pattern": "corner", "rule_id": rule["id"]})).status_code == 404
+    preview = (await other_client.post("/v1/categories/rules/preview", json={"pattern": "corner"})).json()
+    assert (preview["match_count"], preview["items"]) == (0, [])
+
+    own = {c["id"]: c for c in (await client.get("/v1/categories")).json()["items"]}
+    assert (own[mine["id"]]["name"], own[mine["id"]]["parent_id"], own[mine["id"]]["transaction_count"]) == ("A food", group["id"], 1)
+    [own_rule] = (await client.get("/v1/categories/rules")).json()["items"]
+    assert (own_rule["pattern"], own_rule["category_id"], own_rule["transaction_count"]) == ("corner", mine["id"], 1)
+    assert [c["name"] for c in (await other_client.get("/v1/categories")).json()["items"]] == ["B food", "B group"]
 
   @pytest.mark.asyncio
   async def test_klarna_import_into_other_users_account_is_rejected(
