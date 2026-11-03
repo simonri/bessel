@@ -281,6 +281,12 @@ import type {
   DownloadDocumentData,
   DownloadDocumentErrors,
   DownloadDocumentResponses,
+  ExportTransactionsData,
+  ExportTransactionsErrors,
+  ExportTransactionsResponses,
+  ExportTransactionsWithReceiptsData,
+  ExportTransactionsWithReceiptsErrors,
+  ExportTransactionsWithReceiptsResponses,
   ForgetMemoryFactData,
   ForgetMemoryFactErrors,
   ForgetMemoryFactResponses,
@@ -4107,6 +4113,52 @@ export const listTransactions = <ThrowOnError extends boolean = false>(
     responseTransformer: listTransactionsResponseTransformer,
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions",
+    ...options,
+  });
+
+/**
+ * Export Transactions
+ *
+ * The transactions the same filters list, oldest first, as a spreadsheet: UTF-8 with a byte order mark, money out negative.
+ */
+export const exportTransactions = <ThrowOnError extends boolean = false>(
+  options?: Options<ExportTransactionsData, ThrowOnError>,
+): RequestResult<
+  ExportTransactionsResponses,
+  ExportTransactionsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ExportTransactionsResponses,
+    ExportTransactionsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/export",
+    ...options,
+  });
+
+/**
+ * Export Transactions With Receipts
+ *
+ * A zip of the transactions' CSV and every invoice and receipt kept with them, such as a month's company costs for the bookkeeper.
+ */
+export const exportTransactionsWithReceipts = <
+  ThrowOnError extends boolean = false,
+>(
+  options?: Options<ExportTransactionsWithReceiptsData, ThrowOnError>,
+): RequestResult<
+  ExportTransactionsWithReceiptsResponses,
+  ExportTransactionsWithReceiptsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ExportTransactionsWithReceiptsResponses,
+    ExportTransactionsWithReceiptsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/export/receipts",
     ...options,
   });
 

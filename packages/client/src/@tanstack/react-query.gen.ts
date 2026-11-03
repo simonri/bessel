@@ -65,6 +65,8 @@ import {
   documentPage,
   documentThumbnail,
   downloadDocument,
+  exportTransactions,
+  exportTransactionsWithReceipts,
   forgetMemoryFact,
   getAccountsOverview,
   getActivitySummary,
@@ -359,6 +361,12 @@ import type {
   DocumentThumbnailError,
   DownloadDocumentData,
   DownloadDocumentError,
+  ExportTransactionsData,
+  ExportTransactionsError,
+  ExportTransactionsResponse,
+  ExportTransactionsWithReceiptsData,
+  ExportTransactionsWithReceiptsError,
+  ExportTransactionsWithReceiptsResponse,
   ForgetMemoryFactData,
   ForgetMemoryFactError,
   ForgetMemoryFactResponse,
@@ -6009,6 +6017,66 @@ export const listTransactionsInfiniteOptions = (
   );
   return opts as Omit<typeof opts, "initialData">;
 };
+
+export const exportTransactionsQueryKey = (
+  options?: Options<ExportTransactionsData>,
+) => createQueryKey("exportTransactions", options);
+
+/**
+ * Export Transactions
+ *
+ * The transactions the same filters list, oldest first, as a spreadsheet: UTF-8 with a byte order mark, money out negative.
+ */
+export const exportTransactionsOptions = (
+  options?: Options<ExportTransactionsData>,
+) =>
+  queryOptions<
+    ExportTransactionsResponse,
+    ExportTransactionsError,
+    ExportTransactionsResponse,
+    ReturnType<typeof exportTransactionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await exportTransactions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: exportTransactionsQueryKey(options),
+  });
+
+export const exportTransactionsWithReceiptsQueryKey = (
+  options?: Options<ExportTransactionsWithReceiptsData>,
+) => createQueryKey("exportTransactionsWithReceipts", options);
+
+/**
+ * Export Transactions With Receipts
+ *
+ * A zip of the transactions' CSV and every invoice and receipt kept with them, such as a month's company costs for the bookkeeper.
+ */
+export const exportTransactionsWithReceiptsOptions = (
+  options?: Options<ExportTransactionsWithReceiptsData>,
+) =>
+  queryOptions<
+    ExportTransactionsWithReceiptsResponse,
+    ExportTransactionsWithReceiptsError,
+    ExportTransactionsWithReceiptsResponse,
+    ReturnType<typeof exportTransactionsWithReceiptsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await exportTransactionsWithReceipts({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: exportTransactionsWithReceiptsQueryKey(options),
+  });
 
 /**
  * Import Transactions
