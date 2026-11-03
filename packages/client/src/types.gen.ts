@@ -2984,6 +2984,19 @@ export type CryptoPriceSchema = {
 };
 
 /**
+ * CsvDialect
+ */
+export const CsvDialect = {
+  SWEDISH: "swedish",
+  INTERNATIONAL: "international",
+} as const;
+
+/**
+ * CsvDialect
+ */
+export type CsvDialect = (typeof CsvDialect)[keyof typeof CsvDialect];
+
+/**
  * CurrencySummary
  */
 export type CurrencySummary = {
@@ -14461,6 +14474,190 @@ export type ListTransactionsResponses = {
 
 export type ListTransactionsResponse =
   ListTransactionsResponses[keyof ListTransactionsResponses];
+
+export type ExportTransactionsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * 'swedish': semicolons and a decimal comma, for Excel set up for Sweden. 'international': commas and a decimal point.
+     */
+    dialect?: CsvDialect;
+    /**
+     * Bank Account Id
+     *
+     * Filter by bank account ID(s).
+     */
+    bank_account_id?: Array<string> | null;
+    /**
+     * Category Id
+     *
+     * Filter by category ID(s).
+     */
+    category_id?: Array<string> | null;
+    /**
+     * Uncategorized
+     *
+     * If true, only transactions that still need a category: not moves between own accounts, nor investment accounts' movements.
+     */
+    uncategorized?: boolean;
+    /**
+     * Direction
+     *
+     * Filter by direction: 'debit' or 'credit'.
+     */
+    direction?: string | null;
+    /**
+     * Search
+     *
+     * Search in description (case-insensitive).
+     */
+    search?: string | null;
+    /**
+     * Date From
+     *
+     * Start date (inclusive).
+     */
+    date_from?: Date | null;
+    /**
+     * Date To
+     *
+     * End date (inclusive).
+     */
+    date_to?: Date | null;
+    /**
+     * Is Business
+     *
+     * Filter by business flag.
+     */
+    is_business?: boolean | null;
+    /**
+     * Transfers
+     *
+     * True for only moves between the user's own accounts, false to leave them out.
+     */
+    transfers?: boolean | null;
+    /**
+     * Missing Documents
+     *
+     * If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements.
+     */
+    missing_documents?: boolean;
+  };
+  url: "/v1/transactions/export";
+};
+
+export type ExportTransactionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ExportTransactionsError =
+  ExportTransactionsErrors[keyof ExportTransactionsErrors];
+
+export type ExportTransactionsResponses = {
+  /**
+   * The transactions as CSV.
+   */
+  200: Blob | File;
+};
+
+export type ExportTransactionsResponse =
+  ExportTransactionsResponses[keyof ExportTransactionsResponses];
+
+export type ExportTransactionsWithReceiptsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * How the CSV inside is written, as for the CSV export.
+     */
+    dialect?: CsvDialect;
+    /**
+     * Bank Account Id
+     *
+     * Filter by bank account ID(s).
+     */
+    bank_account_id?: Array<string> | null;
+    /**
+     * Category Id
+     *
+     * Filter by category ID(s).
+     */
+    category_id?: Array<string> | null;
+    /**
+     * Uncategorized
+     *
+     * If true, only transactions that still need a category: not moves between own accounts, nor investment accounts' movements.
+     */
+    uncategorized?: boolean;
+    /**
+     * Direction
+     *
+     * Filter by direction: 'debit' or 'credit'.
+     */
+    direction?: string | null;
+    /**
+     * Search
+     *
+     * Search in description (case-insensitive).
+     */
+    search?: string | null;
+    /**
+     * Date From
+     *
+     * Start date (inclusive).
+     */
+    date_from?: Date | null;
+    /**
+     * Date To
+     *
+     * End date (inclusive).
+     */
+    date_to?: Date | null;
+    /**
+     * Is Business
+     *
+     * Filter by business flag.
+     */
+    is_business?: boolean | null;
+    /**
+     * Transfers
+     *
+     * True for only moves between the user's own accounts, false to leave them out.
+     */
+    transfers?: boolean | null;
+    /**
+     * Missing Documents
+     *
+     * If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements.
+     */
+    missing_documents?: boolean;
+  };
+  url: "/v1/transactions/export/receipts";
+};
+
+export type ExportTransactionsWithReceiptsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ExportTransactionsWithReceiptsError =
+  ExportTransactionsWithReceiptsErrors[keyof ExportTransactionsWithReceiptsErrors];
+
+export type ExportTransactionsWithReceiptsResponses = {
+  /**
+   * The CSV and its receipts.
+   */
+  200: Blob | File;
+};
+
+export type ExportTransactionsWithReceiptsResponse =
+  ExportTransactionsWithReceiptsResponses[keyof ExportTransactionsWithReceiptsResponses];
 
 export type ImportTransactionsData = {
   body: BodyImportTransactions;

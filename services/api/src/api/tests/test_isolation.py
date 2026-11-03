@@ -6,7 +6,9 @@ through any write. TestCoverage fails when an API route isn't covered here.
 """
 
 import base64
+import io
 import json
+import zipfile
 from collections.abc import AsyncIterator
 from datetime import UTC, date, datetime, timedelta
 from typing import Any
@@ -198,6 +200,8 @@ AUDITED: set[str] = {
   "GET /v1/timeline",
   "DELETE /v1/transactions",
   "GET /v1/transactions",
+  "GET /v1/transactions/export",
+  "GET /v1/transactions/export/receipts",
   "PATCH /v1/transactions/bulk",
   "POST /v1/transactions/categorize-by-description",
   "POST /v1/transactions/import",
@@ -672,6 +676,10 @@ class TestBankingAndTransactions:
     assert all(m["income"] == 0 and m["expenses"] == 0 for m in (await other_client.get("/v1/transactions/monthly-flow")).json()["items"])
     spending = await other_client.get("/v1/transactions/spending-by-category", params={"year": today.year, "month": today.month})
     assert spending.json()["items"] == []
+    exported = (await other_client.get("/v1/transactions/export")).content.decode("utf-8-sig")
+    assert "A's grocery store" not in exported and len(exported.splitlines()) == 1
+    with_receipts = zipfile.ZipFile(io.BytesIO((await other_client.get("/v1/transactions/export/receipts")).content))
+    assert len(with_receipts.read("transactions.csv").decode("utf-8-sig").splitlines()) == 1
 
     assert (await other_client.patch(f"/v1/transactions/{tx_id}", json={"is_business": True})).status_code == 404
     assert (await other_client.delete(f"/v1/transactions/{tx_id}/transfer")).status_code == 404

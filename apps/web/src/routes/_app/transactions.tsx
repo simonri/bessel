@@ -8,7 +8,6 @@ import {
   listBankAccountsQueryKey,
   listCategoriesOptions,
   listCategoryRulesQueryKey,
-  listTransactionsOptions,
   listTransactionsQueryKey,
   unpairTransferMutation,
   updateTransactionMutation,
@@ -53,12 +52,18 @@ import { ImportDialog } from "@/components/import-dialog";
 import {
   type TransactionFilters,
   TransactionFiltersBar,
+  transactionFilterQuery,
 } from "@/components/transaction-filters";
 import { MonthSummary } from "@/components/transactions/month-summary";
+import {
+  exportFileName,
+  TransactionExportMenu,
+} from "@/components/transactions/transaction-export";
 import {
   type TransactionHandlers,
   TransactionList,
 } from "@/components/transactions/transaction-list";
+import { listTransactionPages } from "@/components/transactions/transaction-pages";
 import { TransactionPanel } from "@/components/transactions/transaction-panel";
 import {
   EmptyState,
@@ -68,7 +73,6 @@ import {
   SoftButton,
 } from "@/components/ui-kit";
 import { client } from "@/lib/client";
-import { apiDate } from "@/lib/local-day";
 import {
   mutationFamily,
   restoreItemFields,
@@ -127,7 +131,7 @@ export const Route = createFileRoute("/_app/transactions")({
   component: Transactions,
 });
 
-const MONTH_LIMIT = 500;
+const SEARCH_LIMIT = 500;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -151,8 +155,11 @@ function Transactions() {
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDayStr = `${year}-${mm}-01`;
   const lastDayStr = `${year}-${mm}-${String(daysInMonth).padStart(2, "0")}`;
-  const dateFrom = useMemo(() => apiDate(firstDayStr), [firstDayStr]);
-  const dateTo = useMemo(() => apiDate(lastDayStr), [lastDayStr]);
+  const filterQuery = useMemo(
+    () =>
+      transactionFilterQuery(filters, { from: firstDayStr, to: lastDayStr }),
+    [filters, firstDayStr, lastDayStr],
+  );
   const isCurrentMonth =
     year === now.getFullYear() && month === now.getMonth() + 1;
 
@@ -210,30 +217,18 @@ function Transactions() {
     [setFilters, handleFiltersChange],
   );
 
+  const listQuery = useMemo<Parameters<typeof listTransactionPages>[0]>(
+    () => ({ sorting: ["-transaction_date", "description"], ...filterQuery }),
+    [filterQuery],
+  );
+  // The whole month, however busy; a search across every month stops at the newest SEARCH_LIMIT.
   const { data, isLoading } = useQuery({
-    ...listTransactionsOptions({
-      client,
-      query: {
-        limit: MONTH_LIMIT,
-        page: 1,
-        sorting: ["-transaction_date", "description"],
-        bank_account_id: filters.bank_account_id,
-        category_id: filters.category_id,
-        uncategorized: filters.uncategorized,
-        direction: filters.direction,
-        is_business: filters.is_business,
-        missing_documents: filters.missing_documents,
-        search: filters.search,
-        transfers:
-          filters.transfers === "only"
-            ? true
-            : filters.transfers === "hide"
-              ? false
-              : undefined,
-        date_from: searching ? undefined : dateFrom,
-        date_to: searching ? undefined : dateTo,
-      },
-    }),
+    queryKey: listTransactionsQueryKey({ client, query: listQuery }),
+    queryFn: ({ signal }) =>
+      listTransactionPages(listQuery, {
+        max: searching ? SEARCH_LIMIT : undefined,
+        signal,
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -492,7 +487,7 @@ function Transactions() {
   const selectedCount = selected.size;
   const open = useKeptOpen(transactions, openId);
   const monthLabel = format(firstDay, "MMMM yyyy");
-  const shown = Math.min(totalCount, MONTH_LIMIT);
+  const shown = Math.min(totalCount, SEARCH_LIMIT);
 
   const list = (
     <div className="min-w-0 space-y-3">
@@ -633,6 +628,10 @@ function Transactions() {
           <ListFilter />
           Rules
         </SoftButton>
+        <TransactionExportMenu
+          query={filterQuery}
+          fileName={exportFileName(filters, firstDayStr)}
+        />
         <ImportDialog />
       </PageHeader>
 
