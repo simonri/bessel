@@ -160,10 +160,10 @@ export function TagsField({ transaction }: { transaction: TransactionSchema }) {
   );
 }
 
-/** A row's tags, the first few and how many more. */
+/** A row's tags: the first, and how many more. */
 export function TagChips({
   tags,
-  max = 2,
+  max = 1,
 }: {
   tags: readonly string[] | undefined;
   max?: number;
@@ -171,7 +171,7 @@ export function TagChips({
   if (!tags?.length) return null;
   const more = tags.length - max;
   return (
-    <span className="flex min-w-0 shrink items-center gap-1 overflow-hidden">
+    <span className="flex shrink-0 items-center gap-1">
       {tags.slice(0, max).map((tag) => (
         <Tag key={tag} tag={tag} />
       ))}
@@ -261,7 +261,9 @@ function Totals({ summary }: { summary: TagSummary }) {
     <span className="flex flex-col items-end">
       {summary.totals.map((total) => (
         <span key={total.currency} className="text-13 text-white/80">
-          <Amount value={total.spent} currency={total.currency} />
+          {(total.spent > 0 || total.received === 0) && (
+            <Amount value={total.spent} currency={total.currency} />
+          )}
           {total.received > 0 && (
             <span className="ml-1.5 type-caption text-income">
               +<Amount value={total.received} currency={total.currency} />

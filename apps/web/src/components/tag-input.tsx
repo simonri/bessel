@@ -44,7 +44,7 @@ function getTagColor(tag: string) {
 export function Tag({ tag, onRemove }: { tag: string; onRemove?: () => void }) {
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-12 font-medium ${getTagColor(tag)}`}
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-12 font-medium ${getTagColor(tag)}`}
     >
       {tag}
       {onRemove && (

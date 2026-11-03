@@ -102,14 +102,14 @@ describe("tidyTag", () => {
 
 describe("retag", () => {
   it("takes off in any case and adds each tag once", () => {
-    expect(retag(["Work", "Lisbon"], ["lisbon", "Receipts"], ["work"])).toEqual(
+    expect(retag(["Work", "Lisbon"], ["lisbon", "Receipts"], ["WORK"])).toEqual(
       ["Lisbon", "Receipts"],
     );
   });
 });
 
 describe("the list's rows", () => {
-  it("show the first two tags and how many more", () => {
+  it("show the first tag and how many more", () => {
     render(
       wrap(
         <TransactionList
@@ -123,9 +123,9 @@ describe("the list's rows", () => {
       ),
     );
     expect(screen.getByText("Lisbon")).toBeTruthy();
-    expect(screen.getByText("Work")).toBeTruthy();
+    expect(screen.queryByText("Work")).toBeNull();
     expect(screen.queryByText("Receipts")).toBeNull();
-    expect(screen.getByText("+1")).toBeTruthy();
+    expect(screen.getByText("+2")).toBeTruthy();
   });
 
   it("can each be marked reviewed while reviewing, and not otherwise", () => {
@@ -207,6 +207,21 @@ describe("TagsField", () => {
       path: { transaction_id: "t1" },
       body: { tags: ["Receipts", "Lisbon 2026"] },
     });
+  });
+
+  it("doesn't offer a tag it already has in another case", async () => {
+    api.tags.mockResolvedValue({
+      items: [
+        { tag: "Receipts", count: 4, totals: [] },
+        { tag: "Work", count: 2, totals: [] },
+      ],
+    });
+    render(wrap(<TagsField transaction={tx({ tags: ["receipts"] })} />));
+
+    fireEvent.focus(screen.getByRole("textbox"));
+
+    expect(await screen.findByRole("button", { name: "Work" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Receipts" })).toBeNull();
   });
 
   it("keeps a new tag's case", async () => {
