@@ -213,6 +213,8 @@ AUDITED: set[str] = {
   "GET /v1/documents/{document_id}/pages/{page}",
   "GET /v1/documents/{document_id}/thumbnail",
   "GET /v1/investments/accounts",
+  "GET /v1/investments/performance",
+  "GET /v1/investments/allocation",
   "GET /v1/categories/rules",
   "POST /v1/categories/rules",
   "DELETE /v1/categories/rules/{rule_id}",

@@ -662,7 +662,12 @@ export function OverviewTab() {
           </fieldset>
         )}
         <PerformancePanel
-          name={scoped?.name ?? "All your investments"}
+          name={
+            scoped?.name ??
+            (inCurrency.some((a) => a.is_business)
+              ? "Yours and your company's"
+              : "All your investments")
+          }
           currency={currency}
           series={series}
           returns={returns}

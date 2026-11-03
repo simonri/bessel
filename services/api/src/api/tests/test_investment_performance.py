@@ -216,3 +216,10 @@ class TestAllocation:
     assert [(s["label"], s["value"]) for s in sek["by_account"]] == [("ISK", 750_000), ("KF", 200_000)]
     assert sek["borrowed"] == -50_000
     assert [(s["key"], s["value"]) for s in items["EUR"]["by_asset_type"]] == [("stock", 10_000)]
+
+  @pytest.mark.asyncio
+  async def test_another_users_money_is_not_in_it(self, other_client: AsyncClient, save_fixture: SaveFixture, user: User) -> None:
+    isk = await _account(save_fixture, user, "ISK")
+    await _move(save_fixture, isk, ago(30), 250_000, CREDIT, "DEPOSIT")
+
+    assert (await other_client.get("/v1/investments/allocation")).json() == {"items": []}

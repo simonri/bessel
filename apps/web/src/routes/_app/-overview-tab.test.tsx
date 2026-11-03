@@ -217,6 +217,8 @@ describe("OverviewTab", () => {
     renderTab();
 
     expect(await screen.findByText("+8,3%")).toBeTruthy();
+    // The KF is the company's, so the total isn't only the user's own.
+    expect(screen.getByText("Yours and your company's")).toBeTruthy();
     expect(screen.getByText("+7,1%")).toBeTruthy();
     // Per year only where it differs from the period's own figure.
     expect(plain(document.body.textContent)).toContain("+4,1% a year");
