@@ -462,16 +462,6 @@ enum API {
         var updated: Int
     }
 
-    enum Cadence: String, Codable, Hashable, CaseIterable, LenientEnum {
-        case weekly
-        case monthly
-        case quarterly
-        case yearly
-        /// A value added on the server after this build.
-        case unknown
-        static let allCases: [Cadence] = [.weekly, .monthly, .quarterly, .yearly]
-    }
-
     struct CalendarAccountListResponse: Codable, Hashable {
         @Lossy var accounts: [CalendarAccountSchema]
     }
@@ -1959,6 +1949,16 @@ enum API {
         var until: String?
     }
 
+    enum RecurringCadence: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case weekly
+        case monthly
+        case quarterly
+        case yearly
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [RecurringCadence] = [.weekly, .monthly, .quarterly, .yearly]
+    }
+
     enum RecurringDecision: String, Codable, Hashable, CaseIterable, LenientEnum {
         case confirmed
         case dismissed
@@ -2012,7 +2012,7 @@ enum API {
         var name: String
         var detectedName: String
         var kind: RecurringKind
-        var cadence: Cadence
+        var cadence: RecurringCadence
         var currency: String
         var direction: TransactionDirection
         var isBusiness: Bool
@@ -2025,10 +2025,19 @@ enum API {
         var firstDate: Date
         var lastDate: Date
         var lastAmount: Int
-        var status: Status
+        var status: RecurringStatus
         var nextDate: Date?
         var nextAmount: Int?
         @Lossy var priceChanges: [PriceChangeSchema]
+    }
+
+    enum RecurringStatus: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case active
+        case late
+        case ended
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [RecurringStatus] = [.active, .late, .ended]
     }
 
     struct RecurringTotal: Codable, Hashable {
@@ -2118,15 +2127,6 @@ enum API {
     struct SleepSummaryResponse: Codable, Hashable {
         var totalAsleepSecs: Int
         @Lossy var stages: [SleepStageSummary]
-    }
-
-    enum Status: String, Codable, Hashable, CaseIterable, LenientEnum {
-        case active
-        case late
-        case ended
-        /// A value added on the server after this build.
-        case unknown
-        static let allCases: [Status] = [.active, .late, .ended]
     }
 
     struct SummaryCategory: Codable, Hashable {
@@ -10033,7 +10033,7 @@ extension API.RecurringSeriesSchema {
         self.name = try container.decode(String.self, forKey: .name)
         self.detectedName = try container.decode(String.self, forKey: .detectedName)
         self.kind = try container.decode(API.RecurringKind.self, forKey: .kind)
-        self.cadence = try container.decode(API.Cadence.self, forKey: .cadence)
+        self.cadence = try container.decode(API.RecurringCadence.self, forKey: .cadence)
         self.currency = try container.decode(String.self, forKey: .currency)
         self.direction = try container.decode(API.TransactionDirection.self, forKey: .direction)
         self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
@@ -10046,7 +10046,7 @@ extension API.RecurringSeriesSchema {
         self.firstDate = try container.decode(Date.self, forKey: .firstDate)
         self.lastDate = try container.decode(Date.self, forKey: .lastDate)
         self.lastAmount = try container.decode(Int.self, forKey: .lastAmount)
-        self.status = try container.decode(API.Status.self, forKey: .status)
+        self.status = try container.decode(API.RecurringStatus.self, forKey: .status)
         self.nextDate = try container.decodeIfPresent(Date.self, forKey: .nextDate)
         self.nextAmount = try container.decodeIfPresent(Int.self, forKey: .nextAmount)
         self._priceChanges = try container.decode(Lossy<API.PriceChangeSchema>.self, forKey: .priceChanges)

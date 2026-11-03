@@ -9,7 +9,7 @@ from uuid import UUID
 from api.models.recurring_series import RecurringDecision, RecurringKind, RecurringSeries
 from api.models.transaction import TransactionDirection
 from api.postgres import AsyncSession
-from api.recurring.detection import HISTORY, Series, Status, detect, occurrences
+from api.recurring.detection import HISTORY, Series, RecurringStatus, detect, occurrences
 from api.recurring.repository import RecurringSeriesRepository
 from api.recurring.schemas import PriceChangeSchema, RecurringResponse, RecurringSeriesSchema, RecurringTotal, UpcomingPayment
 from api.transactions.repository import TransactionRepository
@@ -35,7 +35,7 @@ class ReviewedSeries:
   @property
   def expected(self) -> bool:
     """Still running and wanted: what upcoming payments and totals count."""
-    return self.decision != RecurringDecision.dismissed and self.series.status != Status.ended
+    return self.decision != RecurringDecision.dismissed and self.series.status != RecurringStatus.ended
 
 
 @dataclass(frozen=True)
@@ -82,7 +82,7 @@ def expected_between(reviewed: Sequence[ReviewedSeries], start: date, end: date)
     if not item.expected:
       continue
     due = item.series.next_date
-    if item.series.status == Status.late and due is not None and due < start:
+    if item.series.status == RecurringStatus.late and due is not None and due < start:
       payments.append(ExpectedPayment(item, due, item.series.typical_amount, late=True))
     payments.extend(ExpectedPayment(item, day, item.series.typical_amount) for day in occurrences(item.series, start, end))
   return sorted(payments, key=lambda p: (p.day, p.reviewed.name))

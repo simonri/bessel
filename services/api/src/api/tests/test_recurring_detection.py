@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 from api.models.recurring_series import RecurringKind
 from api.models.transaction import TransactionDirection
-from api.recurring.detection import Cadence, PriceChange, Status, detect, occurrences
+from api.recurring.detection import RecurringCadence, PriceChange, RecurringStatus, detect, occurrences
 from api.transactions.repository import RecurringRow
 
 DEBIT, CREDIT = TransactionDirection.debit, TransactionDirection.credit
@@ -36,7 +36,7 @@ class TestMonthly:
 
     [series] = detect(rows, today=date(2026, 10, 20))
 
-    assert (series.name, series.kind, series.cadence, series.status) == ("SPOTIFY", RecurringKind.subscription, Cadence.monthly, Status.active)
+    assert (series.name, series.kind, series.cadence, series.status) == ("SPOTIFY", RecurringKind.subscription, RecurringCadence.monthly, RecurringStatus.active)
     assert (series.typical_amount, series.count, series.next_date) == (11_900, 6, date(2026, 11, 5))
     assert not series.variable
 
@@ -91,7 +91,7 @@ class TestMonthly:
 
     [series] = detect(rows, today=date(2026, 10, 10))
 
-    assert (series.cadence, series.count) == (Cadence.monthly, 6)
+    assert (series.cadence, series.count) == (RecurringCadence.monthly, 6)
 
   def test_two_payments_are_not_enough(self) -> None:
     assert detect(_monthly(3, [(2026, 9), (2026, 10)], 25_000, "GYMMET"), today=date(2026, 10, 10)) == []
@@ -110,7 +110,7 @@ class TestOtherCadences:
 
     [series] = detect(rows, today=date(2026, 10, 5))
 
-    assert (series.cadence, series.next_date) == (Cadence.weekly, date(2026, 10, 9))
+    assert (series.cadence, series.next_date) == (RecurringCadence.weekly, date(2026, 10, 9))
     assert occurrences(series, date(2026, 10, 5), date(2026, 10, 31)) == [date(2026, 10, 9), date(2026, 10, 16), date(2026, 10, 23), date(2026, 10, 30)]
     assert series.monthly_amount == round(20_000 * 52 / 12)
 
@@ -125,7 +125,7 @@ class TestOtherCadences:
 
     [series] = detect(rows, today=date(2026, 10, 20))
 
-    assert (series.cadence, series.next_date) == (Cadence.quarterly, date(2027, 1, 15))
+    assert (series.cadence, series.next_date) == (RecurringCadence.quarterly, date(2027, 1, 15))
     assert series.monthly_amount == 50_000
 
   def test_yearly(self) -> None:
@@ -133,7 +133,7 @@ class TestOtherCadences:
 
     [series] = detect(rows, today=date(2026, 11, 3))
 
-    assert (series.cadence, series.next_date, series.status) == (Cadence.yearly, date(2026, 11, 20), Status.active)
+    assert (series.cadence, series.next_date, series.status) == (RecurringCadence.yearly, date(2026, 11, 20), RecurringStatus.active)
 
 
 class TestGrouping:
@@ -179,15 +179,15 @@ class TestStatus:
   def test_on_time_within_a_few_days(self) -> None:
     [series] = detect(self.ROWS, today=date(2026, 11, 14))
 
-    assert (series.status, series.next_date) == (Status.active, date(2026, 11, 10))
+    assert (series.status, series.next_date) == (RecurringStatus.active, date(2026, 11, 10))
 
   def test_late_once_the_payment_is_overdue(self) -> None:
     [series] = detect(self.ROWS, today=date(2026, 11, 15))
 
-    assert (series.status, series.next_date) == (Status.late, date(2026, 11, 10))
+    assert (series.status, series.next_date) == (RecurringStatus.late, date(2026, 11, 10))
 
   def test_ended_after_two_missed(self) -> None:
     [series] = detect(self.ROWS, today=date(2026, 12, 15))
 
-    assert (series.status, series.next_date) == (Status.ended, None)
+    assert (series.status, series.next_date) == (RecurringStatus.ended, None)
     assert occurrences(series, date(2026, 12, 15), date(2027, 3, 1)) == []

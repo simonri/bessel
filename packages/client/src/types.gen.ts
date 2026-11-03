@@ -1468,21 +1468,6 @@ export type BulkUpdateResponse = {
 };
 
 /**
- * Cadence
- */
-export const Cadence = {
-  WEEKLY: "weekly",
-  MONTHLY: "monthly",
-  QUARTERLY: "quarterly",
-  YEARLY: "yearly",
-} as const;
-
-/**
- * Cadence
- */
-export type Cadence = (typeof Cadence)[keyof typeof Cadence];
-
-/**
  * CalendarAccountListResponse
  */
 export type CalendarAccountListResponse = {
@@ -6566,6 +6551,22 @@ export type RecurrenceSchema = {
 };
 
 /**
+ * RecurringCadence
+ */
+export const RecurringCadence = {
+  WEEKLY: "weekly",
+  MONTHLY: "monthly",
+  QUARTERLY: "quarterly",
+  YEARLY: "yearly",
+} as const;
+
+/**
+ * RecurringCadence
+ */
+export type RecurringCadence =
+  (typeof RecurringCadence)[keyof typeof RecurringCadence];
+
+/**
  * RecurringDecision
  */
 export const RecurringDecision = {
@@ -6711,7 +6712,7 @@ export type RecurringSeriesSchema = {
    */
   detected_name: string;
   kind: RecurringKind;
-  cadence: Cadence;
+  cadence: RecurringCadence;
   /**
    * Currency
    */
@@ -6769,7 +6770,7 @@ export type RecurringSeriesSchema = {
    * Last Amount
    */
   last_amount: number;
-  status: Status;
+  status: RecurringStatus;
   /**
    * Next Date
    *
@@ -6787,6 +6788,21 @@ export type RecurringSeriesSchema = {
    */
   price_changes: Array<PriceChangeSchema>;
 };
+
+/**
+ * RecurringStatus
+ */
+export const RecurringStatus = {
+  ACTIVE: "active",
+  LATE: "late",
+  ENDED: "ended",
+} as const;
+
+/**
+ * RecurringStatus
+ */
+export type RecurringStatus =
+  (typeof RecurringStatus)[keyof typeof RecurringStatus];
 
 /**
  * RecurringTotal
@@ -7073,20 +7089,6 @@ export type SleepSummaryResponse = {
    */
   stages: Array<SleepStageSummary>;
 };
-
-/**
- * Status
- */
-export const Status = {
-  ACTIVE: "active",
-  LATE: "late",
-  ENDED: "ended",
-} as const;
-
-/**
- * Status
- */
-export type Status = (typeof Status)[keyof typeof Status];
 
 /**
  * SummaryCategory

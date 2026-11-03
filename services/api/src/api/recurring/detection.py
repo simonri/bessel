@@ -22,7 +22,7 @@ from api.models.transaction import TransactionDirection
 from api.transactions.repository import RecurringRow
 
 
-class Cadence(StrEnum):
+class RecurringCadence(StrEnum):
   weekly = "weekly"
   monthly = "monthly"
   quarterly = "quarterly"
@@ -44,11 +44,11 @@ class _Rhythm:
   grace: int
 
 
-RHYTHMS: dict[Cadence, _Rhythm] = {
-  Cadence.weekly: _Rhythm(days=7, low=5, high=9, min_count=4, months=0, per_month=52 / 12, grace=2),
-  Cadence.monthly: _Rhythm(days=30, low=25, high=36, min_count=3, months=1, per_month=1, grace=4),
-  Cadence.quarterly: _Rhythm(days=91, low=80, high=102, min_count=3, months=3, per_month=1 / 3, grace=7),
-  Cadence.yearly: _Rhythm(days=365, low=350, high=380, min_count=2, months=12, per_month=1 / 12, grace=14),
+RHYTHMS: dict[RecurringCadence, _Rhythm] = {
+  RecurringCadence.weekly: _Rhythm(days=7, low=5, high=9, min_count=4, months=0, per_month=52 / 12, grace=2),
+  RecurringCadence.monthly: _Rhythm(days=30, low=25, high=36, min_count=3, months=1, per_month=1, grace=4),
+  RecurringCadence.quarterly: _Rhythm(days=91, low=80, high=102, min_count=3, months=3, per_month=1 / 3, grace=7),
+  RecurringCadence.yearly: _Rhythm(days=365, low=350, high=380, min_count=2, months=12, per_month=1 / 12, grace=14),
 }
 
 # Amounts this close (as a share of the larger) are one price; a cluster breaks where sorted amounts jump by more.
@@ -102,7 +102,7 @@ _SUBSCRIPTION = re.compile(rf"(?<!\w)({'|'.join(re.escape(n) for n in SUBSCRIPTI
 _VARYING = re.compile(r"\S*\d\S*")
 
 
-class Status(StrEnum):
+class RecurringStatus(StrEnum):
   active = "active"
   # The expected payment hasn't come yet.
   late = "late"
@@ -122,7 +122,7 @@ class Series:
   key: str
   name: str
   kind: RecurringKind
-  cadence: Cadence
+  cadence: RecurringCadence
   currency: str
   direction: TransactionDirection
   business: bool
@@ -135,7 +135,7 @@ class Series:
   first_date: date
   last_date: date
   last_amount: int
-  status: Status
+  status: RecurringStatus
   # The next payment expected, even if that day has passed (when `late`); none once it has ended.
   next_date: date | None
   price_changes: tuple[PriceChange, ...]
@@ -178,14 +178,14 @@ def _payments(rows: Sequence[RecurringRow]) -> list[_Payment]:
   return [_Payment(day, sum(r.amount for r in same_day), same_day[-1]) for day, same_day in sorted(by_day.items())]
 
 
-def _cadence_of(gap: int) -> Cadence | None:
+def _cadence_of(gap: int) -> RecurringCadence | None:
   for cadence, rhythm in RHYTHMS.items():
     if rhythm.low <= gap <= rhythm.high:
       return cadence
   return None
 
 
-def _regular_tail(payments: list[_Payment]) -> tuple[Cadence, list[_Payment]] | None:
+def _regular_tail(payments: list[_Payment]) -> tuple[RecurringCadence, list[_Payment]] | None:
   """The latest run of payments that keeps one rhythm, if it's long enough to trust."""
   if len(payments) < 2:
     return None
@@ -206,7 +206,7 @@ def _regular_tail(payments: list[_Payment]) -> tuple[Cadence, list[_Payment]] | 
   tail = payments[start:]
   if regular + 1 < rhythm.min_count:
     return None
-  if cadence == Cadence.weekly:
+  if cadence == RecurringCadence.weekly:
     middle = median(p.amount for p in tail)
     if any(not _same(p.amount, int(middle), WEEKLY_SPREAD) for p in tail):
       return None
@@ -237,10 +237,10 @@ def _price_changes(tail: list[_Payment]) -> tuple[PriceChange, ...]:
   return tuple(changes)
 
 
-def _anchor_day(cadence: Cadence, tail: list[_Payment]) -> int:
+def _anchor_day(cadence: RecurringCadence, tail: list[_Payment]) -> int:
   """The most common due day of the latest payments; weekends only move a few of them."""
   recent = tail[-6:]
-  days = [p.day.weekday() if cadence == Cadence.weekly else p.day.day for p in recent]
+  days = [p.day.weekday() if cadence == RecurringCadence.weekly else p.day.day for p in recent]
   counts = Counter(days)
   best = max(counts.values())
   return min(day for day, count in counts.items() if count == best)
@@ -263,7 +263,7 @@ def due_dates(series: Series, *, after: date) -> Iterator[date]:
   """The days the series is due on after `after`, in order, without end."""
   rhythm = RHYTHMS[series.cadence]
   last = series.last_date
-  if series.cadence == Cadence.weekly:
+  if series.cadence == RecurringCadence.weekly:
     step = 1
     while True:
       due = last + timedelta(days=7 * step)
@@ -300,7 +300,7 @@ def _kind(direction: TransactionDirection, label: str) -> RecurringKind:
   return RecurringKind.subscription if _SUBSCRIPTION.search(label.casefold()) else RecurringKind.bill
 
 
-def _series(key: str, cadence: Cadence, tail: list[_Payment], today: date) -> Series:
+def _series(key: str, cadence: RecurringCadence, tail: list[_Payment], today: date) -> Series:
   rhythm = RHYTHMS[cadence]
   last = tail[-1]
   changes = _price_changes(tail)
@@ -325,7 +325,7 @@ def _series(key: str, cadence: Cadence, tail: list[_Payment], today: date) -> Se
     first_date=tail[0].day,
     last_date=last.day,
     last_amount=last.amount,
-    status=Status.active,
+    status=RecurringStatus.active,
     next_date=None,
     price_changes=changes,
     anchor_day=_anchor_day(cadence, tail),
@@ -333,11 +333,11 @@ def _series(key: str, cadence: Cadence, tail: list[_Payment], today: date) -> Se
   dues = due_dates(draft, after=last.day)
   next_due, following = next(dues), next(dues)
   if today <= next_due + timedelta(days=rhythm.grace):
-    status = Status.active
+    status = RecurringStatus.active
   elif today <= following + timedelta(days=rhythm.grace):
-    status = Status.late
+    status = RecurringStatus.late
   else:
-    return replace(draft, status=Status.ended)
+    return replace(draft, status=RecurringStatus.ended)
   return replace(draft, status=status, next_date=next_due)
 
 

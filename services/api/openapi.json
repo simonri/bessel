@@ -12298,16 +12298,6 @@
         ],
         "title": "BulkUpdateResponse"
       },
-      "Cadence": {
-        "type": "string",
-        "enum": [
-          "weekly",
-          "monthly",
-          "quarterly",
-          "yearly"
-        ],
-        "title": "Cadence"
-      },
       "CalendarAccountListResponse": {
         "properties": {
           "accounts": {
@@ -21007,6 +20997,16 @@
         ],
         "title": "RecurrenceSchema"
       },
+      "RecurringCadence": {
+        "type": "string",
+        "enum": [
+          "weekly",
+          "monthly",
+          "quarterly",
+          "yearly"
+        ],
+        "title": "RecurringCadence"
+      },
       "RecurringDecision": {
         "type": "string",
         "enum": [
@@ -21255,7 +21255,7 @@
             "$ref": "#/components/schemas/RecurringKind"
           },
           "cadence": {
-            "$ref": "#/components/schemas/Cadence"
+            "$ref": "#/components/schemas/RecurringCadence"
           },
           "currency": {
             "type": "string",
@@ -21321,7 +21321,7 @@
             "title": "Last Amount"
           },
           "status": {
-            "$ref": "#/components/schemas/Status"
+            "$ref": "#/components/schemas/RecurringStatus"
           },
           "next_date": {
             "anyOf": [
@@ -21383,6 +21383,15 @@
           "price_changes"
         ],
         "title": "RecurringSeriesSchema"
+      },
+      "RecurringStatus": {
+        "type": "string",
+        "enum": [
+          "active",
+          "late",
+          "ended"
+        ],
+        "title": "RecurringStatus"
       },
       "RecurringTotal": {
         "properties": {
@@ -21778,15 +21787,6 @@
           "stages"
         ],
         "title": "SleepSummaryResponse"
-      },
-      "Status": {
-        "type": "string",
-        "enum": [
-          "active",
-          "late",
-          "ended"
-        ],
-        "title": "Status"
       },
       "SummaryCategory": {
         "properties": {

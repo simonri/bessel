@@ -5,7 +5,7 @@ from pydantic import UUID4, Field
 from api.common.schemas import IDSchema, Schema
 from api.models.recurring_series import RecurringDecision, RecurringKind
 from api.models.transaction import TransactionDirection
-from api.recurring.detection import Cadence, Status
+from api.recurring.detection import RecurringCadence, RecurringStatus
 
 
 class PriceChangeSchema(Schema):
@@ -21,7 +21,7 @@ class RecurringSeriesSchema(Schema):
   name: str = Field(description="The user's name for it, or what the transactions are called.")
   detected_name: str
   kind: RecurringKind
-  cadence: Cadence
+  cadence: RecurringCadence
   currency: str
   direction: TransactionDirection
   is_business: bool = Field(description="The company's money rather than the user's own.")
@@ -34,7 +34,7 @@ class RecurringSeriesSchema(Schema):
   first_date: date
   last_date: date
   last_amount: int
-  status: Status
+  status: RecurringStatus
   next_date: date | None = Field(description="When the next payment is expected; earlier than today when it's late, none once it has ended.")
   next_amount: int | None
   price_changes: list[PriceChangeSchema] = Field(description="Oldest first.")

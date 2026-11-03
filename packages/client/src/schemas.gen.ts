@@ -2231,12 +2231,6 @@ export const BulkUpdateResponseSchema = {
   title: "BulkUpdateResponse",
 } as const;
 
-export const CadenceSchema = {
-  type: "string",
-  enum: ["weekly", "monthly", "quarterly", "yearly"],
-  title: "Cadence",
-} as const;
-
 export const CalendarAccountListResponseSchema = {
   properties: {
     accounts: {
@@ -10750,6 +10744,12 @@ export const RecurrenceSchemaSchema = {
   title: "RecurrenceSchema",
 } as const;
 
+export const RecurringCadenceSchema = {
+  type: "string",
+  enum: ["weekly", "monthly", "quarterly", "yearly"],
+  title: "RecurringCadence",
+} as const;
+
 export const RecurringDecisionSchema = {
   type: "string",
   enum: ["confirmed", "dismissed"],
@@ -10988,7 +10988,7 @@ export const RecurringSeriesSchemaSchema = {
       $ref: "#/components/schemas/RecurringKind",
     },
     cadence: {
-      $ref: "#/components/schemas/Cadence",
+      $ref: "#/components/schemas/RecurringCadence",
     },
     currency: {
       type: "string",
@@ -11055,7 +11055,7 @@ export const RecurringSeriesSchemaSchema = {
       title: "Last Amount",
     },
     status: {
-      $ref: "#/components/schemas/Status",
+      $ref: "#/components/schemas/RecurringStatus",
     },
     next_date: {
       anyOf: [
@@ -11118,6 +11118,12 @@ export const RecurringSeriesSchemaSchema = {
     "price_changes",
   ],
   title: "RecurringSeriesSchema",
+} as const;
+
+export const RecurringStatusSchema = {
+  type: "string",
+  enum: ["active", "late", "ended"],
+  title: "RecurringStatus",
 } as const;
 
 export const RecurringTotalSchema = {
@@ -11494,12 +11500,6 @@ export const SleepSummaryResponseSchema = {
   type: "object",
   required: ["total_asleep_secs", "stages"],
   title: "SleepSummaryResponse",
-} as const;
-
-export const StatusSchema = {
-  type: "string",
-  enum: ["active", "late", "ended"],
-  title: "Status",
 } as const;
 
 export const SummaryCategorySchema = {
