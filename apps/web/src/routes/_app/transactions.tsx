@@ -7,7 +7,6 @@ import {
   listBankAccountsOptions,
   listBankAccountsQueryKey,
   listCategoriesOptions,
-  listTransactionsOptions,
   listTransactionsQueryKey,
   unpairTransferMutation,
   updateTransactionMutation,
@@ -56,6 +55,7 @@ import {
   type TransactionHandlers,
   TransactionList,
 } from "@/components/transactions/transaction-list";
+import { listTransactionPages } from "@/components/transactions/transaction-pages";
 import { TransactionPanel } from "@/components/transactions/transaction-panel";
 import {
   EmptyState,
@@ -123,7 +123,7 @@ export const Route = createFileRoute("/_app/transactions")({
   component: Transactions,
 });
 
-const MONTH_LIMIT = 500;
+const SEARCH_LIMIT = 500;
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -208,16 +208,18 @@ function Transactions() {
     [setFilters, handleFiltersChange],
   );
 
+  const listQuery = useMemo<Parameters<typeof listTransactionPages>[0]>(
+    () => ({ sorting: ["-transaction_date", "description"], ...filterQuery }),
+    [filterQuery],
+  );
+  // The whole month, however busy; a search across every month stops at the newest SEARCH_LIMIT.
   const { data, isLoading } = useQuery({
-    ...listTransactionsOptions({
-      client,
-      query: {
-        limit: MONTH_LIMIT,
-        page: 1,
-        sorting: ["-transaction_date", "description"],
-        ...filterQuery,
-      },
-    }),
+    queryKey: listTransactionsQueryKey({ client, query: listQuery }),
+    queryFn: ({ signal }) =>
+      listTransactionPages(listQuery, {
+        max: searching ? SEARCH_LIMIT : undefined,
+        signal,
+      }),
     placeholderData: keepPreviousData,
   });
 
@@ -472,7 +474,7 @@ function Transactions() {
   const selectedCount = selected.size;
   const open = useKeptOpen(transactions, openId);
   const monthLabel = format(firstDay, "MMMM yyyy");
-  const shown = Math.min(totalCount, MONTH_LIMIT);
+  const shown = Math.min(totalCount, SEARCH_LIMIT);
 
   const list = (
     <div className="min-w-0 space-y-3">
