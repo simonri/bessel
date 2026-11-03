@@ -153,9 +153,11 @@ describe("TransactionExportMenu", () => {
       ),
     );
     expect(saved).toEqual([]);
-    expect(screen.getByRole("button", { name: /Export/ })).toHaveProperty(
-      "disabled",
-      false,
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /Export/ })).toHaveProperty(
+        "disabled",
+        false,
+      ),
     );
   });
 });
