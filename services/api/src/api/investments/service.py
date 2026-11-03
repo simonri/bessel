@@ -252,10 +252,11 @@ class InvestmentService:
     return InvestmentAllocationResponse(items=items)
 
 
+# In the order the web checks its chart colours for telling neighbours apart.
 ALLOCATION_LABELS = {
   "stock": "Stocks",
-  "etf": "ETFs",
   "mutual_fund": "Funds",
+  "etf": "ETFs",
   "bond": "Bonds",
   "crypto": "Crypto",
   "real_estate": "Real estate",

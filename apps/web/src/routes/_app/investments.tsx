@@ -8,6 +8,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/ui-kit";
 import { HideAmountsButton } from "@/lib/privacy";
 import { HoldingsTab } from "./-holdings-tab";
+import { OverviewTab } from "./-overview-tab";
 import { TradesTab } from "./-trades-tab";
 
 export const Route = createFileRoute("/_app/investments")({
@@ -19,14 +20,17 @@ const TRIGGER_CLASS =
 
 function Investments() {
   return (
-    <Tabs defaultValue="holdings" className="@container flex flex-col gap-4">
+    <Tabs defaultValue="overview" className="@container flex flex-col gap-4">
       <PageHeader
         title="Investments"
-        summary="What you hold, and what you bought and sold"
+        summary="How your investments are doing, what you hold, and what you bought and sold"
       >
         <HideAmountsButton />
       </PageHeader>
       <TabsList className="h-8 rounded-lg border border-white/[0.07] bg-white/[0.04] p-0.5 group-data-[orientation=horizontal]/tabs:h-8">
+        <TabsTrigger value="overview" className={TRIGGER_CLASS}>
+          Overview
+        </TabsTrigger>
         <TabsTrigger value="holdings" className={TRIGGER_CLASS}>
           Holdings
         </TabsTrigger>
@@ -34,6 +38,9 @@ function Investments() {
           Bought and sold
         </TabsTrigger>
       </TabsList>
+      <TabsContent value="overview" className="min-h-0 flex-1">
+        <OverviewTab />
+      </TabsContent>
       <TabsContent value="holdings" className="min-h-0 flex-1">
         <HoldingsTab />
       </TabsContent>
