@@ -89,6 +89,8 @@ import {
   getHoldings,
   getIntradayActivity,
   getInvestmentAccounts,
+  getInvestmentAllocation,
+  getInvestmentPerformance,
   getLocationHistoryDay,
   getLocationHistorySummary,
   getMcpConnector,
@@ -439,6 +441,10 @@ import type {
   GetIntradayActivityResponse,
   GetInvestmentAccountsData,
   GetInvestmentAccountsResponse,
+  GetInvestmentAllocationData,
+  GetInvestmentAllocationResponse,
+  GetInvestmentPerformanceData,
+  GetInvestmentPerformanceResponse,
   GetLocationHistoryDayData,
   GetLocationHistoryDayError,
   GetLocationHistoryDayResponse,
@@ -4538,6 +4544,66 @@ export const getHoldingsOptions = (options?: Options<GetHoldingsData>) =>
       return data;
     },
     queryKey: getHoldingsQueryKey(options),
+  });
+
+export const getInvestmentPerformanceQueryKey = (
+  options?: Options<GetInvestmentPerformanceData>,
+) => createQueryKey("getInvestmentPerformance", options);
+
+/**
+ * Investment Performance
+ *
+ * Each investment account's value over time and each currency's total, with time- and money-weighted returns per range.
+ */
+export const getInvestmentPerformanceOptions = (
+  options?: Options<GetInvestmentPerformanceData>,
+) =>
+  queryOptions<
+    GetInvestmentPerformanceResponse,
+    DefaultError,
+    GetInvestmentPerformanceResponse,
+    ReturnType<typeof getInvestmentPerformanceQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInvestmentPerformance({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInvestmentPerformanceQueryKey(options),
+  });
+
+export const getInvestmentAllocationQueryKey = (
+  options?: Options<GetInvestmentAllocationData>,
+) => createQueryKey("getInvestmentAllocation", options);
+
+/**
+ * Investment Allocation
+ *
+ * What the investments are in, per currency: by type of holding and cash, and by account.
+ */
+export const getInvestmentAllocationOptions = (
+  options?: Options<GetInvestmentAllocationData>,
+) =>
+  queryOptions<
+    GetInvestmentAllocationResponse,
+    DefaultError,
+    GetInvestmentAllocationResponse,
+    ReturnType<typeof getInvestmentAllocationQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInvestmentAllocation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInvestmentAllocationQueryKey(options),
   });
 
 export const getCryptoPriceQueryKey = (options: Options<GetCryptoPriceData>) =>

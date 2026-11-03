@@ -774,6 +774,34 @@ export type AgentUsageSyncResponse = {
 };
 
 /**
+ * AllocationSlice
+ */
+export type AllocationSlice = {
+  /**
+   * Key
+   *
+   * The asset type, or the account's id.
+   */
+  key: string;
+  /**
+   * Label
+   */
+  label: string;
+  /**
+   * Value
+   *
+   * In minor units.
+   */
+  value: number;
+  /**
+   * Share
+   *
+   * Of the currency's whole, as a fraction.
+   */
+  share: number;
+};
+
+/**
  * AssetType
  */
 export const AssetType = {
@@ -3039,6 +3067,46 @@ export const CsvDialect = {
 export type CsvDialect = (typeof CsvDialect)[keyof typeof CsvDialect];
 
 /**
+ * CurrencyAllocation
+ */
+export type CurrencyAllocation = {
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Total
+   *
+   * Everything counted, in minor units.
+   */
+  total: number;
+  /**
+   * By Asset Type
+   *
+   * Holdings by type, with uninvested cash as its own slice.
+   */
+  by_asset_type: Array<AllocationSlice>;
+  /**
+   * By Account
+   *
+   * Largest first.
+   */
+  by_account: Array<AllocationSlice>;
+  /**
+   * Borrowed
+   *
+   * Cash below zero across the accounts, in minor units; not in the slices.
+   */
+  borrowed: number;
+  /**
+   * Unpriced
+   *
+   * How many holdings have no price and so aren't counted.
+   */
+  unpriced: number;
+};
+
+/**
  * CurrencySummary
  */
 export type CurrencySummary = {
@@ -4975,6 +5043,16 @@ export type InvestmentAccountsResponse = {
   items: Array<InvestmentAccountSummary>;
 };
 
+/**
+ * InvestmentAllocationResponse
+ */
+export type InvestmentAllocationResponse = {
+  /**
+   * Items
+   */
+  items: Array<CurrencyAllocation>;
+};
+
 export const InvestmentKind = {
   BUY: "buy",
   SELL: "sell",
@@ -4988,6 +5066,28 @@ export const InvestmentKind = {
 
 export type InvestmentKind =
   (typeof InvestmentKind)[keyof typeof InvestmentKind];
+
+/**
+ * InvestmentPerformanceResponse
+ */
+export type InvestmentPerformanceResponse = {
+  /**
+   * Series
+   */
+  series: Array<PortfolioSeries>;
+  /**
+   * Returns
+   *
+   * For each account and each currency's total, one per range.
+   */
+  returns: Array<PeriodReturns>;
+  /**
+   * Left Out
+   *
+   * Accounts not counted in the totals' returns, and why.
+   */
+  left_out: Array<LeftOutAccount>;
+};
 
 /**
  * KlarnaImportRequest
@@ -5059,6 +5159,24 @@ export type KlarnaImportResponse = {
    * Payment plans Bessel doesn't know yet; their purchases were imported as pay later.
    */
   unrecognized_plans: Array<string>;
+};
+
+/**
+ * LeftOutAccount
+ */
+export type LeftOutAccount = {
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Reason
+   */
+  reason: string;
 };
 
 /**
@@ -6048,6 +6166,96 @@ export type PeriodResult = {
 };
 
 /**
+ * PeriodReturns
+ */
+export type PeriodReturns = {
+  /**
+   * Bank Account Id
+   *
+   * The account, or null for all the accounts in the currency together.
+   */
+  bank_account_id: string | null;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Range
+   */
+  range: "1m" | "3m" | "ytd" | "1y" | "all";
+  /**
+   * Start
+   *
+   * The day the returns are measured from: later than the range's start when values only begin later.
+   */
+  start: Date | null;
+  /**
+   * End
+   */
+  end: Date | null;
+  /**
+   * Start Value
+   *
+   * In minor units.
+   */
+  start_value: number | null;
+  /**
+   * End Value
+   *
+   * In minor units.
+   */
+  end_value: number | null;
+  /**
+   * Net Flows
+   *
+   * Deposits minus withdrawals over the period, in minor units.
+   */
+  net_flows: number | null;
+  /**
+   * Gain
+   *
+   * End value minus start value minus net flows: what the money made, in minor units.
+   */
+  gain: number | null;
+  /**
+   * Time Weighted
+   *
+   * Time-weighted return over the period, as a fraction (0.05 is 5%).
+   */
+  time_weighted: number | null;
+  /**
+   * Time Weighted Annualized
+   *
+   * Per year, for periods of a year or more.
+   */
+  time_weighted_annualized: number | null;
+  /**
+   * Time Weighted Unavailable
+   *
+   * Why there's no time-weighted return.
+   */
+  time_weighted_unavailable: string | null;
+  /**
+   * Money Weighted
+   *
+   * Money-weighted return (XIRR) over the period, as a fraction.
+   */
+  money_weighted: number | null;
+  /**
+   * Money Weighted Annualized
+   *
+   * Per year, for periods of a year or more.
+   */
+  money_weighted_annualized: number | null;
+  /**
+   * Money Weighted Unavailable
+   *
+   * Why there's no money-weighted return.
+   */
+  money_weighted_unavailable: string | null;
+};
+
+/**
  * PlaceCreate
  */
 export type PlaceCreate = {
@@ -6357,6 +6565,28 @@ export type PlaceUpdate = {
    * Phone
    */
   phone?: string | null;
+};
+
+/**
+ * PortfolioSeries
+ */
+export type PortfolioSeries = {
+  /**
+   * Bank Account Id
+   *
+   * The account, or null for all the accounts in the currency together.
+   */
+  bank_account_id: string | null;
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Points
+   *
+   * On each day the broker reported the positions, oldest first.
+   */
+  points: Array<ValuePoint>;
 };
 
 /**
@@ -8899,6 +9129,22 @@ export type ValidationError = {
   ctx?: {
     [key: string]: unknown;
   };
+};
+
+/**
+ * ValuePoint
+ */
+export type ValuePoint = {
+  /**
+   * Day
+   */
+  day: Date;
+  /**
+   * Value
+   *
+   * Holdings plus cash at the end of the day, in minor units.
+   */
+  value: number;
 };
 
 /**
@@ -13218,6 +13464,40 @@ export type GetHoldingsResponses = {
 
 export type GetHoldingsResponse =
   GetHoldingsResponses[keyof GetHoldingsResponses];
+
+export type GetInvestmentPerformanceData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/investments/performance";
+};
+
+export type GetInvestmentPerformanceResponses = {
+  /**
+   * Successful Response
+   */
+  200: InvestmentPerformanceResponse;
+};
+
+export type GetInvestmentPerformanceResponse =
+  GetInvestmentPerformanceResponses[keyof GetInvestmentPerformanceResponses];
+
+export type GetInvestmentAllocationData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: "/v1/investments/allocation";
+};
+
+export type GetInvestmentAllocationResponses = {
+  /**
+   * Successful Response
+   */
+  200: InvestmentAllocationResponse;
+};
+
+export type GetInvestmentAllocationResponse =
+  GetInvestmentAllocationResponses[keyof GetInvestmentAllocationResponses];
 
 export type GetCryptoPriceData = {
   body?: never;

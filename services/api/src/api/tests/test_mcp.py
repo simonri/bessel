@@ -267,7 +267,7 @@ class TestTools:
     seen_by_model = sum(len(t.description or "") + len(json.dumps(t.input_schema)) for t in tools)
     whole = sum(len(t.model_dump_json(exclude_none=True, by_alias=True)) for t in tools)
     assert seen_by_model <= 66_000, seen_by_model
-    assert whole <= 169_000, whole
+    assert whole <= 171_000, whole
 
   @pytest.mark.asyncio
   async def test_money_is_only_ever_read(self, connect: ConnectFixture) -> None:

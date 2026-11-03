@@ -392,11 +392,8 @@ async def get_recurring_payments(
   include_ended: bool = False,
   timezone: TimezoneParam = None,
 ) -> RecurringPayments:
-  """Bills, subscriptions and income that repeat, detected from the transactions: how often, how much, when due
-  next, price changes, and the total per month.
-
-  Use it for "what subscriptions do I have", "what's due this week" or "what do my bills cost a month".
-  """
+  """Repeating bills, subscriptions and income found in the transactions: cadence, amount, next due, price
+  changes and monthly totals: "what subscriptions do I have"."""
   async with user_session(ctx) as (session, user):
     today = today_in(resolve_timezone(user, timezone))
     reviewed = await reviewed_series(session, user.id, today=today)
@@ -469,15 +466,13 @@ class TagSpending(Schema):
 
 async def get_tag_spending(
   ctx: Context,
-  start: Annotated[Day | None, Field(description="Earliest day, inclusive. Leave out for no lower bound.")] = None,
-  end: Annotated[Day | None, Field(description="Latest day, inclusive. Leave out for no upper bound.")] = None,
-  company: Annotated[bool | None, Field(description="true for only the company's money, false for only the user's own.")] = None,
+  start: Annotated[Day | None, Field(description="First day; none for no bound.")] = None,
+  end: Annotated[Day | None, Field(description="Last day; none for no bound.")] = None,
+  company: Annotated[bool | None, Field(description="true: only the company's; false: only the user's.")] = None,
   timezone: TimezoneParam = None,
 ) -> TagSpending:
-  """Money out and in under each of the user's tags, such as a trip or a project: "what did the trip cost".
-
-  Moves between the user's own accounts are left out. For the transactions behind a tag, use search_transactions.
-  """
+  """Money out and in per tag (a trip, a project): "what did the trip cost". Own-account moves are left out;
+  search_transactions lists a tag's transactions."""
   async with user_session(ctx) as (session, user):
     today = today_in(resolve_timezone(user, timezone))
     date_from, date_to = (parse_day(start, today) if start else None), (parse_day(end, today) if end else None)
@@ -529,9 +524,40 @@ class Holding(Schema):
   gain_pct: float | None
 
 
+class InvestmentReturns(Schema):
+  account: str | None = Field(description="Null for the currency's total.")
+  currency: str
+  start: date | None
+  end: date | None
+  gain: float | None = Field(description="Made beyond net deposits.")
+  net_deposits: float | None
+  time_weighted_pct: float | None = Field(description="Over the period.")
+  money_weighted_pct: float | None = Field(description="XIRR over the period.")
+  per_year_pct: float | None = Field(description="For a year or more.")
+  unavailable: str | None = Field(description="Why a return is missing.")
+
+
+class AllocationShare(Schema):
+  name: str
+  value: float
+  pct: float
+
+
+class InvestmentAllocation(Schema):
+  currency: str
+  total: float
+  by_type: list[AllocationShare] = Field(description="Asset types, and cash.")
+  by_account: list[AllocationShare]
+  borrowed: float = Field(description="Not in the shares.")
+  unpriced_holdings: int
+
+
 class Investments(Schema):
   accounts: list[InvestmentAccount]
   holdings: list[Holding] = Field(description="Largest value first.")
+  returns: list[InvestmentReturns] = Field(default_factory=list, description="Per account and currency total.")
+  returns_left_out: list[str] = Field(default_factory=list, description="Not in the totals, and why.")
+  allocation: list[InvestmentAllocation] = Field(default_factory=list, description="Per currency.")
 
 
 def _per_year(*series: Sequence[investments.YearAmount]) -> list[YearAmount]:
@@ -542,14 +568,22 @@ def _per_year(*series: Sequence[investments.YearAmount]) -> list[YearAmount]:
   return [YearAmount(year=year, amount=money(amount)) for year, amount in sorted(totals.items(), reverse=True)]
 
 
-async def get_investments(ctx: Context) -> Investments:
-  """Each investment account's value, growth and dividends, and every position held now with its gain.
+def _pct(fraction: float | None) -> float | None:
+  return round(fraction * 100, 2) if fraction is not None else None
 
-  Use it for "how are my investments doing", dividend income, or how the user's and the company's portfolios are spread.
-  """
+
+async def get_investments(
+  ctx: Context,
+  period: Annotated[investments.PerformanceRange, Field(description="For the returns.")] = "1y",
+  timezone: TimezoneParam = None,
+) -> Investments:
+  """Investment accounts' value, growth and dividends, positions and their gain, returns over a period, and
+  allocation: "how are my investments doing"."""
   async with user_session(ctx) as (session, user):
     accounts = await investment_service.accounts(session, user.id)
     holdings = await investment_service.current_holdings(session, user.id)
+    performance = await investment_service.performance(session, user.id, today=today_in(resolve_timezone(user, timezone)))
+    allocation = await investment_service.allocation(session, user.id)
   names = {a.bank_account_id: a.name for a in accounts}
   return Investments(
     accounts=[
@@ -581,6 +615,34 @@ async def get_investments(ctx: Context) -> Investments:
         gain_pct=round(h.gain_loss_pct, 2) if h.gain_loss_pct is not None else None,
       )
       for h in sorted(holdings, key=lambda h: -(h.current_value or 0))
+    ],
+    returns=[
+      InvestmentReturns(
+        account=names.get(r.bank_account_id) if r.bank_account_id else None,
+        currency=r.currency,
+        start=r.start,
+        end=r.end,
+        gain=money(r.gain) if r.gain is not None else None,
+        net_deposits=money(r.net_flows) if r.net_flows is not None else None,
+        time_weighted_pct=_pct(r.time_weighted),
+        money_weighted_pct=_pct(r.money_weighted),
+        per_year_pct=_pct(r.time_weighted_annualized),
+        unavailable=r.time_weighted_unavailable or r.money_weighted_unavailable,
+      )
+      for r in performance.returns
+      if r.range == period
+    ],
+    returns_left_out=[f"{a.name}: {a.reason}" for a in performance.left_out],
+    allocation=[
+      InvestmentAllocation(
+        currency=item.currency,
+        total=money(item.total),
+        by_type=[AllocationShare(name=s.label, value=money(s.value), pct=_pct(s.share) or 0) for s in item.by_asset_type],
+        by_account=[AllocationShare(name=s.label, value=money(s.value), pct=_pct(s.share) or 0) for s in item.by_account],
+        borrowed=money(item.borrowed),
+        unpriced_holdings=item.unpriced,
+      )
+      for item in allocation.items
     ],
   )
 
