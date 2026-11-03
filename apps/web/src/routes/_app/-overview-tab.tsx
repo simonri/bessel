@@ -285,7 +285,7 @@ function ReturnFigure({
             {formatReturn(value)}
           </p>
           <p className="type-caption text-white/40">
-            {perYear != null
+            {perYear != null && formatReturn(perYear) !== formatReturn(value)
               ? `${formatReturn(perYear)} a year - ${explain}`
               : explain}
           </p>
@@ -360,22 +360,37 @@ function PerformancePanel({
         )}
       </p>
       <ValueChart data={data} currency={currency} />
-      <div className="mt-5 grid grid-cols-1 gap-4 @md:grid-cols-2">
-        <ReturnFigure
-          label="Time-weighted return"
-          explain="how the investments did"
-          value={returns?.time_weighted}
-          perYear={returns?.time_weighted_annualized}
-          unavailable={returns?.time_weighted_unavailable}
-        />
-        <ReturnFigure
-          label="Money-weighted return"
-          explain="how your money did, timing included"
-          value={returns?.money_weighted}
-          perYear={returns?.money_weighted_annualized}
-          unavailable={returns?.money_weighted_unavailable}
-        />
-      </div>
+      {returns?.time_weighted == null &&
+      returns?.money_weighted == null &&
+      returns?.time_weighted_unavailable ===
+        returns?.money_weighted_unavailable ? (
+        <div className="mt-5">
+          <ReturnFigure
+            label="Returns"
+            explain=""
+            value={null}
+            perYear={null}
+            unavailable={returns?.time_weighted_unavailable}
+          />
+        </div>
+      ) : (
+        <div className="mt-5 grid grid-cols-1 gap-4 @md:grid-cols-2">
+          <ReturnFigure
+            label="Time-weighted return"
+            explain="how the investments did"
+            value={returns?.time_weighted}
+            perYear={returns?.time_weighted_annualized}
+            unavailable={returns?.time_weighted_unavailable}
+          />
+          <ReturnFigure
+            label="Money-weighted return"
+            explain="how your money did, timing included"
+            value={returns?.money_weighted}
+            perYear={returns?.money_weighted_annualized}
+            unavailable={returns?.money_weighted_unavailable}
+          />
+        </div>
+      )}
       {leftOut.length > 0 && (
         <p className="mt-4 type-caption text-white/40">
           Returns leave out {leftOut.join(", ")}: Bessel hasn't seen money moved
@@ -437,13 +452,20 @@ function AccountReturns({
                     undefined
                   }
                 >
-                  {found?.time_weighted != null
-                    ? formatReturn(found.time_weighted)
-                    : "-"}
-                  <span className="text-white/30"> - </span>
-                  {found?.money_weighted != null
-                    ? formatReturn(found.money_weighted)
-                    : "-"}
+                  {found?.time_weighted == null &&
+                  found?.money_weighted == null ? (
+                    <span className="text-white/40">Not available</span>
+                  ) : (
+                    <>
+                      {found.time_weighted != null
+                        ? formatReturn(found.time_weighted)
+                        : "-"}
+                      <span className="text-white/30"> - </span>
+                      {found.money_weighted != null
+                        ? formatReturn(found.money_weighted)
+                        : "-"}
+                    </>
+                  )}
                 </span>
               </button>
             </li>

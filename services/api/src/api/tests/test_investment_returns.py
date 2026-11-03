@@ -33,13 +33,20 @@ class TestTimeWeighted:
 
     assert period_returns(ledger, start=None, end=day(10)).time_weighted == pytest.approx(0.08)
 
-  def test_money_put_into_an_empty_account_earns_from_when_it_arrives(self) -> None:
-    ledger = Ledger(values={day(0): 0, day(1): 1000, day(2): 1100}, flows={day(1): 1000})
+  def test_money_put_into_an_empty_account_and_invested_that_day_earns_from_then(self) -> None:
+    # 1000 in on day 1 and already worth 1010 by its end: 1% on the 1000, then 10%.
+    ledger = Ledger(values={day(0): 0, day(1): 1010, day(2): 1111}, flows={day(1): 1000})
 
     found = period_returns(ledger, start=None, end=day(2))
 
-    assert found.time_weighted == pytest.approx(0.10)
+    assert found.time_weighted == pytest.approx(1.01 * 1.1 - 1)
     assert found.time_weighted_unavailable is None
+
+  def test_a_stretch_at_zero_with_nothing_moved_counts_as_no_change(self) -> None:
+    # Emptied on day 1, empty on day 2, 500 back in on day 3 that's worth 550 by its end.
+    ledger = Ledger(values={day(0): 1000, day(1): 0, day(2): 0, day(3): 550}, flows={day(1): -1000, day(3): 500})
+
+    assert period_returns(ledger, start=None, end=day(3)).time_weighted == pytest.approx(0.10)
 
   def test_a_value_below_zero_has_no_return_and_says_why(self) -> None:
     found = period_returns(Ledger(values={day(0): -500, day(1): 200}), start=None, end=day(1))

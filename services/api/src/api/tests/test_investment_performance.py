@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 from api.investments import endpoints
+from api.investments.service import range_start
 from api.models.avanza import AvanzaAccount, AvanzaConnection, HoldingSnapshot
 from api.models.bank_account import BankAccount
 from api.models.security import AssetType, Security
@@ -174,6 +175,17 @@ class TestPerformance:
     await _account(save_fixture, user, "ISK")
 
     assert (await other_client.get("/v1/investments/performance")).json() == {"series": [], "returns": [], "left_out": []}
+
+
+class TestRangeStart:
+  def test_each_range_is_measured_from_its_first_days_end(self) -> None:
+    assert [range_start(r, TODAY) for r in ("1m", "3m", "ytd", "1y", "all")] == [
+      date(2026, 9, 15),
+      date(2026, 7, 15),
+      date(2025, 12, 31),
+      date(2025, 10, 15),
+      None,
+    ]
 
 
 class TestAllocation:

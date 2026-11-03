@@ -135,15 +135,9 @@ def _time_weighted(values: Mapping[date, int], flows: Mapping[date, int], days: 
   """Each stretch between two valuations is weighed by Modified Dietz (a flow counts for the share of the stretch it
   was invested), and the stretches are chained, so how much money was in when does not sway the result."""
   growth = 1.0
-  flow_days = sorted(flows)
-  index = 0
   for previous, current in zip(days, days[1:], strict=False):
     length = (current - previous).days
-    within: list[tuple[date, int]] = []
-    while index < len(flow_days) and flow_days[index] <= current:
-      if flow_days[index] > previous:
-        within.append((flow_days[index], flows[flow_days[index]]))
-      index += 1
+    within = [(day, amount) for day, amount in flows.items() if previous < day <= current]
     moved = sum(amount for _, amount in within)
     gain = values[current] - values[previous] - moved
     invested = values[previous] + sum(amount * (current - day).days / length for day, amount in within)

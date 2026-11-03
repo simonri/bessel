@@ -56,7 +56,7 @@ function returns(overrides: Partial<PeriodReturns>): PeriodReturns {
     net_flows: 10000,
     gain: 10000,
     time_weighted: 0.0834,
-    time_weighted_annualized: 0.0834,
+    time_weighted_annualized: null,
     time_weighted_unavailable: null,
     money_weighted: 0.0712,
     money_weighted_annualized: null,
@@ -82,7 +82,17 @@ const PERFORMANCE: InvestmentPerformanceResponse = {
     { bank_account_id: "isk", currency: "SEK", points: [] },
   ],
   returns: [
-    returns({}),
+    returns({
+      time_weighted_annualized: 0.0412,
+      money_weighted_annualized: 0.0712,
+    }),
+    returns({
+      bank_account_id: "kf",
+      time_weighted: null,
+      money_weighted: null,
+      time_weighted_unavailable: "No money moved in or out.",
+      money_weighted_unavailable: "No money moved in or out.",
+    }),
     returns({
       bank_account_id: "isk",
       time_weighted: null,
@@ -208,7 +218,9 @@ describe("OverviewTab", () => {
 
     expect(await screen.findByText("+8,3%")).toBeTruthy();
     expect(screen.getByText("+7,1%")).toBeTruthy();
-    expect(plain(document.body.textContent)).toContain("+8,3% a year");
+    // Per year only where it differs from the period's own figure.
+    expect(plain(document.body.textContent)).toContain("+4,1% a year");
+    expect(plain(document.body.textContent)).not.toContain("+7,1% a year");
 
     fireEvent.click(screen.getByRole("button", { name: "3M" }));
 
@@ -225,6 +237,17 @@ describe("OverviewTab", () => {
         .length,
     ).toBe(1);
     expect(screen.queryByText("+8,3%")).toBeNull();
+  });
+
+  it("gives one reason when neither return can be worked out", async () => {
+    renderTab();
+
+    const row = await screen.findByRole("button", { name: /^KF/ });
+    expect(plain(row.textContent)).toContain("Not available");
+    fireEvent.click(row);
+
+    expect(screen.getAllByText("No money moved in or out.").length).toBe(1);
+    expect(screen.queryByText("Time-weighted return")).toBeNull();
   });
 
   it("names the accounts the total's returns leave out", async () => {
