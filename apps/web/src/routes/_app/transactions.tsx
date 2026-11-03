@@ -7,6 +7,7 @@ import {
   listBankAccountsOptions,
   listBankAccountsQueryKey,
   listCategoriesOptions,
+  listCategoryRulesQueryKey,
   listTransactionsQueryKey,
   unpairTransferMutation,
   updateTransactionMutation,
@@ -36,9 +37,16 @@ import {
 } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { format } from "date-fns";
-import { ArrowLeftRight, ChevronDown, Tag, Trash2 } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ChevronDown,
+  ListFilter,
+  Tag,
+  Trash2,
+} from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { CategorizationPage } from "@/components/categorization/categorization-page";
 import type { BulkSuggestion } from "@/components/category-cell";
 import { ImportDialog } from "@/components/import-dialog";
 import {
@@ -137,6 +145,7 @@ function Transactions() {
   const [bulkSuggestion, setBulkSuggestion] = useState<BulkSuggestion | null>(
     null,
   );
+  const [managingRules, setManagingRules] = useState(false);
   const queryClient = useQueryClient();
 
   const year = filters.year ?? now.getFullYear();
@@ -430,6 +439,10 @@ function Transactions() {
     onSuccess: () =>
       toast.success("New ones like this will be sorted automatically"),
     onError: () => toast.error("Couldn't save the rule"),
+    onSettled: () =>
+      void queryClient.invalidateQueries({
+        queryKey: listCategoryRulesQueryKey({ client }),
+      }),
   });
 
   const handleConfirmBulk = () => {
@@ -587,6 +600,9 @@ function Transactions() {
     </div>
   );
 
+  if (managingRules)
+    return <CategorizationPage onBack={() => setManagingRules(false)} />;
+
   return (
     <div className="@container flex flex-col gap-4">
       <PageHeader
@@ -608,6 +624,10 @@ function Transactions() {
           />
         )}
         <HideAmountsButton />
+        <SoftButton onClick={() => setManagingRules(true)}>
+          <ListFilter />
+          Rules
+        </SoftButton>
         <TransactionExportMenu
           query={filterQuery}
           fileName={exportFileName(filters, firstDayStr)}

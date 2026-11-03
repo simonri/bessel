@@ -1744,6 +1744,38 @@ export type CalendarUpdate = {
 };
 
 /**
+ * CategoryCreate
+ */
+export type CategoryCreate = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Color
+   *
+   * Hex color code for UI display.
+   */
+  color?: string;
+  /**
+   * Parent Id
+   *
+   * The group it goes in; a new group when null.
+   */
+  parent_id?: string | null;
+  /**
+   * Excluded
+   *
+   * Kept out of reports; by default like its group.
+   */
+  excluded?: boolean | null;
+  /**
+   * Income
+   */
+  income?: boolean;
+};
+
+/**
  * CategoryListResponse
  */
 export type CategoryListResponse = {
@@ -1764,6 +1796,8 @@ export type CategoryRuleCreate = {
   category_id: string;
   /**
    * Pattern
+   *
+   * Text matched case-insensitively anywhere in the description.
    */
   pattern: string;
   scope?: RuleScope;
@@ -1827,9 +1861,15 @@ export type CategoryRuleCreated = {
    */
   mark_business: boolean;
   /**
+   * Transaction Count
+   *
+   * Transactions it has sorted that still have the category it gave.
+   */
+  transaction_count: number;
+  /**
    * Categorized
    *
-   * Transactions already imported that the rules sorted.
+   * Transactions already imported that the rule sorted.
    */
   categorized: number;
 };
@@ -1842,6 +1882,101 @@ export type CategoryRuleListResponse = {
    * Items
    */
   items: Array<CategoryRuleSchema>;
+};
+
+/**
+ * CategoryRuleMatch
+ */
+export type CategoryRuleMatch = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Transaction Date
+   */
+  transaction_date: Date;
+  /**
+   * Description
+   */
+  description: string | null;
+  /**
+   * Name
+   */
+  name: string | null;
+  /**
+   * Amount
+   *
+   * Amount in minor units (cents).
+   */
+  amount: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  direction: TransactionDirection;
+  /**
+   * Category Id
+   *
+   * The category it has now.
+   */
+  category_id: string | null;
+  /**
+   * By Rule
+   *
+   * Its category came from a rule rather than the user.
+   */
+  by_rule: boolean;
+  /**
+   * Would Sort
+   *
+   * The rule would give it its category: uncategorized, or sorted by the rule being edited, and no more specific rule wins.
+   */
+  would_sort: boolean;
+};
+
+/**
+ * CategoryRulePreview
+ */
+export type CategoryRulePreview = {
+  /**
+   * Match Count
+   *
+   * Existing transactions the rule matches, categorized or not.
+   */
+  match_count: number;
+  /**
+   * Sortable Count
+   *
+   * Uncategorized ones it would sort when applied to existing transactions.
+   */
+  sortable_count: number;
+  /**
+   * Items
+   *
+   * The newest matches, at most 50.
+   */
+  items: Array<CategoryRuleMatch>;
+};
+
+/**
+ * CategoryRulePreviewRequest
+ */
+export type CategoryRulePreviewRequest = {
+  /**
+   * Pattern
+   *
+   * Text matched case-insensitively anywhere in the description.
+   */
+  pattern: string;
+  scope?: RuleScope;
+  direction?: TransactionDirection | null;
+  /**
+   * Rule Id
+   *
+   * The rule being edited, previewed as these settings in its place.
+   */
+  rule_id?: string | null;
 };
 
 /**
@@ -1890,6 +2025,41 @@ export type CategoryRuleSchema = {
    * Also mark matching transactions as business expenses.
    */
   mark_business: boolean;
+  /**
+   * Transaction Count
+   *
+   * Transactions it has sorted that still have the category it gave.
+   */
+  transaction_count: number;
+};
+
+/**
+ * CategoryRuleUpdate
+ */
+export type CategoryRuleUpdate = {
+  /**
+   * Category Id
+   */
+  category_id?: string | null;
+  /**
+   * Pattern
+   */
+  pattern?: string | null;
+  scope?: RuleScope | null;
+  /**
+   * Null matches both directions.
+   */
+  direction?: TransactionDirection | null;
+  /**
+   * Mark Business
+   */
+  mark_business?: boolean | null;
+  /**
+   * Apply Now
+   *
+   * Also sort the uncategorized transactions already imported.
+   */
+  apply_now?: boolean;
 };
 
 /**
@@ -1950,6 +2120,18 @@ export type CategorySchema = {
    * Parent category ID, null for top-level.
    */
   parent_id: string | null;
+  /**
+   * Transaction Count
+   *
+   * Transactions filed under it.
+   */
+  transaction_count: number;
+  /**
+   * Rule Count
+   *
+   * Rules that sort transactions into it.
+   */
+  rule_count: number;
 };
 
 /**
@@ -1980,6 +2162,34 @@ export type CategorySpending = {
    * Total spending in minor units (cents).
    */
   total: number;
+};
+
+/**
+ * CategoryUpdate
+ */
+export type CategoryUpdate = {
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Color
+   */
+  color?: string | null;
+  /**
+   * Parent Id
+   *
+   * Moves a category to another group. Groups stay groups.
+   */
+  parent_id?: string | null;
+  /**
+   * Excluded
+   */
+  excluded?: boolean | null;
+  /**
+   * Income
+   */
+  income?: boolean | null;
 };
 
 /**
@@ -10943,6 +11153,33 @@ export type ListCategoriesResponses = {
 export type ListCategoriesResponse =
   ListCategoriesResponses[keyof ListCategoriesResponses];
 
+export type CreateCategoryData = {
+  body: CategoryCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/categories";
+};
+
+export type CreateCategoryErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateCategoryError =
+  CreateCategoryErrors[keyof CreateCategoryErrors];
+
+export type CreateCategoryResponses = {
+  /**
+   * Successful Response
+   */
+  201: CategorySchema;
+};
+
+export type CreateCategoryResponse =
+  CreateCategoryResponses[keyof CreateCategoryResponses];
+
 export type ListCategoryRulesData = {
   body?: never;
   path?: never;
@@ -10987,6 +11224,33 @@ export type CreateCategoryRuleResponses = {
 export type CreateCategoryRuleResponse =
   CreateCategoryRuleResponses[keyof CreateCategoryRuleResponses];
 
+export type PreviewCategoryRuleData = {
+  body: CategoryRulePreviewRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/categories/rules/preview";
+};
+
+export type PreviewCategoryRuleErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type PreviewCategoryRuleError =
+  PreviewCategoryRuleErrors[keyof PreviewCategoryRuleErrors];
+
+export type PreviewCategoryRuleResponses = {
+  /**
+   * Successful Response
+   */
+  200: CategoryRulePreview;
+};
+
+export type PreviewCategoryRuleResponse =
+  PreviewCategoryRuleResponses[keyof PreviewCategoryRuleResponses];
+
 export type DeleteCategoryRuleData = {
   body?: never;
   path: {
@@ -10995,7 +11259,14 @@ export type DeleteCategoryRuleData = {
      */
     rule_id: string;
   };
-  query?: never;
+  query?: {
+    /**
+     * Release
+     *
+     * Also take back the category it gave, so other rules or the user sort those again.
+     */
+    release?: boolean;
+  };
   url: "/v1/categories/rules/{rule_id}";
 };
 
@@ -11018,6 +11289,115 @@ export type DeleteCategoryRuleResponses = {
 
 export type DeleteCategoryRuleResponse =
   DeleteCategoryRuleResponses[keyof DeleteCategoryRuleResponses];
+
+export type UpdateCategoryRuleData = {
+  body: CategoryRuleUpdate;
+  path: {
+    /**
+     * Rule Id
+     */
+    rule_id: string;
+  };
+  query?: never;
+  url: "/v1/categories/rules/{rule_id}";
+};
+
+export type UpdateCategoryRuleErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateCategoryRuleError =
+  UpdateCategoryRuleErrors[keyof UpdateCategoryRuleErrors];
+
+export type UpdateCategoryRuleResponses = {
+  /**
+   * Successful Response
+   */
+  200: CategoryRuleCreated;
+};
+
+export type UpdateCategoryRuleResponse =
+  UpdateCategoryRuleResponses[keyof UpdateCategoryRuleResponses];
+
+export type DeleteCategoryData = {
+  body?: never;
+  path: {
+    /**
+     * Category Id
+     */
+    category_id: string;
+  };
+  query?: {
+    /**
+     * Move To
+     *
+     * Category its transactions and rules move to.
+     */
+    move_to?: string | null;
+    /**
+     * Leave Uncategorized
+     *
+     * Leave its transactions uncategorized and delete its rules.
+     */
+    leave_uncategorized?: boolean;
+  };
+  url: "/v1/categories/{category_id}";
+};
+
+export type DeleteCategoryErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteCategoryError =
+  DeleteCategoryErrors[keyof DeleteCategoryErrors];
+
+export type DeleteCategoryResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteCategoryResponse =
+  DeleteCategoryResponses[keyof DeleteCategoryResponses];
+
+export type UpdateCategoryData = {
+  body: CategoryUpdate;
+  path: {
+    /**
+     * Category Id
+     */
+    category_id: string;
+  };
+  query?: never;
+  url: "/v1/categories/{category_id}";
+};
+
+export type UpdateCategoryErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateCategoryError =
+  UpdateCategoryErrors[keyof UpdateCategoryErrors];
+
+export type UpdateCategoryResponses = {
+  /**
+   * Successful Response
+   */
+  200: CategorySchema;
+};
+
+export type UpdateCategoryResponse =
+  UpdateCategoryResponses[keyof UpdateCategoryResponses];
 
 export type ListCountersData = {
   body?: never;

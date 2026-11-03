@@ -220,6 +220,11 @@ AUDITED: set[str] = {
   "GET /v1/categories/rules",
   "POST /v1/categories/rules",
   "DELETE /v1/categories/rules/{rule_id}",
+  "PATCH /v1/categories/rules/{rule_id}",
+  "POST /v1/categories/rules/preview",
+  "POST /v1/categories",
+  "PATCH /v1/categories/{category_id}",
+  "DELETE /v1/categories/{category_id}",
   "PATCH /v1/transactions/{transaction_id}",
   "DELETE /v1/transactions/{transaction_id}/transfer",
   "PUT /v1/transactions/{transaction_id}/name",
@@ -730,6 +735,46 @@ class TestBankingAndTransactions:
 
     [own] = (await other_client.get("/v1/transactions")).json()["items"]
     assert own["category_id"] is None
+
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_change_use_or_preview_against_my_categories_and_rules(
+    self, client: AsyncClient, other_client: AsyncClient, save_owned: SaveFixture
+  ) -> None:
+    account = await _create(client, "/v1/bank-accounts", {"name": "A checking", "currency": "SEK", "subtype": "checking"})
+    group = await _create(client, "/v1/categories", {"name": "A group"})
+    mine = await _create(client, "/v1/categories", {"name": "A food", "parent_id": group["id"]})
+    await save_owned(
+      Transaction(
+        amount=5_000,
+        currency="SEK",
+        transaction_date=datetime.now(UTC).date(),
+        direction=TransactionDirection.debit,
+        dedup_hash=f"a-{uuid4().hex}",
+        description="A corner shop",
+        bank_account_id=UUID(account["id"]),
+      )
+    )
+    rule = await _create(client, "/v1/categories/rules", {"category_id": mine["id"], "pattern": "corner"})
+    their_group = await _create(other_client, "/v1/categories", {"name": "B group"})
+    theirs = await _create(other_client, "/v1/categories", {"name": "B food", "parent_id": their_group["id"]})
+    their_rule = await _create(other_client, "/v1/categories/rules", {"category_id": theirs["id"], "pattern": "shop"})
+
+    assert (await other_client.patch(f"/v1/categories/{mine['id']}", json={"name": "pwned"})).status_code == 404
+    assert (await other_client.delete(f"/v1/categories/{mine['id']}", params={"leave_uncategorized": True})).status_code == 404
+    assert (await other_client.post("/v1/categories", json={"name": "B in A's group", "parent_id": group["id"]})).status_code == 404
+    assert (await other_client.patch(f"/v1/categories/{theirs['id']}", json={"parent_id": group["id"]})).status_code == 404
+    assert (await other_client.delete(f"/v1/categories/{theirs['id']}", params={"move_to": mine["id"]})).status_code == 404
+    assert (await other_client.patch(f"/v1/categories/rules/{rule['id']}", json={"pattern": "pwned"})).status_code == 404
+    assert (await other_client.patch(f"/v1/categories/rules/{their_rule['id']}", json={"category_id": mine["id"]})).status_code == 404
+    assert (await other_client.post("/v1/categories/rules/preview", json={"pattern": "corner", "rule_id": rule["id"]})).status_code == 404
+    preview = (await other_client.post("/v1/categories/rules/preview", json={"pattern": "corner"})).json()
+    assert (preview["match_count"], preview["items"]) == (0, [])
+
+    own = {c["id"]: c for c in (await client.get("/v1/categories")).json()["items"]}
+    assert (own[mine["id"]]["name"], own[mine["id"]]["parent_id"], own[mine["id"]]["transaction_count"]) == ("A food", group["id"], 1)
+    [own_rule] = (await client.get("/v1/categories/rules")).json()["items"]
+    assert (own_rule["pattern"], own_rule["category_id"], own_rule["transaction_count"]) == ("corner", mine["id"], 1)
+    assert [c["name"] for c in (await other_client.get("/v1/categories")).json()["items"]] == ["B food", "B group"]
 
   @pytest.mark.asyncio
   async def test_klarna_import_into_other_users_account_is_rejected(
