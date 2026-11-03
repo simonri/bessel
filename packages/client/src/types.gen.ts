@@ -1438,6 +1438,48 @@ export type BulkDeleteRequest = {
 };
 
 /**
+ * BulkReviewRequest
+ */
+export type BulkReviewRequest = {
+  /**
+   * Ids
+   *
+   * Transactions to mark.
+   */
+  ids: Array<string>;
+  /**
+   * Reviewed
+   *
+   * False puts them back to be reviewed.
+   */
+  reviewed?: boolean;
+};
+
+/**
+ * BulkTagRequest
+ */
+export type BulkTagRequest = {
+  /**
+   * Ids
+   *
+   * Transactions to tag.
+   */
+  ids: Array<string>;
+  /**
+   * Add
+   *
+   * Tags to add to each; a tag the user already has keeps that spelling.
+   */
+  add?: Array<string>;
+  /**
+   * Remove
+   *
+   * Tags to take off each, whatever their case.
+   */
+  remove?: Array<string>;
+};
+
+/**
  * BulkUpdateRequest
  */
 export type BulkUpdateRequest = {
@@ -6863,6 +6905,62 @@ export type SummaryMonth = {
 };
 
 /**
+ * TagListResponse
+ */
+export type TagListResponse = {
+  /**
+   * Items
+   *
+   * The user's tags used in the period, most used first. Moves between own accounts are left out.
+   */
+  items: Array<TagSummary>;
+};
+
+/**
+ * TagSummary
+ */
+export type TagSummary = {
+  /**
+   * Tag
+   */
+  tag: string;
+  /**
+   * Count
+   *
+   * Tagged transactions in the period.
+   */
+  count: number;
+  /**
+   * Totals
+   *
+   * One per currency, never added together; most spent first.
+   */
+  totals: Array<TagTotal>;
+};
+
+/**
+ * TagTotal
+ */
+export type TagTotal = {
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Spent
+   *
+   * Money out, in minor units.
+   */
+  spent: number;
+  /**
+   * Received
+   *
+   * Money in, such as refunds or someone paying back their share, in minor units.
+   */
+  received: number;
+};
+
+/**
  * TaskAttachmentSchema
  */
 export type TaskAttachmentSchema = {
@@ -7761,6 +7859,18 @@ export type TransactionRenameResponse = {
    */
   transfer_id: string | null;
   /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
+  /**
    * Suggestions
    *
    * Others that likely want the same name: first this one's own bank text, if others have it, then similar ones.
@@ -7878,6 +7988,18 @@ export type TransactionSchema = {
    */
   transfer_id: string | null;
   /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
+  /**
    * For a broker's movement, what it is, such as a buy or a tax.
    */
   readonly investment_kind: InvestmentKind | null;
@@ -7957,6 +8079,18 @@ export type TransactionUpdate = {
    * The user's own words about it; empty removes it.
    */
   note?: string | null;
+  /**
+   * Tags
+   *
+   * Replaces its tags; a tag the user already has elsewhere keeps that spelling.
+   */
+  tags?: Array<string> | null;
+  /**
+   * Reviewed
+   *
+   * Mark it reviewed, or back to be reviewed.
+   */
+  reviewed?: boolean | null;
 };
 
 /**
@@ -8064,6 +8198,18 @@ export type TransactionUpdateResponse = {
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
   transfer_id: string | null;
+  /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
   /**
    * Same Description Count
    *
@@ -8622,6 +8768,18 @@ export type TransactionRenameResponseWritable = {
    */
   transfer_id: string | null;
   /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
+  /**
    * Suggestions
    *
    * Others that likely want the same name: first this one's own bank text, if others have it, then similar ones.
@@ -8734,6 +8892,18 @@ export type TransactionSchemaWritable = {
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
   transfer_id: string | null;
+  /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
 };
 
 /**
@@ -8841,6 +9011,18 @@ export type TransactionUpdateResponseWritable = {
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
   transfer_id: string | null;
+  /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
   /**
    * Same Description Count
    *
@@ -14041,6 +14223,18 @@ export type ListTransactionsData = {
      */
     missing_documents?: boolean;
     /**
+     * Tag
+     *
+     * Only transactions with any of these tags, spelled as the user has them.
+     */
+    tag?: Array<string> | null;
+    /**
+     * To Review
+     *
+     * If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements.
+     */
+    to_review?: boolean;
+    /**
      * Page
      *
      * Page number, defaults to 1.
@@ -14148,6 +14342,106 @@ export type BulkUpdateTransactionsResponses = {
 
 export type BulkUpdateTransactionsResponse =
   BulkUpdateTransactionsResponses[keyof BulkUpdateTransactionsResponses];
+
+export type ListTransactionTagsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Date From
+     *
+     * Start date (inclusive).
+     */
+    date_from?: Date | null;
+    /**
+     * Date To
+     *
+     * End date (inclusive).
+     */
+    date_to?: Date | null;
+    /**
+     * Is Business
+     *
+     * True for only the company's money, false for only the user's own; both when left out.
+     */
+    is_business?: boolean | null;
+  };
+  url: "/v1/transactions/tags";
+};
+
+export type ListTransactionTagsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListTransactionTagsError =
+  ListTransactionTagsErrors[keyof ListTransactionTagsErrors];
+
+export type ListTransactionTagsResponses = {
+  /**
+   * Successful Response
+   */
+  200: TagListResponse;
+};
+
+export type ListTransactionTagsResponse =
+  ListTransactionTagsResponses[keyof ListTransactionTagsResponses];
+
+export type TagTransactionsData = {
+  body: BulkTagRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/transactions/tags";
+};
+
+export type TagTransactionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type TagTransactionsError =
+  TagTransactionsErrors[keyof TagTransactionsErrors];
+
+export type TagTransactionsResponses = {
+  /**
+   * Successful Response
+   */
+  200: BulkUpdateResponse;
+};
+
+export type TagTransactionsResponse =
+  TagTransactionsResponses[keyof TagTransactionsResponses];
+
+export type ReviewTransactionsData = {
+  body: BulkReviewRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/transactions/review";
+};
+
+export type ReviewTransactionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ReviewTransactionsError =
+  ReviewTransactionsErrors[keyof ReviewTransactionsErrors];
+
+export type ReviewTransactionsResponses = {
+  /**
+   * Successful Response
+   */
+  200: BulkUpdateResponse;
+};
+
+export type ReviewTransactionsResponse =
+  ReviewTransactionsResponses[keyof ReviewTransactionsResponses];
 
 export type UpdateTransactionData = {
   body: TransactionUpdate;

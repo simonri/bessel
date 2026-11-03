@@ -204,6 +204,9 @@ AUDITED: set[str] = {
   "GET /v1/transactions/monthly-flow",
   "GET /v1/transactions/spending-by-category",
   "GET /v1/transactions/summary",
+  "GET /v1/transactions/tags",
+  "POST /v1/transactions/tags",
+  "POST /v1/transactions/review",
   "GET /v1/bank-accounts/overview",
   "GET /v1/bank-accounts/net-worth",
   "GET /v1/transactions/{transaction_id}/documents",
@@ -658,6 +661,7 @@ class TestBankingAndTransactions:
       bank_account_id=UUID(account["id"]),
       category_id=category.id,
       transfer_id=uuid4(),
+      tags=["A's trip"],
     )
     await save_owned(tx)
     tx_id = str(tx.id)
@@ -678,6 +682,11 @@ class TestBankingAndTransactions:
     assert categorize.status_code == 404 or categorize.json()["updated"] == 0
     delete = await other_client.request("DELETE", "/v1/transactions", json={"ids": [tx_id]})
     assert delete.status_code == 404 or delete.json().get("deleted", 0) == 0
+    assert (await other_client.get("/v1/transactions/tags")).json()["items"] == []
+    assert (await other_client.get("/v1/transactions", params={"tag": "A's trip"})).json()["items"] == []
+    tagged = await other_client.post("/v1/transactions/tags", json={"ids": [tx_id], "add": ["Mine now"], "remove": ["A's trip"]})
+    assert tagged.json()["updated"] == 0
+    assert (await other_client.post("/v1/transactions/review", json={"ids": [tx_id]})).json()["updated"] == 0
 
     imported = await other_client.post(
       "/v1/transactions/import",
@@ -692,6 +701,8 @@ class TestBankingAndTransactions:
     assert own[0]["is_business"] is False
     assert own[0]["transfer_id"] == str(tx.transfer_id)
     assert own[0]["name"] is None
+    assert own[0]["tags"] == ["A's trip"]
+    assert own[0]["reviewed"] is False
 
   @pytest.mark.asyncio
   async def test_other_user_cannot_file_their_transactions_under_this_users_category(

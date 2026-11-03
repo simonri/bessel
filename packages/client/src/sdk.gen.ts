@@ -494,6 +494,9 @@ import type {
   ListTransactionsData,
   ListTransactionsErrors,
   ListTransactionsResponses,
+  ListTransactionTagsData,
+  ListTransactionTagsErrors,
+  ListTransactionTagsResponses,
   LogContactInteractionData,
   LogContactInteractionErrors,
   LogContactInteractionResponses,
@@ -532,6 +535,9 @@ import type {
   RespondToCalendarEventData,
   RespondToCalendarEventErrors,
   RespondToCalendarEventResponses,
+  ReviewTransactionsData,
+  ReviewTransactionsErrors,
+  ReviewTransactionsResponses,
   RevokeIngestTokenData,
   RevokeIngestTokenErrors,
   RevokeIngestTokenResponses,
@@ -578,6 +584,9 @@ import type {
   SyncHealthkitWorkoutsResponses,
   SyncMontroseData,
   SyncMontroseResponses,
+  TagTransactionsData,
+  TagTransactionsErrors,
+  TagTransactionsResponses,
   UndoCompleteTaskData,
   UndoCompleteTaskErrors,
   UndoCompleteTaskResponses,
@@ -4158,6 +4167,80 @@ export const bulkUpdateTransactions = <ThrowOnError extends boolean = false>(
   >({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/transactions/bulk",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * List Transaction Tags
+ *
+ * The user's tags with what was spent under each per currency, for picking a tag or seeing what a trip or project cost.
+ */
+export const listTransactionTags = <ThrowOnError extends boolean = false>(
+  options?: Options<ListTransactionTagsData, ThrowOnError>,
+): RequestResult<
+  ListTransactionTagsResponses,
+  ListTransactionTagsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ListTransactionTagsResponses,
+    ListTransactionTagsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/tags",
+    ...options,
+  });
+
+/**
+ * Tag Transactions
+ *
+ * Adds and takes off tags on several transactions at once; their other tags stay.
+ */
+export const tagTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<TagTransactionsData, ThrowOnError>,
+): RequestResult<
+  TagTransactionsResponses,
+  TagTransactionsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    TagTransactionsResponses,
+    TagTransactionsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/tags",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Review Transactions
+ *
+ * Marks several transactions reviewed, or puts them back to be reviewed.
+ */
+export const reviewTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<ReviewTransactionsData, ThrowOnError>,
+): RequestResult<
+  ReviewTransactionsResponses,
+  ReviewTransactionsErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    ReviewTransactionsResponses,
+    ReviewTransactionsErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/transactions/review",
     ...options,
     headers: {
       "Content-Type": "application/json",

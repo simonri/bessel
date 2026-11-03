@@ -453,6 +453,17 @@ enum API {
         var ids: [UUID]
     }
 
+    struct BulkReviewRequest: Codable, Hashable {
+        var ids: [UUID]
+        var reviewed: Bool = true
+    }
+
+    struct BulkTagRequest: Codable, Hashable {
+        var ids: [UUID]
+        var add: [String] = []
+        var remove: [String] = []
+    }
+
     struct BulkUpdateRequest: Encodable, Hashable {
         var ids: [UUID]
         var categoryId: UUID??
@@ -2045,6 +2056,22 @@ enum API {
         var spending: Int
     }
 
+    struct TagListResponse: Codable, Hashable {
+        @Lossy var items: [TagSummary]
+    }
+
+    struct TagSummary: Codable, Hashable {
+        var tag: String
+        var count: Int
+        @Lossy var totals: [TagTotal]
+    }
+
+    struct TagTotal: Codable, Hashable {
+        var currency: String
+        var spent: Int
+        var received: Int
+    }
+
     struct TaskAttachmentSchema: Codable, Hashable {
         var createdAt: Date
         var modifiedAt: Date?
@@ -2320,6 +2347,8 @@ enum API {
         var isBusiness: Bool = false
         var companyAccount: Bool = false
         var transferId: UUID?
+        var tags: [String]
+        var reviewed: Bool = true
         @Lossy var suggestions: [NameSuggestion]
         var investmentKind: InvestmentKind?
     }
@@ -2345,6 +2374,8 @@ enum API {
         var isBusiness: Bool = false
         var companyAccount: Bool = false
         var transferId: UUID?
+        var tags: [String]
+        var reviewed: Bool = true
         var investmentKind: InvestmentKind?
     }
 
@@ -2374,6 +2405,8 @@ enum API {
         var categoryId: UUID??
         var isBusiness: Bool??
         var note: String??
+        var tags: [String]??
+        var reviewed: Bool??
     }
 
     struct TransactionUpdateResponse: Codable, Hashable {
@@ -2397,6 +2430,8 @@ enum API {
         var isBusiness: Bool = false
         var companyAccount: Bool = false
         var transferId: UUID?
+        var tags: [String]
+        var reviewed: Bool = true
         var sameDescriptionCount: Int = 0
         var investmentKind: InvestmentKind?
     }
@@ -4050,6 +4085,58 @@ extension API.BulkDeleteRequest {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.ids, forKey: .ids)
+    }
+}
+
+extension API.BulkReviewRequest {
+    private enum DecodingKeys: String, CodingKey {
+        case ids
+        case reviewed
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.ids = try container.decode([UUID].self, forKey: .ids)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case ids
+        case reviewed
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.ids, forKey: .ids)
+        try container.encode(self.reviewed, forKey: .reviewed)
+    }
+}
+
+extension API.BulkTagRequest {
+    private enum DecodingKeys: String, CodingKey {
+        case ids
+        case add
+        case remove
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.ids = try container.decode([UUID].self, forKey: .ids)
+        self.add = try container.decodeIfPresent([String].self, forKey: .add) ?? []
+        self.remove = try container.decodeIfPresent([String].self, forKey: .remove) ?? []
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case ids
+        case add
+        case remove
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.ids, forKey: .ids)
+        try container.encode(self.add, forKey: .add)
+        try container.encode(self.remove, forKey: .remove)
     }
 }
 
@@ -10112,6 +10199,82 @@ extension API.SummaryMonth {
     }
 }
 
+extension API.TagListResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case items
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._items = try container.decode(Lossy<API.TagSummary>.self, forKey: .items)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case items
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.items, forKey: .items)
+    }
+}
+
+extension API.TagSummary {
+    private enum DecodingKeys: String, CodingKey {
+        case tag
+        case count
+        case totals
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.tag = try container.decode(String.self, forKey: .tag)
+        self.count = try container.decode(Int.self, forKey: .count)
+        self._totals = try container.decode(Lossy<API.TagTotal>.self, forKey: .totals)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case tag
+        case count
+        case totals
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.tag, forKey: .tag)
+        try container.encode(self.count, forKey: .count)
+        try container.encode(self.totals, forKey: .totals)
+    }
+}
+
+extension API.TagTotal {
+    private enum DecodingKeys: String, CodingKey {
+        case currency
+        case spent
+        case received
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.spent = try container.decode(Int.self, forKey: .spent)
+        self.received = try container.decode(Int.self, forKey: .received)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case currency
+        case spent
+        case received
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.spent, forKey: .spent)
+        try container.encode(self.received, forKey: .received)
+    }
+}
+
 extension API.TaskAttachmentSchema {
     private enum DecodingKeys: String, CodingKey {
         case createdAt
@@ -10959,6 +11122,8 @@ extension API.TransactionRenameResponse {
         case isBusiness
         case companyAccount
         case transferId
+        case tags
+        case reviewed
         case suggestions
         case investmentKind
     }
@@ -10985,6 +11150,8 @@ extension API.TransactionRenameResponse {
         self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
         self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
+        self.tags = try container.decode([String].self, forKey: .tags)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
         self._suggestions = try container.decode(Lossy<API.NameSuggestion>.self, forKey: .suggestions)
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
@@ -11010,6 +11177,8 @@ extension API.TransactionRenameResponse {
         case isBusiness = "is_business"
         case companyAccount = "company_account"
         case transferId = "transfer_id"
+        case tags
+        case reviewed
         case suggestions
         case investmentKind = "investment_kind"
     }
@@ -11036,6 +11205,8 @@ extension API.TransactionRenameResponse {
         try container.encode(self.isBusiness, forKey: .isBusiness)
         try container.encode(self.companyAccount, forKey: .companyAccount)
         try container.encodeIfPresent(self.transferId, forKey: .transferId)
+        try container.encode(self.tags, forKey: .tags)
+        try container.encode(self.reviewed, forKey: .reviewed)
         try container.encode(self.suggestions, forKey: .suggestions)
         try container.encodeIfPresent(self.investmentKind, forKey: .investmentKind)
     }
@@ -11063,6 +11234,8 @@ extension API.TransactionSchema {
         case isBusiness
         case companyAccount
         case transferId
+        case tags
+        case reviewed
         case investmentKind
     }
 
@@ -11088,6 +11261,8 @@ extension API.TransactionSchema {
         self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
         self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
+        self.tags = try container.decode([String].self, forKey: .tags)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
 
@@ -11112,6 +11287,8 @@ extension API.TransactionSchema {
         case isBusiness = "is_business"
         case companyAccount = "company_account"
         case transferId = "transfer_id"
+        case tags
+        case reviewed
         case investmentKind = "investment_kind"
     }
 
@@ -11137,6 +11314,8 @@ extension API.TransactionSchema {
         try container.encode(self.isBusiness, forKey: .isBusiness)
         try container.encode(self.companyAccount, forKey: .companyAccount)
         try container.encodeIfPresent(self.transferId, forKey: .transferId)
+        try container.encode(self.tags, forKey: .tags)
+        try container.encode(self.reviewed, forKey: .reviewed)
         try container.encodeIfPresent(self.investmentKind, forKey: .investmentKind)
     }
 }
@@ -11182,6 +11361,8 @@ extension API.TransactionUpdate {
         case categoryId = "category_id"
         case isBusiness = "is_business"
         case note
+        case tags
+        case reviewed
     }
 
     func encode(to encoder: Encoder) throws {
@@ -11189,6 +11370,8 @@ extension API.TransactionUpdate {
         if let value = self.categoryId { try container.encode(value, forKey: .categoryId) }
         if let value = self.isBusiness { try container.encode(value, forKey: .isBusiness) }
         if let value = self.note { try container.encode(value, forKey: .note) }
+        if let value = self.tags { try container.encode(value, forKey: .tags) }
+        if let value = self.reviewed { try container.encode(value, forKey: .reviewed) }
     }
 }
 
@@ -11214,6 +11397,8 @@ extension API.TransactionUpdateResponse {
         case isBusiness
         case companyAccount
         case transferId
+        case tags
+        case reviewed
         case sameDescriptionCount
         case investmentKind
     }
@@ -11240,6 +11425,8 @@ extension API.TransactionUpdateResponse {
         self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
         self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
+        self.tags = try container.decode([String].self, forKey: .tags)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
         self.sameDescriptionCount = try container.decodeIfPresent(Int.self, forKey: .sameDescriptionCount) ?? 0
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
@@ -11265,6 +11452,8 @@ extension API.TransactionUpdateResponse {
         case isBusiness = "is_business"
         case companyAccount = "company_account"
         case transferId = "transfer_id"
+        case tags
+        case reviewed
         case sameDescriptionCount = "same_description_count"
         case investmentKind = "investment_kind"
     }
@@ -11291,6 +11480,8 @@ extension API.TransactionUpdateResponse {
         try container.encode(self.isBusiness, forKey: .isBusiness)
         try container.encode(self.companyAccount, forKey: .companyAccount)
         try container.encodeIfPresent(self.transferId, forKey: .transferId)
+        try container.encode(self.tags, forKey: .tags)
+        try container.encode(self.reviewed, forKey: .reviewed)
         try container.encode(self.sameDescriptionCount, forKey: .sameDescriptionCount)
         try container.encodeIfPresent(self.investmentKind, forKey: .investmentKind)
     }
