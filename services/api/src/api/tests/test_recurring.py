@@ -100,6 +100,38 @@ class TestDetected:
     assert (await _recurring(client))["series"] == []
 
   @pytest.mark.asyncio
+  async def test_paying_off_pay_later_stays_a_bill_on_the_paying_account(
+    self, client: AsyncClient, save_fixture: SaveFixture, user: User, checking: BankAccount
+  ) -> None:
+    klarna = await _account(save_fixture, user, "Klarna", subtype="credit_card")
+    savings = await _account(save_fixture, user, "Sparkonto", subtype="savings")
+    for month in MONTHS:
+      instalment, saving = uuid4(), uuid4()
+      for account, direction, transfer_id, text in (
+        (checking, DEBIT, instalment, "KLARNA"),
+        (klarna, CREDIT, instalment, "INBETALNING"),
+        (checking, DEBIT, saving, "TILL SPARKONTO"),
+        (savings, CREDIT, saving, "FRAN LONEKONTO"),
+      ):
+        await save_fixture(
+          Transaction(
+            amount=60_000 if transfer_id == instalment else 200_000,
+            currency="SEK",
+            transaction_date=date(2026, month, 28),
+            direction=direction,
+            dedup_hash=uuid4().hex,
+            description=text,
+            bank_account_id=account.id,
+            user_id=account.user_id,
+            transfer_id=transfer_id,
+          )
+        )
+
+    series = (await _recurring(client))["series"]
+
+    assert [(s["name"], s["bank_account_id"], s["direction"]) for s in series] == [("KLARNA", str(checking.id), "debit")]
+
+  @pytest.mark.asyncio
   async def test_a_company_cost_paid_privately_counts_as_the_companys(self, client: AsyncClient, save_fixture: SaveFixture, checking: BankAccount) -> None:
     await _monthly(save_fixture, checking, 9, 30_000, "CLOUD HOSTING", is_business=True)
 

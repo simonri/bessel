@@ -308,7 +308,17 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     return [TransferCandidate(*row) for row in await self.session.execute(statement)]
 
   async def recurring_rows(self, user_id: UUID, *, since: date) -> list[RecurringRow]:
-    """Money that could repeat: not moves between own accounts, a broker's movements, or repayments of a card or pay later."""
+    """Money that could repeat: not moves between own accounts, a broker's movements, or repayments of a card or pay later
+    as the card sees them. Paying off a card or pay later, such as a Klarna instalment, stays a bill on the paying side."""
+    partner = aliased(Transaction)
+    partner_account = aliased(BankAccount)
+    # Only the paying side: a card's own credits are left out below, and its debits never pair.
+    pays_off_credit = exists().where(
+      partner.transfer_id == Transaction.transfer_id,
+      partner.id != Transaction.id,
+      partner_account.id == partner.bank_account_id,
+      partner_account.subtype == "credit_card",
+    )
     statement = (
       select(
         Transaction.id,
@@ -326,7 +336,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       .where(
         Transaction.user_id == user_id,
         Transaction.deleted_at.is_(None),
-        Transaction.transfer_id.is_(None),
+        or_(Transaction.transfer_id.is_(None), pays_off_credit),
         Transaction.transaction_date >= since,
         BankAccount.deleted_at.is_(None),
         BankAccount.subtype.not_in(INVESTMENT_SUBTYPES),
