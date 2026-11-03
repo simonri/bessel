@@ -1438,6 +1438,48 @@ export type BulkDeleteRequest = {
 };
 
 /**
+ * BulkReviewRequest
+ */
+export type BulkReviewRequest = {
+  /**
+   * Ids
+   *
+   * Transactions to mark.
+   */
+  ids: Array<string>;
+  /**
+   * Reviewed
+   *
+   * False puts them back to be reviewed.
+   */
+  reviewed?: boolean;
+};
+
+/**
+ * BulkTagRequest
+ */
+export type BulkTagRequest = {
+  /**
+   * Ids
+   *
+   * Transactions to tag.
+   */
+  ids: Array<string>;
+  /**
+   * Add
+   *
+   * Tags to add to each; a tag the user already has keeps that spelling.
+   */
+  add?: Array<string>;
+  /**
+   * Remove
+   *
+   * Tags to take off each, whatever their case.
+   */
+  remove?: Array<string>;
+};
+
+/**
  * BulkUpdateRequest
  */
 export type BulkUpdateRequest = {
@@ -1744,6 +1786,38 @@ export type CalendarUpdate = {
 };
 
 /**
+ * CategoryCreate
+ */
+export type CategoryCreate = {
+  /**
+   * Name
+   */
+  name: string;
+  /**
+   * Color
+   *
+   * Hex color code for UI display.
+   */
+  color?: string;
+  /**
+   * Parent Id
+   *
+   * The group it goes in; a new group when null.
+   */
+  parent_id?: string | null;
+  /**
+   * Excluded
+   *
+   * Kept out of reports; by default like its group.
+   */
+  excluded?: boolean | null;
+  /**
+   * Income
+   */
+  income?: boolean;
+};
+
+/**
  * CategoryListResponse
  */
 export type CategoryListResponse = {
@@ -1764,6 +1838,8 @@ export type CategoryRuleCreate = {
   category_id: string;
   /**
    * Pattern
+   *
+   * Text matched case-insensitively anywhere in the description.
    */
   pattern: string;
   scope?: RuleScope;
@@ -1827,9 +1903,15 @@ export type CategoryRuleCreated = {
    */
   mark_business: boolean;
   /**
+   * Transaction Count
+   *
+   * Transactions it has sorted that still have the category it gave.
+   */
+  transaction_count: number;
+  /**
    * Categorized
    *
-   * Transactions already imported that the rules sorted.
+   * Transactions already imported that the rule sorted.
    */
   categorized: number;
 };
@@ -1842,6 +1924,101 @@ export type CategoryRuleListResponse = {
    * Items
    */
   items: Array<CategoryRuleSchema>;
+};
+
+/**
+ * CategoryRuleMatch
+ */
+export type CategoryRuleMatch = {
+  /**
+   * Id
+   */
+  id: string;
+  /**
+   * Transaction Date
+   */
+  transaction_date: Date;
+  /**
+   * Description
+   */
+  description: string | null;
+  /**
+   * Name
+   */
+  name: string | null;
+  /**
+   * Amount
+   *
+   * Amount in minor units (cents).
+   */
+  amount: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  direction: TransactionDirection;
+  /**
+   * Category Id
+   *
+   * The category it has now.
+   */
+  category_id: string | null;
+  /**
+   * By Rule
+   *
+   * Its category came from a rule rather than the user.
+   */
+  by_rule: boolean;
+  /**
+   * Would Sort
+   *
+   * The rule would give it its category: uncategorized, or sorted by the rule being edited, and no more specific rule wins.
+   */
+  would_sort: boolean;
+};
+
+/**
+ * CategoryRulePreview
+ */
+export type CategoryRulePreview = {
+  /**
+   * Match Count
+   *
+   * Existing transactions the rule matches, categorized or not.
+   */
+  match_count: number;
+  /**
+   * Sortable Count
+   *
+   * Uncategorized ones it would sort when applied to existing transactions.
+   */
+  sortable_count: number;
+  /**
+   * Items
+   *
+   * The newest matches, at most 50.
+   */
+  items: Array<CategoryRuleMatch>;
+};
+
+/**
+ * CategoryRulePreviewRequest
+ */
+export type CategoryRulePreviewRequest = {
+  /**
+   * Pattern
+   *
+   * Text matched case-insensitively anywhere in the description.
+   */
+  pattern: string;
+  scope?: RuleScope;
+  direction?: TransactionDirection | null;
+  /**
+   * Rule Id
+   *
+   * The rule being edited, previewed as these settings in its place.
+   */
+  rule_id?: string | null;
 };
 
 /**
@@ -1890,6 +2067,41 @@ export type CategoryRuleSchema = {
    * Also mark matching transactions as business expenses.
    */
   mark_business: boolean;
+  /**
+   * Transaction Count
+   *
+   * Transactions it has sorted that still have the category it gave.
+   */
+  transaction_count: number;
+};
+
+/**
+ * CategoryRuleUpdate
+ */
+export type CategoryRuleUpdate = {
+  /**
+   * Category Id
+   */
+  category_id?: string | null;
+  /**
+   * Pattern
+   */
+  pattern?: string | null;
+  scope?: RuleScope | null;
+  /**
+   * Null matches both directions.
+   */
+  direction?: TransactionDirection | null;
+  /**
+   * Mark Business
+   */
+  mark_business?: boolean | null;
+  /**
+   * Apply Now
+   *
+   * Also sort the uncategorized transactions already imported.
+   */
+  apply_now?: boolean;
 };
 
 /**
@@ -1950,6 +2162,18 @@ export type CategorySchema = {
    * Parent category ID, null for top-level.
    */
   parent_id: string | null;
+  /**
+   * Transaction Count
+   *
+   * Transactions filed under it.
+   */
+  transaction_count: number;
+  /**
+   * Rule Count
+   *
+   * Rules that sort transactions into it.
+   */
+  rule_count: number;
 };
 
 /**
@@ -1980,6 +2204,34 @@ export type CategorySpending = {
    * Total spending in minor units (cents).
    */
   total: number;
+};
+
+/**
+ * CategoryUpdate
+ */
+export type CategoryUpdate = {
+  /**
+   * Name
+   */
+  name?: string | null;
+  /**
+   * Color
+   */
+  color?: string | null;
+  /**
+   * Parent Id
+   *
+   * Moves a category to another group. Groups stay groups.
+   */
+  parent_id?: string | null;
+  /**
+   * Excluded
+   */
+  excluded?: boolean | null;
+  /**
+   * Income
+   */
+  income?: boolean | null;
 };
 
 /**
@@ -2772,6 +3024,19 @@ export type CryptoPriceSchema = {
    */
   price_change_pct_24h: number | null;
 };
+
+/**
+ * CsvDialect
+ */
+export const CsvDialect = {
+  SWEDISH: "swedish",
+  INTERNATIONAL: "international",
+} as const;
+
+/**
+ * CsvDialect
+ */
+export type CsvDialect = (typeof CsvDialect)[keyof typeof CsvDialect];
 
 /**
  * CurrencySummary
@@ -7167,6 +7432,68 @@ export type SummaryMonth = {
 };
 
 /**
+ * TagListResponse
+ */
+export type TagListResponse = {
+  /**
+   * Items
+   *
+   * The user's tags used in the period, most used first. Moves between own accounts are left out.
+   */
+  items: Array<TagSummary>;
+  /**
+   * Names
+   *
+   * Every tag the user has, on any transaction and in any period, most used first: for picking one.
+   */
+  names: Array<string>;
+};
+
+/**
+ * TagSummary
+ */
+export type TagSummary = {
+  /**
+   * Tag
+   */
+  tag: string;
+  /**
+   * Count
+   *
+   * Tagged transactions in the period.
+   */
+  count: number;
+  /**
+   * Totals
+   *
+   * One per currency, never added together; most spent first.
+   */
+  totals: Array<TagTotal>;
+};
+
+/**
+ * TagTotal
+ */
+export type TagTotal = {
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Spent
+   *
+   * Money out, in minor units.
+   */
+  spent: number;
+  /**
+   * Received
+   *
+   * Money in, such as refunds or someone paying back their share, in minor units.
+   */
+  received: number;
+};
+
+/**
  * TaskAttachmentSchema
  */
 export type TaskAttachmentSchema = {
@@ -8065,6 +8392,18 @@ export type TransactionRenameResponse = {
    */
   transfer_id: string | null;
   /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
+  /**
    * Suggestions
    *
    * Others that likely want the same name: first this one's own bank text, if others have it, then similar ones.
@@ -8182,6 +8521,18 @@ export type TransactionSchema = {
    */
   transfer_id: string | null;
   /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
+  /**
    * For a broker's movement, what it is, such as a buy or a tax.
    */
   readonly investment_kind: InvestmentKind | null;
@@ -8261,6 +8612,18 @@ export type TransactionUpdate = {
    * The user's own words about it; empty removes it.
    */
   note?: string | null;
+  /**
+   * Tags
+   *
+   * Replaces its tags; a tag the user already has elsewhere keeps that spelling.
+   */
+  tags?: Array<string> | null;
+  /**
+   * Reviewed
+   *
+   * Mark it reviewed, or back to be reviewed.
+   */
+  reviewed?: boolean | null;
 };
 
 /**
@@ -8368,6 +8731,18 @@ export type TransactionUpdateResponse = {
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
   transfer_id: string | null;
+  /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
   /**
    * Same Description Count
    *
@@ -8972,6 +9347,18 @@ export type TransactionRenameResponseWritable = {
    */
   transfer_id: string | null;
   /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
+  /**
    * Suggestions
    *
    * Others that likely want the same name: first this one's own bank text, if others have it, then similar ones.
@@ -9084,6 +9471,18 @@ export type TransactionSchemaWritable = {
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
   transfer_id: string | null;
+  /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
 };
 
 /**
@@ -9191,6 +9590,18 @@ export type TransactionUpdateResponseWritable = {
    * Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.
    */
   transfer_id: string | null;
+  /**
+   * Tags
+   *
+   * The user's own tags, such as a trip or a project.
+   */
+  tags: Array<string>;
+  /**
+   * Reviewed
+   *
+   * Looked over by the user; imports arrive unreviewed.
+   */
+  reviewed: boolean;
   /**
    * Same Description Count
    *
@@ -11280,6 +11691,33 @@ export type ListCategoriesResponses = {
 export type ListCategoriesResponse =
   ListCategoriesResponses[keyof ListCategoriesResponses];
 
+export type CreateCategoryData = {
+  body: CategoryCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/categories";
+};
+
+export type CreateCategoryErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateCategoryError =
+  CreateCategoryErrors[keyof CreateCategoryErrors];
+
+export type CreateCategoryResponses = {
+  /**
+   * Successful Response
+   */
+  201: CategorySchema;
+};
+
+export type CreateCategoryResponse =
+  CreateCategoryResponses[keyof CreateCategoryResponses];
+
 export type ListCategoryRulesData = {
   body?: never;
   path?: never;
@@ -11324,6 +11762,33 @@ export type CreateCategoryRuleResponses = {
 export type CreateCategoryRuleResponse =
   CreateCategoryRuleResponses[keyof CreateCategoryRuleResponses];
 
+export type PreviewCategoryRuleData = {
+  body: CategoryRulePreviewRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/categories/rules/preview";
+};
+
+export type PreviewCategoryRuleErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type PreviewCategoryRuleError =
+  PreviewCategoryRuleErrors[keyof PreviewCategoryRuleErrors];
+
+export type PreviewCategoryRuleResponses = {
+  /**
+   * Successful Response
+   */
+  200: CategoryRulePreview;
+};
+
+export type PreviewCategoryRuleResponse =
+  PreviewCategoryRuleResponses[keyof PreviewCategoryRuleResponses];
+
 export type DeleteCategoryRuleData = {
   body?: never;
   path: {
@@ -11332,7 +11797,14 @@ export type DeleteCategoryRuleData = {
      */
     rule_id: string;
   };
-  query?: never;
+  query?: {
+    /**
+     * Release
+     *
+     * Also take back the category it gave, so other rules or the user sort those again.
+     */
+    release?: boolean;
+  };
   url: "/v1/categories/rules/{rule_id}";
 };
 
@@ -11355,6 +11827,115 @@ export type DeleteCategoryRuleResponses = {
 
 export type DeleteCategoryRuleResponse =
   DeleteCategoryRuleResponses[keyof DeleteCategoryRuleResponses];
+
+export type UpdateCategoryRuleData = {
+  body: CategoryRuleUpdate;
+  path: {
+    /**
+     * Rule Id
+     */
+    rule_id: string;
+  };
+  query?: never;
+  url: "/v1/categories/rules/{rule_id}";
+};
+
+export type UpdateCategoryRuleErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateCategoryRuleError =
+  UpdateCategoryRuleErrors[keyof UpdateCategoryRuleErrors];
+
+export type UpdateCategoryRuleResponses = {
+  /**
+   * Successful Response
+   */
+  200: CategoryRuleCreated;
+};
+
+export type UpdateCategoryRuleResponse =
+  UpdateCategoryRuleResponses[keyof UpdateCategoryRuleResponses];
+
+export type DeleteCategoryData = {
+  body?: never;
+  path: {
+    /**
+     * Category Id
+     */
+    category_id: string;
+  };
+  query?: {
+    /**
+     * Move To
+     *
+     * Category its transactions and rules move to.
+     */
+    move_to?: string | null;
+    /**
+     * Leave Uncategorized
+     *
+     * Leave its transactions uncategorized and delete its rules.
+     */
+    leave_uncategorized?: boolean;
+  };
+  url: "/v1/categories/{category_id}";
+};
+
+export type DeleteCategoryErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteCategoryError =
+  DeleteCategoryErrors[keyof DeleteCategoryErrors];
+
+export type DeleteCategoryResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteCategoryResponse =
+  DeleteCategoryResponses[keyof DeleteCategoryResponses];
+
+export type UpdateCategoryData = {
+  body: CategoryUpdate;
+  path: {
+    /**
+     * Category Id
+     */
+    category_id: string;
+  };
+  query?: never;
+  url: "/v1/categories/{category_id}";
+};
+
+export type UpdateCategoryErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateCategoryError =
+  UpdateCategoryErrors[keyof UpdateCategoryErrors];
+
+export type UpdateCategoryResponses = {
+  /**
+   * Successful Response
+   */
+  200: CategorySchema;
+};
+
+export type UpdateCategoryResponse =
+  UpdateCategoryResponses[keyof UpdateCategoryResponses];
 
 export type ListCountersData = {
   body?: never;
@@ -14516,6 +15097,18 @@ export type ListTransactionsData = {
      */
     missing_documents?: boolean;
     /**
+     * Tag
+     *
+     * Only transactions with any of these tags, spelled as the user has them.
+     */
+    tag?: Array<string> | null;
+    /**
+     * To Review
+     *
+     * If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements.
+     */
+    to_review?: boolean;
+    /**
      * Page
      *
      * Page number, defaults to 1.
@@ -14556,6 +15149,214 @@ export type ListTransactionsResponses = {
 
 export type ListTransactionsResponse =
   ListTransactionsResponses[keyof ListTransactionsResponses];
+
+export type ExportTransactionsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * 'swedish': semicolons and a decimal comma, for Excel set up for Sweden. 'international': commas and a decimal point.
+     */
+    dialect?: CsvDialect;
+    /**
+     * Bank Account Id
+     *
+     * Filter by bank account ID(s).
+     */
+    bank_account_id?: Array<string> | null;
+    /**
+     * Category Id
+     *
+     * Filter by category ID(s).
+     */
+    category_id?: Array<string> | null;
+    /**
+     * Uncategorized
+     *
+     * If true, only transactions that still need a category: not moves between own accounts, nor investment accounts' movements.
+     */
+    uncategorized?: boolean;
+    /**
+     * Direction
+     *
+     * Filter by direction: 'debit' or 'credit'.
+     */
+    direction?: string | null;
+    /**
+     * Search
+     *
+     * Search in description (case-insensitive).
+     */
+    search?: string | null;
+    /**
+     * Date From
+     *
+     * Start date (inclusive).
+     */
+    date_from?: Date | null;
+    /**
+     * Date To
+     *
+     * End date (inclusive).
+     */
+    date_to?: Date | null;
+    /**
+     * Is Business
+     *
+     * Filter by business flag.
+     */
+    is_business?: boolean | null;
+    /**
+     * Transfers
+     *
+     * True for only moves between the user's own accounts, false to leave them out.
+     */
+    transfers?: boolean | null;
+    /**
+     * Missing Documents
+     *
+     * If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements.
+     */
+    missing_documents?: boolean;
+    /**
+     * Tag
+     *
+     * Only transactions with any of these tags, spelled as the user has them.
+     */
+    tag?: Array<string> | null;
+    /**
+     * To Review
+     *
+     * If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements.
+     */
+    to_review?: boolean;
+  };
+  url: "/v1/transactions/export";
+};
+
+export type ExportTransactionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ExportTransactionsError =
+  ExportTransactionsErrors[keyof ExportTransactionsErrors];
+
+export type ExportTransactionsResponses = {
+  /**
+   * The transactions as CSV.
+   */
+  200: Blob | File;
+};
+
+export type ExportTransactionsResponse =
+  ExportTransactionsResponses[keyof ExportTransactionsResponses];
+
+export type ExportTransactionsWithReceiptsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * How the CSV inside is written, as for the CSV export.
+     */
+    dialect?: CsvDialect;
+    /**
+     * Bank Account Id
+     *
+     * Filter by bank account ID(s).
+     */
+    bank_account_id?: Array<string> | null;
+    /**
+     * Category Id
+     *
+     * Filter by category ID(s).
+     */
+    category_id?: Array<string> | null;
+    /**
+     * Uncategorized
+     *
+     * If true, only transactions that still need a category: not moves between own accounts, nor investment accounts' movements.
+     */
+    uncategorized?: boolean;
+    /**
+     * Direction
+     *
+     * Filter by direction: 'debit' or 'credit'.
+     */
+    direction?: string | null;
+    /**
+     * Search
+     *
+     * Search in description (case-insensitive).
+     */
+    search?: string | null;
+    /**
+     * Date From
+     *
+     * Start date (inclusive).
+     */
+    date_from?: Date | null;
+    /**
+     * Date To
+     *
+     * End date (inclusive).
+     */
+    date_to?: Date | null;
+    /**
+     * Is Business
+     *
+     * Filter by business flag.
+     */
+    is_business?: boolean | null;
+    /**
+     * Transfers
+     *
+     * True for only moves between the user's own accounts, false to leave them out.
+     */
+    transfers?: boolean | null;
+    /**
+     * Missing Documents
+     *
+     * If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements.
+     */
+    missing_documents?: boolean;
+    /**
+     * Tag
+     *
+     * Only transactions with any of these tags, spelled as the user has them.
+     */
+    tag?: Array<string> | null;
+    /**
+     * To Review
+     *
+     * If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements.
+     */
+    to_review?: boolean;
+  };
+  url: "/v1/transactions/export/receipts";
+};
+
+export type ExportTransactionsWithReceiptsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ExportTransactionsWithReceiptsError =
+  ExportTransactionsWithReceiptsErrors[keyof ExportTransactionsWithReceiptsErrors];
+
+export type ExportTransactionsWithReceiptsResponses = {
+  /**
+   * The CSV and its receipts.
+   */
+  200: Blob | File;
+};
+
+export type ExportTransactionsWithReceiptsResponse =
+  ExportTransactionsWithReceiptsResponses[keyof ExportTransactionsWithReceiptsResponses];
 
 export type ImportTransactionsData = {
   body: BodyImportTransactions;
@@ -14623,6 +15424,106 @@ export type BulkUpdateTransactionsResponses = {
 
 export type BulkUpdateTransactionsResponse =
   BulkUpdateTransactionsResponses[keyof BulkUpdateTransactionsResponses];
+
+export type ListTransactionTagsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Date From
+     *
+     * Start date (inclusive).
+     */
+    date_from?: Date | null;
+    /**
+     * Date To
+     *
+     * End date (inclusive).
+     */
+    date_to?: Date | null;
+    /**
+     * Is Business
+     *
+     * True for only the company's money, false for only the user's own; both when left out.
+     */
+    is_business?: boolean | null;
+  };
+  url: "/v1/transactions/tags";
+};
+
+export type ListTransactionTagsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListTransactionTagsError =
+  ListTransactionTagsErrors[keyof ListTransactionTagsErrors];
+
+export type ListTransactionTagsResponses = {
+  /**
+   * Successful Response
+   */
+  200: TagListResponse;
+};
+
+export type ListTransactionTagsResponse =
+  ListTransactionTagsResponses[keyof ListTransactionTagsResponses];
+
+export type TagTransactionsData = {
+  body: BulkTagRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/transactions/tags";
+};
+
+export type TagTransactionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type TagTransactionsError =
+  TagTransactionsErrors[keyof TagTransactionsErrors];
+
+export type TagTransactionsResponses = {
+  /**
+   * Successful Response
+   */
+  200: BulkUpdateResponse;
+};
+
+export type TagTransactionsResponse =
+  TagTransactionsResponses[keyof TagTransactionsResponses];
+
+export type ReviewTransactionsData = {
+  body: BulkReviewRequest;
+  path?: never;
+  query?: never;
+  url: "/v1/transactions/review";
+};
+
+export type ReviewTransactionsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ReviewTransactionsError =
+  ReviewTransactionsErrors[keyof ReviewTransactionsErrors];
+
+export type ReviewTransactionsResponses = {
+  /**
+   * Successful Response
+   */
+  200: BulkUpdateResponse;
+};
+
+export type ReviewTransactionsResponse =
+  ReviewTransactionsResponses[keyof ReviewTransactionsResponses];
 
 export type UpdateTransactionData = {
   body: TransactionUpdate;

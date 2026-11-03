@@ -2,7 +2,8 @@ from datetime import datetime
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import Boolean, Date, Enum, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
+from sqlalchemy import Boolean, Date, Enum, ForeignKey, Index, Integer, String, Text, UniqueConstraint, Uuid, text
+from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, declared_attr, mapped_column, relationship
 
 from api.models.bank_account import BankAccount
@@ -19,7 +20,10 @@ class TransactionDirection(StrEnum):
 class Transaction(RecordModel):
   __tablename__ = "transactions"
   # Dedup is per-user: two users importing the same bank export must each get their own rows.
-  __table_args__ = (UniqueConstraint("user_id", "dedup_hash"),)
+  __table_args__ = (
+    UniqueConstraint("user_id", "dedup_hash"),
+    Index("ix_transactions_tags", "tags", postgresql_using="gin"),
+  )
 
   amount: Mapped[int] = mapped_column(Integer, nullable=False)
   currency: Mapped[str] = mapped_column(String(3), nullable=False)
@@ -58,6 +62,10 @@ class Transaction(RecordModel):
   # Set when the user went back to the bank's text: naming its group later leaves this one as it is.
   name_cleared: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
   note: Mapped[str | None] = mapped_column(Text, nullable=True)
+  # The user's own, such as a trip or a project; cutting across categories.
+  tags: Mapped[list[str]] = mapped_column(ARRAY(String(50)), nullable=False, default=list, server_default=text("'{}'"))
+  # Imports arrive unreviewed: the server default is what every import path relies on.
+  reviewed: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
 
   raw_id: Mapped[UUID | None] = mapped_column(Uuid, ForeignKey("raw_transactions.id", onupdate="CASCADE"), nullable=True)
 

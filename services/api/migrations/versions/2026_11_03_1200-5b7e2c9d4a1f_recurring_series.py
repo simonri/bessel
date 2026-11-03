@@ -1,7 +1,7 @@
 """recurring series
 
 Revision ID: 5b7e2c9d4a1f
-Revises: d395c69b4461
+Revises: 5b2f9c1e7a40
 Create Date: 2026-11-03 12:00:00.000000
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = '5b7e2c9d4a1f'
-down_revision: str | Sequence[str] | None = 'd395c69b4461'
+down_revision: str | Sequence[str] | None = '5b2f9c1e7a40'
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

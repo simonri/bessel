@@ -453,6 +453,17 @@ enum API {
         var ids: [UUID]
     }
 
+    struct BulkReviewRequest: Codable, Hashable {
+        var ids: [UUID]
+        var reviewed: Bool = true
+    }
+
+    struct BulkTagRequest: Codable, Hashable {
+        var ids: [UUID]
+        var add: [String] = []
+        var remove: [String] = []
+    }
+
     struct BulkUpdateRequest: Encodable, Hashable {
         var ids: [UUID]
         var categoryId: UUID??
@@ -537,6 +548,14 @@ enum API {
         var hidden: Bool
     }
 
+    struct CategoryCreate: Codable, Hashable {
+        var name: String
+        var color: String = "#6B7280"
+        var parentId: UUID?
+        var excluded: Bool?
+        var income: Bool = false
+    }
+
     struct CategoryListResponse: Codable, Hashable {
         @Lossy var items: [CategorySchema]
         var pagination: Pagination
@@ -560,11 +579,38 @@ enum API {
         var scope: RuleScope
         var direction: TransactionDirection?
         var markBusiness: Bool
+        var transactionCount: Int = 0
         var categorized: Int
     }
 
     struct CategoryRuleListResponse: Codable, Hashable {
         @Lossy var items: [CategoryRuleSchema]
+    }
+
+    struct CategoryRuleMatch: Codable, Hashable {
+        var id: UUID
+        var transactionDate: Date
+        var description: String?
+        var name: String?
+        var amount: Int
+        var currency: String
+        var direction: TransactionDirection
+        var categoryId: UUID?
+        var byRule: Bool
+        var wouldSort: Bool
+    }
+
+    struct CategoryRulePreview: Codable, Hashable {
+        var matchCount: Int
+        var sortableCount: Int
+        @Lossy var items: [CategoryRuleMatch]
+    }
+
+    struct CategoryRulePreviewRequest: Codable, Hashable {
+        var pattern: String
+        var scope: RuleScope = .any
+        var direction: TransactionDirection?
+        var ruleId: UUID?
     }
 
     struct CategoryRuleSchema: Codable, Hashable {
@@ -576,6 +622,16 @@ enum API {
         var scope: RuleScope
         var direction: TransactionDirection?
         var markBusiness: Bool
+        var transactionCount: Int = 0
+    }
+
+    struct CategoryRuleUpdate: Encodable, Hashable {
+        var categoryId: UUID??
+        var pattern: String??
+        var scope: RuleScope??
+        var direction: TransactionDirection??
+        var markBusiness: Bool??
+        var applyNow: Bool?
     }
 
     struct CategorySchema: Codable, Hashable {
@@ -588,6 +644,8 @@ enum API {
         var excluded: Bool
         var income: Bool
         var parentId: UUID?
+        var transactionCount: Int = 0
+        var ruleCount: Int = 0
     }
 
     struct CategorySpending: Codable, Hashable {
@@ -595,6 +653,14 @@ enum API {
         var categoryName: String
         var categoryColor: String
         var total: Int
+    }
+
+    struct CategoryUpdate: Encodable, Hashable {
+        var name: String??
+        var color: String??
+        var parentId: UUID??
+        var excluded: Bool??
+        var income: Bool??
     }
 
     struct ClientDiagnosticsUpload: Codable, Hashable {
@@ -833,6 +899,14 @@ enum API {
         var currency: String
         var price: Double
         var priceChangePct24h: Double?
+    }
+
+    enum CsvDialect: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case swedish
+        case international
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [CsvDialect] = [.swedish, .international]
     }
 
     struct CurrencySummary: Codable, Hashable {
@@ -2150,6 +2224,23 @@ enum API {
         var spending: Int
     }
 
+    struct TagListResponse: Codable, Hashable {
+        @Lossy var items: [TagSummary]
+        var names: [String]
+    }
+
+    struct TagSummary: Codable, Hashable {
+        var tag: String
+        var count: Int
+        @Lossy var totals: [TagTotal]
+    }
+
+    struct TagTotal: Codable, Hashable {
+        var currency: String
+        var spent: Int
+        var received: Int
+    }
+
     struct TaskAttachmentSchema: Codable, Hashable {
         var createdAt: Date
         var modifiedAt: Date?
@@ -2425,6 +2516,8 @@ enum API {
         var isBusiness: Bool = false
         var companyAccount: Bool = false
         var transferId: UUID?
+        var tags: [String]
+        var reviewed: Bool = true
         @Lossy var suggestions: [NameSuggestion]
         var investmentKind: InvestmentKind?
     }
@@ -2450,6 +2543,8 @@ enum API {
         var isBusiness: Bool = false
         var companyAccount: Bool = false
         var transferId: UUID?
+        var tags: [String]
+        var reviewed: Bool = true
         var investmentKind: InvestmentKind?
     }
 
@@ -2479,6 +2574,8 @@ enum API {
         var categoryId: UUID??
         var isBusiness: Bool??
         var note: String??
+        var tags: [String]??
+        var reviewed: Bool??
     }
 
     struct TransactionUpdateResponse: Codable, Hashable {
@@ -2502,6 +2599,8 @@ enum API {
         var isBusiness: Bool = false
         var companyAccount: Bool = false
         var transferId: UUID?
+        var tags: [String]
+        var reviewed: Bool = true
         var sameDescriptionCount: Int = 0
         var investmentKind: InvestmentKind?
     }
@@ -4172,6 +4271,58 @@ extension API.BulkDeleteRequest {
     }
 }
 
+extension API.BulkReviewRequest {
+    private enum DecodingKeys: String, CodingKey {
+        case ids
+        case reviewed
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.ids = try container.decode([UUID].self, forKey: .ids)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case ids
+        case reviewed
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.ids, forKey: .ids)
+        try container.encode(self.reviewed, forKey: .reviewed)
+    }
+}
+
+extension API.BulkTagRequest {
+    private enum DecodingKeys: String, CodingKey {
+        case ids
+        case add
+        case remove
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.ids = try container.decode([UUID].self, forKey: .ids)
+        self.add = try container.decodeIfPresent([String].self, forKey: .add) ?? []
+        self.remove = try container.decodeIfPresent([String].self, forKey: .remove) ?? []
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case ids
+        case add
+        case remove
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.ids, forKey: .ids)
+        try container.encode(self.add, forKey: .add)
+        try container.encode(self.remove, forKey: .remove)
+    }
+}
+
 extension API.BulkUpdateRequest {
     private enum EncodingKeys: String, CodingKey {
         case ids
@@ -4492,6 +4643,42 @@ extension API.CalendarUpdate {
     }
 }
 
+extension API.CategoryCreate {
+    private enum DecodingKeys: String, CodingKey {
+        case name
+        case color
+        case parentId
+        case excluded
+        case income
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.color = try container.decodeIfPresent(String.self, forKey: .color) ?? "#6B7280"
+        self.parentId = try container.decodeIfPresent(UUID.self, forKey: .parentId)
+        self.excluded = try container.decodeIfPresent(Bool.self, forKey: .excluded)
+        self.income = try container.decodeIfPresent(Bool.self, forKey: .income) ?? false
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case name
+        case color
+        case parentId = "parent_id"
+        case excluded
+        case income
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.name, forKey: .name)
+        try container.encode(self.color, forKey: .color)
+        try container.encodeIfPresent(self.parentId, forKey: .parentId)
+        try container.encodeIfPresent(self.excluded, forKey: .excluded)
+        try container.encode(self.income, forKey: .income)
+    }
+}
+
 extension API.CategoryListResponse {
     private enum DecodingKeys: String, CodingKey {
         case items
@@ -4566,6 +4753,7 @@ extension API.CategoryRuleCreated {
         case scope
         case direction
         case markBusiness
+        case transactionCount
         case categorized
     }
 
@@ -4579,6 +4767,7 @@ extension API.CategoryRuleCreated {
         self.scope = try container.decode(API.RuleScope.self, forKey: .scope)
         self.direction = try container.decodeIfPresent(API.TransactionDirection.self, forKey: .direction)
         self.markBusiness = try container.decode(Bool.self, forKey: .markBusiness)
+        self.transactionCount = try container.decodeIfPresent(Int.self, forKey: .transactionCount) ?? 0
         self.categorized = try container.decode(Int.self, forKey: .categorized)
     }
 
@@ -4591,6 +4780,7 @@ extension API.CategoryRuleCreated {
         case scope
         case direction
         case markBusiness = "mark_business"
+        case transactionCount = "transaction_count"
         case categorized
     }
 
@@ -4604,6 +4794,7 @@ extension API.CategoryRuleCreated {
         try container.encode(self.scope, forKey: .scope)
         try container.encodeIfPresent(self.direction, forKey: .direction)
         try container.encode(self.markBusiness, forKey: .markBusiness)
+        try container.encode(self.transactionCount, forKey: .transactionCount)
         try container.encode(self.categorized, forKey: .categorized)
     }
 }
@@ -4628,6 +4819,122 @@ extension API.CategoryRuleListResponse {
     }
 }
 
+extension API.CategoryRuleMatch {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case transactionDate
+        case description
+        case name
+        case amount
+        case currency
+        case direction
+        case categoryId
+        case byRule
+        case wouldSort
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.transactionDate = try container.decode(Date.self, forKey: .transactionDate)
+        self.description = try container.decodeIfPresent(String.self, forKey: .description)
+        self.name = try container.decodeIfPresent(String.self, forKey: .name)
+        self.amount = try container.decode(Int.self, forKey: .amount)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.direction = try container.decode(API.TransactionDirection.self, forKey: .direction)
+        self.categoryId = try container.decodeIfPresent(UUID.self, forKey: .categoryId)
+        self.byRule = try container.decode(Bool.self, forKey: .byRule)
+        self.wouldSort = try container.decode(Bool.self, forKey: .wouldSort)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case transactionDate = "transaction_date"
+        case description
+        case name
+        case amount
+        case currency
+        case direction
+        case categoryId = "category_id"
+        case byRule = "by_rule"
+        case wouldSort = "would_sort"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(API.Day(self.transactionDate), forKey: .transactionDate)
+        try container.encodeIfPresent(self.description, forKey: .description)
+        try container.encodeIfPresent(self.name, forKey: .name)
+        try container.encode(self.amount, forKey: .amount)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.direction, forKey: .direction)
+        try container.encodeIfPresent(self.categoryId, forKey: .categoryId)
+        try container.encode(self.byRule, forKey: .byRule)
+        try container.encode(self.wouldSort, forKey: .wouldSort)
+    }
+}
+
+extension API.CategoryRulePreview {
+    private enum DecodingKeys: String, CodingKey {
+        case matchCount
+        case sortableCount
+        case items
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.matchCount = try container.decode(Int.self, forKey: .matchCount)
+        self.sortableCount = try container.decode(Int.self, forKey: .sortableCount)
+        self._items = try container.decode(Lossy<API.CategoryRuleMatch>.self, forKey: .items)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case matchCount = "match_count"
+        case sortableCount = "sortable_count"
+        case items
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.matchCount, forKey: .matchCount)
+        try container.encode(self.sortableCount, forKey: .sortableCount)
+        try container.encode(self.items, forKey: .items)
+    }
+}
+
+extension API.CategoryRulePreviewRequest {
+    private enum DecodingKeys: String, CodingKey {
+        case pattern
+        case scope
+        case direction
+        case ruleId
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.pattern = try container.decode(String.self, forKey: .pattern)
+        self.scope = try container.decodeIfPresent(API.RuleScope.self, forKey: .scope) ?? .any
+        self.direction = try container.decodeIfPresent(API.TransactionDirection.self, forKey: .direction)
+        self.ruleId = try container.decodeIfPresent(UUID.self, forKey: .ruleId)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case pattern
+        case scope
+        case direction
+        case ruleId = "rule_id"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.pattern, forKey: .pattern)
+        try container.encode(self.scope, forKey: .scope)
+        try container.encodeIfPresent(self.direction, forKey: .direction)
+        try container.encodeIfPresent(self.ruleId, forKey: .ruleId)
+    }
+}
+
 extension API.CategoryRuleSchema {
     private enum DecodingKeys: String, CodingKey {
         case createdAt
@@ -4638,6 +4945,7 @@ extension API.CategoryRuleSchema {
         case scope
         case direction
         case markBusiness
+        case transactionCount
     }
 
     init(from decoder: Decoder) throws {
@@ -4650,6 +4958,7 @@ extension API.CategoryRuleSchema {
         self.scope = try container.decode(API.RuleScope.self, forKey: .scope)
         self.direction = try container.decodeIfPresent(API.TransactionDirection.self, forKey: .direction)
         self.markBusiness = try container.decode(Bool.self, forKey: .markBusiness)
+        self.transactionCount = try container.decodeIfPresent(Int.self, forKey: .transactionCount) ?? 0
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -4661,6 +4970,7 @@ extension API.CategoryRuleSchema {
         case scope
         case direction
         case markBusiness = "mark_business"
+        case transactionCount = "transaction_count"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -4673,6 +4983,28 @@ extension API.CategoryRuleSchema {
         try container.encode(self.scope, forKey: .scope)
         try container.encodeIfPresent(self.direction, forKey: .direction)
         try container.encode(self.markBusiness, forKey: .markBusiness)
+        try container.encode(self.transactionCount, forKey: .transactionCount)
+    }
+}
+
+extension API.CategoryRuleUpdate {
+    private enum EncodingKeys: String, CodingKey {
+        case categoryId = "category_id"
+        case pattern
+        case scope
+        case direction
+        case markBusiness = "mark_business"
+        case applyNow = "apply_now"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.categoryId { try container.encode(value, forKey: .categoryId) }
+        if let value = self.pattern { try container.encode(value, forKey: .pattern) }
+        if let value = self.scope { try container.encode(value, forKey: .scope) }
+        if let value = self.direction { try container.encode(value, forKey: .direction) }
+        if let value = self.markBusiness { try container.encode(value, forKey: .markBusiness) }
+        try container.encodeIfPresent(self.applyNow, forKey: .applyNow)
     }
 }
 
@@ -4687,6 +5019,8 @@ extension API.CategorySchema {
         case excluded
         case income
         case parentId
+        case transactionCount
+        case ruleCount
     }
 
     init(from decoder: Decoder) throws {
@@ -4700,6 +5034,8 @@ extension API.CategorySchema {
         self.excluded = try container.decode(Bool.self, forKey: .excluded)
         self.income = try container.decode(Bool.self, forKey: .income)
         self.parentId = try container.decodeIfPresent(UUID.self, forKey: .parentId)
+        self.transactionCount = try container.decodeIfPresent(Int.self, forKey: .transactionCount) ?? 0
+        self.ruleCount = try container.decodeIfPresent(Int.self, forKey: .ruleCount) ?? 0
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -4712,6 +5048,8 @@ extension API.CategorySchema {
         case excluded
         case income
         case parentId = "parent_id"
+        case transactionCount = "transaction_count"
+        case ruleCount = "rule_count"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -4725,6 +5063,8 @@ extension API.CategorySchema {
         try container.encode(self.excluded, forKey: .excluded)
         try container.encode(self.income, forKey: .income)
         try container.encodeIfPresent(self.parentId, forKey: .parentId)
+        try container.encode(self.transactionCount, forKey: .transactionCount)
+        try container.encode(self.ruleCount, forKey: .ruleCount)
     }
 }
 
@@ -4757,6 +5097,25 @@ extension API.CategorySpending {
         try container.encode(self.categoryName, forKey: .categoryName)
         try container.encode(self.categoryColor, forKey: .categoryColor)
         try container.encode(self.total, forKey: .total)
+    }
+}
+
+extension API.CategoryUpdate {
+    private enum EncodingKeys: String, CodingKey {
+        case name
+        case color
+        case parentId = "parent_id"
+        case excluded
+        case income
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.name { try container.encode(value, forKey: .name) }
+        if let value = self.color { try container.encode(value, forKey: .color) }
+        if let value = self.parentId { try container.encode(value, forKey: .parentId) }
+        if let value = self.excluded { try container.encode(value, forKey: .excluded) }
+        if let value = self.income { try container.encode(value, forKey: .income) }
     }
 }
 
@@ -10522,6 +10881,86 @@ extension API.SummaryMonth {
     }
 }
 
+extension API.TagListResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case items
+        case names
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._items = try container.decode(Lossy<API.TagSummary>.self, forKey: .items)
+        self.names = try container.decode([String].self, forKey: .names)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case items
+        case names
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.items, forKey: .items)
+        try container.encode(self.names, forKey: .names)
+    }
+}
+
+extension API.TagSummary {
+    private enum DecodingKeys: String, CodingKey {
+        case tag
+        case count
+        case totals
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.tag = try container.decode(String.self, forKey: .tag)
+        self.count = try container.decode(Int.self, forKey: .count)
+        self._totals = try container.decode(Lossy<API.TagTotal>.self, forKey: .totals)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case tag
+        case count
+        case totals
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.tag, forKey: .tag)
+        try container.encode(self.count, forKey: .count)
+        try container.encode(self.totals, forKey: .totals)
+    }
+}
+
+extension API.TagTotal {
+    private enum DecodingKeys: String, CodingKey {
+        case currency
+        case spent
+        case received
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.spent = try container.decode(Int.self, forKey: .spent)
+        self.received = try container.decode(Int.self, forKey: .received)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case currency
+        case spent
+        case received
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.spent, forKey: .spent)
+        try container.encode(self.received, forKey: .received)
+    }
+}
+
 extension API.TaskAttachmentSchema {
     private enum DecodingKeys: String, CodingKey {
         case createdAt
@@ -11369,6 +11808,8 @@ extension API.TransactionRenameResponse {
         case isBusiness
         case companyAccount
         case transferId
+        case tags
+        case reviewed
         case suggestions
         case investmentKind
     }
@@ -11395,6 +11836,8 @@ extension API.TransactionRenameResponse {
         self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
         self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
+        self.tags = try container.decode([String].self, forKey: .tags)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
         self._suggestions = try container.decode(Lossy<API.NameSuggestion>.self, forKey: .suggestions)
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
@@ -11420,6 +11863,8 @@ extension API.TransactionRenameResponse {
         case isBusiness = "is_business"
         case companyAccount = "company_account"
         case transferId = "transfer_id"
+        case tags
+        case reviewed
         case suggestions
         case investmentKind = "investment_kind"
     }
@@ -11446,6 +11891,8 @@ extension API.TransactionRenameResponse {
         try container.encode(self.isBusiness, forKey: .isBusiness)
         try container.encode(self.companyAccount, forKey: .companyAccount)
         try container.encodeIfPresent(self.transferId, forKey: .transferId)
+        try container.encode(self.tags, forKey: .tags)
+        try container.encode(self.reviewed, forKey: .reviewed)
         try container.encode(self.suggestions, forKey: .suggestions)
         try container.encodeIfPresent(self.investmentKind, forKey: .investmentKind)
     }
@@ -11473,6 +11920,8 @@ extension API.TransactionSchema {
         case isBusiness
         case companyAccount
         case transferId
+        case tags
+        case reviewed
         case investmentKind
     }
 
@@ -11498,6 +11947,8 @@ extension API.TransactionSchema {
         self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
         self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
+        self.tags = try container.decode([String].self, forKey: .tags)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
 
@@ -11522,6 +11973,8 @@ extension API.TransactionSchema {
         case isBusiness = "is_business"
         case companyAccount = "company_account"
         case transferId = "transfer_id"
+        case tags
+        case reviewed
         case investmentKind = "investment_kind"
     }
 
@@ -11547,6 +12000,8 @@ extension API.TransactionSchema {
         try container.encode(self.isBusiness, forKey: .isBusiness)
         try container.encode(self.companyAccount, forKey: .companyAccount)
         try container.encodeIfPresent(self.transferId, forKey: .transferId)
+        try container.encode(self.tags, forKey: .tags)
+        try container.encode(self.reviewed, forKey: .reviewed)
         try container.encodeIfPresent(self.investmentKind, forKey: .investmentKind)
     }
 }
@@ -11592,6 +12047,8 @@ extension API.TransactionUpdate {
         case categoryId = "category_id"
         case isBusiness = "is_business"
         case note
+        case tags
+        case reviewed
     }
 
     func encode(to encoder: Encoder) throws {
@@ -11599,6 +12056,8 @@ extension API.TransactionUpdate {
         if let value = self.categoryId { try container.encode(value, forKey: .categoryId) }
         if let value = self.isBusiness { try container.encode(value, forKey: .isBusiness) }
         if let value = self.note { try container.encode(value, forKey: .note) }
+        if let value = self.tags { try container.encode(value, forKey: .tags) }
+        if let value = self.reviewed { try container.encode(value, forKey: .reviewed) }
     }
 }
 
@@ -11624,6 +12083,8 @@ extension API.TransactionUpdateResponse {
         case isBusiness
         case companyAccount
         case transferId
+        case tags
+        case reviewed
         case sameDescriptionCount
         case investmentKind
     }
@@ -11650,6 +12111,8 @@ extension API.TransactionUpdateResponse {
         self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
         self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
+        self.tags = try container.decode([String].self, forKey: .tags)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
         self.sameDescriptionCount = try container.decodeIfPresent(Int.self, forKey: .sameDescriptionCount) ?? 0
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
@@ -11675,6 +12138,8 @@ extension API.TransactionUpdateResponse {
         case isBusiness = "is_business"
         case companyAccount = "company_account"
         case transferId = "transfer_id"
+        case tags
+        case reviewed
         case sameDescriptionCount = "same_description_count"
         case investmentKind = "investment_kind"
     }
@@ -11701,6 +12166,8 @@ extension API.TransactionUpdateResponse {
         try container.encode(self.isBusiness, forKey: .isBusiness)
         try container.encode(self.companyAccount, forKey: .companyAccount)
         try container.encodeIfPresent(self.transferId, forKey: .transferId)
+        try container.encode(self.tags, forKey: .tags)
+        try container.encode(self.reviewed, forKey: .reviewed)
         try container.encode(self.sameDescriptionCount, forKey: .sameDescriptionCount)
         try container.encodeIfPresent(self.investmentKind, forKey: .investmentKind)
     }

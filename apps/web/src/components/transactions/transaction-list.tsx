@@ -15,6 +15,7 @@ import {
   ArrowDownToLine,
   ArrowLeftRight,
   ArrowUpFromLine,
+  Check,
   Coins,
   Landmark,
   type LucideIcon,
@@ -29,6 +30,7 @@ import {
 import { memo, useMemo, useState } from "react";
 import { type BulkSuggestion, CategoryCell } from "@/components/category-cell";
 import { displayName } from "@/components/transactions/transaction-naming";
+import { TagChips } from "@/components/transactions/transaction-tags";
 import { IconButton, Panel } from "@/components/ui-kit";
 import { fromApiDate } from "@/lib/local-day";
 import { Amount } from "@/lib/privacy";
@@ -67,6 +69,7 @@ export interface TransactionHandlers {
   onToggleBusiness: (id: string, value: boolean) => void;
   onUnpair: (id: string) => void;
   onBulkSuggestion: (suggestion: BulkSuggestion) => void;
+  onReview: (ids: string[], reviewed: boolean) => void;
 }
 
 /** A credit adds to the account, a debit takes from it. */
@@ -128,6 +131,7 @@ export function TransactionList({
   selected,
   onSelectedChange,
   handlers,
+  reviewing = false,
 }: {
   transactions: TransactionSchema[];
   accounts: Map<string, string>;
@@ -135,6 +139,8 @@ export function TransactionList({
   selected: ReadonlySet<string>;
   onSelectedChange: (selected: Set<string>) => void;
   handlers: TransactionHandlers;
+  /** Going through what's to review: each row gets a way to mark it done. */
+  reviewing?: boolean;
 }) {
   const groups = useMemo(() => groupByDay(transactions), [transactions]);
   const byId = useMemo(
@@ -201,6 +207,7 @@ export function TransactionList({
                 selecting={selecting}
                 onCheck={(on) => toggle(transaction.id, on)}
                 handlers={handlers}
+                reviewing={reviewing}
               />
             ))}
           </ul>
@@ -219,6 +226,7 @@ const TransactionRow = memo(function TransactionRow({
   selecting,
   onCheck,
   handlers,
+  reviewing,
 }: {
   transaction: TransactionSchema;
   account: string | undefined;
@@ -228,6 +236,7 @@ const TransactionRow = memo(function TransactionRow({
   selecting: boolean;
   onCheck: (on: boolean) => void;
   handlers: TransactionHandlers;
+  reviewing: boolean;
 }) {
   const credit = transaction.direction === "credit";
   const description = displayName(transaction);
@@ -281,6 +290,9 @@ const TransactionRow = memo(function TransactionRow({
               }
             />
           )}
+          <span className="hidden min-w-0 @2xl:flex">
+            <TagChips tags={transaction.tags} />
+          </span>
         </span>
         <span className="block truncate type-caption text-white/45">
           {account ?? "Unknown account"}
@@ -315,6 +327,16 @@ const TransactionRow = memo(function TransactionRow({
           credit ? "text-income" : "text-white/80",
         )}
       />
+      {reviewing && (
+        <IconButton
+          aria-label={`Mark ${description} reviewed`}
+          title="Mark reviewed"
+          onClick={() => handlers.onReview([transaction.id], true)}
+          className="shrink-0"
+        >
+          <Check />
+        </IconButton>
+      )}
       <div className="hidden shrink-0 items-center @2xl:flex">
         <RowMenu transaction={transaction} handlers={handlers} />
       </div>
@@ -408,6 +430,13 @@ export function RowMenu({
             {business ? "Not a company expense" : "Company expense"}
           </DropdownMenuItem>
         )}
+        <DropdownMenuItem
+          onClick={() =>
+            handlers.onReview([transaction.id], !(transaction.reviewed ?? true))
+          }
+        >
+          {(transaction.reviewed ?? true) ? "Back to review" : "Mark reviewed"}
+        </DropdownMenuItem>
         {transaction.transfer_id && (
           <DropdownMenuItem onClick={() => handlers.onUnpair(transaction.id)}>
             Not a transfer

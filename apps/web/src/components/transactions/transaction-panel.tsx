@@ -25,6 +25,7 @@ import {
   NameSuggestions,
   NoteField,
 } from "@/components/transactions/transaction-naming";
+import { TagsField } from "@/components/transactions/transaction-tags";
 import { SoftButton } from "@/components/ui-kit";
 import { fromApiDate } from "@/lib/local-day";
 import { Amount } from "@/lib/privacy";
@@ -146,6 +147,7 @@ function Body({
           <Detail label="Account">{account ?? "Unknown account"}</Detail>
           <Detail
             label={transaction.investment_kind ? "What it is" : "Category"}
+            wide
           >
             {transaction.transfer_id || transaction.investment_kind ? (
               <span className="text-13 text-white/60">
@@ -181,7 +183,23 @@ function Body({
               aria-label="Company expense"
             />
           </Detail>
+          <Detail
+            label="Reviewed"
+            hint={
+              transaction.reviewed
+                ? "You've looked it over."
+                : "New from an import, not looked over yet."
+            }
+          >
+            <Switch
+              checked={transaction.reviewed ?? true}
+              onCheckedChange={(on) => handlers.onReview([transaction.id], on)}
+              aria-label="Reviewed"
+            />
+          </Detail>
         </dl>
+
+        <TagsField transaction={transaction} />
 
         <NoteField transaction={transaction} />
 
@@ -222,10 +240,13 @@ function Body({
 function Detail({
   label,
   hint,
+  wide,
   children,
 }: {
   label: string;
   hint?: string;
+  /** Gives a value that truncates, such as a category picker, the width to show itself. */
+  wide?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -234,7 +255,14 @@ function Detail({
         <span className="block text-13 text-white/60">{label}</span>
         {hint && <span className="type-caption text-white/35">{hint}</span>}
       </dt>
-      <dd className="flex max-w-[60%] shrink-0 justify-end">{children}</dd>
+      <dd
+        className={cn(
+          "flex shrink-0 justify-end",
+          wide ? "w-[60%]" : "max-w-[60%]",
+        )}
+      >
+        {children}
+      </dd>
     </div>
   );
 }
