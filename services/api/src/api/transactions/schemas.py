@@ -160,6 +160,7 @@ class TagSummary(Schema):
 
 class TagListResponse(Schema):
   items: list[TagSummary] = Field(description="The user's tags used in the period, most used first. Moves between own accounts are left out.")
+  names: list[str] = Field(default_factory=list, description="Every tag the user has, on any transaction and in any period, most used first: for picking one.")
 
 
 class CategorySpending(Schema):

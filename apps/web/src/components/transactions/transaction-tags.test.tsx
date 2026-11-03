@@ -186,11 +186,10 @@ describe("the panel", () => {
 
 describe("TagsField", () => {
   it("offers the user's own tags as they type, in any case, and saves them as written", async () => {
+    // A tag only on a transfer has no totals, but it's still one of the user's tags.
     api.tags.mockResolvedValue({
-      items: [
-        { tag: "Lisbon 2026", count: 4, totals: [] },
-        { tag: "Work", count: 2, totals: [] },
-      ],
+      items: [{ tag: "Work", count: 2, totals: [] }],
+      names: ["Work", "Lisbon 2026"],
     });
     api.update.mockResolvedValue(tx({ tags: ["Lisbon 2026"] }));
     render(wrap(<TagsField transaction={tx({ tags: ["Receipts"] })} />));
@@ -210,12 +209,7 @@ describe("TagsField", () => {
   });
 
   it("doesn't offer a tag it already has in another case", async () => {
-    api.tags.mockResolvedValue({
-      items: [
-        { tag: "Receipts", count: 4, totals: [] },
-        { tag: "Work", count: 2, totals: [] },
-      ],
-    });
+    api.tags.mockResolvedValue({ items: [], names: ["Receipts", "Work"] });
     render(wrap(<TagsField transaction={tx({ tags: ["receipts"] })} />));
 
     fireEvent.focus(screen.getByRole("textbox"));

@@ -682,7 +682,7 @@ class TestBankingAndTransactions:
     assert categorize.status_code == 404 or categorize.json()["updated"] == 0
     delete = await other_client.request("DELETE", "/v1/transactions", json={"ids": [tx_id]})
     assert delete.status_code == 404 or delete.json().get("deleted", 0) == 0
-    assert (await other_client.get("/v1/transactions/tags")).json()["items"] == []
+    assert (await other_client.get("/v1/transactions/tags")).json() == {"items": [], "names": []}
     assert (await other_client.get("/v1/transactions", params={"tag": "A's trip"})).json()["items"] == []
     tagged = await other_client.post("/v1/transactions/tags", json={"ids": [tx_id], "add": ["Mine now"], "remove": ["A's trip"]})
     assert tagged.json()["updated"] == 0

@@ -58,10 +58,10 @@ export function retag(
   return [...kept.values()];
 }
 
-/** The user's tags, most used first. */
+/** Every tag the user has, transfers' too, most used first. */
 export function useTagNames(): string[] {
   const { data } = useQuery(listTransactionTagsOptions({ client }));
-  return useMemo(() => data?.items.map((t) => t.tag) ?? [], [data]);
+  return useMemo(() => data?.names ?? [], [data]);
 }
 
 /** How many transactions still wait to be reviewed, across every month. */

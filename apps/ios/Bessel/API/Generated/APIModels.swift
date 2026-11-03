@@ -2058,6 +2058,7 @@ enum API {
 
     struct TagListResponse: Codable, Hashable {
         @Lossy var items: [TagSummary]
+        var names: [String]
     }
 
     struct TagSummary: Codable, Hashable {
@@ -10202,20 +10203,24 @@ extension API.SummaryMonth {
 extension API.TagListResponse {
     private enum DecodingKeys: String, CodingKey {
         case items
+        case names
     }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: DecodingKeys.self)
         self._items = try container.decode(Lossy<API.TagSummary>.self, forKey: .items)
+        self.names = try container.decode([String].self, forKey: .names)
     }
 
     private enum EncodingKeys: String, CodingKey {
         case items
+        case names
     }
 
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.items, forKey: .items)
+        try container.encode(self.names, forKey: .names)
     }
 }
 

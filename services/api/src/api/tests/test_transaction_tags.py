@@ -196,6 +196,21 @@ class TestTagSummaries:
     assert [t["tag"] for t in (await other_client.get("/v1/transactions/tags")).json()["items"]] == ["LISBON"]
     assert [t["tag"] for t in (await client.get("/v1/transactions/tags")).json()["items"]] == ["Lisbon"]
 
+  @pytest.mark.asyncio
+  async def test_names_list_every_tag_even_one_only_on_a_transfer_or_outside_the_period(
+    self, client: AsyncClient, save_fixture: SaveFixture, user: User
+  ) -> None:
+    account = await _account(save_fixture, user)
+    await _transaction(save_fixture, account, "Hotel", day=date(2026, 10, 3), tags=["Trip"])
+    await _transaction(save_fixture, account, "Taxi", day=date(2026, 10, 4), tags=["Trip"])
+    await _transaction(save_fixture, account, "To savings", day=date(2026, 10, 4), transfer_id=uuid4(), tags=["Savings goal"])
+    await _transaction(save_fixture, account, "Laptop", day=date(2025, 3, 1), tags=["Work"])
+
+    tags = (await client.get("/v1/transactions/tags", params={"date_from": "2026-10-01", "date_to": "2026-10-31"})).json()
+
+    assert [t["tag"] for t in tags["items"]] == ["Trip"]
+    assert tags["names"] == ["Trip", "Savings goal", "Work"]
+
 
 class TestReview:
   @pytest.mark.asyncio

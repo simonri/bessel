@@ -6914,6 +6914,12 @@ export type TagListResponse = {
    * The user's tags used in the period, most used first. Moves between own accounts are left out.
    */
   items: Array<TagSummary>;
+  /**
+   * Names
+   *
+   * Every tag the user has, on any transaction and in any period, most used first: for picking one.
+   */
+  names: Array<string>;
 };
 
 /**

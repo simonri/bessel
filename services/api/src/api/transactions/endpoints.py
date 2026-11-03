@@ -217,7 +217,8 @@ async def list_transaction_tags(
   is_business: Annotated[bool | None, Query(description="True for only the company's money, false for only the user's own; both when left out.")] = None,
 ) -> TagListResponse:
   """The user's tags with what was spent under each per currency, for picking a tag or seeing what a trip or project cost."""
-  return TagListResponse(items=await tag_summaries(session, current_user.id, date_from=date_from, date_to=date_to, is_business=is_business))
+  items = await tag_summaries(session, current_user.id, date_from=date_from, date_to=date_to, is_business=is_business)
+  return TagListResponse(items=items, names=await TransactionRepository.from_session(session).tag_usage(current_user.id))
 
 
 @router.post("/tags", summary="Tag Transactions", response_model=BulkUpdateResponse)

@@ -11219,9 +11219,18 @@ export const TagListResponseSchema = {
       description:
         "The user's tags used in the period, most used first. Moves between own accounts are left out.",
     },
+    names: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Names",
+      description:
+        "Every tag the user has, on any transaction and in any period, most used first: for picking one.",
+    },
   },
   type: "object",
-  required: ["items"],
+  required: ["items", "names"],
   title: "TagListResponse",
 } as const;
 
