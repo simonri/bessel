@@ -5,7 +5,7 @@ from api.common.pagination import ListResource
 from api.common.schemas import IDSchema, Schema, TimestampedSchema
 from api.investments.kinds import InvestmentKind, investment_kind
 from api.models.transaction import TransactionDirection
-from pydantic import UUID4, BeforeValidator, Field, computed_field
+from pydantic import UUID4, AfterValidator, BeforeValidator, Field, StringConstraints, computed_field
 
 
 def _blank_as_none(value: object) -> object:
@@ -17,6 +17,24 @@ def _blank_as_none(value: object) -> object:
 # Surrounding space is dropped, and nothing but space means none.
 Name = Annotated[Annotated[str, Field(max_length=120)] | None, BeforeValidator(_blank_as_none)]
 Note = Annotated[Annotated[str, Field(max_length=1000)] | None, BeforeValidator(_blank_as_none)]
+
+MAX_TAGS = 20
+
+
+def _single_spaced(value: object) -> object:
+  return " ".join(value.split()) if isinstance(value, str) else value
+
+
+def distinct_tags(tags: list[str]) -> list[str]:
+  """Each tag once, whatever its case, as first written."""
+  seen: dict[str, str] = {}
+  for tag in tags:
+    seen.setdefault(tag.casefold(), tag)
+  return list(seen.values())
+
+
+Tag = Annotated[str, BeforeValidator(_single_spaced), StringConstraints(min_length=1, max_length=50)]
+Tags = Annotated[list[Tag], Field(max_length=MAX_TAGS), AfterValidator(distinct_tags)]
 
 
 class TransactionSchema(IDSchema, TimestampedSchema):
@@ -39,6 +57,8 @@ class TransactionSchema(IDSchema, TimestampedSchema):
   transfer_id: UUID4 | None = Field(
     default=None, description="Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending."
   )
+  tags: list[str] = Field(default_factory=list, description="The user's own tags, such as a trip or a project.")
+  reviewed: bool = Field(default=True, description="Looked over by the user; imports arrive unreviewed.")
 
   @computed_field(description="For a broker's movement, what it is, such as a buy or a tax.")  # type: ignore[prop-decorator]
   @property
@@ -50,6 +70,8 @@ class TransactionUpdate(Schema):
   category_id: UUID4 | None = Field(default=None, description="Category ID to assign.")
   is_business: bool | None = Field(default=None, description="Mark as a business transaction.")
   note: Note = Field(default=None, description="The user's own words about it; empty removes it.")
+  tags: Tags | None = Field(default=None, description="Replaces its tags; a tag the user already has elsewhere keeps that spelling.")
+  reviewed: bool | None = Field(default=None, description="Mark it reviewed, or back to be reviewed.")
 
 
 class TransactionRename(Schema):
@@ -111,6 +133,34 @@ class BulkUpdateRequest(Schema):
 
 class BulkUpdateResponse(Schema):
   updated: int = Field(description="Number of transactions updated.")
+
+
+class BulkTagRequest(Schema):
+  ids: list[UUID4] = Field(description="Transactions to tag.")
+  add: Tags = Field(default_factory=list, description="Tags to add to each; a tag the user already has keeps that spelling.")
+  remove: list[Tag] = Field(default_factory=list, description="Tags to take off each, whatever their case.")
+
+
+class BulkReviewRequest(Schema):
+  ids: list[UUID4] = Field(description="Transactions to mark.")
+  reviewed: bool = Field(default=True, description="False puts them back to be reviewed.")
+
+
+class TagTotal(Schema):
+  currency: str
+  spent: int = Field(description="Money out, in minor units.")
+  received: int = Field(description="Money in, such as refunds or someone paying back their share, in minor units.")
+
+
+class TagSummary(Schema):
+  tag: str
+  count: int = Field(description="Tagged transactions in the period.")
+  totals: list[TagTotal] = Field(description="One per currency, never added together; most spent first.")
+
+
+class TagListResponse(Schema):
+  items: list[TagSummary] = Field(description="The user's tags used in the period, most used first. Moves between own accounts are left out.")
+  names: list[str] = Field(default_factory=list, description="Every tag the user has, on any transaction and in any period, most used first: for picking one.")
 
 
 class CategorySpending(Schema):

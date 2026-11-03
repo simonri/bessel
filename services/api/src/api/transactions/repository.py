@@ -93,6 +93,11 @@ def _counted_in_reports[*Ts](statement: Select[*Ts]) -> Select[*Ts]:
   )
 
 
+def _company() -> ColumnElement[bool]:
+  """The company's money: on one of its accounts, or a company cost the user paid privately."""
+  return or_(Transaction.is_business.is_(True), Transaction.bank_account_id.in_(select(BankAccount.id).where(BankAccount.is_business.is_(True))))
+
+
 def _renamable(adopt: Sequence[str]) -> ColumnElement[bool]:
   """What naming a bank text may change: rows without a name, named by a rule, or named by hand with one of `adopt`,
   such as the one renamed first, whose name the rule then took on. Any other name the user gave stays, and so does
@@ -252,6 +257,8 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     is_business: bool | None = None,
     transfers: bool | None = None,
     missing_documents: bool = False,
+    tags: Sequence[str] | None = None,
+    to_review: bool = False,
   ) -> Select[Transaction]:
     statement = self.get_base_statement().where(Transaction.user_id == user_id)
     if bank_account_ids:
@@ -283,11 +290,40 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     if date_to:
       statement = statement.where(Transaction.transaction_date <= date_to)
     if is_business is not None:
-      company = or_(Transaction.is_business.is_(True), Transaction.bank_account_id.in_(select(BankAccount.id).where(BankAccount.is_business.is_(True))))
-      statement = statement.where(company if is_business else ~company)
+      statement = statement.where(_company() if is_business else ~_company())
     if transfers is not None:
       statement = statement.where(Transaction.transfer_id.is_not(None) if transfers else Transaction.transfer_id.is_(None))
+    if tags:
+      statement = statement.where(Transaction.tags.overlap(list(tags)))
+    if to_review:
+      # A broker's movements are filed by their kind already, and would bury the rest.
+      statement = statement.where(Transaction.reviewed.is_(False), Transaction.bank_account_id.not_in(investment_accounts))
     return statement
+
+  async def tag_usage(self, user_id: UUID) -> list[str]:
+    """The user's tags, most used first."""
+    tag = func.unnest(Transaction.tags).label("tag")
+    used = select(tag).where(Transaction.user_id == user_id).subquery()
+    statement = select(used.c.tag).group_by(used.c.tag).order_by(func.count().desc(), used.c.tag)
+    return list((await self.session.execute(statement)).scalars())
+
+  async def tag_totals(
+    self, user_id: UUID, *, date_from: date | None, date_to: date | None, is_business: bool | None
+  ) -> list[tuple[str, str, TransactionDirection, int, int]]:
+    """(tag, currency, direction, total, count) of the user's tagged transactions, leaving out moves between own accounts."""
+    filtered = self.get_filtered_statement(user_id, date_from=date_from, date_to=date_to, is_business=is_business, transfers=False).subquery()
+    tagged = select(func.unnest(filtered.c.tags).label("tag"), filtered.c.currency, filtered.c.direction, filtered.c.amount).subquery()
+    statement = select(tagged.c.tag, tagged.c.currency, tagged.c.direction, func.sum(tagged.c.amount), func.count()).group_by(
+      tagged.c.tag, tagged.c.currency, tagged.c.direction
+    )
+    return [(tag, currency, direction, int(total), count) for tag, currency, direction, total, count in await self.session.execute(statement)]
+
+  async def owned_by_ids(self, user_id: UUID, ids: Sequence[UUID]) -> Sequence[Transaction]:
+    return await self.get_all(self.get_base_statement().where(Transaction.user_id == user_id, Transaction.id.in_(ids)))
+
+  async def set_reviewed(self, user_id: UUID, ids: Sequence[UUID], *, reviewed: bool) -> int:
+    statement = update(Transaction).where(Transaction.user_id == user_id, Transaction.id.in_(ids)).values(reviewed=reviewed)
+    return await self.execute_for_rowcount(statement)
 
   async def stream_export_rows(self, filtered: Select[tuple[Transaction]], *, batch_size: int = 500) -> AsyncIterator[ExportRow]:
     """The transactions `filtered` picks, oldest first, read from the database a batch at a time."""

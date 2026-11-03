@@ -149,6 +149,7 @@ import {
   listTrades,
   listTransactionDocuments,
   listTransactions,
+  listTransactionTags,
   logContactInteraction,
   logRecipeCooked,
   markAllNotificationsRead,
@@ -164,6 +165,7 @@ import {
   reorderTasks,
   reportAvanzaSyncFailed,
   respondToCalendarEvent,
+  reviewTransactions,
   revokeIngestToken,
   saveGoalPlan,
   searchEverything,
@@ -180,6 +182,7 @@ import {
   syncHealthkitSleep,
   syncHealthkitWorkouts,
   syncMontrose,
+  tagTransactions,
   undoCompleteTask,
   undoReset,
   unpairTransfer,
@@ -589,6 +592,9 @@ import type {
   ListTransactionsData,
   ListTransactionsError,
   ListTransactionsResponse,
+  ListTransactionTagsData,
+  ListTransactionTagsError,
+  ListTransactionTagsResponse,
   LogContactInteractionData,
   LogContactInteractionError,
   LogContactInteractionResponse,
@@ -630,6 +636,9 @@ import type {
   RespondToCalendarEventData,
   RespondToCalendarEventError,
   RespondToCalendarEventResponse,
+  ReviewTransactionsData,
+  ReviewTransactionsError,
+  ReviewTransactionsResponse,
   RevokeIngestTokenData,
   RevokeIngestTokenError,
   RevokeIngestTokenResponse,
@@ -672,6 +681,9 @@ import type {
   SyncHealthkitWorkoutsError,
   SyncHealthkitWorkoutsResponse,
   SyncMontroseData,
+  TagTransactionsData,
+  TagTransactionsError,
+  TagTransactionsResponse,
   UndoCompleteTaskData,
   UndoCompleteTaskError,
   UndoCompleteTaskResponse,
@@ -6291,6 +6303,94 @@ export const bulkUpdateTransactionsMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await bulkUpdateTransactions({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listTransactionTagsQueryKey = (
+  options?: Options<ListTransactionTagsData>,
+) => createQueryKey("listTransactionTags", options);
+
+/**
+ * List Transaction Tags
+ *
+ * The user's tags with what was spent under each per currency, for picking a tag or seeing what a trip or project cost.
+ */
+export const listTransactionTagsOptions = (
+  options?: Options<ListTransactionTagsData>,
+) =>
+  queryOptions<
+    ListTransactionTagsResponse,
+    ListTransactionTagsError,
+    ListTransactionTagsResponse,
+    ReturnType<typeof listTransactionTagsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTransactionTags({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTransactionTagsQueryKey(options),
+  });
+
+/**
+ * Tag Transactions
+ *
+ * Adds and takes off tags on several transactions at once; their other tags stay.
+ */
+export const tagTransactionsMutation = (
+  options?: Partial<Options<TagTransactionsData>>,
+): UseMutationOptions<
+  TagTransactionsResponse,
+  TagTransactionsError,
+  Options<TagTransactionsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    TagTransactionsResponse,
+    TagTransactionsError,
+    Options<TagTransactionsData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await tagTransactions({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Review Transactions
+ *
+ * Marks several transactions reviewed, or puts them back to be reviewed.
+ */
+export const reviewTransactionsMutation = (
+  options?: Partial<Options<ReviewTransactionsData>>,
+): UseMutationOptions<
+  ReviewTransactionsResponse,
+  ReviewTransactionsError,
+  Options<ReviewTransactionsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReviewTransactionsResponse,
+    ReviewTransactionsError,
+    Options<ReviewTransactionsData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await reviewTransactions({
         ...options,
         ...fnOptions,
         throwOnError: true,

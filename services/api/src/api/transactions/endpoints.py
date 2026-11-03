@@ -27,6 +27,8 @@ from api.transactions.schemas import (
   BulkCategorizeRequest,
   BulkCategorizeResponse,
   BulkDeleteRequest,
+  BulkReviewRequest,
+  BulkTagRequest,
   BulkUpdateRequest,
   BulkUpdateResponse,
   CategorySpending,
@@ -35,6 +37,7 @@ from api.transactions.schemas import (
   MonthlySpendingResponse,
   NameAllRequest,
   NameAllResponse,
+  TagListResponse,
   TransactionListResponse,
   TransactionRename,
   TransactionRenameResponse,
@@ -45,6 +48,7 @@ from api.transactions.schemas import (
 )
 from api.transactions.service import transaction_service
 from api.transactions.summary import month_summary
+from api.transactions.tags import set_tags, tag_many, tag_summaries
 from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Depends, Query, UploadFile
 from fastapi.responses import StreamingResponse
@@ -98,6 +102,8 @@ class TransactionFilters:
   is_business: bool | None
   transfers: bool | None
   missing_documents: bool
+  tags: list[str] | None
+  to_review: bool
 
 
 def transaction_filters(
@@ -115,6 +121,10 @@ def transaction_filters(
   missing_documents: Annotated[
     bool, Query(description="If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements.")
   ] = False,
+  tag: Annotated[list[str] | None, Query(description="Only transactions with any of these tags, spelled as the user has them.")] = None,
+  to_review: Annotated[
+    bool, Query(description="If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements.")
+  ] = False,
 ) -> TransactionFilters:
   return TransactionFilters(
     bank_account_ids=bank_account_id,
@@ -127,6 +137,8 @@ def transaction_filters(
     is_business=is_business,
     transfers=transfers,
     missing_documents=missing_documents,
+    tags=tag,
+    to_review=to_review,
   )
 
 
@@ -270,6 +282,32 @@ async def bulk_update_transactions(
   return BulkUpdateResponse(updated=updated)
 
 
+@router.get("/tags", summary="List Transaction Tags", response_model=TagListResponse)
+async def list_transaction_tags(
+  session: DBSession,
+  current_user: CurrentDBUser,
+  date_from: Annotated[date | None, Query(description="Start date (inclusive).")] = None,
+  date_to: Annotated[date | None, Query(description="End date (inclusive).")] = None,
+  is_business: Annotated[bool | None, Query(description="True for only the company's money, false for only the user's own; both when left out.")] = None,
+) -> TagListResponse:
+  """The user's tags with what was spent under each per currency, for picking a tag or seeing what a trip or project cost."""
+  items = await tag_summaries(session, current_user.id, date_from=date_from, date_to=date_to, is_business=is_business)
+  return TagListResponse(items=items, names=await TransactionRepository.from_session(session).tag_usage(current_user.id))
+
+
+@router.post("/tags", summary="Tag Transactions", response_model=BulkUpdateResponse)
+async def tag_transactions(body: BulkTagRequest, session: DBSession, current_user: CurrentDBUser) -> BulkUpdateResponse:
+  """Adds and takes off tags on several transactions at once; their other tags stay."""
+  return BulkUpdateResponse(updated=await tag_many(session, current_user.id, body.ids, add=body.add, remove=body.remove))
+
+
+@router.post("/review", summary="Review Transactions", response_model=BulkUpdateResponse)
+async def review_transactions(body: BulkReviewRequest, session: DBSession, current_user: CurrentDBUser) -> BulkUpdateResponse:
+  """Marks several transactions reviewed, or puts them back to be reviewed."""
+  updated = await TransactionRepository.from_session(session).set_reviewed(current_user.id, body.ids, reviewed=body.reviewed)
+  return BulkUpdateResponse(updated=updated)
+
+
 @router.patch(
   "/{transaction_id}",
   summary="Update Transaction",
@@ -286,6 +324,8 @@ async def update_transaction(
   transaction = await repo.get_owned_or_404(transaction_id, current_user.id, not_found_message="Transaction not found")
 
   update_dict = without_required_nulls(Transaction, body.model_dump(exclude_unset=True))
+  if (tags := update_dict.pop("tags", None)) is not None:
+    await set_tags(session, transaction, tags)
   if "category_id" in update_dict:
     await _check_category(session, update_dict["category_id"], current_user.id)
     # The user's own choice: rules and transfer pairing leave it alone from now on.

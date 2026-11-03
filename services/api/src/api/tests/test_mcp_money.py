@@ -56,7 +56,6 @@ async def _transaction(
 ) -> Transaction:
   transaction = Transaction(
     amount=amount,
-    currency="SEK",
     transaction_date=day,
     direction=direction,
     dedup_hash=uuid4().hex,
@@ -64,7 +63,7 @@ async def _transaction(
     category_id=category.id if category else None,
     bank_account_id=account.id,
     user_id=account.user_id,
-    **fields,
+    **{"currency": "SEK", **fields},
   )
   await save_fixture(transaction)
   return transaction
@@ -230,6 +229,48 @@ class TestSearchTransactions:
     assert await mcp_call_error(connect, "search_transactions", {"account": "Skandia"}, token="token-b") == (
       "No account called 'Skandia'. The user's accounts: Secret."
     )
+
+
+class TestTags:
+  @pytest_asyncio.fixture
+  async def trip(self, save_fixture: SaveFixture, user: User, other_user: User) -> None:
+    skandia = await _account(save_fixture, user, "Skandia")
+    await _transaction(save_fixture, skandia, date(2026, 9, 3), 150_000, DEBIT, "HOTEL", tags=["Lisbon"])
+    await _transaction(save_fixture, skandia, date(2026, 9, 4), 40_000, DEBIT, "DINNER", currency="EUR", tags=["Lisbon", "Friends"])
+    await _transaction(save_fixture, skandia, date(2026, 9, 6), 15_000, CREDIT, "SWISH", currency="EUR", tags=["Lisbon"])
+    await _transaction(save_fixture, skandia, date(2026, 10, 1), 9_900, DEBIT, "ICA")
+    secret = await _account(save_fixture, other_user, "Secret")
+    await _transaction(save_fixture, secret, date(2026, 9, 4), 99_900, DEBIT, "SECRET HOTEL", tags=["Lisbon"])
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("trip")
+  async def test_search_finds_a_tag_in_any_case_and_says_each_ones_tags(self, connect: ConnectFixture) -> None:
+    found = await mcp_call(connect, "search_transactions", {"tag": "lisbon"})
+
+    assert [(t["bank_text"], t["tags"]) for t in found["transactions"]] == [("SWISH", ["Lisbon"]), ("DINNER", ["Lisbon", "Friends"]), ("HOTEL", ["Lisbon"])]
+    assert await mcp_call_error(connect, "search_transactions", {"tag": "Rome"}) == "No tag called 'Rome'. The user's tags: Friends, Lisbon."
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("trip")
+  async def test_spending_per_tag_and_currency_in_currency_units(self, connect: ConnectFixture) -> None:
+    spending = await mcp_call(connect, "get_tag_spending", {"start": "2026-09-01", "end": "2026-09-30"})
+
+    assert spending["tags"] == [
+      {
+        "tag": "Lisbon",
+        "transactions": 3,
+        "currencies": [{"currency": "SEK", "spent": 1500.0, "received": 0.0}, {"currency": "EUR", "spent": 400.0, "received": 150.0}],
+      },
+      {"tag": "Friends", "transactions": 1, "currencies": [{"currency": "EUR", "spent": 400.0, "received": 0.0}]},
+    ]
+    assert (await mcp_call(connect, "get_tag_spending", {"start": "2026-10-01"}))["tags"] == []
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("trip")
+  async def test_another_user_sees_only_their_own_tags(self, connect: ConnectFixture) -> None:
+    [lisbon] = (await mcp_call(connect, "get_tag_spending", token="token-b"))["tags"]
+    assert lisbon["currencies"] == [{"currency": "SEK", "spent": 999.0, "received": 0.0}]
+    assert await mcp_call_error(connect, "search_transactions", {"tag": "Friends"}, token="token-b") == "No tag called 'Friends'. The user's tags: Lisbon."
 
 
 class TestInvestments:

@@ -273,7 +273,7 @@ class TestTools:
     async with connect() as client:
       tools = (await client.list_tools()).tools
     money = [t for t in tools if any(word in t.name for word in ("finance", "month_summary", "transaction", "invest", "account", "spending", "holding"))]
-    assert sorted(t.name for t in money) == ["get_finances_overview", "get_investments", "get_month_summary", "search_transactions"]
+    assert sorted(t.name for t in money) == ["get_finances_overview", "get_investments", "get_month_summary", "get_tag_spending", "search_transactions"]
     for tool in money:
       assert tool.annotations is not None
       assert tool.annotations.read_only_hint is True, tool.name
@@ -314,6 +314,7 @@ ISOLATION_TESTED = {
   "get_finances_overview",
   "get_month_summary",
   "search_transactions",
+  "get_tag_spending",
   "get_investments",
   # Public data: test_weather checks each caller gets it in their own timezone.
   "get_weather",

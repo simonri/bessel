@@ -32,6 +32,7 @@ from api.models.transaction import Transaction as TransactionModel
 from api.models.transaction import TransactionDirection
 from api.transactions.repository import TransactionRepository
 from api.transactions.summary import month_summary
+from api.transactions.tags import tag_summaries
 
 NET_WORTH_MONTHS = 12
 MAX_TRANSACTIONS = 200
@@ -61,6 +62,15 @@ def match_name[T: (BankAccount, Category)](name: str, items: Sequence[T], kind: 
       raise ToolError(f"{name!r} matches several {kind}s: {', '.join(i.name for i in candidates)}. Use the full name.")
   names = ", ".join(sorted(i.name for i in items)) or "none"
   raise ToolError(f"No {kind} called {name!r}. The user's {kind}s: {names}.")
+
+
+def match_tag(name: str, tags: Sequence[str]) -> str:
+  """The user's tag `name` refers to, in any case."""
+  wanted = name.strip().casefold()
+  for tag in tags:
+    if tag.casefold() == wanted:
+      return tag
+  raise ToolError(f"No tag called {name!r}. The user's tags: {', '.join(sorted(tags, key=str.casefold)) or 'none'}.")
 
 
 # ─── Overview ───
@@ -253,6 +263,7 @@ class Transaction(Schema):
   transfer: bool = Field(description="A move between the user's own accounts.")
   investment_kind: str | None = Field(description="For an investment account's movement, what it is, such as a buy, a dividend or a tax.")
   invoices: int = Field(description="Invoices and receipts kept with it.")
+  tags: list[str]
 
 
 class Transactions(Schema):
@@ -270,10 +281,11 @@ async def search_transactions(
   direction: Annotated[Literal["out", "in"] | None, Field(description="'out' for money spent, 'in' for money received.")] = None,
   company: Annotated[bool | None, Field(description="true for only the company's money, false for only the user's own.")] = None,
   uncategorized: Annotated[bool, Field(description="Only transactions still waiting for a category.")] = False,
+  tag: Annotated[str | None, Field(description="One of the user's tags, in any case.")] = None,
   limit: Annotated[int, Field(ge=1, le=MAX_TRANSACTIONS)] = 50,
   timezone: TimezoneParam = None,
 ) -> Transactions:
-  """Transactions across all accounts, newest first, filtered by days, text, category, account, direction or owner.
+  """Transactions across all accounts, newest first, filtered by days, text, category, account, direction, owner or tag.
 
   Use it to look into a month's spending, find a payment ("when did I last pay the dentist"), list the company's
   costs, or see what still needs a category. Moves between the user's own accounts are included and marked `transfer`.
@@ -285,6 +297,7 @@ async def search_transactions(
     accounts = await BankAccountRepository.from_session(session).list_for_user(user.id)
     categories = await CategoryRepository.from_session(session).list_for_user(user.id, order_by=Category.name)
     repository = TransactionRepository.from_session(session)
+    tags = [match_tag(tag, await repository.tag_usage(user.id))] if tag is not None else None
     statement = repository.get_filtered_statement(
       user.id,
       bank_account_ids=[match_name(account, accounts, "account").id] if account else None,
@@ -295,6 +308,7 @@ async def search_transactions(
       date_from=date_from,
       date_to=date_to,
       is_business=company,
+      tags=tags,
     ).order_by(TransactionModel.transaction_date.desc(), TransactionModel.id)
     rows, total_count = await repository.paginate(statement, limit=limit, page=1)
     documents = await DocumentRepository.from_session(session).counts_for_transactions([t.id for t in rows])
@@ -318,9 +332,54 @@ async def search_transactions(
         transfer=t.transfer_id is not None,
         investment_kind=investment_kind(t.transaction_type, t.description),
         invoices=documents.get(t.id, 0),
+        tags=t.tags,
       )
       for t in rows
     ],
+  )
+
+
+class TagCurrency(Schema):
+  currency: str
+  spent: float = Field(description="Money out.")
+  received: float = Field(description="Money in, such as refunds or a friend's share.")
+
+
+class TagSpend(Schema):
+  tag: str
+  transactions: int
+  currencies: list[TagCurrency] = Field(description="One per currency, never added together.")
+
+
+class TagSpending(Schema):
+  tags: list[TagSpend]
+
+
+async def get_tag_spending(
+  ctx: Context,
+  start: Annotated[Day | None, Field(description="Earliest day, inclusive. Leave out for no lower bound.")] = None,
+  end: Annotated[Day | None, Field(description="Latest day, inclusive. Leave out for no upper bound.")] = None,
+  company: Annotated[bool | None, Field(description="true for only the company's money, false for only the user's own.")] = None,
+  timezone: TimezoneParam = None,
+) -> TagSpending:
+  """Money out and in under each of the user's tags, such as a trip or a project: "what did the trip cost".
+
+  Moves between the user's own accounts are left out. For the transactions behind a tag, use search_transactions.
+  """
+  async with user_session(ctx) as (session, user):
+    today = today_in(resolve_timezone(user, timezone))
+    date_from, date_to = (parse_day(start, today) if start else None), (parse_day(end, today) if end else None)
+    check_order(date_from, date_to)
+    summaries = await tag_summaries(session, user.id, date_from=date_from, date_to=date_to, is_business=company)
+  return TagSpending(
+    tags=[
+      TagSpend(
+        tag=s.tag,
+        transactions=s.count,
+        currencies=[TagCurrency(currency=t.currency, spent=money(t.spent), received=money(t.received)) for t in s.totals],
+      )
+      for s in summaries
+    ]
   )
 
 
@@ -418,5 +477,6 @@ TOOLS: list[ToolSpec] = [
   read(get_finances_overview, "Finances overview"),
   read(get_month_summary, "Month summary", open_world=True),
   read(search_transactions, "Search transactions", open_world=True),
+  read(get_tag_spending, "Tag spending"),
   read(get_investments, "Investments"),
 ]

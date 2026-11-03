@@ -2188,6 +2188,68 @@ export const BulkDeleteRequestSchema = {
   title: "BulkDeleteRequest",
 } as const;
 
+export const BulkReviewRequestSchema = {
+  properties: {
+    ids: {
+      items: {
+        type: "string",
+        format: "uuid4",
+      },
+      type: "array",
+      title: "Ids",
+      description: "Transactions to mark.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "False puts them back to be reviewed.",
+      default: true,
+    },
+  },
+  type: "object",
+  required: ["ids"],
+  title: "BulkReviewRequest",
+} as const;
+
+export const BulkTagRequestSchema = {
+  properties: {
+    ids: {
+      items: {
+        type: "string",
+        format: "uuid4",
+      },
+      type: "array",
+      title: "Ids",
+      description: "Transactions to tag.",
+    },
+    add: {
+      items: {
+        type: "string",
+        maxLength: 50,
+        minLength: 1,
+      },
+      type: "array",
+      maxItems: 20,
+      title: "Add",
+      description:
+        "Tags to add to each; a tag the user already has keeps that spelling.",
+    },
+    remove: {
+      items: {
+        type: "string",
+        maxLength: 50,
+        minLength: 1,
+      },
+      type: "array",
+      title: "Remove",
+      description: "Tags to take off each, whatever their case.",
+    },
+  },
+  type: "object",
+  required: ["ids"],
+  title: "BulkTagRequest",
+} as const;
+
 export const BulkUpdateRequestSchema = {
   properties: {
     ids: {
@@ -11534,6 +11596,80 @@ export const SummaryMonthSchema = {
   title: "SummaryMonth",
 } as const;
 
+export const TagListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/TagSummary",
+      },
+      type: "array",
+      title: "Items",
+      description:
+        "The user's tags used in the period, most used first. Moves between own accounts are left out.",
+    },
+    names: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Names",
+      description:
+        "Every tag the user has, on any transaction and in any period, most used first: for picking one.",
+    },
+  },
+  type: "object",
+  required: ["items", "names"],
+  title: "TagListResponse",
+} as const;
+
+export const TagSummarySchema = {
+  properties: {
+    tag: {
+      type: "string",
+      title: "Tag",
+    },
+    count: {
+      type: "integer",
+      title: "Count",
+      description: "Tagged transactions in the period.",
+    },
+    totals: {
+      items: {
+        $ref: "#/components/schemas/TagTotal",
+      },
+      type: "array",
+      title: "Totals",
+      description: "One per currency, never added together; most spent first.",
+    },
+  },
+  type: "object",
+  required: ["tag", "count", "totals"],
+  title: "TagSummary",
+} as const;
+
+export const TagTotalSchema = {
+  properties: {
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    spent: {
+      type: "integer",
+      title: "Spent",
+      description: "Money out, in minor units.",
+    },
+    received: {
+      type: "integer",
+      title: "Received",
+      description:
+        "Money in, such as refunds or someone paying back their share, in minor units.",
+    },
+  },
+  type: "object",
+  required: ["currency", "spent", "received"],
+  title: "TagTotal",
+} as const;
+
 export const TaskAttachmentSchemaSchema = {
   properties: {
     created_at: {
@@ -13097,6 +13233,20 @@ export const TransactionRenameResponseSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
     suggestions: {
       items: {
         $ref: "#/components/schemas/NameSuggestion",
@@ -13142,6 +13292,8 @@ export const TransactionRenameResponseSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
     "suggestions",
     "investment_kind",
   ],
@@ -13318,6 +13470,20 @@ export const TransactionSchemaSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
     investment_kind: {
       anyOf: [
         {
@@ -13354,6 +13520,8 @@ export const TransactionSchemaSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
     "investment_kind",
   ],
   title: "TransactionSchema",
@@ -13449,6 +13617,37 @@ export const TransactionUpdateSchema = {
       ],
       title: "Note",
       description: "The user's own words about it; empty removes it.",
+    },
+    tags: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+            maxLength: 50,
+            minLength: 1,
+          },
+          type: "array",
+          maxItems: 20,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tags",
+      description:
+        "Replaces its tags; a tag the user already has elsewhere keeps that spelling.",
+    },
+    reviewed: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Reviewed",
+      description: "Mark it reviewed, or back to be reviewed.",
     },
   },
   type: "object",
@@ -13625,6 +13824,20 @@ export const TransactionUpdateResponseSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
     same_description_count: {
       type: "integer",
       title: "Same Description Count",
@@ -13668,6 +13881,8 @@ export const TransactionUpdateResponseSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
     "same_description_count",
     "investment_kind",
   ],
@@ -14513,6 +14728,20 @@ export const TransactionRenameResponseWritableSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
     suggestions: {
       items: {
         $ref: "#/components/schemas/NameSuggestion",
@@ -14545,6 +14774,8 @@ export const TransactionRenameResponseWritableSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
     "suggestions",
   ],
   title: "TransactionRenameResponse",
@@ -14720,6 +14951,20 @@ export const TransactionSchemaWritableSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
   },
   type: "object",
   required: [
@@ -14743,6 +14988,8 @@ export const TransactionSchemaWritableSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
   ],
   title: "TransactionSchema",
 } as const;
@@ -14917,6 +15164,20 @@ export const TransactionUpdateResponseWritableSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
     same_description_count: {
       type: "integer",
       title: "Same Description Count",
@@ -14947,6 +15208,8 @@ export const TransactionUpdateResponseWritableSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
     "same_description_count",
   ],
   title: "TransactionUpdateResponse",

@@ -8981,6 +8981,39 @@
             "description": "If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements."
           },
           {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only transactions with any of these tags, spelled as the user has them.",
+              "title": "Tag"
+            },
+            "description": "Only transactions with any of these tags, spelled as the user has them."
+          },
+          {
+            "name": "to_review",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements.",
+              "default": false,
+              "title": "To Review"
+            },
+            "description": "If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements."
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -9295,6 +9328,39 @@
               "title": "Missing Documents"
             },
             "description": "If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements."
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only transactions with any of these tags, spelled as the user has them.",
+              "title": "Tag"
+            },
+            "description": "Only transactions with any of these tags, spelled as the user has them."
+          },
+          {
+            "name": "to_review",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements.",
+              "default": false,
+              "title": "To Review"
+            },
+            "description": "If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements."
           }
         ],
         "responses": {
@@ -9524,6 +9590,39 @@
               "title": "Missing Documents"
             },
             "description": "If true, only purchases with no invoice or receipt: not money in, moves between own accounts, nor investment accounts' movements."
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only transactions with any of these tags, spelled as the user has them.",
+              "title": "Tag"
+            },
+            "description": "Only transactions with any of these tags, spelled as the user has them."
+          },
+          {
+            "name": "to_review",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements.",
+              "default": false,
+              "title": "To Review"
+            },
+            "description": "If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements."
           }
         ],
         "responses": {
@@ -9636,6 +9735,193 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/BulkUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/transactions/tags": {
+      "get": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "List Transaction Tags",
+        "description": "The user's tags with what was spent under each per currency, for picking a tag or seeing what a trip or project cost.",
+        "operationId": "list_transaction_tags",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Start date (inclusive).",
+              "title": "Date From"
+            },
+            "description": "Start date (inclusive)."
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "End date (inclusive).",
+              "title": "Date To"
+            },
+            "description": "End date (inclusive)."
+          },
+          {
+            "name": "is_business",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "True for only the company's money, false for only the user's own; both when left out.",
+              "title": "Is Business"
+            },
+            "description": "True for only the company's money, false for only the user's own; both when left out."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Tag Transactions",
+        "description": "Adds and takes off tags on several transactions at once; their other tags stay.",
+        "operationId": "tag_transactions",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkTagRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkUpdateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/transactions/review": {
+      "post": {
+        "tags": [
+          "transactions"
+        ],
+        "summary": "Review Transactions",
+        "description": "Marks several transactions reviewed, or puts them back to be reviewed.",
+        "operationId": "review_transactions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkReviewRequest"
               }
             }
           },
@@ -12802,6 +13088,69 @@
           "ids"
         ],
         "title": "BulkDeleteRequest"
+      },
+      "BulkReviewRequest": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid4"
+            },
+            "type": "array",
+            "title": "Ids",
+            "description": "Transactions to mark."
+          },
+          "reviewed": {
+            "type": "boolean",
+            "title": "Reviewed",
+            "description": "False puts them back to be reviewed.",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "ids"
+        ],
+        "title": "BulkReviewRequest"
+      },
+      "BulkTagRequest": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid4"
+            },
+            "type": "array",
+            "title": "Ids",
+            "description": "Transactions to tag."
+          },
+          "add": {
+            "items": {
+              "type": "string",
+              "maxLength": 50,
+              "minLength": 1
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Add",
+            "description": "Tags to add to each; a tag the user already has keeps that spelling."
+          },
+          "remove": {
+            "items": {
+              "type": "string",
+              "maxLength": 50,
+              "minLength": 1
+            },
+            "type": "array",
+            "title": "Remove",
+            "description": "Tags to take off each, whatever their case."
+          }
+        },
+        "type": "object",
+        "required": [
+          "ids"
+        ],
+        "title": "BulkTagRequest"
       },
       "BulkUpdateRequest": {
         "properties": {
@@ -22362,6 +22711,85 @@
         ],
         "title": "SummaryMonth"
       },
+      "TagListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TagSummary"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "The user's tags used in the period, most used first. Moves between own accounts are left out."
+          },
+          "names": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Names",
+            "description": "Every tag the user has, on any transaction and in any period, most used first: for picking one."
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "names"
+        ],
+        "title": "TagListResponse"
+      },
+      "TagSummary": {
+        "properties": {
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Tagged transactions in the period."
+          },
+          "totals": {
+            "items": {
+              "$ref": "#/components/schemas/TagTotal"
+            },
+            "type": "array",
+            "title": "Totals",
+            "description": "One per currency, never added together; most spent first."
+          }
+        },
+        "type": "object",
+        "required": [
+          "tag",
+          "count",
+          "totals"
+        ],
+        "title": "TagSummary"
+      },
+      "TagTotal": {
+        "properties": {
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "spent": {
+            "type": "integer",
+            "title": "Spent",
+            "description": "Money out, in minor units."
+          },
+          "received": {
+            "type": "integer",
+            "title": "Received",
+            "description": "Money in, such as refunds or someone paying back their share, in minor units."
+          }
+        },
+        "type": "object",
+        "required": [
+          "currency",
+          "spent",
+          "received"
+        ],
+        "title": "TagTotal"
+      },
       "TaskAttachmentSchema": {
         "properties": {
           "created_at": {
@@ -23956,6 +24384,20 @@
             "title": "Transfer Id",
             "description": "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending."
           },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "The user's own tags, such as a trip or a project."
+          },
+          "reviewed": {
+            "type": "boolean",
+            "title": "Reviewed",
+            "description": "Looked over by the user; imports arrive unreviewed.",
+            "default": true
+          },
           "suggestions": {
             "items": {
               "$ref": "#/components/schemas/NameSuggestion"
@@ -23999,6 +24441,8 @@
           "is_business",
           "company_account",
           "transfer_id",
+          "tags",
+          "reviewed",
           "suggestions",
           "investment_kind"
         ],
@@ -24171,6 +24615,20 @@
             "title": "Transfer Id",
             "description": "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending."
           },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "The user's own tags, such as a trip or a project."
+          },
+          "reviewed": {
+            "type": "boolean",
+            "title": "Reviewed",
+            "description": "Looked over by the user; imports arrive unreviewed.",
+            "default": true
+          },
           "investment_kind": {
             "anyOf": [
               {
@@ -24206,6 +24664,8 @@
           "is_business",
           "company_account",
           "transfer_id",
+          "tags",
+          "reviewed",
           "investment_kind"
         ],
         "title": "TransactionSchema"
@@ -24302,6 +24762,36 @@
             ],
             "title": "Note",
             "description": "The user's own words about it; empty removes it."
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "maxLength": 50,
+                  "minLength": 1
+                },
+                "type": "array",
+                "maxItems": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags",
+            "description": "Replaces its tags; a tag the user already has elsewhere keeps that spelling."
+          },
+          "reviewed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed",
+            "description": "Mark it reviewed, or back to be reviewed."
           }
         },
         "type": "object",
@@ -24474,6 +24964,20 @@
             "title": "Transfer Id",
             "description": "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending."
           },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "description": "The user's own tags, such as a trip or a project."
+          },
+          "reviewed": {
+            "type": "boolean",
+            "title": "Reviewed",
+            "description": "Looked over by the user; imports arrive unreviewed.",
+            "default": true
+          },
           "same_description_count": {
             "type": "integer",
             "title": "Same Description Count",
@@ -24515,6 +25019,8 @@
           "is_business",
           "company_account",
           "transfer_id",
+          "tags",
+          "reviewed",
           "same_description_count",
           "investment_kind"
         ],
