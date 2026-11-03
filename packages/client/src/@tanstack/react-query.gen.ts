@@ -27,6 +27,7 @@ import {
   correctMemoryFact,
   createBankAccount,
   createCalendarEvent,
+  createCategory,
   createCategoryRule,
   createContact,
   createCounter,
@@ -36,12 +37,14 @@ import {
   createPlace,
   createProject,
   createRecipe,
+  createRecurringReview,
   createReset,
   createTask,
   createTimeEntry,
   createTimeProject,
   deleteBankAccount,
   deleteCalendarEvent,
+  deleteCategory,
   deleteCategoryRule,
   deleteContact,
   deleteContactInteraction,
@@ -53,6 +56,7 @@ import {
   deletePlace,
   deleteProject,
   deleteRecipe,
+  deleteRecurringReview,
   deleteTask,
   deleteTaskAttachment,
   deleteTimeEntry,
@@ -65,6 +69,8 @@ import {
   documentPage,
   documentThumbnail,
   downloadDocument,
+  exportTransactions,
+  exportTransactionsWithReceipts,
   forgetMemoryFact,
   getAccountsOverview,
   getActivitySummary,
@@ -83,6 +89,8 @@ import {
   getHoldings,
   getIntradayActivity,
   getInvestmentAccounts,
+  getInvestmentAllocation,
+  getInvestmentPerformance,
   getLocationHistoryDay,
   getLocationHistorySummary,
   getMcpConnector,
@@ -137,6 +145,7 @@ import {
   listProjects,
   listRecipeCooks,
   listRecipes,
+  listRecurringPayments,
   listReflections,
   listResets,
   listTasks,
@@ -145,12 +154,14 @@ import {
   listTrades,
   listTransactionDocuments,
   listTransactions,
+  listTransactionTags,
   logContactInteraction,
   logRecipeCooked,
   markAllNotificationsRead,
   markNotificationRead,
   nameTransactions,
   type Options,
+  previewCategoryRule,
   putGymTopSet,
   removeRecipeCooked,
   removeTransactionDocument,
@@ -159,6 +170,7 @@ import {
   reorderTasks,
   reportAvanzaSyncFailed,
   respondToCalendarEvent,
+  reviewTransactions,
   revokeIngestToken,
   saveGoalPlan,
   searchEverything,
@@ -175,12 +187,15 @@ import {
   syncHealthkitSleep,
   syncHealthkitWorkouts,
   syncMontrose,
+  tagTransactions,
   undoCompleteTask,
   undoReset,
   unpairTransfer,
   updateBankAccount,
   updateCalendar,
   updateCalendarEvent,
+  updateCategory,
+  updateCategoryRule,
   updateContact,
   updateContactPhoto,
   updateContactTags,
@@ -191,6 +206,7 @@ import {
   updatePlace,
   updateProject,
   updateRecipe,
+  updateRecurringReview,
   updateTask,
   updateTimeEntry,
   updateTimeProject,
@@ -250,6 +266,9 @@ import type {
   CreateCalendarEventData,
   CreateCalendarEventError,
   CreateCalendarEventResponse,
+  CreateCategoryData,
+  CreateCategoryError,
+  CreateCategoryResponse,
   CreateCategoryRuleData,
   CreateCategoryRuleError,
   CreateCategoryRuleResponse,
@@ -277,6 +296,9 @@ import type {
   CreateRecipeData,
   CreateRecipeError,
   CreateRecipeResponse,
+  CreateRecurringReviewData,
+  CreateRecurringReviewError,
+  CreateRecurringReviewResponse,
   CreateResetData,
   CreateResetError,
   CreateResetResponse,
@@ -295,6 +317,9 @@ import type {
   DeleteCalendarEventData,
   DeleteCalendarEventError,
   DeleteCalendarEventResponse,
+  DeleteCategoryData,
+  DeleteCategoryError,
+  DeleteCategoryResponse,
   DeleteCategoryRuleData,
   DeleteCategoryRuleError,
   DeleteCategoryRuleResponse,
@@ -328,6 +353,9 @@ import type {
   DeleteRecipeData,
   DeleteRecipeError,
   DeleteRecipeResponse,
+  DeleteRecurringReviewData,
+  DeleteRecurringReviewError,
+  DeleteRecurringReviewResponse,
   DeleteTaskAttachmentData,
   DeleteTaskAttachmentError,
   DeleteTaskAttachmentResponse,
@@ -359,6 +387,12 @@ import type {
   DocumentThumbnailError,
   DownloadDocumentData,
   DownloadDocumentError,
+  ExportTransactionsData,
+  ExportTransactionsError,
+  ExportTransactionsResponse,
+  ExportTransactionsWithReceiptsData,
+  ExportTransactionsWithReceiptsError,
+  ExportTransactionsWithReceiptsResponse,
   ForgetMemoryFactData,
   ForgetMemoryFactError,
   ForgetMemoryFactResponse,
@@ -407,6 +441,10 @@ import type {
   GetIntradayActivityResponse,
   GetInvestmentAccountsData,
   GetInvestmentAccountsResponse,
+  GetInvestmentAllocationData,
+  GetInvestmentAllocationResponse,
+  GetInvestmentPerformanceData,
+  GetInvestmentPerformanceResponse,
   GetLocationHistoryDayData,
   GetLocationHistoryDayError,
   GetLocationHistoryDayResponse,
@@ -547,6 +585,9 @@ import type {
   ListRecipesData,
   ListRecipesError,
   ListRecipesResponse,
+  ListRecurringPaymentsData,
+  ListRecurringPaymentsError,
+  ListRecurringPaymentsResponse,
   ListReflectionsData,
   ListReflectionsError,
   ListReflectionsResponse,
@@ -570,6 +611,9 @@ import type {
   ListTransactionsData,
   ListTransactionsError,
   ListTransactionsResponse,
+  ListTransactionTagsData,
+  ListTransactionTagsError,
+  ListTransactionTagsResponse,
   LogContactInteractionData,
   LogContactInteractionError,
   LogContactInteractionResponse,
@@ -584,6 +628,9 @@ import type {
   NameTransactionsData,
   NameTransactionsError,
   NameTransactionsResponse,
+  PreviewCategoryRuleData,
+  PreviewCategoryRuleError,
+  PreviewCategoryRuleResponse,
   PutGymTopSetData,
   PutGymTopSetError,
   PutGymTopSetResponse,
@@ -608,6 +655,9 @@ import type {
   RespondToCalendarEventData,
   RespondToCalendarEventError,
   RespondToCalendarEventResponse,
+  ReviewTransactionsData,
+  ReviewTransactionsError,
+  ReviewTransactionsResponse,
   RevokeIngestTokenData,
   RevokeIngestTokenError,
   RevokeIngestTokenResponse,
@@ -650,6 +700,9 @@ import type {
   SyncHealthkitWorkoutsError,
   SyncHealthkitWorkoutsResponse,
   SyncMontroseData,
+  TagTransactionsData,
+  TagTransactionsError,
+  TagTransactionsResponse,
   UndoCompleteTaskData,
   UndoCompleteTaskError,
   UndoCompleteTaskResponse,
@@ -668,6 +721,12 @@ import type {
   UpdateCalendarEventError,
   UpdateCalendarEventResponse,
   UpdateCalendarResponse,
+  UpdateCategoryData,
+  UpdateCategoryError,
+  UpdateCategoryResponse,
+  UpdateCategoryRuleData,
+  UpdateCategoryRuleError,
+  UpdateCategoryRuleResponse,
   UpdateContactData,
   UpdateContactError,
   UpdateContactPhotoData,
@@ -698,6 +757,9 @@ import type {
   UpdateRecipeData,
   UpdateRecipeError,
   UpdateRecipeResponse,
+  UpdateRecurringReviewData,
+  UpdateRecurringReviewError,
+  UpdateRecurringReviewResponse,
   UpdateTaskData,
   UpdateTaskError,
   UpdateTaskResponse,
@@ -2960,6 +3022,35 @@ export const listCategoriesInfiniteOptions = (
   return opts as Omit<typeof opts, "initialData">;
 };
 
+/**
+ * Create Category
+ *
+ * A new category in a group, or a new group when it has no parent.
+ */
+export const createCategoryMutation = (
+  options?: Partial<Options<CreateCategoryData>>,
+): UseMutationOptions<
+  CreateCategoryResponse,
+  CreateCategoryError,
+  Options<CreateCategoryData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCategoryResponse,
+    CreateCategoryError,
+    Options<CreateCategoryData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createCategory({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const listCategoryRulesQueryKey = (
   options?: Options<ListCategoryRulesData>,
 ) => createQueryKey("listCategoryRules", options);
@@ -3018,9 +3109,38 @@ export const createCategoryRuleMutation = (
 };
 
 /**
+ * Preview Category Rule
+ *
+ * The existing transactions a rule with these settings matches, and which of them it would sort. Changes nothing.
+ */
+export const previewCategoryRuleMutation = (
+  options?: Partial<Options<PreviewCategoryRuleData>>,
+): UseMutationOptions<
+  PreviewCategoryRuleResponse,
+  PreviewCategoryRuleError,
+  Options<PreviewCategoryRuleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PreviewCategoryRuleResponse,
+    PreviewCategoryRuleError,
+    Options<PreviewCategoryRuleData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await previewCategoryRule({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete Category Rule
  *
- * Stops sorting new imports by it; transactions it already sorted keep their category.
+ * Stops sorting new imports by it; by default transactions it already sorted keep their category.
  */
 export const deleteCategoryRuleMutation = (
   options?: Partial<Options<DeleteCategoryRuleData>>,
@@ -3036,6 +3156,91 @@ export const deleteCategoryRuleMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await deleteCategoryRule({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Category Rule
+ *
+ * Transactions the rule sorted follow its new settings; a category the user chose is never touched.
+ */
+export const updateCategoryRuleMutation = (
+  options?: Partial<Options<UpdateCategoryRuleData>>,
+): UseMutationOptions<
+  UpdateCategoryRuleResponse,
+  UpdateCategoryRuleError,
+  Options<UpdateCategoryRuleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCategoryRuleResponse,
+    UpdateCategoryRuleError,
+    Options<UpdateCategoryRuleData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateCategoryRule({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Category
+ *
+ * Refused while it holds transactions or rules, unless told where they go; a group must be empty first.
+ */
+export const deleteCategoryMutation = (
+  options?: Partial<Options<DeleteCategoryData>>,
+): UseMutationOptions<
+  DeleteCategoryResponse,
+  DeleteCategoryError,
+  Options<DeleteCategoryData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteCategoryResponse,
+    DeleteCategoryError,
+    Options<DeleteCategoryData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteCategory({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Category
+ */
+export const updateCategoryMutation = (
+  options?: Partial<Options<UpdateCategoryData>>,
+): UseMutationOptions<
+  UpdateCategoryResponse,
+  UpdateCategoryError,
+  Options<UpdateCategoryData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCategoryResponse,
+    UpdateCategoryError,
+    Options<UpdateCategoryData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateCategory({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4341,6 +4546,66 @@ export const getHoldingsOptions = (options?: Options<GetHoldingsData>) =>
     queryKey: getHoldingsQueryKey(options),
   });
 
+export const getInvestmentPerformanceQueryKey = (
+  options?: Options<GetInvestmentPerformanceData>,
+) => createQueryKey("getInvestmentPerformance", options);
+
+/**
+ * Investment Performance
+ *
+ * Each investment account's value over time and each currency's total, with time- and money-weighted returns per range.
+ */
+export const getInvestmentPerformanceOptions = (
+  options?: Options<GetInvestmentPerformanceData>,
+) =>
+  queryOptions<
+    GetInvestmentPerformanceResponse,
+    DefaultError,
+    GetInvestmentPerformanceResponse,
+    ReturnType<typeof getInvestmentPerformanceQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInvestmentPerformance({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInvestmentPerformanceQueryKey(options),
+  });
+
+export const getInvestmentAllocationQueryKey = (
+  options?: Options<GetInvestmentAllocationData>,
+) => createQueryKey("getInvestmentAllocation", options);
+
+/**
+ * Investment Allocation
+ *
+ * What the investments are in, per currency: by type of holding and cash, and by account.
+ */
+export const getInvestmentAllocationOptions = (
+  options?: Options<GetInvestmentAllocationData>,
+) =>
+  queryOptions<
+    GetInvestmentAllocationResponse,
+    DefaultError,
+    GetInvestmentAllocationResponse,
+    ReturnType<typeof getInvestmentAllocationQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getInvestmentAllocation({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getInvestmentAllocationQueryKey(options),
+  });
+
 export const getCryptoPriceQueryKey = (options: Options<GetCryptoPriceData>) =>
   createQueryKey("getCryptoPrice", options);
 
@@ -5202,6 +5467,121 @@ export const logRecipeCookedMutation = (
   return mutationOptions;
 };
 
+export const listRecurringPaymentsQueryKey = (
+  options?: Options<ListRecurringPaymentsData>,
+) => createQueryKey("listRecurringPayments", options);
+
+/**
+ * List Recurring Payments
+ *
+ * Bills, subscriptions and income that repeat, detected from the transactions, with what's due next.
+ */
+export const listRecurringPaymentsOptions = (
+  options?: Options<ListRecurringPaymentsData>,
+) =>
+  queryOptions<
+    ListRecurringPaymentsResponse,
+    ListRecurringPaymentsError,
+    ListRecurringPaymentsResponse,
+    ReturnType<typeof listRecurringPaymentsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listRecurringPayments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listRecurringPaymentsQueryKey(options),
+  });
+
+/**
+ * Review Recurring Series
+ *
+ * Confirms, dismisses, renames or changes the kind of a detected series, found by its key and typical amount.
+ */
+export const createRecurringReviewMutation = (
+  options?: Partial<Options<CreateRecurringReviewData>>,
+): UseMutationOptions<
+  CreateRecurringReviewResponse,
+  CreateRecurringReviewError,
+  Options<CreateRecurringReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateRecurringReviewResponse,
+    CreateRecurringReviewError,
+    Options<CreateRecurringReviewData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createRecurringReview({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Recurring Review
+ *
+ * Back to the series as detected.
+ */
+export const deleteRecurringReviewMutation = (
+  options?: Partial<Options<DeleteRecurringReviewData>>,
+): UseMutationOptions<
+  DeleteRecurringReviewResponse,
+  DeleteRecurringReviewError,
+  Options<DeleteRecurringReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteRecurringReviewResponse,
+    DeleteRecurringReviewError,
+    Options<DeleteRecurringReviewData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteRecurringReview({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Recurring Review
+ */
+export const updateRecurringReviewMutation = (
+  options?: Partial<Options<UpdateRecurringReviewData>>,
+): UseMutationOptions<
+  UpdateRecurringReviewResponse,
+  UpdateRecurringReviewError,
+  Options<UpdateRecurringReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateRecurringReviewResponse,
+    UpdateRecurringReviewError,
+    Options<UpdateRecurringReviewData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateRecurringReview({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const searchEverythingQueryKey = (
   options: Options<SearchEverythingData>,
 ) => createQueryKey("searchEverything", options);
@@ -6010,6 +6390,66 @@ export const listTransactionsInfiniteOptions = (
   return opts as Omit<typeof opts, "initialData">;
 };
 
+export const exportTransactionsQueryKey = (
+  options?: Options<ExportTransactionsData>,
+) => createQueryKey("exportTransactions", options);
+
+/**
+ * Export Transactions
+ *
+ * The transactions the same filters list, oldest first, as a spreadsheet: UTF-8 with a byte order mark, money out negative.
+ */
+export const exportTransactionsOptions = (
+  options?: Options<ExportTransactionsData>,
+) =>
+  queryOptions<
+    ExportTransactionsResponse,
+    ExportTransactionsError,
+    ExportTransactionsResponse,
+    ReturnType<typeof exportTransactionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await exportTransactions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: exportTransactionsQueryKey(options),
+  });
+
+export const exportTransactionsWithReceiptsQueryKey = (
+  options?: Options<ExportTransactionsWithReceiptsData>,
+) => createQueryKey("exportTransactionsWithReceipts", options);
+
+/**
+ * Export Transactions With Receipts
+ *
+ * A zip of the transactions' CSV and every invoice and receipt kept with them, such as a month's company costs for the bookkeeper.
+ */
+export const exportTransactionsWithReceiptsOptions = (
+  options?: Options<ExportTransactionsWithReceiptsData>,
+) =>
+  queryOptions<
+    ExportTransactionsWithReceiptsResponse,
+    ExportTransactionsWithReceiptsError,
+    ExportTransactionsWithReceiptsResponse,
+    ReturnType<typeof exportTransactionsWithReceiptsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await exportTransactionsWithReceipts({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: exportTransactionsWithReceiptsQueryKey(options),
+  });
+
 /**
  * Import Transactions
  *
@@ -6060,6 +6500,94 @@ export const bulkUpdateTransactionsMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await bulkUpdateTransactions({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listTransactionTagsQueryKey = (
+  options?: Options<ListTransactionTagsData>,
+) => createQueryKey("listTransactionTags", options);
+
+/**
+ * List Transaction Tags
+ *
+ * The user's tags with what was spent under each per currency, for picking a tag or seeing what a trip or project cost.
+ */
+export const listTransactionTagsOptions = (
+  options?: Options<ListTransactionTagsData>,
+) =>
+  queryOptions<
+    ListTransactionTagsResponse,
+    ListTransactionTagsError,
+    ListTransactionTagsResponse,
+    ReturnType<typeof listTransactionTagsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listTransactionTags({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listTransactionTagsQueryKey(options),
+  });
+
+/**
+ * Tag Transactions
+ *
+ * Adds and takes off tags on several transactions at once; their other tags stay.
+ */
+export const tagTransactionsMutation = (
+  options?: Partial<Options<TagTransactionsData>>,
+): UseMutationOptions<
+  TagTransactionsResponse,
+  TagTransactionsError,
+  Options<TagTransactionsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    TagTransactionsResponse,
+    TagTransactionsError,
+    Options<TagTransactionsData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await tagTransactions({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Review Transactions
+ *
+ * Marks several transactions reviewed, or puts them back to be reviewed.
+ */
+export const reviewTransactionsMutation = (
+  options?: Partial<Options<ReviewTransactionsData>>,
+): UseMutationOptions<
+  ReviewTransactionsResponse,
+  ReviewTransactionsError,
+  Options<ReviewTransactionsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReviewTransactionsResponse,
+    ReviewTransactionsError,
+    Options<ReviewTransactionsData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await reviewTransactions({
         ...options,
         ...fnOptions,
         throwOnError: true,

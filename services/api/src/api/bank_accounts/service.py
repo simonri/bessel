@@ -23,6 +23,7 @@ from api.bank_accounts.schemas import (
   NetWorthSeries,
   OverviewTotal,
 )
+from api.investments.kinds import DEPOSIT_TYPES
 from api.klarna.repository import KlarnaPayLaterRepository
 from api.models.bank_account import INVESTMENT_SUBTYPES, BankAccount
 from api.montrose.repository import MontroseConnectionRepository
@@ -38,8 +39,6 @@ HISTORY_MONTHS = 12
 # Hand-imported accounts drift out of date silently; a month without anything new is worth a look.
 MANUAL_STALE_AFTER = timedelta(days=31)
 RENEW_WARNING = timedelta(days=14)
-# Money moved into or out of an investment account from outside it.
-DEPOSIT_TYPES = ("DEPOSIT", "WITHDRAW")
 KLARNA_LOGO = bank_logo("Klarna", "SE")
 # Export file formats by the bank's name in Enable Banking, for its logo.
 FILE_BANKS = {"marginalen": "Marginalen Bank", "skandiabanken": "Skandia"}

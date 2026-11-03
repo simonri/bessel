@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 
 from pydantic import UUID4, Field
 
@@ -77,6 +78,76 @@ class InvestmentAccountSummary(Schema):
 
 class InvestmentAccountsResponse(Schema):
   items: list[InvestmentAccountSummary]
+
+
+# --- Performance ---
+
+PerformanceRange = Literal["1m", "3m", "ytd", "1y", "all"]
+PERFORMANCE_RANGES: tuple[PerformanceRange, ...] = ("1m", "3m", "ytd", "1y", "all")
+
+
+class ValuePoint(Schema):
+  day: date
+  value: int = Field(description="Holdings plus cash at the end of the day, in minor units.")
+
+
+class PortfolioSeries(Schema):
+  bank_account_id: UUID4 | None = Field(description="The account, or null for all the accounts in the currency together.")
+  currency: str
+  points: list[ValuePoint] = Field(description="On each day the broker reported the positions, oldest first.")
+
+
+class PeriodReturns(Schema):
+  bank_account_id: UUID4 | None = Field(description="The account, or null for all the accounts in the currency together.")
+  currency: str
+  range: PerformanceRange
+  start: date | None = Field(description="The day the returns are measured from: later than the range's start when values only begin later.")
+  end: date | None
+  start_value: int | None = Field(description="In minor units.")
+  end_value: int | None = Field(description="In minor units.")
+  net_flows: int | None = Field(description="Deposits minus withdrawals over the period, in minor units.")
+  gain: int | None = Field(description="End value minus start value minus net flows: what the money made, in minor units.")
+  time_weighted: float | None = Field(description="Time-weighted return over the period, as a fraction (0.05 is 5%).")
+  time_weighted_annualized: float | None = Field(description="Per year, for periods of a year or more.")
+  time_weighted_unavailable: str | None = Field(description="Why there's no time-weighted return.")
+  money_weighted: float | None = Field(description="Money-weighted return (XIRR) over the period, as a fraction.")
+  money_weighted_annualized: float | None = Field(description="Per year, for periods of a year or more.")
+  money_weighted_unavailable: str | None = Field(description="Why there's no money-weighted return.")
+
+
+class LeftOutAccount(Schema):
+  bank_account_id: UUID4
+  name: str
+  reason: str
+
+
+class InvestmentPerformanceResponse(Schema):
+  series: list[PortfolioSeries]
+  returns: list[PeriodReturns] = Field(description="For each account and each currency's total, one per range.")
+  left_out: list[LeftOutAccount] = Field(description="Accounts not counted in the totals' returns, and why.")
+
+
+# --- Allocation ---
+
+
+class AllocationSlice(Schema):
+  key: str = Field(description="The asset type, or the account's id.")
+  label: str
+  value: int = Field(description="In minor units.")
+  share: float = Field(description="Of the currency's whole, as a fraction.")
+
+
+class CurrencyAllocation(Schema):
+  currency: str
+  total: int = Field(description="Everything counted, in minor units.")
+  by_asset_type: list[AllocationSlice] = Field(description="Holdings by type, with uninvested cash as its own slice.")
+  by_account: list[AllocationSlice] = Field(description="Largest first.")
+  borrowed: int = Field(description="Cash below zero across the accounts, in minor units; not in the slices.")
+  unpriced: int = Field(description="How many holdings have no price and so aren't counted.")
+
+
+class InvestmentAllocationResponse(Schema):
+  items: list[CurrencyAllocation]
 
 
 # --- Crypto ---

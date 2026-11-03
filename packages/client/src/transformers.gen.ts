@@ -11,6 +11,7 @@ import type {
   CorrectMemoryFactResponse,
   CreateBankAccountResponse,
   CreateCalendarEventResponse,
+  CreateCategoryResponse,
   CreateCategoryRuleResponse,
   CreateContactResponse,
   CreateCounterResponse,
@@ -32,6 +33,7 @@ import type {
   GetContactResponse,
   GetHealthSummaryResponse,
   GetInvestmentAccountsResponse,
+  GetInvestmentPerformanceResponse,
   GetLocationHistoryDayResponse,
   GetLocationHistorySummaryResponse,
   GetMeetingBriefResponse,
@@ -72,6 +74,7 @@ import type {
   ListProjectsResponse,
   ListRecipeCooksResponse,
   ListRecipesResponse,
+  ListRecurringPaymentsResponse,
   ListReflectionsResponse,
   ListResetsResponse,
   ListTasksResponse,
@@ -83,6 +86,7 @@ import type {
   LogContactInteractionResponse,
   LogRecipeCookedResponse,
   MarkNotificationReadResponse,
+  PreviewCategoryRuleResponse,
   PutGymTopSetResponse,
   RemoveRecipeCookedResponse,
   RenameTransactionResponse,
@@ -93,6 +97,8 @@ import type {
   UndoCompleteTaskResponse,
   UpdateBankAccountResponse,
   UpdateCalendarEventResponse,
+  UpdateCategoryResponse,
+  UpdateCategoryRuleResponse,
   UpdateContactPhotoResponse,
   UpdateContactResponse,
   UpdateContactTagsResponse,
@@ -750,6 +756,13 @@ export const listCategoriesResponseTransformer = async (
   return data;
 };
 
+export const createCategoryResponseTransformer = async (
+  data: any,
+): Promise<CreateCategoryResponse> => {
+  data = categorySchemaSchemaResponseTransformer(data);
+  return data;
+};
+
 const categoryRuleSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
   if (data.modified_at) {
@@ -784,6 +797,39 @@ export const createCategoryRuleResponseTransformer = async (
   data: any,
 ): Promise<CreateCategoryRuleResponse> => {
   data = categoryRuleCreatedSchemaResponseTransformer(data);
+  return data;
+};
+
+const categoryRuleMatchSchemaResponseTransformer = (data: any) => {
+  data.transaction_date = new Date(data.transaction_date);
+  return data;
+};
+
+const categoryRulePreviewSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    categoryRuleMatchSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const previewCategoryRuleResponseTransformer = async (
+  data: any,
+): Promise<PreviewCategoryRuleResponse> => {
+  data = categoryRulePreviewSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateCategoryRuleResponseTransformer = async (
+  data: any,
+): Promise<UpdateCategoryRuleResponse> => {
+  data = categoryRuleCreatedSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateCategoryResponseTransformer = async (
+  data: any,
+): Promise<UpdateCategoryResponse> => {
+  data = categorySchemaSchemaResponseTransformer(data);
   return data;
 };
 
@@ -1185,6 +1231,45 @@ export const getInvestmentAccountsResponseTransformer = async (
   return data;
 };
 
+const valuePointSchemaResponseTransformer = (data: any) => {
+  data.day = new Date(data.day);
+  return data;
+};
+
+const portfolioSeriesSchemaResponseTransformer = (data: any) => {
+  data.points = data.points.map((item: any) =>
+    valuePointSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const periodReturnsSchemaResponseTransformer = (data: any) => {
+  if (data.start) {
+    data.start = new Date(data.start);
+  }
+  if (data.end) {
+    data.end = new Date(data.end);
+  }
+  return data;
+};
+
+const investmentPerformanceResponseSchemaResponseTransformer = (data: any) => {
+  data.series = data.series.map((item: any) =>
+    portfolioSeriesSchemaResponseTransformer(item),
+  );
+  data.returns = data.returns.map((item: any) =>
+    periodReturnsSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getInvestmentPerformanceResponseTransformer = async (
+  data: any,
+): Promise<GetInvestmentPerformanceResponse> => {
+  data = investmentPerformanceResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 const locationImportSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
   data.as_of = new Date(data.as_of);
@@ -1447,6 +1532,45 @@ export const logRecipeCookedResponseTransformer = async (
   data: any,
 ): Promise<LogRecipeCookedResponse> => {
   data = recipeCookResultSchemaResponseTransformer(data);
+  return data;
+};
+
+const priceChangeSchemaSchemaResponseTransformer = (data: any) => {
+  data.date = new Date(data.date);
+  return data;
+};
+
+const recurringSeriesSchemaSchemaResponseTransformer = (data: any) => {
+  data.first_date = new Date(data.first_date);
+  data.last_date = new Date(data.last_date);
+  if (data.next_date) {
+    data.next_date = new Date(data.next_date);
+  }
+  data.price_changes = data.price_changes.map((item: any) =>
+    priceChangeSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const upcomingPaymentSchemaResponseTransformer = (data: any) => {
+  data.date = new Date(data.date);
+  return data;
+};
+
+const recurringResponseSchemaResponseTransformer = (data: any) => {
+  data.series = data.series.map((item: any) =>
+    recurringSeriesSchemaSchemaResponseTransformer(item),
+  );
+  data.upcoming = data.upcoming.map((item: any) =>
+    upcomingPaymentSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listRecurringPaymentsResponseTransformer = async (
+  data: any,
+): Promise<ListRecurringPaymentsResponse> => {
+  data = recurringResponseSchemaResponseTransformer(data);
   return data;
 };
 

@@ -5,9 +5,19 @@ import httpx
 from fastapi import APIRouter, Depends, Query
 
 from api.common.pagination import PaginationParamsQuery
+from api.common.utils import utc_now
+from api.contacts.keeping import user_zone
 from api.exceptions import ResourceNotFound, ServiceUnavailableError
 from api.investments.repository import TradeRepository
-from api.investments.schemas import CryptoPriceSchema, HoldingsResponse, InvestmentAccountsResponse, TradeListResponse, TradeSchema
+from api.investments.schemas import (
+  CryptoPriceSchema,
+  HoldingsResponse,
+  InvestmentAccountsResponse,
+  InvestmentAllocationResponse,
+  InvestmentPerformanceResponse,
+  TradeListResponse,
+  TradeSchema,
+)
 from api.investments.service import investment_service
 from api.postgres import DBSession
 from api.redis import Redis, get_redis
@@ -65,6 +75,19 @@ async def get_holdings(
   current_user: CurrentDBUser,
 ) -> HoldingsResponse:
   return HoldingsResponse(items=await investment_service.current_holdings(session, current_user.id))
+
+
+@router.get("/performance", summary="Investment Performance", response_model=InvestmentPerformanceResponse)
+async def get_investment_performance(session: DBSession, current_user: CurrentDBUser) -> InvestmentPerformanceResponse:
+  """Each investment account's value over time and each currency's total, with time- and money-weighted returns per range."""
+  today = utc_now().astimezone(user_zone(current_user)).date()
+  return await investment_service.performance(session, current_user.id, today=today)
+
+
+@router.get("/allocation", summary="Investment Allocation", response_model=InvestmentAllocationResponse)
+async def get_investment_allocation(session: DBSession, current_user: CurrentDBUser) -> InvestmentAllocationResponse:
+  """What the investments are in, per currency: by type of holding and cash, and by account."""
+  return await investment_service.allocation(session, current_user.id)
 
 
 # ─── Crypto ───

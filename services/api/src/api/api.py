@@ -29,6 +29,7 @@ from api.open_banking.endpoints import router as open_banking_router
 from api.places.endpoints import router as places_router
 from api.projects.endpoints import router as projects_router
 from api.recipes.endpoints import router as recipes_router
+from api.recurring.endpoints import router as recurring_router
 from api.search.endpoints import router as search_router
 from api.tasks.endpoints import router as tasks_router
 from api.time_tracking.endpoints import router as time_tracking_router
@@ -65,6 +66,7 @@ router.include_router(notifications_router)
 router.include_router(places_router)
 router.include_router(projects_router)
 router.include_router(recipes_router)
+router.include_router(recurring_router)
 router.include_router(search_router)
 router.include_router(tasks_router)
 router.include_router(time_tracking_router)

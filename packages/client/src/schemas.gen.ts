@@ -1216,6 +1216,33 @@ export const AgentUsageSyncResponseSchema = {
   title: "AgentUsageSyncResponse",
 } as const;
 
+export const AllocationSliceSchema = {
+  properties: {
+    key: {
+      type: "string",
+      title: "Key",
+      description: "The asset type, or the account's id.",
+    },
+    label: {
+      type: "string",
+      title: "Label",
+    },
+    value: {
+      type: "integer",
+      title: "Value",
+      description: "In minor units.",
+    },
+    share: {
+      type: "number",
+      title: "Share",
+      description: "Of the currency's whole, as a fraction.",
+    },
+  },
+  type: "object",
+  required: ["key", "label", "value", "share"],
+  title: "AllocationSlice",
+} as const;
+
 export const AssetTypeSchema = {
   type: "string",
   enum: [
@@ -2188,6 +2215,68 @@ export const BulkDeleteRequestSchema = {
   title: "BulkDeleteRequest",
 } as const;
 
+export const BulkReviewRequestSchema = {
+  properties: {
+    ids: {
+      items: {
+        type: "string",
+        format: "uuid4",
+      },
+      type: "array",
+      title: "Ids",
+      description: "Transactions to mark.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "False puts them back to be reviewed.",
+      default: true,
+    },
+  },
+  type: "object",
+  required: ["ids"],
+  title: "BulkReviewRequest",
+} as const;
+
+export const BulkTagRequestSchema = {
+  properties: {
+    ids: {
+      items: {
+        type: "string",
+        format: "uuid4",
+      },
+      type: "array",
+      title: "Ids",
+      description: "Transactions to tag.",
+    },
+    add: {
+      items: {
+        type: "string",
+        maxLength: 50,
+        minLength: 1,
+      },
+      type: "array",
+      maxItems: 20,
+      title: "Add",
+      description:
+        "Tags to add to each; a tag the user already has keeps that spelling.",
+    },
+    remove: {
+      items: {
+        type: "string",
+        maxLength: 50,
+        minLength: 1,
+      },
+      type: "array",
+      title: "Remove",
+      description: "Tags to take off each, whatever their case.",
+    },
+  },
+  type: "object",
+  required: ["ids"],
+  title: "BulkTagRequest",
+} as const;
+
 export const BulkUpdateRequestSchema = {
   properties: {
     ids: {
@@ -2702,6 +2791,57 @@ export const CalendarUpdateSchema = {
   title: "CalendarUpdate",
 } as const;
 
+export const CategoryCreateSchema = {
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 100,
+      minLength: 1,
+      title: "Name",
+    },
+    color: {
+      type: "string",
+      pattern: "^#[0-9a-fA-F]{6}$",
+      title: "Color",
+      description: "Hex color code for UI display.",
+      default: "#6B7280",
+    },
+    parent_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Parent Id",
+      description: "The group it goes in; a new group when null.",
+    },
+    excluded: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Excluded",
+      description: "Kept out of reports; by default like its group.",
+    },
+    income: {
+      type: "boolean",
+      title: "Income",
+      default: false,
+    },
+  },
+  type: "object",
+  required: ["name"],
+  title: "CategoryCreate",
+} as const;
+
 export const CategoryListResponseSchema = {
   properties: {
     items: {
@@ -2732,6 +2872,8 @@ export const CategoryRuleCreateSchema = {
       maxLength: 255,
       minLength: 2,
       title: "Pattern",
+      description:
+        "Text matched case-insensitively anywhere in the description.",
     },
     scope: {
       $ref: "#/components/schemas/RuleScope",
@@ -2822,10 +2964,17 @@ export const CategoryRuleCreatedSchema = {
       title: "Mark Business",
       description: "Also mark matching transactions as business expenses.",
     },
+    transaction_count: {
+      type: "integer",
+      title: "Transaction Count",
+      description:
+        "Transactions it has sorted that still have the category it gave.",
+      default: 0,
+    },
     categorized: {
       type: "integer",
       title: "Categorized",
-      description: "Transactions already imported that the rules sorted.",
+      description: "Transactions already imported that the rule sorted.",
     },
   },
   type: "object",
@@ -2838,6 +2987,7 @@ export const CategoryRuleCreatedSchema = {
     "scope",
     "direction",
     "mark_business",
+    "transaction_count",
     "categorized",
   ],
   title: "CategoryRuleCreated",
@@ -2856,6 +3006,165 @@ export const CategoryRuleListResponseSchema = {
   type: "object",
   required: ["items"],
   title: "CategoryRuleListResponse",
+} as const;
+
+export const CategoryRuleMatchSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+    },
+    transaction_date: {
+      type: "string",
+      format: "date",
+      title: "Transaction Date",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    amount: {
+      type: "integer",
+      title: "Amount",
+      description: "Amount in minor units (cents).",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+      description: "The category it has now.",
+    },
+    by_rule: {
+      type: "boolean",
+      title: "By Rule",
+      description: "Its category came from a rule rather than the user.",
+    },
+    would_sort: {
+      type: "boolean",
+      title: "Would Sort",
+      description:
+        "The rule would give it its category: uncategorized, or sorted by the rule being edited, and no more specific rule wins.",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "transaction_date",
+    "description",
+    "name",
+    "amount",
+    "currency",
+    "direction",
+    "category_id",
+    "by_rule",
+    "would_sort",
+  ],
+  title: "CategoryRuleMatch",
+} as const;
+
+export const CategoryRulePreviewSchema = {
+  properties: {
+    match_count: {
+      type: "integer",
+      title: "Match Count",
+      description:
+        "Existing transactions the rule matches, categorized or not.",
+    },
+    sortable_count: {
+      type: "integer",
+      title: "Sortable Count",
+      description:
+        "Uncategorized ones it would sort when applied to existing transactions.",
+    },
+    items: {
+      items: {
+        $ref: "#/components/schemas/CategoryRuleMatch",
+      },
+      type: "array",
+      title: "Items",
+      description: "The newest matches, at most 50.",
+    },
+  },
+  type: "object",
+  required: ["match_count", "sortable_count", "items"],
+  title: "CategoryRulePreview",
+} as const;
+
+export const CategoryRulePreviewRequestSchema = {
+  properties: {
+    pattern: {
+      type: "string",
+      maxLength: 255,
+      minLength: 2,
+      title: "Pattern",
+      description:
+        "Text matched case-insensitively anywhere in the description.",
+    },
+    scope: {
+      $ref: "#/components/schemas/RuleScope",
+      default: "any",
+    },
+    direction: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/TransactionDirection",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    rule_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rule Id",
+      description:
+        "The rule being edited, previewed as these settings in its place.",
+    },
+  },
+  type: "object",
+  required: ["pattern"],
+  title: "CategoryRulePreviewRequest",
 } as const;
 
 export const CategoryRuleSchemaSchema = {
@@ -2916,6 +3225,13 @@ export const CategoryRuleSchemaSchema = {
       title: "Mark Business",
       description: "Also mark matching transactions as business expenses.",
     },
+    transaction_count: {
+      type: "integer",
+      title: "Transaction Count",
+      description:
+        "Transactions it has sorted that still have the category it gave.",
+      default: 0,
+    },
   },
   type: "object",
   required: [
@@ -2927,8 +3243,81 @@ export const CategoryRuleSchemaSchema = {
     "scope",
     "direction",
     "mark_business",
+    "transaction_count",
   ],
   title: "CategoryRuleSchema",
+} as const;
+
+export const CategoryRuleUpdateSchema = {
+  properties: {
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+    },
+    pattern: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+          minLength: 2,
+          description:
+            "Text matched case-insensitively anywhere in the description.",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Pattern",
+    },
+    scope: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RuleScope",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    direction: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/TransactionDirection",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Null matches both directions.",
+    },
+    mark_business: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Mark Business",
+    },
+    apply_now: {
+      type: "boolean",
+      title: "Apply Now",
+      description: "Also sort the uncategorized transactions already imported.",
+      default: false,
+    },
+  },
+  type: "object",
+  title: "CategoryRuleUpdate",
 } as const;
 
 export const CategorySchemaSchema = {
@@ -2997,6 +3386,18 @@ export const CategorySchemaSchema = {
       title: "Parent Id",
       description: "Parent category ID, null for top-level.",
     },
+    transaction_count: {
+      type: "integer",
+      title: "Transaction Count",
+      description: "Transactions filed under it.",
+      default: 0,
+    },
+    rule_count: {
+      type: "integer",
+      title: "Rule Count",
+      description: "Rules that sort transactions into it.",
+      default: 0,
+    },
   },
   type: "object",
   required: [
@@ -3009,6 +3410,8 @@ export const CategorySchemaSchema = {
     "excluded",
     "income",
     "parent_id",
+    "transaction_count",
+    "rule_count",
   ],
   title: "CategorySchema",
 } as const;
@@ -3040,6 +3443,74 @@ export const CategorySpendingSchema = {
   type: "object",
   required: ["category_id", "category_name", "category_color", "total"],
   title: "CategorySpending",
+} as const;
+
+export const CategoryUpdateSchema = {
+  properties: {
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+          minLength: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    color: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^#[0-9a-fA-F]{6}$",
+          description: "Hex color code for UI display.",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Color",
+    },
+    parent_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Parent Id",
+      description: "Moves a category to another group. Groups stay groups.",
+    },
+    excluded: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Excluded",
+    },
+    income: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Income",
+    },
+  },
+  type: "object",
+  title: "CategoryUpdate",
 } as const;
 
 export const ClientDiagnosticsUploadSchema = {
@@ -4486,6 +4957,63 @@ export const CryptoPriceSchemaSchema = {
   type: "object",
   required: ["coin_id", "currency", "price", "price_change_pct_24h"],
   title: "CryptoPriceSchema",
+} as const;
+
+export const CsvDialectSchema = {
+  type: "string",
+  enum: ["swedish", "international"],
+  title: "CsvDialect",
+} as const;
+
+export const CurrencyAllocationSchema = {
+  properties: {
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    total: {
+      type: "integer",
+      title: "Total",
+      description: "Everything counted, in minor units.",
+    },
+    by_asset_type: {
+      items: {
+        $ref: "#/components/schemas/AllocationSlice",
+      },
+      type: "array",
+      title: "By Asset Type",
+      description: "Holdings by type, with uninvested cash as its own slice.",
+    },
+    by_account: {
+      items: {
+        $ref: "#/components/schemas/AllocationSlice",
+      },
+      type: "array",
+      title: "By Account",
+      description: "Largest first.",
+    },
+    borrowed: {
+      type: "integer",
+      title: "Borrowed",
+      description:
+        "Cash below zero across the accounts, in minor units; not in the slices.",
+    },
+    unpriced: {
+      type: "integer",
+      title: "Unpriced",
+      description: "How many holdings have no price and so aren't counted.",
+    },
+  },
+  type: "object",
+  required: [
+    "currency",
+    "total",
+    "by_asset_type",
+    "by_account",
+    "borrowed",
+    "unpriced",
+  ],
+  title: "CurrencyAllocation",
 } as const;
 
 export const CurrencySummarySchema = {
@@ -7649,6 +8177,21 @@ export const InvestmentAccountsResponseSchema = {
   title: "InvestmentAccountsResponse",
 } as const;
 
+export const InvestmentAllocationResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/CurrencyAllocation",
+      },
+      type: "array",
+      title: "Items",
+    },
+  },
+  type: "object",
+  required: ["items"],
+  title: "InvestmentAllocationResponse",
+} as const;
+
 export const InvestmentKindSchema = {
   type: "string",
   enum: [
@@ -7661,6 +8204,37 @@ export const InvestmentKindSchema = {
     "tax",
     "fee",
   ],
+} as const;
+
+export const InvestmentPerformanceResponseSchema = {
+  properties: {
+    series: {
+      items: {
+        $ref: "#/components/schemas/PortfolioSeries",
+      },
+      type: "array",
+      title: "Series",
+    },
+    returns: {
+      items: {
+        $ref: "#/components/schemas/PeriodReturns",
+      },
+      type: "array",
+      title: "Returns",
+      description: "For each account and each currency's total, one per range.",
+    },
+    left_out: {
+      items: {
+        $ref: "#/components/schemas/LeftOutAccount",
+      },
+      type: "array",
+      title: "Left Out",
+      description: "Accounts not counted in the totals' returns, and why.",
+    },
+  },
+  type: "object",
+  required: ["series", "returns", "left_out"],
+  title: "InvestmentPerformanceResponse",
 } as const;
 
 export const KlarnaImportRequestSchema = {
@@ -7769,6 +8343,27 @@ export const KlarnaImportResponseSchema = {
     "unrecognized_plans",
   ],
   title: "KlarnaImportResponse",
+} as const;
+
+export const LeftOutAccountSchema = {
+  properties: {
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    reason: {
+      type: "string",
+      title: "Reason",
+    },
+  },
+  type: "object",
+  required: ["bank_account_id", "name", "reason"],
+  title: "LeftOutAccount",
 } as const;
 
 export const LocationActivitySchema = {
@@ -9338,6 +9933,203 @@ export const PeriodResultSchema = {
   title: "PeriodResult",
 } as const;
 
+export const PeriodReturnsSchema = {
+  properties: {
+    bank_account_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Account Id",
+      description:
+        "The account, or null for all the accounts in the currency together.",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    range: {
+      type: "string",
+      enum: ["1m", "3m", "ytd", "1y", "all"],
+      title: "Range",
+    },
+    start: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start",
+      description:
+        "The day the returns are measured from: later than the range's start when values only begin later.",
+    },
+    end: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End",
+    },
+    start_value: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start Value",
+      description: "In minor units.",
+    },
+    end_value: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End Value",
+      description: "In minor units.",
+    },
+    net_flows: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Net Flows",
+      description:
+        "Deposits minus withdrawals over the period, in minor units.",
+    },
+    gain: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Gain",
+      description:
+        "End value minus start value minus net flows: what the money made, in minor units.",
+    },
+    time_weighted: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Time Weighted",
+      description:
+        "Time-weighted return over the period, as a fraction (0.05 is 5%).",
+    },
+    time_weighted_annualized: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Time Weighted Annualized",
+      description: "Per year, for periods of a year or more.",
+    },
+    time_weighted_unavailable: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Time Weighted Unavailable",
+      description: "Why there's no time-weighted return.",
+    },
+    money_weighted: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Money Weighted",
+      description:
+        "Money-weighted return (XIRR) over the period, as a fraction.",
+    },
+    money_weighted_annualized: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Money Weighted Annualized",
+      description: "Per year, for periods of a year or more.",
+    },
+    money_weighted_unavailable: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Money Weighted Unavailable",
+      description: "Why there's no money-weighted return.",
+    },
+  },
+  type: "object",
+  required: [
+    "bank_account_id",
+    "currency",
+    "range",
+    "start",
+    "end",
+    "start_value",
+    "end_value",
+    "net_flows",
+    "gain",
+    "time_weighted",
+    "time_weighted_annualized",
+    "time_weighted_unavailable",
+    "money_weighted",
+    "money_weighted_annualized",
+    "money_weighted_unavailable",
+  ],
+  title: "PeriodReturns",
+} as const;
+
 export const PlaceCreateSchema = {
   properties: {
     name: {
@@ -9969,6 +10761,62 @@ export const PlaceUpdateSchema = {
   },
   type: "object",
   title: "PlaceUpdate",
+} as const;
+
+export const PortfolioSeriesSchema = {
+  properties: {
+    bank_account_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Account Id",
+      description:
+        "The account, or null for all the accounts in the currency together.",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    points: {
+      items: {
+        $ref: "#/components/schemas/ValuePoint",
+      },
+      type: "array",
+      title: "Points",
+      description:
+        "On each day the broker reported the positions, oldest first.",
+    },
+  },
+  type: "object",
+  required: ["bank_account_id", "currency", "points"],
+  title: "PortfolioSeries",
+} as const;
+
+export const PriceChangeSchemaSchema = {
+  properties: {
+    date: {
+      type: "string",
+      format: "date",
+      title: "Date",
+    },
+    old_amount: {
+      type: "integer",
+      title: "Old Amount",
+    },
+    new_amount: {
+      type: "integer",
+      title: "New Amount",
+    },
+  },
+  type: "object",
+  required: ["date", "old_amount", "new_amount"],
+  title: "PriceChangeSchema",
 } as const;
 
 export const ProjectCreateSchema = {
@@ -10723,6 +11571,426 @@ export const RecurrenceSchemaSchema = {
   title: "RecurrenceSchema",
 } as const;
 
+export const RecurringCadenceSchema = {
+  type: "string",
+  enum: ["weekly", "monthly", "quarterly", "yearly"],
+  title: "RecurringCadence",
+} as const;
+
+export const RecurringDecisionSchema = {
+  type: "string",
+  enum: ["confirmed", "dismissed"],
+  title: "RecurringDecision",
+} as const;
+
+export const RecurringKindSchema = {
+  type: "string",
+  enum: ["bill", "subscription", "income"],
+  title: "RecurringKind",
+} as const;
+
+export const RecurringResponseSchema = {
+  properties: {
+    series: {
+      items: {
+        $ref: "#/components/schemas/RecurringSeriesSchema",
+      },
+      type: "array",
+      title: "Series",
+      description:
+        "Every series detected, dismissed ones included, the latest payment first.",
+    },
+    upcoming: {
+      items: {
+        $ref: "#/components/schemas/UpcomingPayment",
+      },
+      type: "array",
+      title: "Upcoming",
+      description:
+        "Late payments, then those expected from today on, soonest first; none from dismissed or ended series.",
+    },
+    totals: {
+      items: {
+        $ref: "#/components/schemas/RecurringTotal",
+      },
+      type: "array",
+      title: "Totals",
+      description:
+        "Per currency and owner, from series still running; currencies are never added together.",
+    },
+  },
+  type: "object",
+  required: ["series", "upcoming", "totals"],
+  title: "RecurringResponse",
+} as const;
+
+export const RecurringReviewCreateSchema = {
+  properties: {
+    key: {
+      type: "string",
+      maxLength: 300,
+      title: "Key",
+    },
+    typical_amount: {
+      type: "integer",
+      title: "Typical Amount",
+    },
+    decision: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringDecision",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 120,
+          minLength: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    kind: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringKind",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+  },
+  type: "object",
+  required: ["key", "typical_amount"],
+  title: "RecurringReviewCreate",
+} as const;
+
+export const RecurringReviewSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    key: {
+      type: "string",
+      title: "Key",
+    },
+    typical_amount: {
+      type: "integer",
+      title: "Typical Amount",
+    },
+    decision: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringDecision",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    kind: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringKind",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+  },
+  type: "object",
+  required: ["id", "key", "typical_amount", "decision", "name", "kind"],
+  title: "RecurringReviewSchema",
+} as const;
+
+export const RecurringReviewUpdateSchema = {
+  properties: {
+    decision: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringDecision",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Null takes back a confirmation or dismissal.",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 120,
+          minLength: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "Null goes back to the detected name.",
+    },
+    kind: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringKind",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Null goes back to the detected kind.",
+    },
+  },
+  type: "object",
+  title: "RecurringReviewUpdate",
+} as const;
+
+export const RecurringSeriesSchemaSchema = {
+  properties: {
+    key: {
+      type: "string",
+      title: "Key",
+      description:
+        "The group of transactions it comes from; with `typical_amount`, what a review refers to.",
+    },
+    review_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Review Id",
+      description: "The user's review of it, if any.",
+    },
+    decision: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringDecision",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    name: {
+      type: "string",
+      title: "Name",
+      description:
+        "The user's name for it, or what the transactions are called.",
+    },
+    detected_name: {
+      type: "string",
+      title: "Detected Name",
+    },
+    kind: {
+      $ref: "#/components/schemas/RecurringKind",
+    },
+    cadence: {
+      $ref: "#/components/schemas/RecurringCadence",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+      description: "The company's money rather than the user's own.",
+    },
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+      description: "The account its latest payment was on.",
+    },
+    logo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Logo Url",
+    },
+    typical_amount: {
+      type: "integer",
+      title: "Typical Amount",
+      description:
+        "Minor units: the latest price, or the middle of recent amounts when they vary.",
+    },
+    variable: {
+      type: "boolean",
+      title: "Variable",
+      description: "Whether the amount changes from one payment to the next.",
+    },
+    monthly_amount: {
+      type: "integer",
+      title: "Monthly Amount",
+      description: "What it comes to in an average month, in minor units.",
+    },
+    count: {
+      type: "integer",
+      title: "Count",
+      description: "Payments seen in a row on this schedule.",
+    },
+    first_date: {
+      type: "string",
+      format: "date",
+      title: "First Date",
+    },
+    last_date: {
+      type: "string",
+      format: "date",
+      title: "Last Date",
+    },
+    last_amount: {
+      type: "integer",
+      title: "Last Amount",
+    },
+    status: {
+      $ref: "#/components/schemas/RecurringStatus",
+    },
+    next_date: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Next Date",
+      description:
+        "When the next payment is expected; earlier than today when it's late, none once it has ended.",
+    },
+    next_amount: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Next Amount",
+    },
+    price_changes: {
+      items: {
+        $ref: "#/components/schemas/PriceChangeSchema",
+      },
+      type: "array",
+      title: "Price Changes",
+      description: "Oldest first.",
+    },
+  },
+  type: "object",
+  required: [
+    "key",
+    "review_id",
+    "decision",
+    "name",
+    "detected_name",
+    "kind",
+    "cadence",
+    "currency",
+    "direction",
+    "is_business",
+    "bank_account_id",
+    "logo_url",
+    "typical_amount",
+    "variable",
+    "monthly_amount",
+    "count",
+    "first_date",
+    "last_date",
+    "last_amount",
+    "status",
+    "next_date",
+    "next_amount",
+    "price_changes",
+  ],
+  title: "RecurringSeriesSchema",
+} as const;
+
+export const RecurringStatusSchema = {
+  type: "string",
+  enum: ["active", "late", "ended"],
+  title: "RecurringStatus",
+} as const;
+
+export const RecurringTotalSchema = {
+  properties: {
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+    },
+    money_out: {
+      type: "integer",
+      title: "Money Out",
+      description:
+        "Bills and subscriptions in an average month, in minor units.",
+    },
+    subscriptions: {
+      type: "integer",
+      title: "Subscriptions",
+      description: "The subscriptions among them.",
+    },
+    money_in: {
+      type: "integer",
+      title: "Money In",
+      description: "Income in an average month.",
+    },
+  },
+  type: "object",
+  required: [
+    "currency",
+    "is_business",
+    "money_out",
+    "subscriptions",
+    "money_in",
+  ],
+  title: "RecurringTotal",
+} as const;
+
 export const ReflectionAnswerSchema = {
   properties: {
     answer: {
@@ -11144,6 +12412,80 @@ export const SummaryMonthSchema = {
   type: "object",
   required: ["year", "month", "income", "spending"],
   title: "SummaryMonth",
+} as const;
+
+export const TagListResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/TagSummary",
+      },
+      type: "array",
+      title: "Items",
+      description:
+        "The user's tags used in the period, most used first. Moves between own accounts are left out.",
+    },
+    names: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Names",
+      description:
+        "Every tag the user has, on any transaction and in any period, most used first: for picking one.",
+    },
+  },
+  type: "object",
+  required: ["items", "names"],
+  title: "TagListResponse",
+} as const;
+
+export const TagSummarySchema = {
+  properties: {
+    tag: {
+      type: "string",
+      title: "Tag",
+    },
+    count: {
+      type: "integer",
+      title: "Count",
+      description: "Tagged transactions in the period.",
+    },
+    totals: {
+      items: {
+        $ref: "#/components/schemas/TagTotal",
+      },
+      type: "array",
+      title: "Totals",
+      description: "One per currency, never added together; most spent first.",
+    },
+  },
+  type: "object",
+  required: ["tag", "count", "totals"],
+  title: "TagSummary",
+} as const;
+
+export const TagTotalSchema = {
+  properties: {
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    spent: {
+      type: "integer",
+      title: "Spent",
+      description: "Money out, in minor units.",
+    },
+    received: {
+      type: "integer",
+      title: "Received",
+      description:
+        "Money in, such as refunds or someone paying back their share, in minor units.",
+    },
+  },
+  type: "object",
+  required: ["currency", "spent", "received"],
+  title: "TagTotal",
 } as const;
 
 export const TaskAttachmentSchemaSchema = {
@@ -12709,6 +14051,20 @@ export const TransactionRenameResponseSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
     suggestions: {
       items: {
         $ref: "#/components/schemas/NameSuggestion",
@@ -12754,6 +14110,8 @@ export const TransactionRenameResponseSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
     "suggestions",
     "investment_kind",
   ],
@@ -12930,6 +14288,20 @@ export const TransactionSchemaSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
     investment_kind: {
       anyOf: [
         {
@@ -12966,6 +14338,8 @@ export const TransactionSchemaSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
     "investment_kind",
   ],
   title: "TransactionSchema",
@@ -13061,6 +14435,37 @@ export const TransactionUpdateSchema = {
       ],
       title: "Note",
       description: "The user's own words about it; empty removes it.",
+    },
+    tags: {
+      anyOf: [
+        {
+          items: {
+            type: "string",
+            maxLength: 50,
+            minLength: 1,
+          },
+          type: "array",
+          maxItems: 20,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Tags",
+      description:
+        "Replaces its tags; a tag the user already has elsewhere keeps that spelling.",
+    },
+    reviewed: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Reviewed",
+      description: "Mark it reviewed, or back to be reviewed.",
     },
   },
   type: "object",
@@ -13237,6 +14642,20 @@ export const TransactionUpdateResponseSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
     same_description_count: {
       type: "integer",
       title: "Same Description Count",
@@ -13280,6 +14699,8 @@ export const TransactionUpdateResponseSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
     "same_description_count",
     "investment_kind",
   ],
@@ -13403,6 +14824,71 @@ export const TypicalDaySchema = {
   title: "TypicalDay",
 } as const;
 
+export const UpcomingPaymentSchema = {
+  properties: {
+    key: {
+      type: "string",
+      title: "Key",
+    },
+    typical_amount: {
+      type: "integer",
+      title: "Typical Amount",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    kind: {
+      $ref: "#/components/schemas/RecurringKind",
+    },
+    date: {
+      type: "string",
+      format: "date",
+      title: "Date",
+    },
+    amount: {
+      type: "integer",
+      title: "Amount",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+    },
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+    },
+    late: {
+      type: "boolean",
+      title: "Late",
+      description: "Was due before today and hasn't been seen yet.",
+    },
+  },
+  type: "object",
+  required: [
+    "key",
+    "typical_amount",
+    "name",
+    "kind",
+    "date",
+    "amount",
+    "currency",
+    "direction",
+    "is_business",
+    "bank_account_id",
+    "late",
+  ],
+  title: "UpcomingPayment",
+} as const;
+
 export const ValidationErrorSchema = {
   properties: {
     loc: {
@@ -13438,6 +14924,24 @@ export const ValidationErrorSchema = {
   type: "object",
   required: ["loc", "msg", "type"],
   title: "ValidationError",
+} as const;
+
+export const ValuePointSchema = {
+  properties: {
+    day: {
+      type: "string",
+      format: "date",
+      title: "Day",
+    },
+    value: {
+      type: "integer",
+      title: "Value",
+      description: "Holdings plus cash at the end of the day, in minor units.",
+    },
+  },
+  type: "object",
+  required: ["day", "value"],
+  title: "ValuePoint",
 } as const;
 
 export const WeatherDaySchema = {
@@ -14125,6 +15629,20 @@ export const TransactionRenameResponseWritableSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
     suggestions: {
       items: {
         $ref: "#/components/schemas/NameSuggestion",
@@ -14157,6 +15675,8 @@ export const TransactionRenameResponseWritableSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
     "suggestions",
   ],
   title: "TransactionRenameResponse",
@@ -14332,6 +15852,20 @@ export const TransactionSchemaWritableSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
   },
   type: "object",
   required: [
@@ -14355,6 +15889,8 @@ export const TransactionSchemaWritableSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
   ],
   title: "TransactionSchema",
 } as const;
@@ -14529,6 +16065,20 @@ export const TransactionUpdateResponseWritableSchema = {
       description:
         "Shared with the other side of a move between the user's own accounts; such pairs count as neither income nor spending.",
     },
+    tags: {
+      items: {
+        type: "string",
+      },
+      type: "array",
+      title: "Tags",
+      description: "The user's own tags, such as a trip or a project.",
+    },
+    reviewed: {
+      type: "boolean",
+      title: "Reviewed",
+      description: "Looked over by the user; imports arrive unreviewed.",
+      default: true,
+    },
     same_description_count: {
       type: "integer",
       title: "Same Description Count",
@@ -14559,6 +16109,8 @@ export const TransactionUpdateResponseWritableSchema = {
     "is_business",
     "company_account",
     "transfer_id",
+    "tags",
+    "reviewed",
     "same_description_count",
   ],
   title: "TransactionUpdateResponse",

@@ -420,11 +420,14 @@ export function MonthSummary({
   year,
   month,
   actions,
+  aside,
   children,
 }: {
   year: number;
   month: number;
   actions: MonthSummaryActions;
+  /** More for the side column, above the month's own. */
+  aside?: ReactNode;
   /** The month's list, under the figures and beside where the money went. */
   children: ReactNode;
 }) {
@@ -497,6 +500,7 @@ export function MonthSummary({
           {children}
         </div>
         <div className="min-w-0 space-y-4 @4xl:sticky @4xl:top-4">
+          {aside}
           {data.uncategorized > 0 && (
             <ToSort
               count={data.uncategorized}

@@ -68,6 +68,7 @@ function handlers() {
     onToggleBusiness: vi.fn(),
     onUnpair: vi.fn(),
     onBulkSuggestion: vi.fn(),
+    onReview: vi.fn(),
   };
 }
 

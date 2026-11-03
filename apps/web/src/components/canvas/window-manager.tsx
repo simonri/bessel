@@ -23,6 +23,7 @@ import { isAvailableModule, MODULE_REGISTRY } from "./module-registry";
 
 export type ModuleKey =
   | "transactions"
+  | "recurring"
   | "accounts"
   | "investments"
   | "tasks"

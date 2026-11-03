@@ -275,6 +275,13 @@ enum API {
         var statusSynced: Int
     }
 
+    struct AllocationSlice: Codable, Hashable {
+        var key: String
+        var label: String
+        var value: Int
+        var share: Double
+    }
+
     enum AssetType: String, Codable, Hashable, CaseIterable, LenientEnum {
         case stock
         case etf
@@ -453,6 +460,17 @@ enum API {
         var ids: [UUID]
     }
 
+    struct BulkReviewRequest: Codable, Hashable {
+        var ids: [UUID]
+        var reviewed: Bool = true
+    }
+
+    struct BulkTagRequest: Codable, Hashable {
+        var ids: [UUID]
+        var add: [String] = []
+        var remove: [String] = []
+    }
+
     struct BulkUpdateRequest: Encodable, Hashable {
         var ids: [UUID]
         var categoryId: UUID??
@@ -537,6 +555,14 @@ enum API {
         var hidden: Bool
     }
 
+    struct CategoryCreate: Codable, Hashable {
+        var name: String
+        var color: String = "#6B7280"
+        var parentId: UUID?
+        var excluded: Bool?
+        var income: Bool = false
+    }
+
     struct CategoryListResponse: Codable, Hashable {
         @Lossy var items: [CategorySchema]
         var pagination: Pagination
@@ -560,11 +586,38 @@ enum API {
         var scope: RuleScope
         var direction: TransactionDirection?
         var markBusiness: Bool
+        var transactionCount: Int = 0
         var categorized: Int
     }
 
     struct CategoryRuleListResponse: Codable, Hashable {
         @Lossy var items: [CategoryRuleSchema]
+    }
+
+    struct CategoryRuleMatch: Codable, Hashable {
+        var id: UUID
+        var transactionDate: Date
+        var description: String?
+        var name: String?
+        var amount: Int
+        var currency: String
+        var direction: TransactionDirection
+        var categoryId: UUID?
+        var byRule: Bool
+        var wouldSort: Bool
+    }
+
+    struct CategoryRulePreview: Codable, Hashable {
+        var matchCount: Int
+        var sortableCount: Int
+        @Lossy var items: [CategoryRuleMatch]
+    }
+
+    struct CategoryRulePreviewRequest: Codable, Hashable {
+        var pattern: String
+        var scope: RuleScope = .any
+        var direction: TransactionDirection?
+        var ruleId: UUID?
     }
 
     struct CategoryRuleSchema: Codable, Hashable {
@@ -576,6 +629,16 @@ enum API {
         var scope: RuleScope
         var direction: TransactionDirection?
         var markBusiness: Bool
+        var transactionCount: Int = 0
+    }
+
+    struct CategoryRuleUpdate: Encodable, Hashable {
+        var categoryId: UUID??
+        var pattern: String??
+        var scope: RuleScope??
+        var direction: TransactionDirection??
+        var markBusiness: Bool??
+        var applyNow: Bool?
     }
 
     struct CategorySchema: Codable, Hashable {
@@ -588,6 +651,8 @@ enum API {
         var excluded: Bool
         var income: Bool
         var parentId: UUID?
+        var transactionCount: Int = 0
+        var ruleCount: Int = 0
     }
 
     struct CategorySpending: Codable, Hashable {
@@ -595,6 +660,14 @@ enum API {
         var categoryName: String
         var categoryColor: String
         var total: Int
+    }
+
+    struct CategoryUpdate: Encodable, Hashable {
+        var name: String??
+        var color: String??
+        var parentId: UUID??
+        var excluded: Bool??
+        var income: Bool??
     }
 
     struct ClientDiagnosticsUpload: Codable, Hashable {
@@ -833,6 +906,23 @@ enum API {
         var currency: String
         var price: Double
         var priceChangePct24h: Double?
+    }
+
+    enum CsvDialect: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case swedish
+        case international
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [CsvDialect] = [.swedish, .international]
+    }
+
+    struct CurrencyAllocation: Codable, Hashable {
+        var currency: String
+        var total: Int
+        @Lossy var byAssetType: [AllocationSlice]
+        @Lossy var byAccount: [AllocationSlice]
+        var borrowed: Int
+        var unpriced: Int
     }
 
     struct CurrencySummary: Codable, Hashable {
@@ -1378,6 +1468,10 @@ enum API {
         @Lossy var items: [InvestmentAccountSummary]
     }
 
+    struct InvestmentAllocationResponse: Codable, Hashable {
+        @Lossy var items: [CurrencyAllocation]
+    }
+
     enum InvestmentKind: String, Codable, Hashable, CaseIterable, LenientEnum {
         case buy
         case sell
@@ -1390,6 +1484,12 @@ enum API {
         /// A value added on the server after this build.
         case unknown
         static let allCases: [InvestmentKind] = [.buy, .sell, .deposit, .withdrawal, .dividend, .interest, .tax, .fee]
+    }
+
+    struct InvestmentPerformanceResponse: Codable, Hashable {
+        @Lossy var series: [PortfolioSeries]
+        @Lossy var returns: [PeriodReturns]
+        @Lossy var leftOut: [LeftOutAccount]
     }
 
     struct KlarnaImportRequest: Codable, Hashable {
@@ -1407,6 +1507,12 @@ enum API {
         var drift: Int?
         var declined: Int
         var unrecognizedPlans: [String]
+    }
+
+    struct LeftOutAccount: Codable, Hashable {
+        var bankAccountId: UUID
+        var name: String
+        var reason: String
     }
 
     struct LocationActivity: Codable, Hashable {
@@ -1703,6 +1809,24 @@ enum API {
         var met: Bool
     }
 
+    struct PeriodReturns: Codable, Hashable {
+        var bankAccountId: UUID?
+        var currency: String
+        var range: String
+        var start: Date?
+        var end: Date?
+        var startValue: Int?
+        var endValue: Int?
+        var netFlows: Int?
+        var gain: Int?
+        var timeWeighted: Double?
+        var timeWeightedAnnualized: Double?
+        var timeWeightedUnavailable: String?
+        var moneyWeighted: Double?
+        var moneyWeightedAnnualized: Double?
+        var moneyWeightedUnavailable: String?
+    }
+
     struct PlaceCreate: Codable, Hashable {
         var name: String
         var address: String?
@@ -1792,6 +1916,18 @@ enum API {
         var photoUrl: String??
         var website: String??
         var phone: String??
+    }
+
+    struct PortfolioSeries: Codable, Hashable {
+        var bankAccountId: UUID?
+        var currency: String
+        @Lossy var points: [ValuePoint]
+    }
+
+    struct PriceChangeSchema: Codable, Hashable {
+        var date: Date
+        var oldAmount: Int
+        var newAmount: Int
     }
 
     struct ProjectCreate: Codable, Hashable {
@@ -1943,6 +2079,105 @@ enum API {
         var until: String?
     }
 
+    enum RecurringCadence: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case weekly
+        case monthly
+        case quarterly
+        case yearly
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [RecurringCadence] = [.weekly, .monthly, .quarterly, .yearly]
+    }
+
+    enum RecurringDecision: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case confirmed
+        case dismissed
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [RecurringDecision] = [.confirmed, .dismissed]
+    }
+
+    enum RecurringKind: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case bill
+        case subscription
+        case income
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [RecurringKind] = [.bill, .subscription, .income]
+    }
+
+    struct RecurringResponse: Codable, Hashable {
+        @Lossy var series: [RecurringSeriesSchema]
+        @Lossy var upcoming: [UpcomingPayment]
+        @Lossy var totals: [RecurringTotal]
+    }
+
+    struct RecurringReviewCreate: Codable, Hashable {
+        var key: String
+        var typicalAmount: Int
+        var decision: RecurringDecision?
+        var name: String?
+        var kind: RecurringKind?
+    }
+
+    struct RecurringReviewSchema: Codable, Hashable {
+        var id: UUID
+        var key: String
+        var typicalAmount: Int
+        var decision: RecurringDecision?
+        var name: String?
+        var kind: RecurringKind?
+    }
+
+    struct RecurringReviewUpdate: Encodable, Hashable {
+        var decision: RecurringDecision??
+        var name: String??
+        var kind: RecurringKind??
+    }
+
+    struct RecurringSeriesSchema: Codable, Hashable {
+        var key: String
+        var reviewId: UUID?
+        var decision: RecurringDecision?
+        var name: String
+        var detectedName: String
+        var kind: RecurringKind
+        var cadence: RecurringCadence
+        var currency: String
+        var direction: TransactionDirection
+        var isBusiness: Bool
+        var bankAccountId: UUID
+        var logoUrl: String?
+        var typicalAmount: Int
+        var variable: Bool
+        var monthlyAmount: Int
+        var count: Int
+        var firstDate: Date
+        var lastDate: Date
+        var lastAmount: Int
+        var status: RecurringStatus
+        var nextDate: Date?
+        var nextAmount: Int?
+        @Lossy var priceChanges: [PriceChangeSchema]
+    }
+
+    enum RecurringStatus: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case active
+        case late
+        case ended
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [RecurringStatus] = [.active, .late, .ended]
+    }
+
+    struct RecurringTotal: Codable, Hashable {
+        var currency: String
+        var isBusiness: Bool
+        var moneyOut: Int
+        var subscriptions: Int
+        var moneyIn: Int
+    }
+
     struct ReflectionAnswer: Codable, Hashable {
         var answer: String
     }
@@ -2043,6 +2278,23 @@ enum API {
         var month: Int
         var income: Int
         var spending: Int
+    }
+
+    struct TagListResponse: Codable, Hashable {
+        @Lossy var items: [TagSummary]
+        var names: [String]
+    }
+
+    struct TagSummary: Codable, Hashable {
+        var tag: String
+        var count: Int
+        @Lossy var totals: [TagTotal]
+    }
+
+    struct TagTotal: Codable, Hashable {
+        var currency: String
+        var spent: Int
+        var received: Int
     }
 
     struct TaskAttachmentSchema: Codable, Hashable {
@@ -2320,6 +2572,8 @@ enum API {
         var isBusiness: Bool = false
         var companyAccount: Bool = false
         var transferId: UUID?
+        var tags: [String]
+        var reviewed: Bool = true
         @Lossy var suggestions: [NameSuggestion]
         var investmentKind: InvestmentKind?
     }
@@ -2345,6 +2599,8 @@ enum API {
         var isBusiness: Bool = false
         var companyAccount: Bool = false
         var transferId: UUID?
+        var tags: [String]
+        var reviewed: Bool = true
         var investmentKind: InvestmentKind?
     }
 
@@ -2374,6 +2630,8 @@ enum API {
         var categoryId: UUID??
         var isBusiness: Bool??
         var note: String??
+        var tags: [String]??
+        var reviewed: Bool??
     }
 
     struct TransactionUpdateResponse: Codable, Hashable {
@@ -2397,6 +2655,8 @@ enum API {
         var isBusiness: Bool = false
         var companyAccount: Bool = false
         var transferId: UUID?
+        var tags: [String]
+        var reviewed: Bool = true
         var sameDescriptionCount: Int = 0
         var investmentKind: InvestmentKind?
     }
@@ -2415,12 +2675,31 @@ enum API {
         var steps: Int?
     }
 
+    struct UpcomingPayment: Codable, Hashable {
+        var key: String
+        var typicalAmount: Int
+        var name: String
+        var kind: RecurringKind
+        var date: Date
+        var amount: Int
+        var currency: String
+        var direction: TransactionDirection
+        var isBusiness: Bool
+        var bankAccountId: UUID
+        var late: Bool
+    }
+
     struct ValidationError: Codable, Hashable {
         var loc: [JSONValue]
         var msg: String
         var type: String
         var input: JSONValue?
         var ctx: [String: JSONValue]?
+    }
+
+    struct ValuePoint: Codable, Hashable {
+        var day: Date
+        var value: Int
     }
 
     struct WeatherDay: Codable, Hashable {
@@ -3374,6 +3653,38 @@ extension API.AgentUsageSyncResponse {
     }
 }
 
+extension API.AllocationSlice {
+    private enum DecodingKeys: String, CodingKey {
+        case key
+        case label
+        case value
+        case share
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.label = try container.decode(String.self, forKey: .label)
+        self.value = try container.decode(Int.self, forKey: .value)
+        self.share = try container.decode(Double.self, forKey: .share)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case key
+        case label
+        case value
+        case share
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.key, forKey: .key)
+        try container.encode(self.label, forKey: .label)
+        try container.encode(self.value, forKey: .value)
+        try container.encode(self.share, forKey: .share)
+    }
+}
+
 extension API.AssistantNoteResponse {
     private enum DecodingKeys: String, CodingKey {
         case key
@@ -4053,6 +4364,58 @@ extension API.BulkDeleteRequest {
     }
 }
 
+extension API.BulkReviewRequest {
+    private enum DecodingKeys: String, CodingKey {
+        case ids
+        case reviewed
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.ids = try container.decode([UUID].self, forKey: .ids)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case ids
+        case reviewed
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.ids, forKey: .ids)
+        try container.encode(self.reviewed, forKey: .reviewed)
+    }
+}
+
+extension API.BulkTagRequest {
+    private enum DecodingKeys: String, CodingKey {
+        case ids
+        case add
+        case remove
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.ids = try container.decode([UUID].self, forKey: .ids)
+        self.add = try container.decodeIfPresent([String].self, forKey: .add) ?? []
+        self.remove = try container.decodeIfPresent([String].self, forKey: .remove) ?? []
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case ids
+        case add
+        case remove
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.ids, forKey: .ids)
+        try container.encode(self.add, forKey: .add)
+        try container.encode(self.remove, forKey: .remove)
+    }
+}
+
 extension API.BulkUpdateRequest {
     private enum EncodingKeys: String, CodingKey {
         case ids
@@ -4373,6 +4736,42 @@ extension API.CalendarUpdate {
     }
 }
 
+extension API.CategoryCreate {
+    private enum DecodingKeys: String, CodingKey {
+        case name
+        case color
+        case parentId
+        case excluded
+        case income
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.color = try container.decodeIfPresent(String.self, forKey: .color) ?? "#6B7280"
+        self.parentId = try container.decodeIfPresent(UUID.self, forKey: .parentId)
+        self.excluded = try container.decodeIfPresent(Bool.self, forKey: .excluded)
+        self.income = try container.decodeIfPresent(Bool.self, forKey: .income) ?? false
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case name
+        case color
+        case parentId = "parent_id"
+        case excluded
+        case income
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.name, forKey: .name)
+        try container.encode(self.color, forKey: .color)
+        try container.encodeIfPresent(self.parentId, forKey: .parentId)
+        try container.encodeIfPresent(self.excluded, forKey: .excluded)
+        try container.encode(self.income, forKey: .income)
+    }
+}
+
 extension API.CategoryListResponse {
     private enum DecodingKeys: String, CodingKey {
         case items
@@ -4447,6 +4846,7 @@ extension API.CategoryRuleCreated {
         case scope
         case direction
         case markBusiness
+        case transactionCount
         case categorized
     }
 
@@ -4460,6 +4860,7 @@ extension API.CategoryRuleCreated {
         self.scope = try container.decode(API.RuleScope.self, forKey: .scope)
         self.direction = try container.decodeIfPresent(API.TransactionDirection.self, forKey: .direction)
         self.markBusiness = try container.decode(Bool.self, forKey: .markBusiness)
+        self.transactionCount = try container.decodeIfPresent(Int.self, forKey: .transactionCount) ?? 0
         self.categorized = try container.decode(Int.self, forKey: .categorized)
     }
 
@@ -4472,6 +4873,7 @@ extension API.CategoryRuleCreated {
         case scope
         case direction
         case markBusiness = "mark_business"
+        case transactionCount = "transaction_count"
         case categorized
     }
 
@@ -4485,6 +4887,7 @@ extension API.CategoryRuleCreated {
         try container.encode(self.scope, forKey: .scope)
         try container.encodeIfPresent(self.direction, forKey: .direction)
         try container.encode(self.markBusiness, forKey: .markBusiness)
+        try container.encode(self.transactionCount, forKey: .transactionCount)
         try container.encode(self.categorized, forKey: .categorized)
     }
 }
@@ -4509,6 +4912,122 @@ extension API.CategoryRuleListResponse {
     }
 }
 
+extension API.CategoryRuleMatch {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case transactionDate
+        case description
+        case name
+        case amount
+        case currency
+        case direction
+        case categoryId
+        case byRule
+        case wouldSort
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.transactionDate = try container.decode(Date.self, forKey: .transactionDate)
+        self.description = try container.decodeIfPresent(String.self, forKey: .description)
+        self.name = try container.decodeIfPresent(String.self, forKey: .name)
+        self.amount = try container.decode(Int.self, forKey: .amount)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.direction = try container.decode(API.TransactionDirection.self, forKey: .direction)
+        self.categoryId = try container.decodeIfPresent(UUID.self, forKey: .categoryId)
+        self.byRule = try container.decode(Bool.self, forKey: .byRule)
+        self.wouldSort = try container.decode(Bool.self, forKey: .wouldSort)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case transactionDate = "transaction_date"
+        case description
+        case name
+        case amount
+        case currency
+        case direction
+        case categoryId = "category_id"
+        case byRule = "by_rule"
+        case wouldSort = "would_sort"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(API.Day(self.transactionDate), forKey: .transactionDate)
+        try container.encodeIfPresent(self.description, forKey: .description)
+        try container.encodeIfPresent(self.name, forKey: .name)
+        try container.encode(self.amount, forKey: .amount)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.direction, forKey: .direction)
+        try container.encodeIfPresent(self.categoryId, forKey: .categoryId)
+        try container.encode(self.byRule, forKey: .byRule)
+        try container.encode(self.wouldSort, forKey: .wouldSort)
+    }
+}
+
+extension API.CategoryRulePreview {
+    private enum DecodingKeys: String, CodingKey {
+        case matchCount
+        case sortableCount
+        case items
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.matchCount = try container.decode(Int.self, forKey: .matchCount)
+        self.sortableCount = try container.decode(Int.self, forKey: .sortableCount)
+        self._items = try container.decode(Lossy<API.CategoryRuleMatch>.self, forKey: .items)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case matchCount = "match_count"
+        case sortableCount = "sortable_count"
+        case items
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.matchCount, forKey: .matchCount)
+        try container.encode(self.sortableCount, forKey: .sortableCount)
+        try container.encode(self.items, forKey: .items)
+    }
+}
+
+extension API.CategoryRulePreviewRequest {
+    private enum DecodingKeys: String, CodingKey {
+        case pattern
+        case scope
+        case direction
+        case ruleId
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.pattern = try container.decode(String.self, forKey: .pattern)
+        self.scope = try container.decodeIfPresent(API.RuleScope.self, forKey: .scope) ?? .any
+        self.direction = try container.decodeIfPresent(API.TransactionDirection.self, forKey: .direction)
+        self.ruleId = try container.decodeIfPresent(UUID.self, forKey: .ruleId)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case pattern
+        case scope
+        case direction
+        case ruleId = "rule_id"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.pattern, forKey: .pattern)
+        try container.encode(self.scope, forKey: .scope)
+        try container.encodeIfPresent(self.direction, forKey: .direction)
+        try container.encodeIfPresent(self.ruleId, forKey: .ruleId)
+    }
+}
+
 extension API.CategoryRuleSchema {
     private enum DecodingKeys: String, CodingKey {
         case createdAt
@@ -4519,6 +5038,7 @@ extension API.CategoryRuleSchema {
         case scope
         case direction
         case markBusiness
+        case transactionCount
     }
 
     init(from decoder: Decoder) throws {
@@ -4531,6 +5051,7 @@ extension API.CategoryRuleSchema {
         self.scope = try container.decode(API.RuleScope.self, forKey: .scope)
         self.direction = try container.decodeIfPresent(API.TransactionDirection.self, forKey: .direction)
         self.markBusiness = try container.decode(Bool.self, forKey: .markBusiness)
+        self.transactionCount = try container.decodeIfPresent(Int.self, forKey: .transactionCount) ?? 0
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -4542,6 +5063,7 @@ extension API.CategoryRuleSchema {
         case scope
         case direction
         case markBusiness = "mark_business"
+        case transactionCount = "transaction_count"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -4554,6 +5076,28 @@ extension API.CategoryRuleSchema {
         try container.encode(self.scope, forKey: .scope)
         try container.encodeIfPresent(self.direction, forKey: .direction)
         try container.encode(self.markBusiness, forKey: .markBusiness)
+        try container.encode(self.transactionCount, forKey: .transactionCount)
+    }
+}
+
+extension API.CategoryRuleUpdate {
+    private enum EncodingKeys: String, CodingKey {
+        case categoryId = "category_id"
+        case pattern
+        case scope
+        case direction
+        case markBusiness = "mark_business"
+        case applyNow = "apply_now"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.categoryId { try container.encode(value, forKey: .categoryId) }
+        if let value = self.pattern { try container.encode(value, forKey: .pattern) }
+        if let value = self.scope { try container.encode(value, forKey: .scope) }
+        if let value = self.direction { try container.encode(value, forKey: .direction) }
+        if let value = self.markBusiness { try container.encode(value, forKey: .markBusiness) }
+        try container.encodeIfPresent(self.applyNow, forKey: .applyNow)
     }
 }
 
@@ -4568,6 +5112,8 @@ extension API.CategorySchema {
         case excluded
         case income
         case parentId
+        case transactionCount
+        case ruleCount
     }
 
     init(from decoder: Decoder) throws {
@@ -4581,6 +5127,8 @@ extension API.CategorySchema {
         self.excluded = try container.decode(Bool.self, forKey: .excluded)
         self.income = try container.decode(Bool.self, forKey: .income)
         self.parentId = try container.decodeIfPresent(UUID.self, forKey: .parentId)
+        self.transactionCount = try container.decodeIfPresent(Int.self, forKey: .transactionCount) ?? 0
+        self.ruleCount = try container.decodeIfPresent(Int.self, forKey: .ruleCount) ?? 0
     }
 
     private enum EncodingKeys: String, CodingKey {
@@ -4593,6 +5141,8 @@ extension API.CategorySchema {
         case excluded
         case income
         case parentId = "parent_id"
+        case transactionCount = "transaction_count"
+        case ruleCount = "rule_count"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -4606,6 +5156,8 @@ extension API.CategorySchema {
         try container.encode(self.excluded, forKey: .excluded)
         try container.encode(self.income, forKey: .income)
         try container.encodeIfPresent(self.parentId, forKey: .parentId)
+        try container.encode(self.transactionCount, forKey: .transactionCount)
+        try container.encode(self.ruleCount, forKey: .ruleCount)
     }
 }
 
@@ -4638,6 +5190,25 @@ extension API.CategorySpending {
         try container.encode(self.categoryName, forKey: .categoryName)
         try container.encode(self.categoryColor, forKey: .categoryColor)
         try container.encode(self.total, forKey: .total)
+    }
+}
+
+extension API.CategoryUpdate {
+    private enum EncodingKeys: String, CodingKey {
+        case name
+        case color
+        case parentId = "parent_id"
+        case excluded
+        case income
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.name { try container.encode(value, forKey: .name) }
+        if let value = self.color { try container.encode(value, forKey: .color) }
+        if let value = self.parentId { try container.encode(value, forKey: .parentId) }
+        if let value = self.excluded { try container.encode(value, forKey: .excluded) }
+        if let value = self.income { try container.encode(value, forKey: .income) }
     }
 }
 
@@ -5582,6 +6153,46 @@ extension API.CryptoPriceSchema {
         try container.encode(self.currency, forKey: .currency)
         try container.encode(self.price, forKey: .price)
         try container.encodeIfPresent(self.priceChangePct24h, forKey: .priceChangePct24h)
+    }
+}
+
+extension API.CurrencyAllocation {
+    private enum DecodingKeys: String, CodingKey {
+        case currency
+        case total
+        case byAssetType
+        case byAccount
+        case borrowed
+        case unpriced
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.total = try container.decode(Int.self, forKey: .total)
+        self._byAssetType = try container.decode(Lossy<API.AllocationSlice>.self, forKey: .byAssetType)
+        self._byAccount = try container.decode(Lossy<API.AllocationSlice>.self, forKey: .byAccount)
+        self.borrowed = try container.decode(Int.self, forKey: .borrowed)
+        self.unpriced = try container.decode(Int.self, forKey: .unpriced)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case currency
+        case total
+        case byAssetType = "by_asset_type"
+        case byAccount = "by_account"
+        case borrowed
+        case unpriced
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.total, forKey: .total)
+        try container.encode(self.byAssetType, forKey: .byAssetType)
+        try container.encode(self.byAccount, forKey: .byAccount)
+        try container.encode(self.borrowed, forKey: .borrowed)
+        try container.encode(self.unpriced, forKey: .unpriced)
     }
 }
 
@@ -7660,6 +8271,54 @@ extension API.InvestmentAccountsResponse {
     }
 }
 
+extension API.InvestmentAllocationResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case items
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._items = try container.decode(Lossy<API.CurrencyAllocation>.self, forKey: .items)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case items
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.items, forKey: .items)
+    }
+}
+
+extension API.InvestmentPerformanceResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case series
+        case returns
+        case leftOut
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._series = try container.decode(Lossy<API.PortfolioSeries>.self, forKey: .series)
+        self._returns = try container.decode(Lossy<API.PeriodReturns>.self, forKey: .returns)
+        self._leftOut = try container.decode(Lossy<API.LeftOutAccount>.self, forKey: .leftOut)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case series
+        case returns
+        case leftOut = "left_out"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.series, forKey: .series)
+        try container.encode(self.returns, forKey: .returns)
+        try container.encode(self.leftOut, forKey: .leftOut)
+    }
+}
+
 extension API.KlarnaImportRequest {
     private enum DecodingKeys: String, CodingKey {
         case bankAccountId
@@ -7733,6 +8392,34 @@ extension API.KlarnaImportResponse {
         try container.encodeIfPresent(self.drift, forKey: .drift)
         try container.encode(self.declined, forKey: .declined)
         try container.encode(self.unrecognizedPlans, forKey: .unrecognizedPlans)
+    }
+}
+
+extension API.LeftOutAccount {
+    private enum DecodingKeys: String, CodingKey {
+        case bankAccountId
+        case name
+        case reason
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.bankAccountId = try container.decode(UUID.self, forKey: .bankAccountId)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.reason = try container.decode(String.self, forKey: .reason)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case bankAccountId = "bank_account_id"
+        case name
+        case reason
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.bankAccountId, forKey: .bankAccountId)
+        try container.encode(self.name, forKey: .name)
+        try container.encode(self.reason, forKey: .reason)
     }
 }
 
@@ -8903,6 +9590,82 @@ extension API.PeriodResult {
     }
 }
 
+extension API.PeriodReturns {
+    private enum DecodingKeys: String, CodingKey {
+        case bankAccountId
+        case currency
+        case range
+        case start
+        case end
+        case startValue
+        case endValue
+        case netFlows
+        case gain
+        case timeWeighted
+        case timeWeightedAnnualized
+        case timeWeightedUnavailable
+        case moneyWeighted
+        case moneyWeightedAnnualized
+        case moneyWeightedUnavailable
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.bankAccountId = try container.decodeIfPresent(UUID.self, forKey: .bankAccountId)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.range = try container.decode(String.self, forKey: .range)
+        self.start = try container.decodeIfPresent(Date.self, forKey: .start)
+        self.end = try container.decodeIfPresent(Date.self, forKey: .end)
+        self.startValue = try container.decodeIfPresent(Int.self, forKey: .startValue)
+        self.endValue = try container.decodeIfPresent(Int.self, forKey: .endValue)
+        self.netFlows = try container.decodeIfPresent(Int.self, forKey: .netFlows)
+        self.gain = try container.decodeIfPresent(Int.self, forKey: .gain)
+        self.timeWeighted = try container.decodeIfPresent(Double.self, forKey: .timeWeighted)
+        self.timeWeightedAnnualized = try container.decodeIfPresent(Double.self, forKey: .timeWeightedAnnualized)
+        self.timeWeightedUnavailable = try container.decodeIfPresent(String.self, forKey: .timeWeightedUnavailable)
+        self.moneyWeighted = try container.decodeIfPresent(Double.self, forKey: .moneyWeighted)
+        self.moneyWeightedAnnualized = try container.decodeIfPresent(Double.self, forKey: .moneyWeightedAnnualized)
+        self.moneyWeightedUnavailable = try container.decodeIfPresent(String.self, forKey: .moneyWeightedUnavailable)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case bankAccountId = "bank_account_id"
+        case currency
+        case range
+        case start
+        case end
+        case startValue = "start_value"
+        case endValue = "end_value"
+        case netFlows = "net_flows"
+        case gain
+        case timeWeighted = "time_weighted"
+        case timeWeightedAnnualized = "time_weighted_annualized"
+        case timeWeightedUnavailable = "time_weighted_unavailable"
+        case moneyWeighted = "money_weighted"
+        case moneyWeightedAnnualized = "money_weighted_annualized"
+        case moneyWeightedUnavailable = "money_weighted_unavailable"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.bankAccountId, forKey: .bankAccountId)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.range, forKey: .range)
+        try container.encodeIfPresent(self.start.map(API.Day.init), forKey: .start)
+        try container.encodeIfPresent(self.end.map(API.Day.init), forKey: .end)
+        try container.encodeIfPresent(self.startValue, forKey: .startValue)
+        try container.encodeIfPresent(self.endValue, forKey: .endValue)
+        try container.encodeIfPresent(self.netFlows, forKey: .netFlows)
+        try container.encodeIfPresent(self.gain, forKey: .gain)
+        try container.encodeIfPresent(self.timeWeighted, forKey: .timeWeighted)
+        try container.encodeIfPresent(self.timeWeightedAnnualized, forKey: .timeWeightedAnnualized)
+        try container.encodeIfPresent(self.timeWeightedUnavailable, forKey: .timeWeightedUnavailable)
+        try container.encodeIfPresent(self.moneyWeighted, forKey: .moneyWeighted)
+        try container.encodeIfPresent(self.moneyWeightedAnnualized, forKey: .moneyWeightedAnnualized)
+        try container.encodeIfPresent(self.moneyWeightedUnavailable, forKey: .moneyWeightedUnavailable)
+    }
+}
+
 extension API.PlaceCreate {
     private enum DecodingKeys: String, CodingKey {
         case name
@@ -9161,6 +9924,62 @@ extension API.PlaceUpdate {
         if let value = self.photoUrl { try container.encode(value, forKey: .photoUrl) }
         if let value = self.website { try container.encode(value, forKey: .website) }
         if let value = self.phone { try container.encode(value, forKey: .phone) }
+    }
+}
+
+extension API.PortfolioSeries {
+    private enum DecodingKeys: String, CodingKey {
+        case bankAccountId
+        case currency
+        case points
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.bankAccountId = try container.decodeIfPresent(UUID.self, forKey: .bankAccountId)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self._points = try container.decode(Lossy<API.ValuePoint>.self, forKey: .points)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case bankAccountId = "bank_account_id"
+        case currency
+        case points
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.bankAccountId, forKey: .bankAccountId)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.points, forKey: .points)
+    }
+}
+
+extension API.PriceChangeSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case date
+        case oldAmount
+        case newAmount
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.date = try container.decode(Date.self, forKey: .date)
+        self.oldAmount = try container.decode(Int.self, forKey: .oldAmount)
+        self.newAmount = try container.decode(Int.self, forKey: .newAmount)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case date
+        case oldAmount = "old_amount"
+        case newAmount = "new_amount"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(API.Day(self.date), forKey: .date)
+        try container.encode(self.oldAmount, forKey: .oldAmount)
+        try container.encode(self.newAmount, forKey: .newAmount)
     }
 }
 
@@ -9732,6 +10551,269 @@ extension API.RecurrenceSchema {
     }
 }
 
+extension API.RecurringResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case series
+        case upcoming
+        case totals
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._series = try container.decode(Lossy<API.RecurringSeriesSchema>.self, forKey: .series)
+        self._upcoming = try container.decode(Lossy<API.UpcomingPayment>.self, forKey: .upcoming)
+        self._totals = try container.decode(Lossy<API.RecurringTotal>.self, forKey: .totals)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case series
+        case upcoming
+        case totals
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.series, forKey: .series)
+        try container.encode(self.upcoming, forKey: .upcoming)
+        try container.encode(self.totals, forKey: .totals)
+    }
+}
+
+extension API.RecurringReviewCreate {
+    private enum DecodingKeys: String, CodingKey {
+        case key
+        case typicalAmount
+        case decision
+        case name
+        case kind
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.typicalAmount = try container.decode(Int.self, forKey: .typicalAmount)
+        self.decision = try container.decodeIfPresent(API.RecurringDecision.self, forKey: .decision)
+        self.name = try container.decodeIfPresent(String.self, forKey: .name)
+        self.kind = try container.decodeIfPresent(API.RecurringKind.self, forKey: .kind)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case key
+        case typicalAmount = "typical_amount"
+        case decision
+        case name
+        case kind
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.key, forKey: .key)
+        try container.encode(self.typicalAmount, forKey: .typicalAmount)
+        try container.encodeIfPresent(self.decision, forKey: .decision)
+        try container.encodeIfPresent(self.name, forKey: .name)
+        try container.encodeIfPresent(self.kind, forKey: .kind)
+    }
+}
+
+extension API.RecurringReviewSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case key
+        case typicalAmount
+        case decision
+        case name
+        case kind
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.typicalAmount = try container.decode(Int.self, forKey: .typicalAmount)
+        self.decision = try container.decodeIfPresent(API.RecurringDecision.self, forKey: .decision)
+        self.name = try container.decodeIfPresent(String.self, forKey: .name)
+        self.kind = try container.decodeIfPresent(API.RecurringKind.self, forKey: .kind)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case key
+        case typicalAmount = "typical_amount"
+        case decision
+        case name
+        case kind
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.key, forKey: .key)
+        try container.encode(self.typicalAmount, forKey: .typicalAmount)
+        try container.encodeIfPresent(self.decision, forKey: .decision)
+        try container.encodeIfPresent(self.name, forKey: .name)
+        try container.encodeIfPresent(self.kind, forKey: .kind)
+    }
+}
+
+extension API.RecurringReviewUpdate {
+    private enum EncodingKeys: String, CodingKey {
+        case decision
+        case name
+        case kind
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.decision { try container.encode(value, forKey: .decision) }
+        if let value = self.name { try container.encode(value, forKey: .name) }
+        if let value = self.kind { try container.encode(value, forKey: .kind) }
+    }
+}
+
+extension API.RecurringSeriesSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case key
+        case reviewId
+        case decision
+        case name
+        case detectedName
+        case kind
+        case cadence
+        case currency
+        case direction
+        case isBusiness
+        case bankAccountId
+        case logoUrl
+        case typicalAmount
+        case variable
+        case monthlyAmount
+        case count
+        case firstDate
+        case lastDate
+        case lastAmount
+        case status
+        case nextDate
+        case nextAmount
+        case priceChanges
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.reviewId = try container.decodeIfPresent(UUID.self, forKey: .reviewId)
+        self.decision = try container.decodeIfPresent(API.RecurringDecision.self, forKey: .decision)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.detectedName = try container.decode(String.self, forKey: .detectedName)
+        self.kind = try container.decode(API.RecurringKind.self, forKey: .kind)
+        self.cadence = try container.decode(API.RecurringCadence.self, forKey: .cadence)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.direction = try container.decode(API.TransactionDirection.self, forKey: .direction)
+        self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
+        self.bankAccountId = try container.decode(UUID.self, forKey: .bankAccountId)
+        self.logoUrl = try container.decodeIfPresent(String.self, forKey: .logoUrl)
+        self.typicalAmount = try container.decode(Int.self, forKey: .typicalAmount)
+        self.variable = try container.decode(Bool.self, forKey: .variable)
+        self.monthlyAmount = try container.decode(Int.self, forKey: .monthlyAmount)
+        self.count = try container.decode(Int.self, forKey: .count)
+        self.firstDate = try container.decode(Date.self, forKey: .firstDate)
+        self.lastDate = try container.decode(Date.self, forKey: .lastDate)
+        self.lastAmount = try container.decode(Int.self, forKey: .lastAmount)
+        self.status = try container.decode(API.RecurringStatus.self, forKey: .status)
+        self.nextDate = try container.decodeIfPresent(Date.self, forKey: .nextDate)
+        self.nextAmount = try container.decodeIfPresent(Int.self, forKey: .nextAmount)
+        self._priceChanges = try container.decode(Lossy<API.PriceChangeSchema>.self, forKey: .priceChanges)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case key
+        case reviewId = "review_id"
+        case decision
+        case name
+        case detectedName = "detected_name"
+        case kind
+        case cadence
+        case currency
+        case direction
+        case isBusiness = "is_business"
+        case bankAccountId = "bank_account_id"
+        case logoUrl = "logo_url"
+        case typicalAmount = "typical_amount"
+        case variable
+        case monthlyAmount = "monthly_amount"
+        case count
+        case firstDate = "first_date"
+        case lastDate = "last_date"
+        case lastAmount = "last_amount"
+        case status
+        case nextDate = "next_date"
+        case nextAmount = "next_amount"
+        case priceChanges = "price_changes"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.key, forKey: .key)
+        try container.encodeIfPresent(self.reviewId, forKey: .reviewId)
+        try container.encodeIfPresent(self.decision, forKey: .decision)
+        try container.encode(self.name, forKey: .name)
+        try container.encode(self.detectedName, forKey: .detectedName)
+        try container.encode(self.kind, forKey: .kind)
+        try container.encode(self.cadence, forKey: .cadence)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.direction, forKey: .direction)
+        try container.encode(self.isBusiness, forKey: .isBusiness)
+        try container.encode(self.bankAccountId, forKey: .bankAccountId)
+        try container.encodeIfPresent(self.logoUrl, forKey: .logoUrl)
+        try container.encode(self.typicalAmount, forKey: .typicalAmount)
+        try container.encode(self.variable, forKey: .variable)
+        try container.encode(self.monthlyAmount, forKey: .monthlyAmount)
+        try container.encode(self.count, forKey: .count)
+        try container.encode(API.Day(self.firstDate), forKey: .firstDate)
+        try container.encode(API.Day(self.lastDate), forKey: .lastDate)
+        try container.encode(self.lastAmount, forKey: .lastAmount)
+        try container.encode(self.status, forKey: .status)
+        try container.encodeIfPresent(self.nextDate.map(API.Day.init), forKey: .nextDate)
+        try container.encodeIfPresent(self.nextAmount, forKey: .nextAmount)
+        try container.encode(self.priceChanges, forKey: .priceChanges)
+    }
+}
+
+extension API.RecurringTotal {
+    private enum DecodingKeys: String, CodingKey {
+        case currency
+        case isBusiness
+        case moneyOut
+        case subscriptions
+        case moneyIn
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
+        self.moneyOut = try container.decode(Int.self, forKey: .moneyOut)
+        self.subscriptions = try container.decode(Int.self, forKey: .subscriptions)
+        self.moneyIn = try container.decode(Int.self, forKey: .moneyIn)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case currency
+        case isBusiness = "is_business"
+        case moneyOut = "money_out"
+        case subscriptions
+        case moneyIn = "money_in"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.isBusiness, forKey: .isBusiness)
+        try container.encode(self.moneyOut, forKey: .moneyOut)
+        try container.encode(self.subscriptions, forKey: .subscriptions)
+        try container.encode(self.moneyIn, forKey: .moneyIn)
+    }
+}
+
 extension API.ReflectionAnswer {
     private enum DecodingKeys: String, CodingKey {
         case answer
@@ -10109,6 +11191,86 @@ extension API.SummaryMonth {
         try container.encode(self.month, forKey: .month)
         try container.encode(self.income, forKey: .income)
         try container.encode(self.spending, forKey: .spending)
+    }
+}
+
+extension API.TagListResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case items
+        case names
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._items = try container.decode(Lossy<API.TagSummary>.self, forKey: .items)
+        self.names = try container.decode([String].self, forKey: .names)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case items
+        case names
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.items, forKey: .items)
+        try container.encode(self.names, forKey: .names)
+    }
+}
+
+extension API.TagSummary {
+    private enum DecodingKeys: String, CodingKey {
+        case tag
+        case count
+        case totals
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.tag = try container.decode(String.self, forKey: .tag)
+        self.count = try container.decode(Int.self, forKey: .count)
+        self._totals = try container.decode(Lossy<API.TagTotal>.self, forKey: .totals)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case tag
+        case count
+        case totals
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.tag, forKey: .tag)
+        try container.encode(self.count, forKey: .count)
+        try container.encode(self.totals, forKey: .totals)
+    }
+}
+
+extension API.TagTotal {
+    private enum DecodingKeys: String, CodingKey {
+        case currency
+        case spent
+        case received
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.spent = try container.decode(Int.self, forKey: .spent)
+        self.received = try container.decode(Int.self, forKey: .received)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case currency
+        case spent
+        case received
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.spent, forKey: .spent)
+        try container.encode(self.received, forKey: .received)
     }
 }
 
@@ -10959,6 +12121,8 @@ extension API.TransactionRenameResponse {
         case isBusiness
         case companyAccount
         case transferId
+        case tags
+        case reviewed
         case suggestions
         case investmentKind
     }
@@ -10985,6 +12149,8 @@ extension API.TransactionRenameResponse {
         self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
         self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
+        self.tags = try container.decode([String].self, forKey: .tags)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
         self._suggestions = try container.decode(Lossy<API.NameSuggestion>.self, forKey: .suggestions)
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
@@ -11010,6 +12176,8 @@ extension API.TransactionRenameResponse {
         case isBusiness = "is_business"
         case companyAccount = "company_account"
         case transferId = "transfer_id"
+        case tags
+        case reviewed
         case suggestions
         case investmentKind = "investment_kind"
     }
@@ -11036,6 +12204,8 @@ extension API.TransactionRenameResponse {
         try container.encode(self.isBusiness, forKey: .isBusiness)
         try container.encode(self.companyAccount, forKey: .companyAccount)
         try container.encodeIfPresent(self.transferId, forKey: .transferId)
+        try container.encode(self.tags, forKey: .tags)
+        try container.encode(self.reviewed, forKey: .reviewed)
         try container.encode(self.suggestions, forKey: .suggestions)
         try container.encodeIfPresent(self.investmentKind, forKey: .investmentKind)
     }
@@ -11063,6 +12233,8 @@ extension API.TransactionSchema {
         case isBusiness
         case companyAccount
         case transferId
+        case tags
+        case reviewed
         case investmentKind
     }
 
@@ -11088,6 +12260,8 @@ extension API.TransactionSchema {
         self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
         self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
+        self.tags = try container.decode([String].self, forKey: .tags)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
 
@@ -11112,6 +12286,8 @@ extension API.TransactionSchema {
         case isBusiness = "is_business"
         case companyAccount = "company_account"
         case transferId = "transfer_id"
+        case tags
+        case reviewed
         case investmentKind = "investment_kind"
     }
 
@@ -11137,6 +12313,8 @@ extension API.TransactionSchema {
         try container.encode(self.isBusiness, forKey: .isBusiness)
         try container.encode(self.companyAccount, forKey: .companyAccount)
         try container.encodeIfPresent(self.transferId, forKey: .transferId)
+        try container.encode(self.tags, forKey: .tags)
+        try container.encode(self.reviewed, forKey: .reviewed)
         try container.encodeIfPresent(self.investmentKind, forKey: .investmentKind)
     }
 }
@@ -11182,6 +12360,8 @@ extension API.TransactionUpdate {
         case categoryId = "category_id"
         case isBusiness = "is_business"
         case note
+        case tags
+        case reviewed
     }
 
     func encode(to encoder: Encoder) throws {
@@ -11189,6 +12369,8 @@ extension API.TransactionUpdate {
         if let value = self.categoryId { try container.encode(value, forKey: .categoryId) }
         if let value = self.isBusiness { try container.encode(value, forKey: .isBusiness) }
         if let value = self.note { try container.encode(value, forKey: .note) }
+        if let value = self.tags { try container.encode(value, forKey: .tags) }
+        if let value = self.reviewed { try container.encode(value, forKey: .reviewed) }
     }
 }
 
@@ -11214,6 +12396,8 @@ extension API.TransactionUpdateResponse {
         case isBusiness
         case companyAccount
         case transferId
+        case tags
+        case reviewed
         case sameDescriptionCount
         case investmentKind
     }
@@ -11240,6 +12424,8 @@ extension API.TransactionUpdateResponse {
         self.isBusiness = try container.decodeIfPresent(Bool.self, forKey: .isBusiness) ?? false
         self.companyAccount = try container.decodeIfPresent(Bool.self, forKey: .companyAccount) ?? false
         self.transferId = try container.decodeIfPresent(UUID.self, forKey: .transferId)
+        self.tags = try container.decode([String].self, forKey: .tags)
+        self.reviewed = try container.decodeIfPresent(Bool.self, forKey: .reviewed) ?? true
         self.sameDescriptionCount = try container.decodeIfPresent(Int.self, forKey: .sameDescriptionCount) ?? 0
         self.investmentKind = try container.decodeIfPresent(API.InvestmentKind.self, forKey: .investmentKind)
     }
@@ -11265,6 +12451,8 @@ extension API.TransactionUpdateResponse {
         case isBusiness = "is_business"
         case companyAccount = "company_account"
         case transferId = "transfer_id"
+        case tags
+        case reviewed
         case sameDescriptionCount = "same_description_count"
         case investmentKind = "investment_kind"
     }
@@ -11291,6 +12479,8 @@ extension API.TransactionUpdateResponse {
         try container.encode(self.isBusiness, forKey: .isBusiness)
         try container.encode(self.companyAccount, forKey: .companyAccount)
         try container.encodeIfPresent(self.transferId, forKey: .transferId)
+        try container.encode(self.tags, forKey: .tags)
+        try container.encode(self.reviewed, forKey: .reviewed)
         try container.encode(self.sameDescriptionCount, forKey: .sameDescriptionCount)
         try container.encodeIfPresent(self.investmentKind, forKey: .investmentKind)
     }
@@ -11356,6 +12546,66 @@ extension API.TypicalDay {
     }
 }
 
+extension API.UpcomingPayment {
+    private enum DecodingKeys: String, CodingKey {
+        case key
+        case typicalAmount
+        case name
+        case kind
+        case date
+        case amount
+        case currency
+        case direction
+        case isBusiness
+        case bankAccountId
+        case late
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.typicalAmount = try container.decode(Int.self, forKey: .typicalAmount)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.kind = try container.decode(API.RecurringKind.self, forKey: .kind)
+        self.date = try container.decode(Date.self, forKey: .date)
+        self.amount = try container.decode(Int.self, forKey: .amount)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.direction = try container.decode(API.TransactionDirection.self, forKey: .direction)
+        self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
+        self.bankAccountId = try container.decode(UUID.self, forKey: .bankAccountId)
+        self.late = try container.decode(Bool.self, forKey: .late)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case key
+        case typicalAmount = "typical_amount"
+        case name
+        case kind
+        case date
+        case amount
+        case currency
+        case direction
+        case isBusiness = "is_business"
+        case bankAccountId = "bank_account_id"
+        case late
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.key, forKey: .key)
+        try container.encode(self.typicalAmount, forKey: .typicalAmount)
+        try container.encode(self.name, forKey: .name)
+        try container.encode(self.kind, forKey: .kind)
+        try container.encode(API.Day(self.date), forKey: .date)
+        try container.encode(self.amount, forKey: .amount)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.direction, forKey: .direction)
+        try container.encode(self.isBusiness, forKey: .isBusiness)
+        try container.encode(self.bankAccountId, forKey: .bankAccountId)
+        try container.encode(self.late, forKey: .late)
+    }
+}
+
 extension API.ValidationError {
     private enum DecodingKeys: String, CodingKey {
         case loc
@@ -11389,6 +12639,30 @@ extension API.ValidationError {
         try container.encode(self.type, forKey: .type)
         try container.encodeIfPresent(self.input, forKey: .input)
         try container.encodeIfPresent(self.ctx, forKey: .ctx)
+    }
+}
+
+extension API.ValuePoint {
+    private enum DecodingKeys: String, CodingKey {
+        case day
+        case value
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.day = try container.decode(Date.self, forKey: .day)
+        self.value = try container.decode(Int.self, forKey: .value)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case day
+        case value
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(API.Day(self.day), forKey: .day)
+        try container.encode(self.value, forKey: .value)
     }
 }
 
