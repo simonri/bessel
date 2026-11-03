@@ -385,12 +385,6 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     statement = update(Transaction).where(Transaction.user_id == user_id, Transaction.category_id == source_id).values(category_id=target_id)
     return await self.execute_for_rowcount(statement)
 
-  async def clear_category(self, user_id: UUID, category_id: UUID) -> int:
-    statement = (
-      update(Transaction).where(Transaction.user_id == user_id, Transaction.category_id == category_id).values(category_id=None, category_rule_id=None)
-    )
-    return await self.execute_for_rowcount(statement)
-
   async def set_category_from_rule(self, transaction_id: UUID, category_id: UUID, *, rule_id: UUID, mark_business: bool) -> None:
     values: dict[str, Any] = {"category_id": category_id, "category_rule_id": rule_id}
     if mark_business:

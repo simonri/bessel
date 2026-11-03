@@ -184,3 +184,5 @@ class TestDeleting:
 
     assert set(await _listed(client)) == {"Privat", "Utanför rapporter", "Mat"}
     assert (await _filed(session))["ICA Kvantum"][0] == UUID(food["id"])
+    assert (await client.delete(f"/v1/categories/{outside['id']}")).status_code == 204
+    assert set(await _listed(client)) == {"Privat", "Mat"}

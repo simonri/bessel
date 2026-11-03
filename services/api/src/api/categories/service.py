@@ -80,15 +80,13 @@ class CategoryService:
         raise ValidationError("Move them to another category, not a group")
       await transactions.move_category(user_id, category.id, target.id)
       await rules.retarget(user_id, category.id, target.id)
-    elif leave_uncategorized:
-      await transactions.clear_category(user_id, category.id)
-      await rules.delete_for_category(user_id, category.id)
-    else:
+    elif not leave_uncategorized:
       transaction_count = (await transactions.count_by_category(user_id)).get(category.id, 0)
       rule_count = (await rules.count_by_category(user_id)).get(category.id, 0)
       if transaction_count or rule_count:
         held = f"{_plural(transaction_count, 'transaction')} and {_plural(rule_count, 'rule')}"
         raise ConflictError(f"{held} use it: choose a category to move them to, or leave them uncategorized")
+    # Left uncategorized, its transactions lose it and its rules go with it, by the foreign keys.
     await categories.delete(category, flush=True)
 
   async def create_rule(self, session: AsyncSession, user_id: UUID, body: CategoryRuleCreate) -> tuple[CategoryRule, int]:

@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from uuid import UUID
 
-from sqlalchemy import delete, exists, func, select, update
+from sqlalchemy import exists, func, select, update
 
 from api.common.repository.base import RepositoryBase, RepositoryIDMixin, RepositoryUserMixin
 from api.exceptions import ResourceNotFound
@@ -36,6 +36,3 @@ class CategoryRuleRepository(RepositoryBase[CategoryRule], RepositoryIDMixin[Cat
   async def retarget(self, user_id: UUID, source_id: UUID, target_id: UUID) -> int:
     statement = update(CategoryRule).where(CategoryRule.user_id == user_id, CategoryRule.category_id == source_id).values(category_id=target_id)
     return await self.execute_for_rowcount(statement)
-
-  async def delete_for_category(self, user_id: UUID, category_id: UUID) -> int:
-    return await self.execute_for_rowcount(delete(CategoryRule).where(CategoryRule.user_id == user_id, CategoryRule.category_id == category_id))
