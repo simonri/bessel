@@ -7213,6 +7213,204 @@
         }
       }
     },
+    "/v1/recurring": {
+      "get": {
+        "tags": [
+          "recurring"
+        ],
+        "summary": "List Recurring Payments",
+        "description": "Bills, subscriptions and income that repeat, detected from the transactions, with what's due next.",
+        "operationId": "list_recurring_payments",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 366,
+              "minimum": 1,
+              "description": "How many days ahead, from today, upcoming payments cover.",
+              "default": 30,
+              "title": "Days"
+            },
+            "description": "How many days ahead, from today, upcoming payments cover."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/recurring/reviews": {
+      "post": {
+        "tags": [
+          "recurring"
+        ],
+        "summary": "Review Recurring Series",
+        "description": "Confirms, dismisses, renames or changes the kind of a detected series, found by its key and typical amount.",
+        "operationId": "create_recurring_review",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringReviewCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringReviewSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/recurring/reviews/{review_id}": {
+      "patch": {
+        "tags": [
+          "recurring"
+        ],
+        "summary": "Update Recurring Review",
+        "operationId": "update_recurring_review",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "review_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Review Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecurringReviewUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecurringReviewSchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "recurring"
+        ],
+        "summary": "Delete Recurring Review",
+        "description": "Back to the series as detected.",
+        "operationId": "delete_recurring_review",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "review_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Review Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/search": {
       "get": {
         "tags": [
@@ -12099,6 +12297,16 @@
           "updated"
         ],
         "title": "BulkUpdateResponse"
+      },
+      "Cadence": {
+        "type": "string",
+        "enum": [
+          "weekly",
+          "monthly",
+          "quarterly",
+          "yearly"
+        ],
+        "title": "Cadence"
       },
       "CalendarAccountListResponse": {
         "properties": {
@@ -19993,6 +20201,30 @@
         "type": "object",
         "title": "PlaceUpdate"
       },
+      "PriceChangeSchema": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "old_amount": {
+            "type": "integer",
+            "title": "Old Amount"
+          },
+          "new_amount": {
+            "type": "integer",
+            "title": "New Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "old_amount",
+          "new_amount"
+        ],
+        "title": "PriceChangeSchema"
+      },
       "ProjectCreate": {
         "properties": {
           "name": {
@@ -20775,6 +21007,419 @@
         ],
         "title": "RecurrenceSchema"
       },
+      "RecurringDecision": {
+        "type": "string",
+        "enum": [
+          "confirmed",
+          "dismissed"
+        ],
+        "title": "RecurringDecision"
+      },
+      "RecurringKind": {
+        "type": "string",
+        "enum": [
+          "bill",
+          "subscription",
+          "income"
+        ],
+        "title": "RecurringKind"
+      },
+      "RecurringResponse": {
+        "properties": {
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/RecurringSeriesSchema"
+            },
+            "type": "array",
+            "title": "Series",
+            "description": "Every series detected, dismissed ones included, the latest payment first."
+          },
+          "upcoming": {
+            "items": {
+              "$ref": "#/components/schemas/UpcomingPayment"
+            },
+            "type": "array",
+            "title": "Upcoming",
+            "description": "Late payments, then those expected from today on, soonest first; none from dismissed or ended series."
+          },
+          "totals": {
+            "items": {
+              "$ref": "#/components/schemas/RecurringTotal"
+            },
+            "type": "array",
+            "title": "Totals",
+            "description": "Per currency and owner, from series still running; currencies are never added together."
+          }
+        },
+        "type": "object",
+        "required": [
+          "series",
+          "upcoming",
+          "totals"
+        ],
+        "title": "RecurringResponse"
+      },
+      "RecurringReviewCreate": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Key"
+          },
+          "typical_amount": {
+            "type": "integer",
+            "title": "Typical Amount"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurringDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurringKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "typical_amount"
+        ],
+        "title": "RecurringReviewCreate"
+      },
+      "RecurringReviewSchema": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id",
+            "description": "The ID of the object."
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "typical_amount": {
+            "type": "integer",
+            "title": "Typical Amount"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurringDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurringKind"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "typical_amount",
+          "decision",
+          "name",
+          "kind"
+        ],
+        "title": "RecurringReviewSchema"
+      },
+      "RecurringReviewUpdate": {
+        "properties": {
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurringDecision"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null takes back a confirmation or dismissal."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "Null goes back to the detected name."
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurringKind"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null goes back to the detected kind."
+          }
+        },
+        "type": "object",
+        "title": "RecurringReviewUpdate"
+      },
+      "RecurringSeriesSchema": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "The group of transactions it comes from; with `typical_amount`, what a review refers to."
+          },
+          "review_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Id",
+            "description": "The user's review of it, if any."
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RecurringDecision"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "The user's name for it, or what the transactions are called."
+          },
+          "detected_name": {
+            "type": "string",
+            "title": "Detected Name"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/RecurringKind"
+          },
+          "cadence": {
+            "$ref": "#/components/schemas/Cadence"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/TransactionDirection"
+          },
+          "is_business": {
+            "type": "boolean",
+            "title": "Is Business",
+            "description": "The company's money rather than the user's own."
+          },
+          "bank_account_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Bank Account Id",
+            "description": "The account its latest payment was on."
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "typical_amount": {
+            "type": "integer",
+            "title": "Typical Amount",
+            "description": "Minor units: the latest price, or the middle of recent amounts when they vary."
+          },
+          "variable": {
+            "type": "boolean",
+            "title": "Variable",
+            "description": "Whether the amount changes from one payment to the next."
+          },
+          "monthly_amount": {
+            "type": "integer",
+            "title": "Monthly Amount",
+            "description": "What it comes to in an average month, in minor units."
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "description": "Payments seen in a row on this schedule."
+          },
+          "first_date": {
+            "type": "string",
+            "format": "date",
+            "title": "First Date"
+          },
+          "last_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Last Date"
+          },
+          "last_amount": {
+            "type": "integer",
+            "title": "Last Amount"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "next_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Date",
+            "description": "When the next payment is expected; earlier than today when it's late, none once it has ended."
+          },
+          "next_amount": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Amount"
+          },
+          "price_changes": {
+            "items": {
+              "$ref": "#/components/schemas/PriceChangeSchema"
+            },
+            "type": "array",
+            "title": "Price Changes",
+            "description": "Oldest first."
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "review_id",
+          "decision",
+          "name",
+          "detected_name",
+          "kind",
+          "cadence",
+          "currency",
+          "direction",
+          "is_business",
+          "bank_account_id",
+          "logo_url",
+          "typical_amount",
+          "variable",
+          "monthly_amount",
+          "count",
+          "first_date",
+          "last_date",
+          "last_amount",
+          "status",
+          "next_date",
+          "next_amount",
+          "price_changes"
+        ],
+        "title": "RecurringSeriesSchema"
+      },
+      "RecurringTotal": {
+        "properties": {
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "is_business": {
+            "type": "boolean",
+            "title": "Is Business"
+          },
+          "money_out": {
+            "type": "integer",
+            "title": "Money Out",
+            "description": "Bills and subscriptions in an average month, in minor units."
+          },
+          "subscriptions": {
+            "type": "integer",
+            "title": "Subscriptions",
+            "description": "The subscriptions among them."
+          },
+          "money_in": {
+            "type": "integer",
+            "title": "Money In",
+            "description": "Income in an average month."
+          }
+        },
+        "type": "object",
+        "required": [
+          "currency",
+          "is_business",
+          "money_out",
+          "subscriptions",
+          "money_in"
+        ],
+        "title": "RecurringTotal"
+      },
       "ReflectionAnswer": {
         "properties": {
           "answer": {
@@ -21133,6 +21778,15 @@
           "stages"
         ],
         "title": "SleepSummaryResponse"
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "active",
+          "late",
+          "ended"
+        ],
+        "title": "Status"
       },
       "SummaryCategory": {
         "properties": {
@@ -23504,6 +24158,70 @@
           "steps"
         ],
         "title": "TypicalDay"
+      },
+      "UpcomingPayment": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "typical_amount": {
+            "type": "integer",
+            "title": "Typical Amount"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/RecurringKind"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "title": "Date"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/TransactionDirection"
+          },
+          "is_business": {
+            "type": "boolean",
+            "title": "Is Business"
+          },
+          "bank_account_id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Bank Account Id"
+          },
+          "late": {
+            "type": "boolean",
+            "title": "Late",
+            "description": "Was due before today and hasn't been seen yet."
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "typical_amount",
+          "name",
+          "kind",
+          "date",
+          "amount",
+          "currency",
+          "direction",
+          "is_business",
+          "bank_account_id",
+          "late"
+        ],
+        "title": "UpcomingPayment"
       },
       "ValidationError": {
         "properties": {

@@ -462,6 +462,16 @@ enum API {
         var updated: Int
     }
 
+    enum Cadence: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case weekly
+        case monthly
+        case quarterly
+        case yearly
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [Cadence] = [.weekly, .monthly, .quarterly, .yearly]
+    }
+
     struct CalendarAccountListResponse: Codable, Hashable {
         @Lossy var accounts: [CalendarAccountSchema]
     }
@@ -1794,6 +1804,12 @@ enum API {
         var phone: String??
     }
 
+    struct PriceChangeSchema: Codable, Hashable {
+        var date: Date
+        var oldAmount: Int
+        var newAmount: Int
+    }
+
     struct ProjectCreate: Codable, Hashable {
         var name: String
         var path: String?
@@ -1943,6 +1959,86 @@ enum API {
         var until: String?
     }
 
+    enum RecurringDecision: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case confirmed
+        case dismissed
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [RecurringDecision] = [.confirmed, .dismissed]
+    }
+
+    enum RecurringKind: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case bill
+        case subscription
+        case income
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [RecurringKind] = [.bill, .subscription, .income]
+    }
+
+    struct RecurringResponse: Codable, Hashable {
+        @Lossy var series: [RecurringSeriesSchema]
+        @Lossy var upcoming: [UpcomingPayment]
+        @Lossy var totals: [RecurringTotal]
+    }
+
+    struct RecurringReviewCreate: Codable, Hashable {
+        var key: String
+        var typicalAmount: Int
+        var decision: RecurringDecision?
+        var name: String?
+        var kind: RecurringKind?
+    }
+
+    struct RecurringReviewSchema: Codable, Hashable {
+        var id: UUID
+        var key: String
+        var typicalAmount: Int
+        var decision: RecurringDecision?
+        var name: String?
+        var kind: RecurringKind?
+    }
+
+    struct RecurringReviewUpdate: Encodable, Hashable {
+        var decision: RecurringDecision??
+        var name: String??
+        var kind: RecurringKind??
+    }
+
+    struct RecurringSeriesSchema: Codable, Hashable {
+        var key: String
+        var reviewId: UUID?
+        var decision: RecurringDecision?
+        var name: String
+        var detectedName: String
+        var kind: RecurringKind
+        var cadence: Cadence
+        var currency: String
+        var direction: TransactionDirection
+        var isBusiness: Bool
+        var bankAccountId: UUID
+        var logoUrl: String?
+        var typicalAmount: Int
+        var variable: Bool
+        var monthlyAmount: Int
+        var count: Int
+        var firstDate: Date
+        var lastDate: Date
+        var lastAmount: Int
+        var status: Status
+        var nextDate: Date?
+        var nextAmount: Int?
+        @Lossy var priceChanges: [PriceChangeSchema]
+    }
+
+    struct RecurringTotal: Codable, Hashable {
+        var currency: String
+        var isBusiness: Bool
+        var moneyOut: Int
+        var subscriptions: Int
+        var moneyIn: Int
+    }
+
     struct ReflectionAnswer: Codable, Hashable {
         var answer: String
     }
@@ -2022,6 +2118,15 @@ enum API {
     struct SleepSummaryResponse: Codable, Hashable {
         var totalAsleepSecs: Int
         @Lossy var stages: [SleepStageSummary]
+    }
+
+    enum Status: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case active
+        case late
+        case ended
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [Status] = [.active, .late, .ended]
     }
 
     struct SummaryCategory: Codable, Hashable {
@@ -2413,6 +2518,20 @@ enum API {
         var tasksCompleted: Double
         var gymShare: Double
         var steps: Int?
+    }
+
+    struct UpcomingPayment: Codable, Hashable {
+        var key: String
+        var typicalAmount: Int
+        var name: String
+        var kind: RecurringKind
+        var date: Date
+        var amount: Int
+        var currency: String
+        var direction: TransactionDirection
+        var isBusiness: Bool
+        var bankAccountId: UUID
+        var late: Bool
     }
 
     struct ValidationError: Codable, Hashable {
@@ -9164,6 +9283,34 @@ extension API.PlaceUpdate {
     }
 }
 
+extension API.PriceChangeSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case date
+        case oldAmount
+        case newAmount
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.date = try container.decode(Date.self, forKey: .date)
+        self.oldAmount = try container.decode(Int.self, forKey: .oldAmount)
+        self.newAmount = try container.decode(Int.self, forKey: .newAmount)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case date
+        case oldAmount = "old_amount"
+        case newAmount = "new_amount"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(API.Day(self.date), forKey: .date)
+        try container.encode(self.oldAmount, forKey: .oldAmount)
+        try container.encode(self.newAmount, forKey: .newAmount)
+    }
+}
+
 extension API.ProjectCreate {
     private enum DecodingKeys: String, CodingKey {
         case name
@@ -9729,6 +9876,269 @@ extension API.RecurrenceSchema {
         try container.encode(self.byWeekday, forKey: .byWeekday)
         try container.encodeIfPresent(self.count, forKey: .count)
         try container.encodeIfPresent(self.until, forKey: .until)
+    }
+}
+
+extension API.RecurringResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case series
+        case upcoming
+        case totals
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._series = try container.decode(Lossy<API.RecurringSeriesSchema>.self, forKey: .series)
+        self._upcoming = try container.decode(Lossy<API.UpcomingPayment>.self, forKey: .upcoming)
+        self._totals = try container.decode(Lossy<API.RecurringTotal>.self, forKey: .totals)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case series
+        case upcoming
+        case totals
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.series, forKey: .series)
+        try container.encode(self.upcoming, forKey: .upcoming)
+        try container.encode(self.totals, forKey: .totals)
+    }
+}
+
+extension API.RecurringReviewCreate {
+    private enum DecodingKeys: String, CodingKey {
+        case key
+        case typicalAmount
+        case decision
+        case name
+        case kind
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.typicalAmount = try container.decode(Int.self, forKey: .typicalAmount)
+        self.decision = try container.decodeIfPresent(API.RecurringDecision.self, forKey: .decision)
+        self.name = try container.decodeIfPresent(String.self, forKey: .name)
+        self.kind = try container.decodeIfPresent(API.RecurringKind.self, forKey: .kind)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case key
+        case typicalAmount = "typical_amount"
+        case decision
+        case name
+        case kind
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.key, forKey: .key)
+        try container.encode(self.typicalAmount, forKey: .typicalAmount)
+        try container.encodeIfPresent(self.decision, forKey: .decision)
+        try container.encodeIfPresent(self.name, forKey: .name)
+        try container.encodeIfPresent(self.kind, forKey: .kind)
+    }
+}
+
+extension API.RecurringReviewSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case id
+        case key
+        case typicalAmount
+        case decision
+        case name
+        case kind
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.typicalAmount = try container.decode(Int.self, forKey: .typicalAmount)
+        self.decision = try container.decodeIfPresent(API.RecurringDecision.self, forKey: .decision)
+        self.name = try container.decodeIfPresent(String.self, forKey: .name)
+        self.kind = try container.decodeIfPresent(API.RecurringKind.self, forKey: .kind)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case id
+        case key
+        case typicalAmount = "typical_amount"
+        case decision
+        case name
+        case kind
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.id, forKey: .id)
+        try container.encode(self.key, forKey: .key)
+        try container.encode(self.typicalAmount, forKey: .typicalAmount)
+        try container.encodeIfPresent(self.decision, forKey: .decision)
+        try container.encodeIfPresent(self.name, forKey: .name)
+        try container.encodeIfPresent(self.kind, forKey: .kind)
+    }
+}
+
+extension API.RecurringReviewUpdate {
+    private enum EncodingKeys: String, CodingKey {
+        case decision
+        case name
+        case kind
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        if let value = self.decision { try container.encode(value, forKey: .decision) }
+        if let value = self.name { try container.encode(value, forKey: .name) }
+        if let value = self.kind { try container.encode(value, forKey: .kind) }
+    }
+}
+
+extension API.RecurringSeriesSchema {
+    private enum DecodingKeys: String, CodingKey {
+        case key
+        case reviewId
+        case decision
+        case name
+        case detectedName
+        case kind
+        case cadence
+        case currency
+        case direction
+        case isBusiness
+        case bankAccountId
+        case logoUrl
+        case typicalAmount
+        case variable
+        case monthlyAmount
+        case count
+        case firstDate
+        case lastDate
+        case lastAmount
+        case status
+        case nextDate
+        case nextAmount
+        case priceChanges
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.reviewId = try container.decodeIfPresent(UUID.self, forKey: .reviewId)
+        self.decision = try container.decodeIfPresent(API.RecurringDecision.self, forKey: .decision)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.detectedName = try container.decode(String.self, forKey: .detectedName)
+        self.kind = try container.decode(API.RecurringKind.self, forKey: .kind)
+        self.cadence = try container.decode(API.Cadence.self, forKey: .cadence)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.direction = try container.decode(API.TransactionDirection.self, forKey: .direction)
+        self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
+        self.bankAccountId = try container.decode(UUID.self, forKey: .bankAccountId)
+        self.logoUrl = try container.decodeIfPresent(String.self, forKey: .logoUrl)
+        self.typicalAmount = try container.decode(Int.self, forKey: .typicalAmount)
+        self.variable = try container.decode(Bool.self, forKey: .variable)
+        self.monthlyAmount = try container.decode(Int.self, forKey: .monthlyAmount)
+        self.count = try container.decode(Int.self, forKey: .count)
+        self.firstDate = try container.decode(Date.self, forKey: .firstDate)
+        self.lastDate = try container.decode(Date.self, forKey: .lastDate)
+        self.lastAmount = try container.decode(Int.self, forKey: .lastAmount)
+        self.status = try container.decode(API.Status.self, forKey: .status)
+        self.nextDate = try container.decodeIfPresent(Date.self, forKey: .nextDate)
+        self.nextAmount = try container.decodeIfPresent(Int.self, forKey: .nextAmount)
+        self._priceChanges = try container.decode(Lossy<API.PriceChangeSchema>.self, forKey: .priceChanges)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case key
+        case reviewId = "review_id"
+        case decision
+        case name
+        case detectedName = "detected_name"
+        case kind
+        case cadence
+        case currency
+        case direction
+        case isBusiness = "is_business"
+        case bankAccountId = "bank_account_id"
+        case logoUrl = "logo_url"
+        case typicalAmount = "typical_amount"
+        case variable
+        case monthlyAmount = "monthly_amount"
+        case count
+        case firstDate = "first_date"
+        case lastDate = "last_date"
+        case lastAmount = "last_amount"
+        case status
+        case nextDate = "next_date"
+        case nextAmount = "next_amount"
+        case priceChanges = "price_changes"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.key, forKey: .key)
+        try container.encodeIfPresent(self.reviewId, forKey: .reviewId)
+        try container.encodeIfPresent(self.decision, forKey: .decision)
+        try container.encode(self.name, forKey: .name)
+        try container.encode(self.detectedName, forKey: .detectedName)
+        try container.encode(self.kind, forKey: .kind)
+        try container.encode(self.cadence, forKey: .cadence)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.direction, forKey: .direction)
+        try container.encode(self.isBusiness, forKey: .isBusiness)
+        try container.encode(self.bankAccountId, forKey: .bankAccountId)
+        try container.encodeIfPresent(self.logoUrl, forKey: .logoUrl)
+        try container.encode(self.typicalAmount, forKey: .typicalAmount)
+        try container.encode(self.variable, forKey: .variable)
+        try container.encode(self.monthlyAmount, forKey: .monthlyAmount)
+        try container.encode(self.count, forKey: .count)
+        try container.encode(API.Day(self.firstDate), forKey: .firstDate)
+        try container.encode(API.Day(self.lastDate), forKey: .lastDate)
+        try container.encode(self.lastAmount, forKey: .lastAmount)
+        try container.encode(self.status, forKey: .status)
+        try container.encodeIfPresent(self.nextDate.map(API.Day.init), forKey: .nextDate)
+        try container.encodeIfPresent(self.nextAmount, forKey: .nextAmount)
+        try container.encode(self.priceChanges, forKey: .priceChanges)
+    }
+}
+
+extension API.RecurringTotal {
+    private enum DecodingKeys: String, CodingKey {
+        case currency
+        case isBusiness
+        case moneyOut
+        case subscriptions
+        case moneyIn
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
+        self.moneyOut = try container.decode(Int.self, forKey: .moneyOut)
+        self.subscriptions = try container.decode(Int.self, forKey: .subscriptions)
+        self.moneyIn = try container.decode(Int.self, forKey: .moneyIn)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case currency
+        case isBusiness = "is_business"
+        case moneyOut = "money_out"
+        case subscriptions
+        case moneyIn = "money_in"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.isBusiness, forKey: .isBusiness)
+        try container.encode(self.moneyOut, forKey: .moneyOut)
+        try container.encode(self.subscriptions, forKey: .subscriptions)
+        try container.encode(self.moneyIn, forKey: .moneyIn)
     }
 }
 
@@ -11353,6 +11763,66 @@ extension API.TypicalDay {
         try container.encode(self.tasksCompleted, forKey: .tasksCompleted)
         try container.encode(self.gymShare, forKey: .gymShare)
         try container.encodeIfPresent(self.steps, forKey: .steps)
+    }
+}
+
+extension API.UpcomingPayment {
+    private enum DecodingKeys: String, CodingKey {
+        case key
+        case typicalAmount
+        case name
+        case kind
+        case date
+        case amount
+        case currency
+        case direction
+        case isBusiness
+        case bankAccountId
+        case late
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.typicalAmount = try container.decode(Int.self, forKey: .typicalAmount)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.kind = try container.decode(API.RecurringKind.self, forKey: .kind)
+        self.date = try container.decode(Date.self, forKey: .date)
+        self.amount = try container.decode(Int.self, forKey: .amount)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.direction = try container.decode(API.TransactionDirection.self, forKey: .direction)
+        self.isBusiness = try container.decode(Bool.self, forKey: .isBusiness)
+        self.bankAccountId = try container.decode(UUID.self, forKey: .bankAccountId)
+        self.late = try container.decode(Bool.self, forKey: .late)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case key
+        case typicalAmount = "typical_amount"
+        case name
+        case kind
+        case date
+        case amount
+        case currency
+        case direction
+        case isBusiness = "is_business"
+        case bankAccountId = "bank_account_id"
+        case late
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.key, forKey: .key)
+        try container.encode(self.typicalAmount, forKey: .typicalAmount)
+        try container.encode(self.name, forKey: .name)
+        try container.encode(self.kind, forKey: .kind)
+        try container.encode(API.Day(self.date), forKey: .date)
+        try container.encode(self.amount, forKey: .amount)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.direction, forKey: .direction)
+        try container.encode(self.isBusiness, forKey: .isBusiness)
+        try container.encode(self.bankAccountId, forKey: .bankAccountId)
+        try container.encode(self.late, forKey: .late)
     }
 }
 

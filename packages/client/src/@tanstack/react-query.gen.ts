@@ -36,6 +36,7 @@ import {
   createPlace,
   createProject,
   createRecipe,
+  createRecurringReview,
   createReset,
   createTask,
   createTimeEntry,
@@ -53,6 +54,7 @@ import {
   deletePlace,
   deleteProject,
   deleteRecipe,
+  deleteRecurringReview,
   deleteTask,
   deleteTaskAttachment,
   deleteTimeEntry,
@@ -137,6 +139,7 @@ import {
   listProjects,
   listRecipeCooks,
   listRecipes,
+  listRecurringPayments,
   listReflections,
   listResets,
   listTasks,
@@ -191,6 +194,7 @@ import {
   updatePlace,
   updateProject,
   updateRecipe,
+  updateRecurringReview,
   updateTask,
   updateTimeEntry,
   updateTimeProject,
@@ -277,6 +281,9 @@ import type {
   CreateRecipeData,
   CreateRecipeError,
   CreateRecipeResponse,
+  CreateRecurringReviewData,
+  CreateRecurringReviewError,
+  CreateRecurringReviewResponse,
   CreateResetData,
   CreateResetError,
   CreateResetResponse,
@@ -328,6 +335,9 @@ import type {
   DeleteRecipeData,
   DeleteRecipeError,
   DeleteRecipeResponse,
+  DeleteRecurringReviewData,
+  DeleteRecurringReviewError,
+  DeleteRecurringReviewResponse,
   DeleteTaskAttachmentData,
   DeleteTaskAttachmentError,
   DeleteTaskAttachmentResponse,
@@ -547,6 +557,9 @@ import type {
   ListRecipesData,
   ListRecipesError,
   ListRecipesResponse,
+  ListRecurringPaymentsData,
+  ListRecurringPaymentsError,
+  ListRecurringPaymentsResponse,
   ListReflectionsData,
   ListReflectionsError,
   ListReflectionsResponse,
@@ -698,6 +711,9 @@ import type {
   UpdateRecipeData,
   UpdateRecipeError,
   UpdateRecipeResponse,
+  UpdateRecurringReviewData,
+  UpdateRecurringReviewError,
+  UpdateRecurringReviewResponse,
   UpdateTaskData,
   UpdateTaskError,
   UpdateTaskResponse,
@@ -5192,6 +5208,121 @@ export const logRecipeCookedMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await logRecipeCooked({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listRecurringPaymentsQueryKey = (
+  options?: Options<ListRecurringPaymentsData>,
+) => createQueryKey("listRecurringPayments", options);
+
+/**
+ * List Recurring Payments
+ *
+ * Bills, subscriptions and income that repeat, detected from the transactions, with what's due next.
+ */
+export const listRecurringPaymentsOptions = (
+  options?: Options<ListRecurringPaymentsData>,
+) =>
+  queryOptions<
+    ListRecurringPaymentsResponse,
+    ListRecurringPaymentsError,
+    ListRecurringPaymentsResponse,
+    ReturnType<typeof listRecurringPaymentsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listRecurringPayments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listRecurringPaymentsQueryKey(options),
+  });
+
+/**
+ * Review Recurring Series
+ *
+ * Confirms, dismisses, renames or changes the kind of a detected series, found by its key and typical amount.
+ */
+export const createRecurringReviewMutation = (
+  options?: Partial<Options<CreateRecurringReviewData>>,
+): UseMutationOptions<
+  CreateRecurringReviewResponse,
+  CreateRecurringReviewError,
+  Options<CreateRecurringReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateRecurringReviewResponse,
+    CreateRecurringReviewError,
+    Options<CreateRecurringReviewData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createRecurringReview({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Recurring Review
+ *
+ * Back to the series as detected.
+ */
+export const deleteRecurringReviewMutation = (
+  options?: Partial<Options<DeleteRecurringReviewData>>,
+): UseMutationOptions<
+  DeleteRecurringReviewResponse,
+  DeleteRecurringReviewError,
+  Options<DeleteRecurringReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteRecurringReviewResponse,
+    DeleteRecurringReviewError,
+    Options<DeleteRecurringReviewData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteRecurringReview({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Recurring Review
+ */
+export const updateRecurringReviewMutation = (
+  options?: Partial<Options<UpdateRecurringReviewData>>,
+): UseMutationOptions<
+  UpdateRecurringReviewResponse,
+  UpdateRecurringReviewError,
+  Options<UpdateRecurringReviewData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateRecurringReviewResponse,
+    UpdateRecurringReviewError,
+    Options<UpdateRecurringReviewData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateRecurringReview({
         ...options,
         ...fnOptions,
         throwOnError: true,

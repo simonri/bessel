@@ -81,6 +81,7 @@ import {
   listProjectsResponseTransformer,
   listRecipeCooksResponseTransformer,
   listRecipesResponseTransformer,
+  listRecurringPaymentsResponseTransformer,
   listReflectionsResponseTransformer,
   listResetsResponseTransformer,
   listTasksResponseTransformer,
@@ -196,6 +197,9 @@ import type {
   CreateRecipeData,
   CreateRecipeErrors,
   CreateRecipeResponses,
+  CreateRecurringReviewData,
+  CreateRecurringReviewErrors,
+  CreateRecurringReviewResponses,
   CreateResetData,
   CreateResetErrors,
   CreateResetResponses,
@@ -247,6 +251,9 @@ import type {
   DeleteRecipeData,
   DeleteRecipeErrors,
   DeleteRecipeResponses,
+  DeleteRecurringReviewData,
+  DeleteRecurringReviewErrors,
+  DeleteRecurringReviewResponses,
   DeleteTaskAttachmentData,
   DeleteTaskAttachmentErrors,
   DeleteTaskAttachmentResponses,
@@ -471,6 +478,9 @@ import type {
   ListRecipesData,
   ListRecipesErrors,
   ListRecipesResponses,
+  ListRecurringPaymentsData,
+  ListRecurringPaymentsErrors,
+  ListRecurringPaymentsResponses,
   ListReflectionsData,
   ListReflectionsErrors,
   ListReflectionsResponses,
@@ -626,6 +636,9 @@ import type {
   UpdateRecipeData,
   UpdateRecipeErrors,
   UpdateRecipeResponses,
+  UpdateRecurringReviewData,
+  UpdateRecurringReviewErrors,
+  UpdateRecurringReviewResponses,
   UpdateTaskData,
   UpdateTaskErrors,
   UpdateTaskResponses,
@@ -3612,6 +3625,101 @@ export const logRecipeCooked = <ThrowOnError extends boolean = false>(
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/recipes/{recipe_id}/cooks/{cooked_on}",
     ...options,
+  });
+
+/**
+ * List Recurring Payments
+ *
+ * Bills, subscriptions and income that repeat, detected from the transactions, with what's due next.
+ */
+export const listRecurringPayments = <ThrowOnError extends boolean = false>(
+  options?: Options<ListRecurringPaymentsData, ThrowOnError>,
+): RequestResult<
+  ListRecurringPaymentsResponses,
+  ListRecurringPaymentsErrors,
+  ThrowOnError
+> =>
+  (options?.client ?? client).get<
+    ListRecurringPaymentsResponses,
+    ListRecurringPaymentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listRecurringPaymentsResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recurring",
+    ...options,
+  });
+
+/**
+ * Review Recurring Series
+ *
+ * Confirms, dismisses, renames or changes the kind of a detected series, found by its key and typical amount.
+ */
+export const createRecurringReview = <ThrowOnError extends boolean = false>(
+  options: Options<CreateRecurringReviewData, ThrowOnError>,
+): RequestResult<
+  CreateRecurringReviewResponses,
+  CreateRecurringReviewErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).post<
+    CreateRecurringReviewResponses,
+    CreateRecurringReviewErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recurring/reviews",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Delete Recurring Review
+ *
+ * Back to the series as detected.
+ */
+export const deleteRecurringReview = <ThrowOnError extends boolean = false>(
+  options: Options<DeleteRecurringReviewData, ThrowOnError>,
+): RequestResult<
+  DeleteRecurringReviewResponses,
+  DeleteRecurringReviewErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).delete<
+    DeleteRecurringReviewResponses,
+    DeleteRecurringReviewErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recurring/reviews/{review_id}",
+    ...options,
+  });
+
+/**
+ * Update Recurring Review
+ */
+export const updateRecurringReview = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateRecurringReviewData, ThrowOnError>,
+): RequestResult<
+  UpdateRecurringReviewResponses,
+  UpdateRecurringReviewErrors,
+  ThrowOnError
+> =>
+  (options.client ?? client).patch<
+    UpdateRecurringReviewResponses,
+    UpdateRecurringReviewErrors,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/recurring/reviews/{review_id}",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
   });
 
 /**
