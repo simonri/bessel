@@ -15,6 +15,8 @@ _BY_TYPE: dict[str, InvestmentKind] = {
   "FOREIGN_TAX": "tax",
   "FEE": "fee",
 }
+# Money moved into or out of an investment account from outside it, as opposed to what it earned or paid.
+DEPOSIT_TYPES = ("DEPOSIT", "WITHDRAW")
 # Avanza files some movements as UNKNOWN; their text says what they are ("Avkastningsskatt", "Riskpremie").
 _BY_TEXT: tuple[tuple[str, InvestmentKind], ...] = (
   ("skatt", "tax"),

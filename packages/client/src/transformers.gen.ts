@@ -32,6 +32,7 @@ import type {
   GetContactResponse,
   GetHealthSummaryResponse,
   GetInvestmentAccountsResponse,
+  GetInvestmentPerformanceResponse,
   GetLocationHistoryDayResponse,
   GetLocationHistorySummaryResponse,
   GetMeetingBriefResponse,
@@ -1182,6 +1183,45 @@ export const getInvestmentAccountsResponseTransformer = async (
   data: any,
 ): Promise<GetInvestmentAccountsResponse> => {
   data = investmentAccountsResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const valuePointSchemaResponseTransformer = (data: any) => {
+  data.day = new Date(data.day);
+  return data;
+};
+
+const portfolioSeriesSchemaResponseTransformer = (data: any) => {
+  data.points = data.points.map((item: any) =>
+    valuePointSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const periodReturnsSchemaResponseTransformer = (data: any) => {
+  if (data.start) {
+    data.start = new Date(data.start);
+  }
+  if (data.end) {
+    data.end = new Date(data.end);
+  }
+  return data;
+};
+
+const investmentPerformanceResponseSchemaResponseTransformer = (data: any) => {
+  data.series = data.series.map((item: any) =>
+    portfolioSeriesSchemaResponseTransformer(item),
+  );
+  data.returns = data.returns.map((item: any) =>
+    periodReturnsSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const getInvestmentPerformanceResponseTransformer = async (
+  data: any,
+): Promise<GetInvestmentPerformanceResponse> => {
+  data = investmentPerformanceResponseSchemaResponseTransformer(data);
   return data;
 };
 

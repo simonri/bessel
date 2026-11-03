@@ -281,4 +281,53 @@ class TestInvestments:
       "cost": 10_000.0,
       "gain": 2_000.0,
     }
-    assert await mcp_call(connect, "get_investments", token="token-b") == {"accounts": [], "holdings": []}
+    assert await mcp_call(connect, "get_investments", token="token-b") == {
+      "accounts": [],
+      "holdings": [],
+      "returns": [],
+      "returns_left_out": [],
+      "allocation": [],
+    }
+
+  @pytest.mark.asyncio
+  async def test_returns_over_the_period_asked_for_and_what_it_is_in(self, connect: ConnectFixture, save_fixture: SaveFixture, user: User) -> None:
+    isk = await _account(save_fixture, user, "ISK", subtype="isk")
+    await _transaction(save_fixture, isk, date(2025, 12, 1), 1_000_000, CREDIT, "Insättning", transaction_type="DEPOSIT")
+    await _transaction(save_fixture, isk, date(2025, 12, 1), 800_000, DEBIT, "Köp", transaction_type="BUY")
+    fund = Security(name="Global fund", asset_type=AssetType.mutual_fund, currency="SEK", isin="SE0000000019")
+    await save_fixture(fund)
+    for day, value in ((date(2025, 12, 31), 800_000), (date(2026, 6, 30), 900_000), (TODAY, 1_000_000)):
+      await save_fixture(
+        HoldingSnapshot(
+          user_id=user.id,
+          bank_account_id=isk.id,
+          security_id=fund.id,
+          snapshot_date=day,
+          quantity=1_000_000,
+          value=value,
+          acquired_value=800_000,
+          currency="SEK",
+        )
+      )
+    avanza = AvanzaConnection(user_id=user.id, username="someone")
+    await save_fixture(avanza)
+    await save_fixture(AvanzaAccount(connection_id=avanza.id, external_id="1", name="ISK", account_type="ISK", bank_account_id=isk.id))
+
+    investments = await mcp_call(connect, "get_investments", {"period": "ytd"})
+
+    own, total = investments["returns"]
+    assert {k: own[k] for k in ("account", "start", "end", "gain", "net_deposits", "time_weighted_pct", "per_year_pct", "unavailable")} == {
+      "account": "ISK",
+      "start": "2025-12-31",
+      "end": TODAY.isoformat(),
+      "gain": 2_000.0,
+      "net_deposits": 0.0,
+      "time_weighted_pct": 20.0,
+      "per_year_pct": None,
+      "unavailable": None,
+    }
+    assert own["money_weighted_pct"] == 20.0
+    assert total["account"] is None
+    [allocation] = investments["allocation"]
+    assert allocation["by_type"] == [{"name": "Funds", "value": 10_000.0, "pct": 83.33}, {"name": "Cash", "value": 2_000.0, "pct": 16.67}]
+    assert allocation["by_account"] == [{"name": "ISK", "value": 12_000.0, "pct": 100.0}]

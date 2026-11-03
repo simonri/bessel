@@ -1216,6 +1216,33 @@ export const AgentUsageSyncResponseSchema = {
   title: "AgentUsageSyncResponse",
 } as const;
 
+export const AllocationSliceSchema = {
+  properties: {
+    key: {
+      type: "string",
+      title: "Key",
+      description: "The asset type, or the account's id.",
+    },
+    label: {
+      type: "string",
+      title: "Label",
+    },
+    value: {
+      type: "integer",
+      title: "Value",
+      description: "In minor units.",
+    },
+    share: {
+      type: "number",
+      title: "Share",
+      description: "Of the currency's whole, as a fraction.",
+    },
+  },
+  type: "object",
+  required: ["key", "label", "value", "share"],
+  title: "AllocationSlice",
+} as const;
+
 export const AssetTypeSchema = {
   type: "string",
   enum: [
@@ -4488,6 +4515,57 @@ export const CryptoPriceSchemaSchema = {
   title: "CryptoPriceSchema",
 } as const;
 
+export const CurrencyAllocationSchema = {
+  properties: {
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    total: {
+      type: "integer",
+      title: "Total",
+      description: "Everything counted, in minor units.",
+    },
+    by_asset_type: {
+      items: {
+        $ref: "#/components/schemas/AllocationSlice",
+      },
+      type: "array",
+      title: "By Asset Type",
+      description: "Holdings by type, with uninvested cash as its own slice.",
+    },
+    by_account: {
+      items: {
+        $ref: "#/components/schemas/AllocationSlice",
+      },
+      type: "array",
+      title: "By Account",
+      description: "Largest first.",
+    },
+    borrowed: {
+      type: "integer",
+      title: "Borrowed",
+      description:
+        "Cash below zero across the accounts, in minor units; not in the slices.",
+    },
+    unpriced: {
+      type: "integer",
+      title: "Unpriced",
+      description: "How many holdings have no price and so aren't counted.",
+    },
+  },
+  type: "object",
+  required: [
+    "currency",
+    "total",
+    "by_asset_type",
+    "by_account",
+    "borrowed",
+    "unpriced",
+  ],
+  title: "CurrencyAllocation",
+} as const;
+
 export const CurrencySummarySchema = {
   properties: {
     currency: {
@@ -7649,6 +7727,21 @@ export const InvestmentAccountsResponseSchema = {
   title: "InvestmentAccountsResponse",
 } as const;
 
+export const InvestmentAllocationResponseSchema = {
+  properties: {
+    items: {
+      items: {
+        $ref: "#/components/schemas/CurrencyAllocation",
+      },
+      type: "array",
+      title: "Items",
+    },
+  },
+  type: "object",
+  required: ["items"],
+  title: "InvestmentAllocationResponse",
+} as const;
+
 export const InvestmentKindSchema = {
   type: "string",
   enum: [
@@ -7661,6 +7754,37 @@ export const InvestmentKindSchema = {
     "tax",
     "fee",
   ],
+} as const;
+
+export const InvestmentPerformanceResponseSchema = {
+  properties: {
+    series: {
+      items: {
+        $ref: "#/components/schemas/PortfolioSeries",
+      },
+      type: "array",
+      title: "Series",
+    },
+    returns: {
+      items: {
+        $ref: "#/components/schemas/PeriodReturns",
+      },
+      type: "array",
+      title: "Returns",
+      description: "For each account and each currency's total, one per range.",
+    },
+    left_out: {
+      items: {
+        $ref: "#/components/schemas/LeftOutAccount",
+      },
+      type: "array",
+      title: "Left Out",
+      description: "Accounts not counted in the totals' returns, and why.",
+    },
+  },
+  type: "object",
+  required: ["series", "returns", "left_out"],
+  title: "InvestmentPerformanceResponse",
 } as const;
 
 export const KlarnaImportRequestSchema = {
@@ -7769,6 +7893,27 @@ export const KlarnaImportResponseSchema = {
     "unrecognized_plans",
   ],
   title: "KlarnaImportResponse",
+} as const;
+
+export const LeftOutAccountSchema = {
+  properties: {
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    reason: {
+      type: "string",
+      title: "Reason",
+    },
+  },
+  type: "object",
+  required: ["bank_account_id", "name", "reason"],
+  title: "LeftOutAccount",
 } as const;
 
 export const LocationActivitySchema = {
@@ -9338,6 +9483,203 @@ export const PeriodResultSchema = {
   title: "PeriodResult",
 } as const;
 
+export const PeriodReturnsSchema = {
+  properties: {
+    bank_account_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Account Id",
+      description:
+        "The account, or null for all the accounts in the currency together.",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    range: {
+      type: "string",
+      enum: ["1m", "3m", "ytd", "1y", "all"],
+      title: "Range",
+    },
+    start: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start",
+      description:
+        "The day the returns are measured from: later than the range's start when values only begin later.",
+    },
+    end: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End",
+    },
+    start_value: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Start Value",
+      description: "In minor units.",
+    },
+    end_value: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "End Value",
+      description: "In minor units.",
+    },
+    net_flows: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Net Flows",
+      description:
+        "Deposits minus withdrawals over the period, in minor units.",
+    },
+    gain: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Gain",
+      description:
+        "End value minus start value minus net flows: what the money made, in minor units.",
+    },
+    time_weighted: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Time Weighted",
+      description:
+        "Time-weighted return over the period, as a fraction (0.05 is 5%).",
+    },
+    time_weighted_annualized: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Time Weighted Annualized",
+      description: "Per year, for periods of a year or more.",
+    },
+    time_weighted_unavailable: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Time Weighted Unavailable",
+      description: "Why there's no time-weighted return.",
+    },
+    money_weighted: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Money Weighted",
+      description:
+        "Money-weighted return (XIRR) over the period, as a fraction.",
+    },
+    money_weighted_annualized: {
+      anyOf: [
+        {
+          type: "number",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Money Weighted Annualized",
+      description: "Per year, for periods of a year or more.",
+    },
+    money_weighted_unavailable: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Money Weighted Unavailable",
+      description: "Why there's no money-weighted return.",
+    },
+  },
+  type: "object",
+  required: [
+    "bank_account_id",
+    "currency",
+    "range",
+    "start",
+    "end",
+    "start_value",
+    "end_value",
+    "net_flows",
+    "gain",
+    "time_weighted",
+    "time_weighted_annualized",
+    "time_weighted_unavailable",
+    "money_weighted",
+    "money_weighted_annualized",
+    "money_weighted_unavailable",
+  ],
+  title: "PeriodReturns",
+} as const;
+
 export const PlaceCreateSchema = {
   properties: {
     name: {
@@ -9969,6 +10311,41 @@ export const PlaceUpdateSchema = {
   },
   type: "object",
   title: "PlaceUpdate",
+} as const;
+
+export const PortfolioSeriesSchema = {
+  properties: {
+    bank_account_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Bank Account Id",
+      description:
+        "The account, or null for all the accounts in the currency together.",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    points: {
+      items: {
+        $ref: "#/components/schemas/ValuePoint",
+      },
+      type: "array",
+      title: "Points",
+      description:
+        "On each day the broker reported the positions, oldest first.",
+    },
+  },
+  type: "object",
+  required: ["bank_account_id", "currency", "points"],
+  title: "PortfolioSeries",
 } as const;
 
 export const ProjectCreateSchema = {
@@ -13438,6 +13815,24 @@ export const ValidationErrorSchema = {
   type: "object",
   required: ["loc", "msg", "type"],
   title: "ValidationError",
+} as const;
+
+export const ValuePointSchema = {
+  properties: {
+    day: {
+      type: "string",
+      format: "date",
+      title: "Day",
+    },
+    value: {
+      type: "integer",
+      title: "Value",
+      description: "Holdings plus cash at the end of the day, in minor units.",
+    },
+  },
+  type: "object",
+  required: ["day", "value"],
+  title: "ValuePoint",
 } as const;
 
 export const WeatherDaySchema = {

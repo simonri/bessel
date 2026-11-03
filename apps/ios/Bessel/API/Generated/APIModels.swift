@@ -275,6 +275,13 @@ enum API {
         var statusSynced: Int
     }
 
+    struct AllocationSlice: Codable, Hashable {
+        var key: String
+        var label: String
+        var value: Int
+        var share: Double
+    }
+
     enum AssetType: String, Codable, Hashable, CaseIterable, LenientEnum {
         case stock
         case etf
@@ -835,6 +842,15 @@ enum API {
         var priceChangePct24h: Double?
     }
 
+    struct CurrencyAllocation: Codable, Hashable {
+        var currency: String
+        var total: Int
+        @Lossy var byAssetType: [AllocationSlice]
+        @Lossy var byAccount: [AllocationSlice]
+        var borrowed: Int
+        var unpriced: Int
+    }
+
     struct CurrencySummary: Codable, Hashable {
         var currency: String
         var income: Int
@@ -1378,6 +1394,10 @@ enum API {
         @Lossy var items: [InvestmentAccountSummary]
     }
 
+    struct InvestmentAllocationResponse: Codable, Hashable {
+        @Lossy var items: [CurrencyAllocation]
+    }
+
     enum InvestmentKind: String, Codable, Hashable, CaseIterable, LenientEnum {
         case buy
         case sell
@@ -1390,6 +1410,12 @@ enum API {
         /// A value added on the server after this build.
         case unknown
         static let allCases: [InvestmentKind] = [.buy, .sell, .deposit, .withdrawal, .dividend, .interest, .tax, .fee]
+    }
+
+    struct InvestmentPerformanceResponse: Codable, Hashable {
+        @Lossy var series: [PortfolioSeries]
+        @Lossy var returns: [PeriodReturns]
+        @Lossy var leftOut: [LeftOutAccount]
     }
 
     struct KlarnaImportRequest: Codable, Hashable {
@@ -1407,6 +1433,12 @@ enum API {
         var drift: Int?
         var declined: Int
         var unrecognizedPlans: [String]
+    }
+
+    struct LeftOutAccount: Codable, Hashable {
+        var bankAccountId: UUID
+        var name: String
+        var reason: String
     }
 
     struct LocationActivity: Codable, Hashable {
@@ -1703,6 +1735,24 @@ enum API {
         var met: Bool
     }
 
+    struct PeriodReturns: Codable, Hashable {
+        var bankAccountId: UUID?
+        var currency: String
+        var range: String
+        var start: Date?
+        var end: Date?
+        var startValue: Int?
+        var endValue: Int?
+        var netFlows: Int?
+        var gain: Int?
+        var timeWeighted: Double?
+        var timeWeightedAnnualized: Double?
+        var timeWeightedUnavailable: String?
+        var moneyWeighted: Double?
+        var moneyWeightedAnnualized: Double?
+        var moneyWeightedUnavailable: String?
+    }
+
     struct PlaceCreate: Codable, Hashable {
         var name: String
         var address: String?
@@ -1792,6 +1842,12 @@ enum API {
         var photoUrl: String??
         var website: String??
         var phone: String??
+    }
+
+    struct PortfolioSeries: Codable, Hashable {
+        var bankAccountId: UUID?
+        var currency: String
+        @Lossy var points: [ValuePoint]
     }
 
     struct ProjectCreate: Codable, Hashable {
@@ -2421,6 +2477,11 @@ enum API {
         var type: String
         var input: JSONValue?
         var ctx: [String: JSONValue]?
+    }
+
+    struct ValuePoint: Codable, Hashable {
+        var day: Date
+        var value: Int
     }
 
     struct WeatherDay: Codable, Hashable {
@@ -3371,6 +3432,38 @@ extension API.AgentUsageSyncResponse {
         var container = encoder.container(keyedBy: EncodingKeys.self)
         try container.encode(self.dailySynced, forKey: .dailySynced)
         try container.encode(self.statusSynced, forKey: .statusSynced)
+    }
+}
+
+extension API.AllocationSlice {
+    private enum DecodingKeys: String, CodingKey {
+        case key
+        case label
+        case value
+        case share
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.key = try container.decode(String.self, forKey: .key)
+        self.label = try container.decode(String.self, forKey: .label)
+        self.value = try container.decode(Int.self, forKey: .value)
+        self.share = try container.decode(Double.self, forKey: .share)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case key
+        case label
+        case value
+        case share
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.key, forKey: .key)
+        try container.encode(self.label, forKey: .label)
+        try container.encode(self.value, forKey: .value)
+        try container.encode(self.share, forKey: .share)
     }
 }
 
@@ -5585,6 +5678,46 @@ extension API.CryptoPriceSchema {
     }
 }
 
+extension API.CurrencyAllocation {
+    private enum DecodingKeys: String, CodingKey {
+        case currency
+        case total
+        case byAssetType
+        case byAccount
+        case borrowed
+        case unpriced
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.total = try container.decode(Int.self, forKey: .total)
+        self._byAssetType = try container.decode(Lossy<API.AllocationSlice>.self, forKey: .byAssetType)
+        self._byAccount = try container.decode(Lossy<API.AllocationSlice>.self, forKey: .byAccount)
+        self.borrowed = try container.decode(Int.self, forKey: .borrowed)
+        self.unpriced = try container.decode(Int.self, forKey: .unpriced)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case currency
+        case total
+        case byAssetType = "by_asset_type"
+        case byAccount = "by_account"
+        case borrowed
+        case unpriced
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.total, forKey: .total)
+        try container.encode(self.byAssetType, forKey: .byAssetType)
+        try container.encode(self.byAccount, forKey: .byAccount)
+        try container.encode(self.borrowed, forKey: .borrowed)
+        try container.encode(self.unpriced, forKey: .unpriced)
+    }
+}
+
 extension API.CurrencySummary {
     private enum DecodingKeys: String, CodingKey {
         case currency
@@ -7660,6 +7793,54 @@ extension API.InvestmentAccountsResponse {
     }
 }
 
+extension API.InvestmentAllocationResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case items
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._items = try container.decode(Lossy<API.CurrencyAllocation>.self, forKey: .items)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case items
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.items, forKey: .items)
+    }
+}
+
+extension API.InvestmentPerformanceResponse {
+    private enum DecodingKeys: String, CodingKey {
+        case series
+        case returns
+        case leftOut
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self._series = try container.decode(Lossy<API.PortfolioSeries>.self, forKey: .series)
+        self._returns = try container.decode(Lossy<API.PeriodReturns>.self, forKey: .returns)
+        self._leftOut = try container.decode(Lossy<API.LeftOutAccount>.self, forKey: .leftOut)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case series
+        case returns
+        case leftOut = "left_out"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.series, forKey: .series)
+        try container.encode(self.returns, forKey: .returns)
+        try container.encode(self.leftOut, forKey: .leftOut)
+    }
+}
+
 extension API.KlarnaImportRequest {
     private enum DecodingKeys: String, CodingKey {
         case bankAccountId
@@ -7733,6 +7914,34 @@ extension API.KlarnaImportResponse {
         try container.encodeIfPresent(self.drift, forKey: .drift)
         try container.encode(self.declined, forKey: .declined)
         try container.encode(self.unrecognizedPlans, forKey: .unrecognizedPlans)
+    }
+}
+
+extension API.LeftOutAccount {
+    private enum DecodingKeys: String, CodingKey {
+        case bankAccountId
+        case name
+        case reason
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.bankAccountId = try container.decode(UUID.self, forKey: .bankAccountId)
+        self.name = try container.decode(String.self, forKey: .name)
+        self.reason = try container.decode(String.self, forKey: .reason)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case bankAccountId = "bank_account_id"
+        case name
+        case reason
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(self.bankAccountId, forKey: .bankAccountId)
+        try container.encode(self.name, forKey: .name)
+        try container.encode(self.reason, forKey: .reason)
     }
 }
 
@@ -8903,6 +9112,82 @@ extension API.PeriodResult {
     }
 }
 
+extension API.PeriodReturns {
+    private enum DecodingKeys: String, CodingKey {
+        case bankAccountId
+        case currency
+        case range
+        case start
+        case end
+        case startValue
+        case endValue
+        case netFlows
+        case gain
+        case timeWeighted
+        case timeWeightedAnnualized
+        case timeWeightedUnavailable
+        case moneyWeighted
+        case moneyWeightedAnnualized
+        case moneyWeightedUnavailable
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.bankAccountId = try container.decodeIfPresent(UUID.self, forKey: .bankAccountId)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self.range = try container.decode(String.self, forKey: .range)
+        self.start = try container.decodeIfPresent(Date.self, forKey: .start)
+        self.end = try container.decodeIfPresent(Date.self, forKey: .end)
+        self.startValue = try container.decodeIfPresent(Int.self, forKey: .startValue)
+        self.endValue = try container.decodeIfPresent(Int.self, forKey: .endValue)
+        self.netFlows = try container.decodeIfPresent(Int.self, forKey: .netFlows)
+        self.gain = try container.decodeIfPresent(Int.self, forKey: .gain)
+        self.timeWeighted = try container.decodeIfPresent(Double.self, forKey: .timeWeighted)
+        self.timeWeightedAnnualized = try container.decodeIfPresent(Double.self, forKey: .timeWeightedAnnualized)
+        self.timeWeightedUnavailable = try container.decodeIfPresent(String.self, forKey: .timeWeightedUnavailable)
+        self.moneyWeighted = try container.decodeIfPresent(Double.self, forKey: .moneyWeighted)
+        self.moneyWeightedAnnualized = try container.decodeIfPresent(Double.self, forKey: .moneyWeightedAnnualized)
+        self.moneyWeightedUnavailable = try container.decodeIfPresent(String.self, forKey: .moneyWeightedUnavailable)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case bankAccountId = "bank_account_id"
+        case currency
+        case range
+        case start
+        case end
+        case startValue = "start_value"
+        case endValue = "end_value"
+        case netFlows = "net_flows"
+        case gain
+        case timeWeighted = "time_weighted"
+        case timeWeightedAnnualized = "time_weighted_annualized"
+        case timeWeightedUnavailable = "time_weighted_unavailable"
+        case moneyWeighted = "money_weighted"
+        case moneyWeightedAnnualized = "money_weighted_annualized"
+        case moneyWeightedUnavailable = "money_weighted_unavailable"
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.bankAccountId, forKey: .bankAccountId)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.range, forKey: .range)
+        try container.encodeIfPresent(self.start.map(API.Day.init), forKey: .start)
+        try container.encodeIfPresent(self.end.map(API.Day.init), forKey: .end)
+        try container.encodeIfPresent(self.startValue, forKey: .startValue)
+        try container.encodeIfPresent(self.endValue, forKey: .endValue)
+        try container.encodeIfPresent(self.netFlows, forKey: .netFlows)
+        try container.encodeIfPresent(self.gain, forKey: .gain)
+        try container.encodeIfPresent(self.timeWeighted, forKey: .timeWeighted)
+        try container.encodeIfPresent(self.timeWeightedAnnualized, forKey: .timeWeightedAnnualized)
+        try container.encodeIfPresent(self.timeWeightedUnavailable, forKey: .timeWeightedUnavailable)
+        try container.encodeIfPresent(self.moneyWeighted, forKey: .moneyWeighted)
+        try container.encodeIfPresent(self.moneyWeightedAnnualized, forKey: .moneyWeightedAnnualized)
+        try container.encodeIfPresent(self.moneyWeightedUnavailable, forKey: .moneyWeightedUnavailable)
+    }
+}
+
 extension API.PlaceCreate {
     private enum DecodingKeys: String, CodingKey {
         case name
@@ -9161,6 +9446,34 @@ extension API.PlaceUpdate {
         if let value = self.photoUrl { try container.encode(value, forKey: .photoUrl) }
         if let value = self.website { try container.encode(value, forKey: .website) }
         if let value = self.phone { try container.encode(value, forKey: .phone) }
+    }
+}
+
+extension API.PortfolioSeries {
+    private enum DecodingKeys: String, CodingKey {
+        case bankAccountId
+        case currency
+        case points
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.bankAccountId = try container.decodeIfPresent(UUID.self, forKey: .bankAccountId)
+        self.currency = try container.decode(String.self, forKey: .currency)
+        self._points = try container.decode(Lossy<API.ValuePoint>.self, forKey: .points)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case bankAccountId = "bank_account_id"
+        case currency
+        case points
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encodeIfPresent(self.bankAccountId, forKey: .bankAccountId)
+        try container.encode(self.currency, forKey: .currency)
+        try container.encode(self.points, forKey: .points)
     }
 }
 
@@ -11389,6 +11702,30 @@ extension API.ValidationError {
         try container.encode(self.type, forKey: .type)
         try container.encodeIfPresent(self.input, forKey: .input)
         try container.encodeIfPresent(self.ctx, forKey: .ctx)
+    }
+}
+
+extension API.ValuePoint {
+    private enum DecodingKeys: String, CodingKey {
+        case day
+        case value
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: DecodingKeys.self)
+        self.day = try container.decode(Date.self, forKey: .day)
+        self.value = try container.decode(Int.self, forKey: .value)
+    }
+
+    private enum EncodingKeys: String, CodingKey {
+        case day
+        case value
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: EncodingKeys.self)
+        try container.encode(API.Day(self.day), forKey: .day)
+        try container.encode(self.value, forKey: .value)
     }
 }
 

@@ -41,6 +41,7 @@ import {
   getContactResponseTransformer,
   getHealthSummaryResponseTransformer,
   getInvestmentAccountsResponseTransformer,
+  getInvestmentPerformanceResponseTransformer,
   getLocationHistoryDayResponseTransformer,
   getLocationHistorySummaryResponseTransformer,
   getMeetingBriefResponseTransformer,
@@ -329,6 +330,10 @@ import type {
   GetIntradayActivityResponses,
   GetInvestmentAccountsData,
   GetInvestmentAccountsResponses,
+  GetInvestmentAllocationData,
+  GetInvestmentAllocationResponses,
+  GetInvestmentPerformanceData,
+  GetInvestmentPerformanceResponses,
   GetLocationHistoryDayData,
   GetLocationHistoryDayErrors,
   GetLocationHistoryDayResponses,
@@ -3051,6 +3056,43 @@ export const getHoldings = <ThrowOnError extends boolean = false>(
   (options?.client ?? client).get<GetHoldingsResponses, unknown, ThrowOnError>({
     security: [{ scheme: "bearer", type: "http" }],
     url: "/v1/investments/holdings",
+    ...options,
+  });
+
+/**
+ * Investment Performance
+ *
+ * Each investment account's value over time and each currency's total, with time- and money-weighted returns per range.
+ */
+export const getInvestmentPerformance = <ThrowOnError extends boolean = false>(
+  options?: Options<GetInvestmentPerformanceData, ThrowOnError>,
+): RequestResult<GetInvestmentPerformanceResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetInvestmentPerformanceResponses,
+    unknown,
+    ThrowOnError
+  >({
+    responseTransformer: getInvestmentPerformanceResponseTransformer,
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/investments/performance",
+    ...options,
+  });
+
+/**
+ * Investment Allocation
+ *
+ * What the investments are in, per currency: by type of holding and cash, and by account.
+ */
+export const getInvestmentAllocation = <ThrowOnError extends boolean = false>(
+  options?: Options<GetInvestmentAllocationData, ThrowOnError>,
+): RequestResult<GetInvestmentAllocationResponses, unknown, ThrowOnError> =>
+  (options?.client ?? client).get<
+    GetInvestmentAllocationResponses,
+    unknown,
+    ThrowOnError
+  >({
+    security: [{ scheme: "bearer", type: "http" }],
+    url: "/v1/investments/allocation",
     ...options,
   });
 
