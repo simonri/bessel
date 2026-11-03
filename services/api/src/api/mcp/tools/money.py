@@ -1,4 +1,4 @@
-"""Read-only views of the user's money: accounts, monthly summaries, transactions and investments.
+"""Read-only views of the user's money: accounts, monthly summaries, transactions, recurring payments and investments.
 
 Nothing here changes financial data. Amounts are in currency units (e.g. 1299.5 SEK), never öre or cents,
 and always next to their currency.
@@ -6,7 +6,7 @@ and always next to their currency.
 
 import re
 from collections.abc import Sequence
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -30,6 +30,7 @@ from api.models.bank_account import BankAccount
 from api.models.category import Category
 from api.models.transaction import Transaction as TransactionModel
 from api.models.transaction import TransactionDirection
+from api.recurring.service import expected_between, monthly_totals, reviewed_series
 from api.transactions.repository import TransactionRepository
 from api.transactions.summary import month_summary
 from api.transactions.tags import tag_summaries
@@ -339,6 +340,117 @@ async def search_transactions(
   )
 
 
+# ─── Recurring payments ───
+
+MAX_RECURRING_DAYS = 366
+
+
+class RecurringSeries(Schema):
+  name: str
+  kind: Literal["bill", "subscription", "income"]
+  cadence: Literal["weekly", "monthly", "quarterly", "yearly"]
+  owner: Literal["personal", "company"]
+  account: str
+  currency: str
+  amount: float = Field(description="The latest price, or recent typical amount when it varies (`varies`).")
+  varies: bool
+  per_month: float
+  status: Literal["active", "late", "ended"] = Field(description="'late': the expected payment hasn't come; 'ended': two haven't.")
+  confirmed: bool = Field(description="By the user; otherwise only detected.")
+  last_paid: date
+  next_due: date | None
+  price_changes: list[str] = Field(description="Oldest first, e.g. '2026-09-12: 99.0 -> 129.0'.")
+
+
+class DuePayment(Schema):
+  date: date
+  name: str
+  kind: Literal["bill", "subscription", "income"]
+  amount: float
+  currency: str
+  late: bool = Field(description="Was due before today and hasn't come.")
+
+
+class RecurringTotal(Schema):
+  owner: Literal["personal", "company"]
+  currency: str
+  money_out_per_month: float = Field(description="Bills and subscriptions.")
+  subscriptions_per_month: float
+  money_in_per_month: float
+
+
+class RecurringPayments(Schema):
+  series: list[RecurringSeries] = Field(description="Latest payment first; never ones the user dismissed.")
+  due: list[DuePayment] = Field(description="Late payments, then those due in the next `days` days.")
+  totals: list[RecurringTotal] = Field(description="Of series still running.")
+
+
+async def get_recurring_payments(
+  ctx: Context,
+  kind: Literal["bill", "subscription", "income"] | None = None,
+  days: Annotated[int, Field(ge=1, le=MAX_RECURRING_DAYS, description="How far ahead `due` looks.")] = 30,
+  include_ended: bool = False,
+  timezone: TimezoneParam = None,
+) -> RecurringPayments:
+  """Bills, subscriptions and income that repeat, detected from the transactions: how often, how much, when due
+  next, price changes, and the total per month.
+
+  Use it for "what subscriptions do I have", "what's due this week" or "what do my bills cost a month".
+  """
+  async with user_session(ctx) as (session, user):
+    today = today_in(resolve_timezone(user, timezone))
+    reviewed = await reviewed_series(session, user.id, today=today)
+    accounts = {a.id: a.name for a in await BankAccountRepository.from_session(session).list_for_user(user.id)}
+  shown = [r for r in reviewed if r.decision != "dismissed" and (kind is None or r.kind == kind)]
+
+  def owner(business: bool) -> Literal["personal", "company"]:
+    return "company" if business else "personal"
+
+  return RecurringPayments(
+    series=[
+      RecurringSeries(
+        name=r.name,
+        kind=r.kind.value,
+        cadence=r.series.cadence.value,
+        owner=owner(r.series.business),
+        account=accounts.get(r.series.bank_account_id, "Unknown"),
+        currency=r.series.currency,
+        amount=money(r.series.typical_amount),
+        varies=r.series.variable,
+        per_month=money(r.series.monthly_amount),
+        status=r.series.status.value,
+        confirmed=r.decision == "confirmed",
+        last_paid=r.series.last_date,
+        next_due=r.series.next_date,
+        price_changes=[f"{c.day}: {money(c.old_amount)} -> {money(c.new_amount)}" for c in r.series.price_changes],
+      )
+      for r in shown
+      if include_ended or r.series.status != "ended"
+    ],
+    due=[
+      DuePayment(
+        date=p.day,
+        name=p.reviewed.name,
+        kind=p.reviewed.kind.value,
+        amount=money(p.amount),
+        currency=p.reviewed.series.currency,
+        late=p.late,
+      )
+      for p in expected_between(shown, today, today + timedelta(days=days - 1))
+    ],
+    totals=[
+      RecurringTotal(
+        owner=owner(t.is_business),
+        currency=t.currency,
+        money_out_per_month=money(t.money_out),
+        subscriptions_per_month=money(t.subscriptions),
+        money_in_per_month=money(t.money_in),
+      )
+      for t in monthly_totals(reviewed)
+    ],
+  )
+
+
 class TagCurrency(Schema):
   currency: str
   spent: float = Field(description="Money out.")
@@ -479,4 +591,5 @@ TOOLS: list[ToolSpec] = [
   read(search_transactions, "Search transactions", open_world=True),
   read(get_tag_spending, "Tag spending"),
   read(get_investments, "Investments"),
+  read(get_recurring_payments, "Recurring payments", open_world=True),
 ]

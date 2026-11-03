@@ -57,6 +57,20 @@ class RuleCandidate(NamedTuple):
   company_account: bool
 
 
+class RecurringRow(NamedTuple):
+  id: UUID
+  transaction_date: date
+  amount: int
+  currency: str
+  direction: TransactionDirection
+  name: str | None
+  description: str | None
+  bank_account_id: UUID
+  # The company's money: on a company account, or a company cost paid privately.
+  business: bool
+  logo_url: str | None = None
+
+
 class RuleMatch(NamedTuple):
   """A transaction a rule could sort, with what it has now, for previewing a rule."""
 
@@ -401,6 +415,45 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     if since is not None:
       statement = statement.where(Transaction.transaction_date >= since)
     return [TransferCandidate(*row) for row in await self.session.execute(statement)]
+
+  async def recurring_rows(self, user_id: UUID, *, since: date) -> list[RecurringRow]:
+    """Money that could repeat: not moves between own accounts, a broker's movements, or repayments of a card or pay later
+    as the card sees them. Paying off a card or pay later, such as a Klarna instalment, stays a bill on the paying side."""
+    partner = aliased(Transaction)
+    partner_account = aliased(BankAccount)
+    # Only the paying side: a card's own credits are left out below, and its debits never pair.
+    pays_off_credit = exists().where(
+      partner.transfer_id == Transaction.transfer_id,
+      partner.id != Transaction.id,
+      partner_account.id == partner.bank_account_id,
+      partner_account.subtype == "credit_card",
+    )
+    statement = (
+      select(
+        Transaction.id,
+        Transaction.transaction_date,
+        Transaction.amount,
+        Transaction.currency,
+        Transaction.direction,
+        Transaction.name,
+        Transaction.description,
+        Transaction.bank_account_id,
+        or_(BankAccount.is_business, Transaction.is_business),
+        Transaction.logo_url,
+      )
+      .join(BankAccount, BankAccount.id == Transaction.bank_account_id)
+      .where(
+        Transaction.user_id == user_id,
+        Transaction.deleted_at.is_(None),
+        or_(Transaction.transfer_id.is_(None), pays_off_credit),
+        Transaction.transaction_date >= since,
+        BankAccount.deleted_at.is_(None),
+        BankAccount.subtype.not_in(INVESTMENT_SUBTYPES),
+        ~((BankAccount.subtype == "credit_card") & (Transaction.direction == TransactionDirection.credit)),
+      )
+      .order_by(Transaction.transaction_date, Transaction.id)
+    )
+    return [RecurringRow(*row) for row in await self.session.execute(statement)]
 
   @staticmethod
   def _sortable_by_rules[*Ts](statement: Select[*Ts], user_id: UUID) -> Select[*Ts]:

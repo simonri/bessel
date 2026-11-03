@@ -10421,6 +10421,27 @@ export const PlaceUpdateSchema = {
   title: "PlaceUpdate",
 } as const;
 
+export const PriceChangeSchemaSchema = {
+  properties: {
+    date: {
+      type: "string",
+      format: "date",
+      title: "Date",
+    },
+    old_amount: {
+      type: "integer",
+      title: "Old Amount",
+    },
+    new_amount: {
+      type: "integer",
+      title: "New Amount",
+    },
+  },
+  type: "object",
+  required: ["date", "old_amount", "new_amount"],
+  title: "PriceChangeSchema",
+} as const;
+
 export const ProjectCreateSchema = {
   properties: {
     name: {
@@ -11171,6 +11192,426 @@ export const RecurrenceSchemaSchema = {
   type: "object",
   required: ["frequency"],
   title: "RecurrenceSchema",
+} as const;
+
+export const RecurringCadenceSchema = {
+  type: "string",
+  enum: ["weekly", "monthly", "quarterly", "yearly"],
+  title: "RecurringCadence",
+} as const;
+
+export const RecurringDecisionSchema = {
+  type: "string",
+  enum: ["confirmed", "dismissed"],
+  title: "RecurringDecision",
+} as const;
+
+export const RecurringKindSchema = {
+  type: "string",
+  enum: ["bill", "subscription", "income"],
+  title: "RecurringKind",
+} as const;
+
+export const RecurringResponseSchema = {
+  properties: {
+    series: {
+      items: {
+        $ref: "#/components/schemas/RecurringSeriesSchema",
+      },
+      type: "array",
+      title: "Series",
+      description:
+        "Every series detected, dismissed ones included, the latest payment first.",
+    },
+    upcoming: {
+      items: {
+        $ref: "#/components/schemas/UpcomingPayment",
+      },
+      type: "array",
+      title: "Upcoming",
+      description:
+        "Late payments, then those expected from today on, soonest first; none from dismissed or ended series.",
+    },
+    totals: {
+      items: {
+        $ref: "#/components/schemas/RecurringTotal",
+      },
+      type: "array",
+      title: "Totals",
+      description:
+        "Per currency and owner, from series still running; currencies are never added together.",
+    },
+  },
+  type: "object",
+  required: ["series", "upcoming", "totals"],
+  title: "RecurringResponse",
+} as const;
+
+export const RecurringReviewCreateSchema = {
+  properties: {
+    key: {
+      type: "string",
+      maxLength: 300,
+      title: "Key",
+    },
+    typical_amount: {
+      type: "integer",
+      title: "Typical Amount",
+    },
+    decision: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringDecision",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 120,
+          minLength: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    kind: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringKind",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+  },
+  type: "object",
+  required: ["key", "typical_amount"],
+  title: "RecurringReviewCreate",
+} as const;
+
+export const RecurringReviewSchemaSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+      description: "The ID of the object.",
+    },
+    key: {
+      type: "string",
+      title: "Key",
+    },
+    typical_amount: {
+      type: "integer",
+      title: "Typical Amount",
+    },
+    decision: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringDecision",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    kind: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringKind",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+  },
+  type: "object",
+  required: ["id", "key", "typical_amount", "decision", "name", "kind"],
+  title: "RecurringReviewSchema",
+} as const;
+
+export const RecurringReviewUpdateSchema = {
+  properties: {
+    decision: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringDecision",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Null takes back a confirmation or dismissal.",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 120,
+          minLength: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+      description: "Null goes back to the detected name.",
+    },
+    kind: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringKind",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Null goes back to the detected kind.",
+    },
+  },
+  type: "object",
+  title: "RecurringReviewUpdate",
+} as const;
+
+export const RecurringSeriesSchemaSchema = {
+  properties: {
+    key: {
+      type: "string",
+      title: "Key",
+      description:
+        "The group of transactions it comes from; with `typical_amount`, what a review refers to.",
+    },
+    review_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Review Id",
+      description: "The user's review of it, if any.",
+    },
+    decision: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RecurringDecision",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    name: {
+      type: "string",
+      title: "Name",
+      description:
+        "The user's name for it, or what the transactions are called.",
+    },
+    detected_name: {
+      type: "string",
+      title: "Detected Name",
+    },
+    kind: {
+      $ref: "#/components/schemas/RecurringKind",
+    },
+    cadence: {
+      $ref: "#/components/schemas/RecurringCadence",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+      description: "The company's money rather than the user's own.",
+    },
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+      description: "The account its latest payment was on.",
+    },
+    logo_url: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Logo Url",
+    },
+    typical_amount: {
+      type: "integer",
+      title: "Typical Amount",
+      description:
+        "Minor units: the latest price, or the middle of recent amounts when they vary.",
+    },
+    variable: {
+      type: "boolean",
+      title: "Variable",
+      description: "Whether the amount changes from one payment to the next.",
+    },
+    monthly_amount: {
+      type: "integer",
+      title: "Monthly Amount",
+      description: "What it comes to in an average month, in minor units.",
+    },
+    count: {
+      type: "integer",
+      title: "Count",
+      description: "Payments seen in a row on this schedule.",
+    },
+    first_date: {
+      type: "string",
+      format: "date",
+      title: "First Date",
+    },
+    last_date: {
+      type: "string",
+      format: "date",
+      title: "Last Date",
+    },
+    last_amount: {
+      type: "integer",
+      title: "Last Amount",
+    },
+    status: {
+      $ref: "#/components/schemas/RecurringStatus",
+    },
+    next_date: {
+      anyOf: [
+        {
+          type: "string",
+          format: "date",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Next Date",
+      description:
+        "When the next payment is expected; earlier than today when it's late, none once it has ended.",
+    },
+    next_amount: {
+      anyOf: [
+        {
+          type: "integer",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Next Amount",
+    },
+    price_changes: {
+      items: {
+        $ref: "#/components/schemas/PriceChangeSchema",
+      },
+      type: "array",
+      title: "Price Changes",
+      description: "Oldest first.",
+    },
+  },
+  type: "object",
+  required: [
+    "key",
+    "review_id",
+    "decision",
+    "name",
+    "detected_name",
+    "kind",
+    "cadence",
+    "currency",
+    "direction",
+    "is_business",
+    "bank_account_id",
+    "logo_url",
+    "typical_amount",
+    "variable",
+    "monthly_amount",
+    "count",
+    "first_date",
+    "last_date",
+    "last_amount",
+    "status",
+    "next_date",
+    "next_amount",
+    "price_changes",
+  ],
+  title: "RecurringSeriesSchema",
+} as const;
+
+export const RecurringStatusSchema = {
+  type: "string",
+  enum: ["active", "late", "ended"],
+  title: "RecurringStatus",
+} as const;
+
+export const RecurringTotalSchema = {
+  properties: {
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+    },
+    money_out: {
+      type: "integer",
+      title: "Money Out",
+      description:
+        "Bills and subscriptions in an average month, in minor units.",
+    },
+    subscriptions: {
+      type: "integer",
+      title: "Subscriptions",
+      description: "The subscriptions among them.",
+    },
+    money_in: {
+      type: "integer",
+      title: "Money In",
+      description: "Income in an average month.",
+    },
+  },
+  type: "object",
+  required: [
+    "currency",
+    "is_business",
+    "money_out",
+    "subscriptions",
+    "money_in",
+  ],
+  title: "RecurringTotal",
 } as const;
 
 export const ReflectionAnswerSchema = {
@@ -14004,6 +14445,71 @@ export const TypicalDaySchema = {
     "steps",
   ],
   title: "TypicalDay",
+} as const;
+
+export const UpcomingPaymentSchema = {
+  properties: {
+    key: {
+      type: "string",
+      title: "Key",
+    },
+    typical_amount: {
+      type: "integer",
+      title: "Typical Amount",
+    },
+    name: {
+      type: "string",
+      title: "Name",
+    },
+    kind: {
+      $ref: "#/components/schemas/RecurringKind",
+    },
+    date: {
+      type: "string",
+      format: "date",
+      title: "Date",
+    },
+    amount: {
+      type: "integer",
+      title: "Amount",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    is_business: {
+      type: "boolean",
+      title: "Is Business",
+    },
+    bank_account_id: {
+      type: "string",
+      format: "uuid4",
+      title: "Bank Account Id",
+    },
+    late: {
+      type: "boolean",
+      title: "Late",
+      description: "Was due before today and hasn't been seen yet.",
+    },
+  },
+  type: "object",
+  required: [
+    "key",
+    "typical_amount",
+    "name",
+    "kind",
+    "date",
+    "amount",
+    "currency",
+    "direction",
+    "is_business",
+    "bank_account_id",
+    "late",
+  ],
+  title: "UpcomingPayment",
 } as const;
 
 export const ValidationErrorSchema = {

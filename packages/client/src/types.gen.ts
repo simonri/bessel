@@ -6360,6 +6360,24 @@ export type PlaceUpdate = {
 };
 
 /**
+ * PriceChangeSchema
+ */
+export type PriceChangeSchema = {
+  /**
+   * Date
+   */
+  date: Date;
+  /**
+   * Old Amount
+   */
+  old_amount: number;
+  /**
+   * New Amount
+   */
+  new_amount: number;
+};
+
+/**
  * ProjectCreate
  */
 export type ProjectCreate = {
@@ -6795,6 +6813,292 @@ export type RecurrenceSchema = {
    * Last day that may hold an occurrence (inclusive), YYYY-MM-DD.
    */
   until?: string | null;
+};
+
+/**
+ * RecurringCadence
+ */
+export const RecurringCadence = {
+  WEEKLY: "weekly",
+  MONTHLY: "monthly",
+  QUARTERLY: "quarterly",
+  YEARLY: "yearly",
+} as const;
+
+/**
+ * RecurringCadence
+ */
+export type RecurringCadence =
+  (typeof RecurringCadence)[keyof typeof RecurringCadence];
+
+/**
+ * RecurringDecision
+ */
+export const RecurringDecision = {
+  CONFIRMED: "confirmed",
+  DISMISSED: "dismissed",
+} as const;
+
+/**
+ * RecurringDecision
+ */
+export type RecurringDecision =
+  (typeof RecurringDecision)[keyof typeof RecurringDecision];
+
+/**
+ * RecurringKind
+ */
+export const RecurringKind = {
+  BILL: "bill",
+  SUBSCRIPTION: "subscription",
+  INCOME: "income",
+} as const;
+
+/**
+ * RecurringKind
+ */
+export type RecurringKind = (typeof RecurringKind)[keyof typeof RecurringKind];
+
+/**
+ * RecurringResponse
+ */
+export type RecurringResponse = {
+  /**
+   * Series
+   *
+   * Every series detected, dismissed ones included, the latest payment first.
+   */
+  series: Array<RecurringSeriesSchema>;
+  /**
+   * Upcoming
+   *
+   * Late payments, then those expected from today on, soonest first; none from dismissed or ended series.
+   */
+  upcoming: Array<UpcomingPayment>;
+  /**
+   * Totals
+   *
+   * Per currency and owner, from series still running; currencies are never added together.
+   */
+  totals: Array<RecurringTotal>;
+};
+
+/**
+ * RecurringReviewCreate
+ */
+export type RecurringReviewCreate = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Typical Amount
+   */
+  typical_amount: number;
+  decision?: RecurringDecision | null;
+  /**
+   * Name
+   */
+  name?: string | null;
+  kind?: RecurringKind | null;
+};
+
+/**
+ * RecurringReviewSchema
+ */
+export type RecurringReviewSchema = {
+  /**
+   * Id
+   *
+   * The ID of the object.
+   */
+  id: string;
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Typical Amount
+   */
+  typical_amount: number;
+  decision: RecurringDecision | null;
+  /**
+   * Name
+   */
+  name: string | null;
+  kind: RecurringKind | null;
+};
+
+/**
+ * RecurringReviewUpdate
+ */
+export type RecurringReviewUpdate = {
+  /**
+   * Null takes back a confirmation or dismissal.
+   */
+  decision?: RecurringDecision | null;
+  /**
+   * Name
+   *
+   * Null goes back to the detected name.
+   */
+  name?: string | null;
+  /**
+   * Null goes back to the detected kind.
+   */
+  kind?: RecurringKind | null;
+};
+
+/**
+ * RecurringSeriesSchema
+ */
+export type RecurringSeriesSchema = {
+  /**
+   * Key
+   *
+   * The group of transactions it comes from; with `typical_amount`, what a review refers to.
+   */
+  key: string;
+  /**
+   * Review Id
+   *
+   * The user's review of it, if any.
+   */
+  review_id: string | null;
+  decision: RecurringDecision | null;
+  /**
+   * Name
+   *
+   * The user's name for it, or what the transactions are called.
+   */
+  name: string;
+  /**
+   * Detected Name
+   */
+  detected_name: string;
+  kind: RecurringKind;
+  cadence: RecurringCadence;
+  /**
+   * Currency
+   */
+  currency: string;
+  direction: TransactionDirection;
+  /**
+   * Is Business
+   *
+   * The company's money rather than the user's own.
+   */
+  is_business: boolean;
+  /**
+   * Bank Account Id
+   *
+   * The account its latest payment was on.
+   */
+  bank_account_id: string;
+  /**
+   * Logo Url
+   */
+  logo_url: string | null;
+  /**
+   * Typical Amount
+   *
+   * Minor units: the latest price, or the middle of recent amounts when they vary.
+   */
+  typical_amount: number;
+  /**
+   * Variable
+   *
+   * Whether the amount changes from one payment to the next.
+   */
+  variable: boolean;
+  /**
+   * Monthly Amount
+   *
+   * What it comes to in an average month, in minor units.
+   */
+  monthly_amount: number;
+  /**
+   * Count
+   *
+   * Payments seen in a row on this schedule.
+   */
+  count: number;
+  /**
+   * First Date
+   */
+  first_date: Date;
+  /**
+   * Last Date
+   */
+  last_date: Date;
+  /**
+   * Last Amount
+   */
+  last_amount: number;
+  status: RecurringStatus;
+  /**
+   * Next Date
+   *
+   * When the next payment is expected; earlier than today when it's late, none once it has ended.
+   */
+  next_date: Date | null;
+  /**
+   * Next Amount
+   */
+  next_amount: number | null;
+  /**
+   * Price Changes
+   *
+   * Oldest first.
+   */
+  price_changes: Array<PriceChangeSchema>;
+};
+
+/**
+ * RecurringStatus
+ */
+export const RecurringStatus = {
+  ACTIVE: "active",
+  LATE: "late",
+  ENDED: "ended",
+} as const;
+
+/**
+ * RecurringStatus
+ */
+export type RecurringStatus =
+  (typeof RecurringStatus)[keyof typeof RecurringStatus];
+
+/**
+ * RecurringTotal
+ */
+export type RecurringTotal = {
+  /**
+   * Currency
+   */
+  currency: string;
+  /**
+   * Is Business
+   */
+  is_business: boolean;
+  /**
+   * Money Out
+   *
+   * Bills and subscriptions in an average month, in minor units.
+   */
+  money_out: number;
+  /**
+   * Subscriptions
+   *
+   * The subscriptions among them.
+   */
+  subscriptions: number;
+  /**
+   * Money In
+   *
+   * Income in an average month.
+   */
+  money_in: number;
 };
 
 /**
@@ -8521,6 +8825,52 @@ export type TypicalDay = {
    * Median steps.
    */
   steps: number | null;
+};
+
+/**
+ * UpcomingPayment
+ */
+export type UpcomingPayment = {
+  /**
+   * Key
+   */
+  key: string;
+  /**
+   * Typical Amount
+   */
+  typical_amount: number;
+  /**
+   * Name
+   */
+  name: string;
+  kind: RecurringKind;
+  /**
+   * Date
+   */
+  date: Date;
+  /**
+   * Amount
+   */
+  amount: number;
+  /**
+   * Currency
+   */
+  currency: string;
+  direction: TransactionDirection;
+  /**
+   * Is Business
+   */
+  is_business: boolean;
+  /**
+   * Bank Account Id
+   */
+  bank_account_id: string;
+  /**
+   * Late
+   *
+   * Was due before today and hasn't been seen yet.
+   */
+  late: boolean;
 };
 
 /**
@@ -13777,6 +14127,131 @@ export type LogRecipeCookedResponses = {
 
 export type LogRecipeCookedResponse =
   LogRecipeCookedResponses[keyof LogRecipeCookedResponses];
+
+export type ListRecurringPaymentsData = {
+  body?: never;
+  path?: never;
+  query?: {
+    /**
+     * Days
+     *
+     * How many days ahead, from today, upcoming payments cover.
+     */
+    days?: number;
+  };
+  url: "/v1/recurring";
+};
+
+export type ListRecurringPaymentsErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type ListRecurringPaymentsError =
+  ListRecurringPaymentsErrors[keyof ListRecurringPaymentsErrors];
+
+export type ListRecurringPaymentsResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecurringResponse;
+};
+
+export type ListRecurringPaymentsResponse =
+  ListRecurringPaymentsResponses[keyof ListRecurringPaymentsResponses];
+
+export type CreateRecurringReviewData = {
+  body: RecurringReviewCreate;
+  path?: never;
+  query?: never;
+  url: "/v1/recurring/reviews";
+};
+
+export type CreateRecurringReviewErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type CreateRecurringReviewError =
+  CreateRecurringReviewErrors[keyof CreateRecurringReviewErrors];
+
+export type CreateRecurringReviewResponses = {
+  /**
+   * Successful Response
+   */
+  201: RecurringReviewSchema;
+};
+
+export type CreateRecurringReviewResponse =
+  CreateRecurringReviewResponses[keyof CreateRecurringReviewResponses];
+
+export type DeleteRecurringReviewData = {
+  body?: never;
+  path: {
+    /**
+     * Review Id
+     */
+    review_id: string;
+  };
+  query?: never;
+  url: "/v1/recurring/reviews/{review_id}";
+};
+
+export type DeleteRecurringReviewErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type DeleteRecurringReviewError =
+  DeleteRecurringReviewErrors[keyof DeleteRecurringReviewErrors];
+
+export type DeleteRecurringReviewResponses = {
+  /**
+   * Successful Response
+   */
+  204: void;
+};
+
+export type DeleteRecurringReviewResponse =
+  DeleteRecurringReviewResponses[keyof DeleteRecurringReviewResponses];
+
+export type UpdateRecurringReviewData = {
+  body: RecurringReviewUpdate;
+  path: {
+    /**
+     * Review Id
+     */
+    review_id: string;
+  };
+  query?: never;
+  url: "/v1/recurring/reviews/{review_id}";
+};
+
+export type UpdateRecurringReviewErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type UpdateRecurringReviewError =
+  UpdateRecurringReviewErrors[keyof UpdateRecurringReviewErrors];
+
+export type UpdateRecurringReviewResponses = {
+  /**
+   * Successful Response
+   */
+  200: RecurringReviewSchema;
+};
+
+export type UpdateRecurringReviewResponse =
+  UpdateRecurringReviewResponses[keyof UpdateRecurringReviewResponses];
 
 export type SearchEverythingData = {
   body?: never;

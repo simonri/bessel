@@ -38,6 +38,7 @@ from api.redis import create_redis, get_redis
 from api.settings import settings
 from api.tests.fixtures.database import SaveFixture
 from cryptography.fernet import Fernet
+from dateutil.relativedelta import relativedelta
 from httpx import AsyncClient
 from sqlalchemy import select
 
@@ -93,6 +94,10 @@ AUDITED: set[str] = {
   "PUT /v1/calendars/events/{event_id}/response",
   "POST /v1/calendars/google/callback",
   "GET /v1/categories",
+  "GET /v1/recurring",
+  "POST /v1/recurring/reviews",
+  "PATCH /v1/recurring/reviews/{review_id}",
+  "DELETE /v1/recurring/reviews/{review_id}",
   "GET /v1/counters",
   "POST /v1/counters",
   "DELETE /v1/counters/{counter_id}",
@@ -530,6 +535,39 @@ class TestCounters:
 
     assert [c["name"] for c in (await client.get("/v1/counters")).json()] == ["A counter"]
     assert len((await client.get(f"/v1/counters/{counter['id']}/resets")).json()) == 1
+
+
+class TestRecurring:
+  @pytest.mark.asyncio
+  async def test_other_user_cannot_see_or_review_recurring_payments(
+    self, client: AsyncClient, other_client: AsyncClient, save_fixture: SaveFixture, user: User
+  ) -> None:
+    account = BankAccount(name="A's", currency="SEK", base_balance=0, subtype="checking", user_id=user.id)
+    await save_fixture(account)
+    for months in range(1, 5):
+      day = date.today() - relativedelta(months=months)
+      await save_fixture(
+        Transaction(
+          amount=11_900,
+          currency="SEK",
+          transaction_date=day,
+          direction=TransactionDirection.debit,
+          dedup_hash=uuid4().hex,
+          description="A's subscription",
+          bank_account_id=account.id,
+          user_id=user.id,
+        )
+      )
+    [series] = (await client.get("/v1/recurring")).json()["series"]
+    review = await _create(client, "/v1/recurring/reviews", {"key": series["key"], "typical_amount": series["typical_amount"], "name": "Mine"})
+
+    assert (await other_client.get("/v1/recurring")).json()["series"] == []
+    assert (await other_client.patch(f"/v1/recurring/reviews/{review['id']}", json={"name": "pwned"})).status_code == 404
+    assert (await other_client.delete(f"/v1/recurring/reviews/{review['id']}")).status_code == 404
+    await _create(other_client, "/v1/recurring/reviews", {"key": series["key"], "typical_amount": series["typical_amount"], "decision": "dismissed"})
+
+    [after] = (await client.get("/v1/recurring")).json()["series"]
+    assert (after["name"], after["decision"]) == ("Mine", None)
 
 
 class TestTimeTracking:

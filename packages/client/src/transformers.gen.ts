@@ -73,6 +73,7 @@ import type {
   ListProjectsResponse,
   ListRecipeCooksResponse,
   ListRecipesResponse,
+  ListRecurringPaymentsResponse,
   ListReflectionsResponse,
   ListResetsResponse,
   ListTasksResponse,
@@ -1491,6 +1492,45 @@ export const logRecipeCookedResponseTransformer = async (
   data: any,
 ): Promise<LogRecipeCookedResponse> => {
   data = recipeCookResultSchemaResponseTransformer(data);
+  return data;
+};
+
+const priceChangeSchemaSchemaResponseTransformer = (data: any) => {
+  data.date = new Date(data.date);
+  return data;
+};
+
+const recurringSeriesSchemaSchemaResponseTransformer = (data: any) => {
+  data.first_date = new Date(data.first_date);
+  data.last_date = new Date(data.last_date);
+  if (data.next_date) {
+    data.next_date = new Date(data.next_date);
+  }
+  data.price_changes = data.price_changes.map((item: any) =>
+    priceChangeSchemaSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+const upcomingPaymentSchemaResponseTransformer = (data: any) => {
+  data.date = new Date(data.date);
+  return data;
+};
+
+const recurringResponseSchemaResponseTransformer = (data: any) => {
+  data.series = data.series.map((item: any) =>
+    recurringSeriesSchemaSchemaResponseTransformer(item),
+  );
+  data.upcoming = data.upcoming.map((item: any) =>
+    upcomingPaymentSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const listRecurringPaymentsResponseTransformer = async (
+  data: any,
+): Promise<ListRecurringPaymentsResponse> => {
+  data = recurringResponseSchemaResponseTransformer(data);
   return data;
 };
 
