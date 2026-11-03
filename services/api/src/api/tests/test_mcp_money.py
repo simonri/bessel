@@ -8,6 +8,7 @@ from api.mcp.tools import money
 from api.models.avanza import AvanzaAccount, AvanzaConnection, HoldingSnapshot
 from api.models.bank_account import BankAccount
 from api.models.category import Category
+from api.models.recurring_series import RecurringDecision, RecurringSeries
 from api.models.security import AssetType, Security
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
@@ -282,3 +283,47 @@ class TestInvestments:
       "gain": 2_000.0,
     }
     assert await mcp_call(connect, "get_investments", token="token-b") == {"accounts": [], "holdings": []}
+
+
+class TestRecurringPayments:
+  @pytest_asyncio.fixture
+  async def subscriptions(self, save_fixture: SaveFixture, user: User) -> None:
+    """Monthly, from May to September: a streaming service, a gym the user dismissed, and the company's hosting."""
+    skandia = await _account(save_fixture, user, "Skandia")
+    company = await _account(save_fixture, user, "Företaget", business=True)
+    for month in range(5, 10):
+      await _transaction(save_fixture, skandia, date(2026, month, 20), 11_900, DEBIT, f"NETFLIX.COM {month}")
+      await _transaction(save_fixture, skandia, date(2026, month, 2), 39_900, DEBIT, "GYMMET")
+      await _transaction(save_fixture, company, date(2026, month, 8), 50_000, DEBIT, "SERVERHALL")
+    await save_fixture(RecurringSeries(user_id=user.id, key="debit|SEK|personal|gymmet", typical_amount=39_900, decision=RecurringDecision.dismissed))
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("subscriptions")
+  async def test_series_due_and_totals_in_currency_units_without_dismissed_ones(self, connect: ConnectFixture) -> None:
+    result = await mcp_call(connect, "get_recurring_payments")
+
+    assert [(s["name"], s["kind"], s["owner"], s["account"], s["amount"], s["status"], s["next_due"]) for s in result["series"]] == [
+      ("NETFLIX.COM", "subscription", "personal", "Skandia", 119.0, "active", "2026-10-20"),
+      ("SERVERHALL", "bill", "company", "Företaget", 500.0, "late", "2026-10-08"),
+    ]
+    assert [(d["date"], d["name"], d["late"]) for d in result["due"]] == [
+      ("2026-10-08", "SERVERHALL", True),
+      ("2026-10-20", "NETFLIX.COM", False),
+      # The 8th is a Sunday.
+      ("2026-11-09", "SERVERHALL", False),
+    ]
+    totals = [(t["owner"], t["money_out_per_month"], t["subscriptions_per_month"]) for t in result["totals"]]
+    assert totals == [("personal", 119.0, 119.0), ("company", 500.0, 0.0)]
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("subscriptions")
+  async def test_filters_by_kind_and_days(self, connect: ConnectFixture) -> None:
+    result = await mcp_call(connect, "get_recurring_payments", {"kind": "subscription", "days": 5})
+
+    assert [s["name"] for s in result["series"]] == ["NETFLIX.COM"]
+    assert result["due"] == []
+
+  @pytest.mark.asyncio
+  @pytest.mark.usefixtures("subscriptions")
+  async def test_another_user_sees_none(self, connect: ConnectFixture) -> None:
+    assert (await mcp_call(connect, "get_recurring_payments", token="token-b"))["series"] == []

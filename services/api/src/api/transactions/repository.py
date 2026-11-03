@@ -39,6 +39,20 @@ class RuleCandidate(NamedTuple):
   company_account: bool
 
 
+class RecurringRow(NamedTuple):
+  id: UUID
+  transaction_date: date
+  amount: int
+  currency: str
+  direction: TransactionDirection
+  name: str | None
+  description: str | None
+  bank_account_id: UUID
+  # The company's money: on a company account, or a company cost paid privately.
+  business: bool
+  logo_url: str | None = None
+
+
 class TransferCandidate(NamedTuple):
   id: UUID
   bank_account_id: UUID
@@ -292,6 +306,35 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     if since is not None:
       statement = statement.where(Transaction.transaction_date >= since)
     return [TransferCandidate(*row) for row in await self.session.execute(statement)]
+
+  async def recurring_rows(self, user_id: UUID, *, since: date) -> list[RecurringRow]:
+    """Money that could repeat: not moves between own accounts, a broker's movements, or repayments of a card or pay later."""
+    statement = (
+      select(
+        Transaction.id,
+        Transaction.transaction_date,
+        Transaction.amount,
+        Transaction.currency,
+        Transaction.direction,
+        Transaction.name,
+        Transaction.description,
+        Transaction.bank_account_id,
+        or_(BankAccount.is_business, Transaction.is_business),
+        Transaction.logo_url,
+      )
+      .join(BankAccount, BankAccount.id == Transaction.bank_account_id)
+      .where(
+        Transaction.user_id == user_id,
+        Transaction.deleted_at.is_(None),
+        Transaction.transfer_id.is_(None),
+        Transaction.transaction_date >= since,
+        BankAccount.deleted_at.is_(None),
+        BankAccount.subtype.not_in(INVESTMENT_SUBTYPES),
+        ~((BankAccount.subtype == "credit_card") & (Transaction.direction == TransactionDirection.credit)),
+      )
+      .order_by(Transaction.transaction_date, Transaction.id)
+    )
+    return [RecurringRow(*row) for row in await self.session.execute(statement)]
 
   async def rule_candidates(self, user_id: UUID, *, since: date | None) -> list[RuleCandidate]:
     """Uncategorized transactions a rule may sort: not investment accounts' buys and sells, nor paired transfers."""

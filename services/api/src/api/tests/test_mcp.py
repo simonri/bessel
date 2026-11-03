@@ -216,6 +216,7 @@ class TestTools:
       "get_meeting_brief",
       "get_month_summary",
       "search_transactions",
+      "get_recurring_payments",
       "get_location_history",
     }
 
@@ -266,14 +267,14 @@ class TestTools:
     seen_by_model = sum(len(t.description or "") + len(json.dumps(t.input_schema)) for t in tools)
     whole = sum(len(t.model_dump_json(exclude_none=True, by_alias=True)) for t in tools)
     assert seen_by_model <= 66_000, seen_by_model
-    assert whole <= 165_000, whole
+    assert whole <= 167_000, whole
 
   @pytest.mark.asyncio
   async def test_money_is_only_ever_read(self, connect: ConnectFixture) -> None:
     async with connect() as client:
       tools = (await client.list_tools()).tools
-    money = [t for t in tools if any(word in t.name for word in ("finance", "month_summary", "transaction", "invest", "account", "spending", "holding"))]
-    assert sorted(t.name for t in money) == ["get_finances_overview", "get_investments", "get_month_summary", "search_transactions"]
+    money = [t for t in tools if any(word in t.name for word in ("finance", "month_summary", "transaction", "invest", "account", "spending", "holding", "recurring"))]
+    assert sorted(t.name for t in money) == ["get_finances_overview", "get_investments", "get_month_summary", "get_recurring_payments", "search_transactions"]
     for tool in money:
       assert tool.annotations is not None
       assert tool.annotations.read_only_hint is True, tool.name
@@ -315,6 +316,7 @@ ISOLATION_TESTED = {
   "get_month_summary",
   "search_transactions",
   "get_investments",
+  "get_recurring_payments",
   # Public data: test_weather checks each caller gets it in their own timezone.
   "get_weather",
   "search_recipes",
