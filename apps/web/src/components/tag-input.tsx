@@ -74,16 +74,31 @@ export function TagDisplay({ tags }: { tags: string[] }) {
 interface TagInputProps {
   tags: string[];
   onChange: (tags: string[]) => void;
+  /** Offered as you type; place tags by default. */
+  suggestions?: string[];
+  /** How a typed tag is stored; lower case by default. */
+  normalize?: (tag: string) => string;
+  placeholder?: string;
 }
 
-export function TagInput({ tags, onChange }: TagInputProps) {
+const lowerCase = (tag: string) => tag.trim().toLowerCase();
+
+export function TagInput({
+  tags,
+  onChange,
+  suggestions = PRESET_TAGS,
+  normalize = lowerCase,
+  placeholder = "Add tags...",
+}: TagInputProps) {
   const [input, setInput] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const has = (tag: string) =>
+    tags.some((t) => t.toLowerCase() === tag.toLowerCase());
 
   const addTag = (tag: string) => {
-    const normalized = tag.trim().toLowerCase();
-    if (normalized && !tags.includes(normalized)) {
+    const normalized = normalize(tag);
+    if (normalized && !has(normalized)) {
       onChange([...tags, normalized]);
     }
     setInput("");
@@ -106,9 +121,10 @@ export function TagInput({ tags, onChange }: TagInputProps) {
     }
   };
 
-  const filteredSuggestions = PRESET_TAGS.filter(
+  const filteredSuggestions = suggestions.filter(
     (s) =>
-      !tags.includes(s) && (input ? s.includes(input.toLowerCase()) : true),
+      !has(s) &&
+      (input ? s.toLowerCase().includes(input.trim().toLowerCase()) : true),
   );
 
   return (
@@ -132,7 +148,7 @@ export function TagInput({ tags, onChange }: TagInputProps) {
               // Delay to allow click on suggestion
               setTimeout(() => setShowSuggestions(false), 150);
             }}
-            placeholder={tags.length === 0 ? "Add tags..." : ""}
+            placeholder={tags.length === 0 ? placeholder : ""}
             className="bg-transparent text-13 outline-none flex-1 min-w-[80px] placeholder:text-muted-foreground"
           />
         </div>

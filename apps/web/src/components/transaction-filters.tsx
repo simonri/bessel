@@ -10,6 +10,7 @@ import { cn } from "@bessel/ui/lib/utils";
 import {
   ArrowLeftRight,
   Briefcase,
+  CheckCheck,
   ChevronDown,
   Paperclip,
   Search,
@@ -29,6 +30,10 @@ export interface TransactionFilters {
   search?: string;
   /** Moves between the user's own accounts: shown by default, or hidden, or the only rows. */
   transfers?: "hide" | "only";
+  /** Only transactions with any of these tags, across every month. */
+  tag?: string[];
+  /** Only transactions not yet reviewed, across every month. */
+  to_review?: boolean;
   year?: number;
   month?: number;
 }
@@ -38,6 +43,10 @@ interface TransactionFiltersBarProps {
   onFiltersChange: (filters: TransactionFilters) => void;
   accounts: BankAccountSchema[];
   categories: CategorySchema[];
+  /** The user's tags, most used first. */
+  tags: string[];
+  /** How many wait to be reviewed, when known. */
+  toReviewCount?: number;
 }
 
 function hasActiveFilters(filters: TransactionFilters): boolean {
@@ -49,7 +58,9 @@ function hasActiveFilters(filters: TransactionFilters): boolean {
     filters.is_business !== undefined ||
     filters.missing_documents ||
     filters.search ||
-    filters.transfers
+    filters.transfers ||
+    filters.tag?.length ||
+    filters.to_review
   );
 }
 
@@ -230,6 +241,100 @@ function CategoryDropdown({
   );
 }
 
+// ─── Tag multi-select ────────────────────────────────────────────────────────
+
+function TagDropdown({
+  tags,
+  selected,
+  onToggle,
+  onClear,
+}: {
+  tags: string[];
+  selected: string[];
+  onToggle: (tag: string) => void;
+  onClear: () => void;
+}) {
+  if (tags.length === 0 && selected.length === 0) return null;
+  const label =
+    selected.length === 0
+      ? "Tag"
+      : selected.length === 1
+        ? selected[0]
+        : `${selected.length} tags`;
+  const options = [...selected.filter((t) => !tags.includes(t)), ...tags];
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            CHIP_CLASS,
+            selected.length > 0 ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS,
+          )}
+        >
+          <span className="max-w-32 truncate">{label}</span>
+          {selected.length > 0 ? (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                onClear();
+              }}
+              className="-mr-1 rounded p-0.5 text-white/45 transition-colors duration-150 hover:bg-white/10 hover:text-white/90"
+            >
+              <X className="size-3" />
+            </span>
+          ) : (
+            <ChevronDown className="size-3" />
+          )}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        className="max-h-72 w-56 overflow-y-auto rounded-xl p-1.5"
+      >
+        {options.map((tag) => (
+          <label key={tag} className={OPTION_CLASS}>
+            <Checkbox
+              checked={selected.includes(tag)}
+              onCheckedChange={() => onToggle(tag)}
+            />
+            <span className="truncate">{tag}</span>
+          </label>
+        ))}
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+// ─── Review toggle ───────────────────────────────────────────────────────────
+
+function ReviewToggle({
+  value,
+  count,
+  onChange,
+}: {
+  value: boolean | undefined;
+  count: number | undefined;
+  onChange: (v: boolean | undefined) => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(value ? undefined : true)}
+      title="New imports you haven't looked over yet"
+      className={cn(
+        CHIP_CLASS,
+        "px-2.5",
+        value ? CHIP_ACTIVE_CLASS : CHIP_IDLE_CLASS,
+      )}
+    >
+      <CheckCheck className={cn("size-3.5", value && "text-primary-300")} />
+      To review
+      {!!count && <span className="tabular-nums text-white/45">{count}</span>}
+    </button>
+  );
+}
+
 // ─── Direction toggle ────────────────────────────────────────────────────────
 
 function DirectionToggle({
@@ -393,6 +498,8 @@ export function TransactionFiltersBar({
   onFiltersChange,
   accounts,
   categories,
+  tags,
+  toReviewCount,
 }: TransactionFiltersBarProps) {
   const [searchValue, setSearchValue] = useState(filters.search ?? "");
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -403,7 +510,7 @@ export function TransactionFiltersBar({
   const active = hasActiveFilters(filters);
 
   const toggleArrayFilter = (
-    key: "bank_account_id" | "category_id",
+    key: "bank_account_id" | "category_id" | "tag",
     id: string,
   ) => {
     const current = filters[key] ?? [];
@@ -461,6 +568,19 @@ export function TransactionFiltersBar({
               uncategorized: undefined,
             })
           }
+        />
+
+        <ReviewToggle
+          value={filters.to_review}
+          count={toReviewCount}
+          onChange={(v) => onFiltersChange({ ...filters, to_review: v })}
+        />
+
+        <TagDropdown
+          tags={tags}
+          selected={filters.tag ?? []}
+          onToggle={(tag) => toggleArrayFilter("tag", tag)}
+          onClear={() => onFiltersChange({ ...filters, tag: undefined })}
         />
 
         <DirectionToggle

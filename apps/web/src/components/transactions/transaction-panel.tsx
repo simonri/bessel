@@ -25,6 +25,7 @@ import {
   NameSuggestions,
   NoteField,
 } from "@/components/transactions/transaction-naming";
+import { TagsField } from "@/components/transactions/transaction-tags";
 import { SoftButton } from "@/components/ui-kit";
 import { fromApiDate } from "@/lib/local-day";
 import { Amount } from "@/lib/privacy";
@@ -181,7 +182,23 @@ function Body({
               aria-label="Company expense"
             />
           </Detail>
+          <Detail
+            label="Reviewed"
+            hint={
+              transaction.reviewed
+                ? "You've looked it over."
+                : "New from an import, not looked over yet."
+            }
+          >
+            <Switch
+              checked={transaction.reviewed ?? true}
+              onCheckedChange={(on) => handlers.onReview([transaction.id], on)}
+              aria-label="Reviewed"
+            />
+          </Detail>
         </dl>
+
+        <TagsField transaction={transaction} />
 
         <NoteField transaction={transaction} />
 
