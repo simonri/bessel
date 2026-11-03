@@ -100,6 +100,8 @@ class TestPerformance:
       {"day": ago(40).isoformat(), "value": 1_000_000},
       {"day": ago(20).isoformat(), "value": 1_100_000},
       {"day": ago(10).isoformat(), "value": 1_600_000},
+      # Today, with today's cash and the latest positions: what it's worth now.
+      {"day": TODAY.isoformat(), "value": 1_600_000},
     ]
     assert (total["bank_account_id"], total["points"]) == (None, own["points"])
     month = _returns(body, isk, "1m")
@@ -134,7 +136,7 @@ class TestPerformance:
     # The ISK's cash of 1,000,000 grew by 100,000; the KF's 80% isn't in the total.
     assert _returns(body, None, "3m")["time_weighted"] == pytest.approx(0.10)
     total = next(s for s in body["series"] if s["bank_account_id"] is None)
-    assert total["points"][-1] == {"day": ago(10).isoformat(), "value": 1_100_000 + 900_000}
+    assert total["points"][-1] == {"day": TODAY.isoformat(), "value": 1_100_000 + 900_000}
 
   @pytest.mark.asyncio
   async def test_an_account_valued_from_later_joins_the_total_without_counting_as_gain(
@@ -167,14 +169,50 @@ class TestPerformance:
     body = (await client.get("/v1/investments/performance")).json()
 
     assert {(s["bank_account_id"], s["currency"]) for s in body["series"]} == {(str(eur.id), "EUR"), (None, "EUR")}
-    assert "daily values" in _returns(body, eur, "all", "EUR")["time_weighted_unavailable"]
-    assert body["left_out"] == []
+    reason = _returns(body, eur, "all", "EUR")["time_weighted_unavailable"]
+    assert "daily values" in reason
+    assert body["left_out"] == [{"bank_account_id": str(eur.id), "name": "Euro broker", "reason": reason}]
 
   @pytest.mark.asyncio
   async def test_another_users_accounts_are_not_in_it(self, other_client: AsyncClient, save_fixture: SaveFixture, user: User) -> None:
     await _account(save_fixture, user, "ISK")
 
     assert (await other_client.get("/v1/investments/performance")).json() == {"series": [], "returns": [], "left_out": []}
+
+
+class TestReconciles:
+  @pytest.mark.asyncio
+  async def test_the_latest_value_is_what_it_is_in_and_the_accounts_totals(self, client: AsyncClient, save_fixture: SaveFixture, user: User) -> None:
+    isk, kf = await _account(save_fixture, user, "ISK"), await _account(save_fixture, user, "KF", subtype="kf", business=True)
+    eur = await _account(save_fixture, user, "Euro broker", currency="EUR")
+    fund = await _security(save_fixture, "Global fund", AssetType.mutual_fund, "SE0000000106")
+    stock = await _security(save_fixture, "Some company", AssetType.stock, "SE0000000107")
+    await _link(save_fixture, user, isk)
+    await _move(save_fixture, isk, ago(40), 1_000_000, CREDIT, "DEPOSIT")
+    await _move(save_fixture, isk, ago(40), 800_000, DEBIT, "BUY")
+    await _snapshot(save_fixture, isk, fund, ago(40), 800_000)
+    await _snapshot(save_fixture, isk, fund, ago(10), 900_000)
+    await _snapshot(save_fixture, isk, stock, ago(10), 50_000)
+    # Put in after the last snapshot, and a KF that borrowed: both still reconcile.
+    await _move(save_fixture, isk, ago(3), 70_000, CREDIT, "DEPOSIT")
+    await _move(save_fixture, kf, ago(30), 40_000, DEBIT, "BUY")
+    await _snapshot(save_fixture, kf, stock, ago(20), 45_000)
+    await _move(save_fixture, eur, ago(30), 10_000, CREDIT, "DEPOSIT")
+    await _snapshot(save_fixture, eur, stock, ago(5), 9_000)
+
+    performance = (await client.get("/v1/investments/performance")).json()
+    allocation = {a["currency"]: a for a in (await client.get("/v1/investments/allocation")).json()["items"]}
+    accounts = (await client.get("/v1/investments/accounts")).json()["items"]
+
+    for currency in ("SEK", "EUR"):
+      latest = next(s for s in performance["series"] if s["bank_account_id"] is None and s["currency"] == currency)["points"][-1]
+      in_it = allocation[currency]
+      account_totals = sum(a["total"] for a in accounts if a["currency"] == currency)
+      assert latest["value"] == in_it["total"] + in_it["borrowed"] == account_totals, currency
+      assert sum(s["value"] for s in in_it["by_asset_type"]) == sum(s["value"] for s in in_it["by_account"]) == in_it["total"]
+    assert allocation["SEK"]["borrowed"] == -40_000
+    assert allocation["EUR"]["total"] == 9_000 + 10_000
+    assert allocation["SEK"]["total"] == 200_000 + 70_000 + 950_000 + 45_000
 
 
 class TestRangeStart:
@@ -213,7 +251,8 @@ class TestAllocation:
       ("mutual_fund", 500_000, 0.5),
       ("cash", 250_000, 0.25),
     ]
-    assert [(s["label"], s["value"]) for s in sek["by_account"]] == [("ISK", 750_000), ("KF", 200_000)]
+    # What each account holds, before what it borrowed: the bars add up to the same whole.
+    assert [(s["label"], s["value"]) for s in sek["by_account"]] == [("ISK", 750_000), ("KF", 250_000)]
     assert sek["borrowed"] == -50_000
     assert [(s["key"], s["value"]) for s in items["EUR"]["by_asset_type"]] == [("stock", 10_000)]
 

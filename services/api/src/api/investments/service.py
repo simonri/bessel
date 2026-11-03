@@ -170,7 +170,10 @@ class InvestmentService:
 
   async def performance(self, session: AsyncSession, user_id: UUID, *, today: date) -> InvestmentPerformanceResponse:
     """Each account's value on the days its broker reported its positions, each currency's total, and their
-    returns over each range, from those values and the deposits and withdrawals between them."""
+    returns over each range, from those values and the deposits and withdrawals between them.
+
+    The series end today, with today's cash and the latest positions, so their last value is what the accounts
+    are worth now. Returns only use the days positions were reported."""
     accounts = await self._investment_accounts(session, user_id)
     ids = [a.id for a in accounts]
     transactions = TransactionRepository.from_session(session)
@@ -184,14 +187,15 @@ class InvestmentService:
     left_out: list[LeftOutAccount] = []
     for currency in sorted({a.currency for a in accounts}):
       in_currency = [a for a in accounts if a.currency == currency]
-      days = sorted({day for a in in_currency for day in holdings.get(a.id, {})})
+      days = {day for a in in_currency for day in holdings.get(a.id, {})}
       counted: list[Ledger] = []
       everything: list[Ledger] = []
       for account in in_currency:
         snapshots = holdings.get(account.id, {})
-        values = values_on(days, base_balance=account.base_balance, daily_net=net.get(account.id, {}), holdings=snapshots)
+        values = values_on(days | {today}, base_balance=account.base_balance, daily_net=net.get(account.id, {}), holdings=snapshots)
         own = Ledger(values={day: values[day] for day in snapshots}, flows=deposits.get(account.id, {}))
-        series.append(PortfolioSeries(bank_account_id=account.id, currency=currency, points=_points(own.values)))
+        own_series = {day: value for day, value in values.items() if day in snapshots or day == today}
+        series.append(PortfolioSeries(bank_account_id=account.id, currency=currency, points=_points(own_series)))
         if not snapshots:
           reason = "Bessel has no daily values for this account. They come from a broker's sync of its positions."
         elif account.id not in activity:
@@ -201,8 +205,8 @@ class InvestmentService:
         returns.extend(_ranges(own, account.id, currency, today=today, reason=reason))
         everything.append(Ledger(values=values))
         if reason is None:
-          counted.append(Ledger(values=values, flows=own.flows))
-        elif snapshots:
+          counted.append(Ledger(values={day: value for day, value in values.items() if day in days}, flows=own.flows))
+        else:
           left_out.append(LeftOutAccount(bank_account_id=account.id, name=account.name, reason=reason))
       series.append(PortfolioSeries(bank_account_id=None, currency=currency, points=_points(combine(everything).values)))
       reason = "No account here has both daily values and deposits Bessel can count." if not counted and any(e.values for e in everything) else None
@@ -210,31 +214,42 @@ class InvestmentService:
     return InvestmentPerformanceResponse(series=series, returns=returns, left_out=left_out)
 
   async def allocation(self, session: AsyncSession, user_id: UUID) -> InvestmentAllocationResponse:
-    """What the investments are in per currency: by type of holding, with uninvested cash its own slice, and by account."""
-    return self.allocation_of(await self.accounts(session, user_id), await self.current_holdings(session, user_id))
+    """What the investments are in per currency: by type of holding, with uninvested cash its own slice, and by account.
 
-  def allocation_of(self, summaries: Sequence[InvestmentAccountSummary], holdings: Sequence[HoldingSchema]) -> InvestmentAllocationResponse:
+    Valued as the accounts' totals are, from each account's latest positions and its cash, so the slices plus what
+    was borrowed add up to the accounts' totals. Positions worked out from trades have no price and are only counted."""
+    summaries = await self.accounts(session, user_id)
+    positions = await HoldingSnapshotRepository.from_session(session).latest_for_accounts([s.bank_account_id for s in summaries])
+    from_trades = [h for h in await self.current_holdings(session, user_id) if h.bank_account_id is None]
+    return self.allocation_of(summaries, self._from_snapshots(positions), unpriced=[h for h in from_trades if h.current_value is None])
+
+  def allocation_of(
+    self, summaries: Sequence[InvestmentAccountSummary], positions: Sequence[HoldingSchema], *, unpriced: Sequence[HoldingSchema] = ()
+  ) -> InvestmentAllocationResponse:
     by_type: dict[str, dict[str, int]] = {}
     by_account: dict[str, dict[str, int]] = {}
     borrowed: dict[str, int] = {}
-    unpriced: dict[str, int] = {}
-    for holding in holdings:
-      if holding.current_value is None:
-        unpriced[holding.currency] = unpriced.get(holding.currency, 0) + 1
-      elif holding.current_value > 0:
+    unpriced_count: dict[str, int] = {}
+    for holding in unpriced:
+      unpriced_count[holding.currency] = unpriced_count.get(holding.currency, 0) + 1
+    for holding in positions:
+      value = holding.current_value or 0
+      if value > 0:
         types = by_type.setdefault(holding.currency, {})
-        types[holding.asset_type] = types.get(holding.asset_type, 0) + holding.current_value
+        types[holding.asset_type] = types.get(holding.asset_type, 0) + value
+        accounts = by_account.setdefault(holding.currency, {})
+        accounts[str(holding.bank_account_id)] = accounts.get(str(holding.bank_account_id), 0) + value
     for summary in summaries:
       types = by_type.setdefault(summary.currency, {})
       if summary.cash > 0:
         types["cash"] = types.get("cash", 0) + summary.cash
+        accounts = by_account.setdefault(summary.currency, {})
+        accounts[str(summary.bank_account_id)] = accounts.get(str(summary.bank_account_id), 0) + summary.cash
       elif summary.cash < 0:
         borrowed[summary.currency] = borrowed.get(summary.currency, 0) + summary.cash
-      if summary.total > 0:
-        by_account.setdefault(summary.currency, {})[str(summary.bank_account_id)] = summary.total
     names = {str(s.bank_account_id): s.name for s in summaries}
     items = []
-    for currency in sorted(by_type.keys() | by_account.keys() | unpriced.keys()):
+    for currency in sorted(by_type.keys() | by_account.keys() | unpriced_count.keys()):
       types = by_type.get(currency, {})
       whole = sum(types.values())
       items.append(
@@ -246,7 +261,7 @@ class InvestmentService:
           ],
           by_account=_slices(by_account.get(currency, {}), names),
           borrowed=borrowed.get(currency, 0),
-          unpriced=unpriced.get(currency, 0),
+          unpriced=unpriced_count.get(currency, 0),
         )
       )
     return InvestmentAllocationResponse(items=items)

@@ -419,8 +419,8 @@ async def get_investments(
     accounts = await investment_service.accounts(session, user.id)
     holdings = await investment_service.current_holdings(session, user.id)
     performance = await investment_service.performance(session, user.id, today=today_in(resolve_timezone(user, timezone)))
+    allocation = await investment_service.allocation(session, user.id)
   names = {a.bank_account_id: a.name for a in accounts}
-  allocation = investment_service.allocation_of(accounts, holdings)
   return Investments(
     accounts=[
       InvestmentAccount(

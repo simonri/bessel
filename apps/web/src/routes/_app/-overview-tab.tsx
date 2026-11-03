@@ -317,7 +317,7 @@ function PerformancePanel({
   returns: PeriodReturns | undefined;
   range: Range;
   onRange: (range: Range) => void;
-  leftOut: string[];
+  leftOut: { name: string; reason: string }[];
 }) {
   const start = returns?.start
     ? fromApiDate(returns.start)
@@ -391,12 +391,11 @@ function PerformancePanel({
           />
         </div>
       )}
-      {leftOut.length > 0 && (
-        <p className="mt-4 type-caption text-white/40">
-          Returns leave out {leftOut.join(", ")}: Bessel hasn't seen money moved
-          in or out of {leftOut.length === 1 ? "it" : "them"}.
+      {leftOut.map((l) => (
+        <p key={l.name} className="mt-4 type-caption text-white/40">
+          Returns leave out {l.name}. {l.reason}
         </p>
-      )}
+      ))}
     </Panel>
   );
 }
@@ -627,11 +626,9 @@ export function OverviewTab() {
   );
   const leftOut = scoped
     ? []
-    : (performance?.left_out ?? [])
-        .filter((l) =>
-          inCurrency.some((a) => a.bank_account_id === l.bank_account_id),
-        )
-        .map((l) => l.name);
+    : (performance?.left_out ?? []).filter((l) =>
+        inCurrency.some((a) => a.bank_account_id === l.bank_account_id),
+      );
   const allocation = allocationData?.items.find((a) => a.currency === currency);
 
   return (
