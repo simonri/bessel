@@ -273,7 +273,9 @@ class TestTools:
   async def test_money_is_only_ever_read(self, connect: ConnectFixture) -> None:
     async with connect() as client:
       tools = (await client.list_tools()).tools
-    money = [t for t in tools if any(word in t.name for word in ("finance", "month_summary", "transaction", "invest", "account", "spending", "holding", "recurring"))]
+    money = [
+      t for t in tools if any(word in t.name for word in ("finance", "month_summary", "transaction", "invest", "account", "spending", "holding", "recurring"))
+    ]
     assert sorted(t.name for t in money) == ["get_finances_overview", "get_investments", "get_month_summary", "get_recurring_payments", "search_transactions"]
     for tool in money:
       assert tool.annotations is not None

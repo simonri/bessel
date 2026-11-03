@@ -9,7 +9,7 @@ from uuid import UUID
 from api.models.recurring_series import RecurringDecision, RecurringKind, RecurringSeries
 from api.models.transaction import TransactionDirection
 from api.postgres import AsyncSession
-from api.recurring.detection import HISTORY, Series, RecurringStatus, detect, occurrences
+from api.recurring.detection import HISTORY, RecurringStatus, Series, detect, occurrences
 from api.recurring.repository import RecurringSeriesRepository
 from api.recurring.schemas import PriceChangeSchema, RecurringResponse, RecurringSeriesSchema, RecurringTotal, UpcomingPayment
 from api.transactions.repository import TransactionRepository

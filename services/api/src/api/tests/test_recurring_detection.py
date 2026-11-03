@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 from api.models.recurring_series import RecurringKind
 from api.models.transaction import TransactionDirection
-from api.recurring.detection import RecurringCadence, PriceChange, RecurringStatus, detect, occurrences
+from api.recurring.detection import PriceChange, RecurringCadence, RecurringStatus, detect, occurrences
 from api.transactions.repository import RecurringRow
 
 DEBIT, CREDIT = TransactionDirection.debit, TransactionDirection.credit
@@ -36,7 +36,12 @@ class TestMonthly:
 
     [series] = detect(rows, today=date(2026, 10, 20))
 
-    assert (series.name, series.kind, series.cadence, series.status) == ("SPOTIFY", RecurringKind.subscription, RecurringCadence.monthly, RecurringStatus.active)
+    assert (series.name, series.kind, series.cadence, series.status) == (
+      "SPOTIFY",
+      RecurringKind.subscription,
+      RecurringCadence.monthly,
+      RecurringStatus.active,
+    )
     assert (series.typical_amount, series.count, series.next_date) == (11_900, 6, date(2026, 11, 5))
     assert not series.variable
 
@@ -138,9 +143,7 @@ class TestOtherCadences:
 
 class TestGrouping:
   def test_the_users_name_joins_two_bank_texts(self) -> None:
-    rows = [
-      _row(date(2026, m, 8), 29_900, "TELIA SVERIGE" if m % 2 else "TELIA MOBIL AB", name="Mobil") for m in range(6, 11)
-    ]
+    rows = [_row(date(2026, m, 8), 29_900, "TELIA SVERIGE" if m % 2 else "TELIA MOBIL AB", name="Mobil") for m in range(6, 11)]
 
     [series] = detect(rows, today=date(2026, 10, 20))
 

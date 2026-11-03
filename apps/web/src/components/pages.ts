@@ -26,6 +26,7 @@ export type PageKey =
   | "recipes"
   | "contacts"
   | "transactions"
+  | "recurring"
   | "accounts"
   | "investments"
   | "obsidian"
@@ -80,6 +81,7 @@ export const PAGE_REGISTRY: Record<PageKey, PageConfig> = {
   recipes: fromModule("recipes"),
   contacts: fromModule("contacts"),
   transactions: fromModule("transactions"),
+  recurring: fromModule("recurring"),
   accounts: fromModule("accounts"),
   investments: fromModule("investments"),
   obsidian: fromModule("obsidian", true),
@@ -111,6 +113,7 @@ export const PRIMARY_PAGES: PageKey[] = [
   "googleTimeline",
   "activity",
   "transactions",
+  "recurring",
   "accounts",
   "investments",
   "hyperliquid",
@@ -157,6 +160,7 @@ const ALL_PAGES = new Set<string>([...PRIMARY_PAGES, ...MORE_PAGES]);
 /** Pages the sidebar shows indented under the page they belong to. */
 export const SUBPAGES: Partial<Record<PageKey, readonly PageKey[]>> = {
   timeline: ["activity", "googleTimeline"],
+  transactions: ["recurring"],
 };
 
 /**
