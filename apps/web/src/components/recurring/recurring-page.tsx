@@ -132,33 +132,28 @@ function Totals({ totals }: { totals: RecurringTotal[] }) {
   if (totals.length === 0) return null;
   return (
     <div className="flex flex-col gap-2">
-      {orderedTotals(totals).map((total) => (
-        <div
-          key={`${total.currency}-${total.is_business}`}
-          className="grid grid-cols-1 gap-2 @md:grid-cols-3"
-        >
-          <StatTile
-            label={
-              total.is_business
-                ? "Company bills and subscriptions a month"
-                : "Bills and subscriptions a month"
-            }
-            value={<Amount value={total.money_out} currency={total.currency} />}
-          />
-          <StatTile
-            label="Of which subscriptions"
-            value={
-              <Amount value={total.subscriptions} currency={total.currency} />
-            }
-          />
-          <StatTile
-            label={
-              total.is_business ? "Company income a month" : "Income a month"
-            }
-            value={<Amount value={total.money_in} currency={total.currency} />}
-          />
-        </div>
-      ))}
+      {orderedTotals(totals).map((total) => {
+        const owner = total.is_business ? "Company " : "";
+        const tiles = [
+          { label: `${owner}out a month`, value: total.money_out },
+          { label: "On subscriptions", value: total.subscriptions },
+          { label: `${owner}in a month`, value: total.money_in },
+        ].filter((tile, i) => i === 0 || tile.value > 0);
+        return (
+          <div
+            key={`${total.currency}-${total.is_business}`}
+            className="grid grid-cols-3 gap-2"
+          >
+            {tiles.map((tile) => (
+              <StatTile
+                key={tile.label}
+                label={tile.label.charAt(0).toUpperCase() + tile.label.slice(1)}
+                value={<Amount value={tile.value} currency={total.currency} />}
+              />
+            ))}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -293,9 +288,9 @@ function seriesCaption(
 ): string {
   const when =
     series.status === "ended" || !series.next_date
-      ? `Last ${format(fromApiDate(series.last_date), "d MMM yyyy")}`
+      ? `last paid ${format(fromApiDate(series.last_date), "d MMM yyyy")}`
       : series.status === "late"
-        ? `Was due ${format(fromApiDate(series.next_date), "d MMM")}`
+        ? `was due ${format(fromApiDate(series.next_date), "d MMM")}`
         : dueText(series.next_date, today);
   return [CADENCE_LABELS[series.cadence], account, when]
     .filter(Boolean)
@@ -362,9 +357,21 @@ function SeriesRow({
             credit ? "text-income" : "text-white/80",
           )}
         />
-        <span className="type-caption text-white/40">
-          {series.variable ? "Varies" : CADENCE_LABELS[series.cadence]}
-        </span>
+        {(series.variable || series.cadence !== "monthly") && (
+          <span className="type-caption text-white/40">
+            {series.variable ? (
+              "Varies"
+            ) : (
+              <>
+                <Amount
+                  value={series.monthly_amount}
+                  currency={series.currency}
+                />{" "}
+                a month
+              </>
+            )}
+          </span>
+        )}
       </div>
       <SeriesMenu series={series} onReview={onReview} onRename={onRename} />
     </li>
