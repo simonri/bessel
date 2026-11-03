@@ -542,14 +542,14 @@ function Transactions() {
     ],
   );
 
-  // One marked reviewed leaves the queue at once, before the list comes back.
+  // One marked reviewed leaves the queue at once, before the list comes back; its open panel stays live.
   const transactions = useMemo(
     () => (data?.items ?? []).filter((t) => !reviewing || t.reviewed === false),
     [data, reviewing],
   );
   const totalCount = data?.pagination.total_count ?? 0;
   const selectedCount = selected.size;
-  const open = useKeptOpen(transactions, openId);
+  const open = useKeptOpen(data?.items ?? transactions, openId);
   const monthLabel = format(firstDay, "MMMM yyyy");
   const shown = Math.min(totalCount, MONTH_LIMIT);
 
