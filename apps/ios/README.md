@@ -7,6 +7,11 @@ sleep and workouts), Recipes and Places; your profile opens from the avatar in
 each tab's navigation bar. Contacts (the Google address book, with a log of
 when you were in touch and dates coming up) opens from the people button on the Calendar tab.
 The Golf cart screen is off the tab bar for now.
+Money (More tab) shows accounts with net worth per currency and sync problems,
+transactions by month with search and an account filter (a transaction's
+category can be changed), the month summary and investment holdings; the eye
+in its toolbar hides amounts on this device. Everything else about money,
+like connecting a bank, happens on the web or desktop.
 
 ### Simulator against a local API
 

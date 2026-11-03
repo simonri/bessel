@@ -4,6 +4,8 @@ import SwiftUI
 enum Preferences {
     static let hapticsKey = "prefs.haptics"
     static let appearanceKey = "prefs.appearance"
+    /// Money blurred on this device, for showing the app with someone looking.
+    static let hideAmountsKey = "prefs.hideAmounts"
 }
 
 enum AppearancePreference: String, CaseIterable, Identifiable {
