@@ -147,6 +147,7 @@ function Body({
           <Detail label="Account">{account ?? "Unknown account"}</Detail>
           <Detail
             label={transaction.investment_kind ? "What it is" : "Category"}
+            wide
           >
             {transaction.transfer_id || transaction.investment_kind ? (
               <span className="text-13 text-white/60">
@@ -239,10 +240,13 @@ function Body({
 function Detail({
   label,
   hint,
+  wide,
   children,
 }: {
   label: string;
   hint?: string;
+  /** Gives a value that truncates, such as a category picker, the width to show itself. */
+  wide?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -251,7 +255,14 @@ function Detail({
         <span className="block text-13 text-white/60">{label}</span>
         {hint && <span className="type-caption text-white/35">{hint}</span>}
       </dt>
-      <dd className="flex max-w-[60%] shrink-0 justify-end">{children}</dd>
+      <dd
+        className={cn(
+          "flex shrink-0 justify-end",
+          wide ? "w-[60%]" : "max-w-[60%]",
+        )}
+      >
+        {children}
+      </dd>
     </div>
   );
 }
