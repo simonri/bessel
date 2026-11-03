@@ -374,7 +374,7 @@ export function previewSummary(
     return "Matches nothing here yet; it will sort new imports.";
   const base = `Matches ${plural(preview.match_count, "transaction")} already here`;
   if (rule && rule.transaction_count > 0)
-    return `${base}. The ${plural(rule.transaction_count, "one")} it sorted follow the change.`;
+    return `${base}. The ${rule.transaction_count.toLocaleString("sv-SE")} it sorted will follow the change.`;
   return `${base}.`;
 }
 

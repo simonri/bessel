@@ -63,14 +63,6 @@ export function filterRules(
   );
 }
 
-/** Where a deleted category's transactions can go: any other category, never a group. */
-export function moveTargets(
-  categories: CategorySchema[],
-  deleting: CategorySchema,
-): CategorySchema[] {
-  return categories.filter((c) => c.parent_id && c.id !== deleting.id);
-}
-
 export function plural(count: number, word: string, many = `${word}s`) {
   return `${count.toLocaleString("sv-SE")} ${count === 1 ? word : many}`;
 }

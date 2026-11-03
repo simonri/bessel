@@ -15,7 +15,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { errorDetail } from "@/lib/api-error";
 import { client } from "@/lib/client";
-import { moveTargets, plural } from "./categorization";
+import { plural } from "./categorization";
 import { CategoryPicker } from "./category-picker";
 import { useRefreshCategorization } from "./use-refresh";
 
@@ -74,7 +74,6 @@ function DeleteCategoryForm({
   });
 
   const inUse = category.transaction_count > 0 || category.rule_count > 0;
-  const targets = moveTargets(categories, category);
   const ready = !inUse || choice === "uncategorize" || target !== "";
   const held = [
     category.transaction_count > 0 &&
@@ -123,7 +122,8 @@ function DeleteCategoryForm({
               <CategoryPicker
                 value={target}
                 onChange={setTarget}
-                categories={targets}
+                categories={categories}
+                excludeId={category.id}
                 placeholder="Choose where they go"
               />
             </div>
