@@ -1,7 +1,7 @@
 from enum import StrEnum
 from uuid import UUID
 
-from sqlalchemy import Enum, ForeignKey, Integer, String, Uuid
+from sqlalchemy import Enum, ForeignKey, Integer, String, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column
 
 from api.models.base import RecordModel
@@ -23,6 +23,8 @@ class RecurringSeries(RecordModel):
   """The user's word on a recurring series Bessel detected: kept apart from the detection, which reruns on every read."""
 
   __tablename__ = "recurring_series"
+  # One review per detected series: a second quick action on it changes the same row.
+  __table_args__ = (UniqueConstraint("user_id", "key", "typical_amount"),)
 
   user_id: Mapped[UUID] = mapped_column(Uuid, ForeignKey("users.id"), nullable=False, index=True)
   # Which group of transactions the series comes from: direction, currency, owner and merchant.

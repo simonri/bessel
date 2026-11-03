@@ -35,6 +35,7 @@ def upgrade() -> None:
     sa.Column('deleted_at', sa.TIMESTAMP(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], name=op.f('recurring_series_user_id_fkey')),
     sa.PrimaryKeyConstraint('id', name=op.f('recurring_series_pkey')),
+    sa.UniqueConstraint('user_id', 'key', 'typical_amount', name='recurring_series_user_id_key_typical_amount_key'),
   )
   op.create_index(op.f('ix_recurring_series_created_at'), 'recurring_series', ['created_at'], unique=False)
   op.create_index(op.f('ix_recurring_series_deleted_at'), 'recurring_series', ['deleted_at'], unique=False)

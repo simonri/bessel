@@ -5,11 +5,14 @@ from uuid import uuid4
 import pytest
 import pytest_asyncio
 from api.models.bank_account import BankAccount
+from api.models.recurring_series import RecurringSeries
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
+from api.postgres import AsyncSession
 from api.recurring import endpoints
 from api.tests.fixtures.database import SaveFixture
 from httpx import AsyncClient
+from sqlalchemy import select
 
 TODAY = date(2026, 10, 1)
 DEBIT, CREDIT = TransactionDirection.debit, TransactionDirection.credit
@@ -185,6 +188,19 @@ class TestReview:
     assert (series["kind"], series["decision"], series["review_id"]) == ("bill", None, None)
 
   @pytest.mark.asyncio
+  async def test_a_second_quick_action_changes_the_same_review(self, client: AsyncClient, session: AsyncSession, user: User) -> None:
+    # The page sends both before its list comes back with the first one's id.
+    first = await self._review(client, decision="dismissed")
+    second = await self._review(client, name="Gym")
+
+    assert second["id"] == first["id"]
+    assert (second["decision"], second["name"]) == ("dismissed", "Gym")
+    rows = (await session.execute(select(RecurringSeries).where(RecurringSeries.user_id == user.id))).scalars().all()
+    assert len(rows) == 1
+    [series] = (await _recurring(client))["series"]
+    assert (series["review_id"], series["decision"], series["name"]) == (first["id"], "dismissed", "Gym")
+
+  @pytest.mark.asyncio
   async def test_a_dismissal_survives_a_price_rise(self, client: AsyncClient, save_fixture: SaveFixture, checking: BankAccount) -> None:
     await self._review(client, decision="dismissed")
     await save_fixture(
@@ -217,8 +233,6 @@ class TestReview:
 
   @pytest.mark.asyncio
   async def test_another_users_review_cannot_be_changed(self, client: AsyncClient, save_fixture: SaveFixture, other_user: User) -> None:
-    from api.models.recurring_series import RecurringSeries
-
     theirs = RecurringSeries(user_id=other_user.id, key="debit|SEK|personal|x", typical_amount=1)
     await save_fixture(theirs)
 

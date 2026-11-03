@@ -4,7 +4,6 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Query
 
-from api.models.recurring_series import RecurringSeries
 from api.models.user import User
 from api.postgres import DBSession
 from api.recurring import service
@@ -32,7 +31,9 @@ async def list_recurring_payments(
 @router.post("/reviews", summary="Review Recurring Series", response_model=RecurringReviewSchema, status_code=201)
 async def create_recurring_review(body: RecurringReviewCreate, session: DBSession, current_user: CurrentDBUser) -> RecurringReviewSchema:
   """Confirms, dismisses, renames or changes the kind of a detected series, found by its key and typical amount."""
-  review = await RecurringSeriesRepository.from_session(session).create(RecurringSeries(**body.model_dump(), user_id=current_user.id), flush=True)
+  review = await RecurringSeriesRepository.from_session(session).upsert(
+    current_user.id, key=body.key, typical_amount=body.typical_amount, changes=body.model_dump(exclude={"key", "typical_amount"}, exclude_unset=True)
+  )
   return RecurringReviewSchema.model_validate(review)
 
 
