@@ -182,7 +182,9 @@ function CategoryForm({
       <form.Field name="color">
         {(field) => (
           <fieldset className="space-y-1.5">
-            <legend className="mb-1.5 text-sm font-medium">Color</legend>
+            <legend className="mb-1.5 text-12 leading-none font-medium text-white/60">
+              Color
+            </legend>
             <div className="flex flex-wrap items-center gap-1.5">
               {CATEGORY_COLORS.map((color) => (
                 <button
