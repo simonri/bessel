@@ -835,6 +835,14 @@ enum API {
         var priceChangePct24h: Double?
     }
 
+    enum CsvDialect: String, Codable, Hashable, CaseIterable, LenientEnum {
+        case swedish
+        case international
+        /// A value added on the server after this build.
+        case unknown
+        static let allCases: [CsvDialect] = [.swedish, .international]
+    }
+
     struct CurrencySummary: Codable, Hashable {
         var currency: String
         var income: Int

@@ -4488,6 +4488,12 @@ export const CryptoPriceSchemaSchema = {
   title: "CryptoPriceSchema",
 } as const;
 
+export const CsvDialectSchema = {
+  type: "string",
+  enum: ["swedish", "international"],
+  title: "CsvDialect",
+} as const;
+
 export const CurrencySummarySchema = {
   properties: {
     currency: {

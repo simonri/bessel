@@ -1,4 +1,8 @@
-import type { BankAccountSchema, CategorySchema } from "@bessel/client";
+import type {
+  BankAccountSchema,
+  CategorySchema,
+  ListTransactionsData,
+} from "@bessel/client";
 import { Checkbox } from "@bessel/ui/components/checkbox";
 import {
   Popover,
@@ -17,6 +21,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { TextInput } from "@/components/ui-kit";
+import { apiDate } from "@/lib/local-day";
 
 export interface TransactionFilters {
   bank_account_id?: string[];
@@ -31,6 +36,32 @@ export interface TransactionFilters {
   transfers?: "hide" | "only";
   year?: number;
   month?: number;
+}
+
+/** The API query the filters ask for, shared by the list and its export. A
+ *  search reaches across every month, so it leaves the month out. */
+export function transactionFilterQuery(
+  filters: TransactionFilters,
+  month: { from: string; to: string },
+) {
+  const searching = !!filters.search;
+  return {
+    bank_account_id: filters.bank_account_id,
+    category_id: filters.category_id,
+    uncategorized: filters.uncategorized,
+    direction: filters.direction,
+    is_business: filters.is_business,
+    missing_documents: filters.missing_documents,
+    search: filters.search,
+    transfers:
+      filters.transfers === "only"
+        ? true
+        : filters.transfers === "hide"
+          ? false
+          : undefined,
+    date_from: searching ? undefined : apiDate(month.from),
+    date_to: searching ? undefined : apiDate(month.to),
+  } satisfies NonNullable<ListTransactionsData["query"]>;
 }
 
 interface TransactionFiltersBarProps {

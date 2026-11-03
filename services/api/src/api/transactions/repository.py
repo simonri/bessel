@@ -1,5 +1,5 @@
 import re
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 from datetime import date
 from typing import Any, NamedTuple
 from uuid import UUID
@@ -8,13 +8,13 @@ from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.models.bank_account import INVESTMENT_SUBTYPES, BankAccount
 from api.models.bank_profile import BankProfile
 from api.models.category import Category
-from api.models.document import TransactionDocument
+from api.models.document import Document, TransactionDocument
 from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.transaction_name_rule import TransactionNameRule
 from sqlalchemy import ColumnElement, Row, Select, and_, case, delete, exists, extract, false, func, or_, select, update
-from sqlalchemy.dialects.postgresql import distinct_on
+from sqlalchemy.dialects.postgresql import aggregate_order_by, distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import aliased
 
@@ -30,6 +30,24 @@ class ReportRow(NamedTuple):
   category_color: str | None
   # A credit under a description the user was also charged under: money back, not income.
   refund: bool
+
+
+class ExportRow(NamedTuple):
+  transaction_date: date
+  account: str
+  description: str | None
+  name: str | None
+  category: str | None
+  amount: int
+  currency: str
+  direction: TransactionDirection
+  # Marked as the company's, or on one of the company's accounts: the same line the company filter draws.
+  company: bool
+  transfer: bool
+  note: str | None
+  # The invoices and receipts kept with it, oldest first.
+  document_ids: list[UUID]
+  document_filenames: list[str]
 
 
 class RuleCandidate(NamedTuple):
@@ -255,6 +273,46 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     if transfers is not None:
       statement = statement.where(Transaction.transfer_id.is_not(None) if transfers else Transaction.transfer_id.is_(None))
     return statement
+
+  async def stream_export_rows(self, filtered: Select[tuple[Transaction]], *, batch_size: int = 500) -> AsyncIterator[ExportRow]:
+    """The transactions `filtered` picks, oldest first, read from the database a batch at a time."""
+    # Aliased: the filters' own subqueries on bank accounts would otherwise correlate with this join and lose their FROM.
+    account = aliased(BankAccount)
+    category = aliased(Category)
+
+    def documents(column: ColumnElement[Any]) -> ColumnElement[Any]:
+      return (
+        select(func.array_agg(aggregate_order_by(column, TransactionDocument.created_at, Document.id)))
+        .select_from(TransactionDocument)
+        .join(Document, Document.id == TransactionDocument.document_id)
+        .where(TransactionDocument.transaction_id == Transaction.id, Document.deleted_at.is_(None))
+        .scalar_subquery()
+      )
+
+    statement = (
+      filtered.with_only_columns(
+        Transaction.transaction_date,
+        account.name,
+        Transaction.description,
+        Transaction.name,
+        category.name,
+        Transaction.amount,
+        Transaction.currency,
+        Transaction.direction,
+        or_(Transaction.is_business, account.is_business),
+        Transaction.transfer_id.is_not(None),
+        Transaction.note,
+        documents(Document.id),
+        documents(Document.filename),
+      )
+      .join(account, account.id == Transaction.bank_account_id)
+      .outerjoin(category, category.id == Transaction.category_id)
+      .order_by(None)
+      .order_by(Transaction.transaction_date, Transaction.id)
+      .execution_options(yield_per=batch_size)
+    )
+    async for row in await self.session.stream(statement):
+      yield ExportRow._make((*row[:-2], row[-2] or [], row[-1] or []))
 
   async def create_import_batch(self, batch: ImportBatch) -> ImportBatch:
     self.session.add(batch)
