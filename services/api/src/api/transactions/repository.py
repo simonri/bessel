@@ -312,8 +312,7 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       .execution_options(yield_per=batch_size)
     )
     async for row in await self.session.stream(statement):
-      *fields, document_ids, document_filenames = row
-      yield ExportRow(*fields, document_ids=document_ids or [], document_filenames=document_filenames or [])
+      yield ExportRow._make((*row[:-2], row[-2] or [], row[-1] or []))
 
   async def create_import_batch(self, batch: ImportBatch) -> ImportBatch:
     self.session.add(batch)

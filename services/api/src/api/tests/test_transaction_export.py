@@ -74,7 +74,7 @@ def _rows(content: bytes, delimiter: str = ";") -> list[list[str]]:
   return list(csv.reader(io.StringIO(content.decode("utf-8-sig"), newline=""), delimiter=delimiter))
 
 
-async def _export(client: AsyncClient, **params: object) -> list[list[str]]:
+async def _export(client: AsyncClient, **params: str) -> list[list[str]]:
   response = await client.get("/v1/transactions/export", params=params)
   assert response.status_code == 200, response.text
   assert response.headers["content-type"].startswith("text/csv")
@@ -113,9 +113,7 @@ class TestTransactionExport:
     assert (international[2], international[5], international[9]) == ("RESTAURANG; AB", "-49.50", note)
 
   @pytest.mark.asyncio
-  async def test_text_a_spreadsheet_would_run_as_a_formula_stays_text(
-    self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount
-  ) -> None:
+  async def test_text_a_spreadsheet_would_run_as_a_formula_stays_text(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
     await _transaction(save_fixture, account, "=HYPERLINK(1)", name="+46701234567", note="-")
 
     [_, row] = await _export(client)
@@ -141,9 +139,7 @@ class TestTransactionExport:
     assert [row[0] for row in searched[1:]] == ["2026-09-30", "2026-10-01"]
 
   @pytest.mark.asyncio
-  async def test_says_which_are_transfers_and_which_have_receipts(
-    self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount
-  ) -> None:
+  async def test_says_which_are_transfers_and_which_have_receipts(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
     transfer = await _transaction(save_fixture, account, "Till sparkonto", transfer_id=uuid4())
     purchase = await _transaction(save_fixture, account, "Datorbutik", day=date(2026, 10, 2))
     await _receipt(save_fixture, purchase, "kvitto.pdf", b"%PDF-1")
@@ -155,9 +151,7 @@ class TestTransactionExport:
     assert (rows["Datorbutik"][8], rows["Datorbutik"][10], rows["Datorbutik"][11]) == ("No", "Yes", "kvitto.pdf, faktura.pdf")
 
   @pytest.mark.asyncio
-  async def test_another_users_transactions_are_never_exported(
-    self, other_client: AsyncClient, save_fixture: SaveFixture, account: BankAccount
-  ) -> None:
+  async def test_another_users_transactions_are_never_exported(self, other_client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
     await _transaction(save_fixture, account, "Kaffebaren")
 
     response = await other_client.get("/v1/transactions/export")
@@ -204,9 +198,7 @@ class TestReceiptsExport:
     assert archive.read(path) == b"%PDF-invoice"
 
   @pytest.mark.asyncio
-  async def test_a_receipt_missing_from_storage_is_left_out_not_a_failure(
-    self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount
-  ) -> None:
+  async def test_a_receipt_missing_from_storage_is_left_out_not_a_failure(self, client: AsyncClient, save_fixture: SaveFixture, account: BankAccount) -> None:
     purchase = await _transaction(save_fixture, account, "Datorbutik")
     lost = await _receipt(save_fixture, purchase, "kvitto.pdf", b"%PDF-1")
     await file_storage().delete(original_key(lost.id))

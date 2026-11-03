@@ -16,7 +16,6 @@ from enum import StrEnum
 from uuid import UUID
 
 import structlog
-
 from api.common.file_storage import file_storage
 from api.common.utils import utc_now
 from api.documents.service import original_key
@@ -129,11 +128,14 @@ class _Sink:
   def __init__(self) -> None:
     self.buffer = bytearray()
 
-  def write(self, data: bytes) -> int:
+  def write(self, data: bytes, /) -> int:
     self.buffer += data
     return len(data)
 
   def flush(self) -> None:
+    pass
+
+  def close(self) -> None:
     pass
 
   def take(self) -> bytes:
@@ -152,7 +154,7 @@ async def receipts_zip(rows: AsyncIterable[ExportRow], dialect: CsvDialect) -> A
       paths.setdefault(document_id, receipt_path(document_id, filename))
     return [paths[document_id] for document_id in row.document_ids]
 
-  with zipfile.ZipFile(sink, "w", compression=zipfile.ZIP_STORED) as archive:  # type: ignore[arg-type]
+  with zipfile.ZipFile(sink, "w", compression=zipfile.ZIP_STORED) as archive:
     sheet = zipfile.ZipInfo(CSV_NAME, date_time=utc_now().timetuple()[:6])
     sheet.compress_type = zipfile.ZIP_DEFLATED
     with archive.open(sheet, "w") as entry:

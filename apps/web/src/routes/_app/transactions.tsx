@@ -45,8 +45,13 @@ import { ImportDialog } from "@/components/import-dialog";
 import {
   type TransactionFilters,
   TransactionFiltersBar,
+  transactionFilterQuery,
 } from "@/components/transaction-filters";
 import { MonthSummary } from "@/components/transactions/month-summary";
+import {
+  exportFileName,
+  TransactionExportMenu,
+} from "@/components/transactions/transaction-export";
 import {
   type TransactionHandlers,
   TransactionList,
@@ -60,7 +65,6 @@ import {
   SoftButton,
 } from "@/components/ui-kit";
 import { client } from "@/lib/client";
-import { apiDate } from "@/lib/local-day";
 import {
   mutationFamily,
   restoreItemFields,
@@ -142,8 +146,11 @@ function Transactions() {
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDayStr = `${year}-${mm}-01`;
   const lastDayStr = `${year}-${mm}-${String(daysInMonth).padStart(2, "0")}`;
-  const dateFrom = useMemo(() => apiDate(firstDayStr), [firstDayStr]);
-  const dateTo = useMemo(() => apiDate(lastDayStr), [lastDayStr]);
+  const filterQuery = useMemo(
+    () =>
+      transactionFilterQuery(filters, { from: firstDayStr, to: lastDayStr }),
+    [filters, firstDayStr, lastDayStr],
+  );
   const isCurrentMonth =
     year === now.getFullYear() && month === now.getMonth() + 1;
 
@@ -208,21 +215,7 @@ function Transactions() {
         limit: MONTH_LIMIT,
         page: 1,
         sorting: ["-transaction_date", "description"],
-        bank_account_id: filters.bank_account_id,
-        category_id: filters.category_id,
-        uncategorized: filters.uncategorized,
-        direction: filters.direction,
-        is_business: filters.is_business,
-        missing_documents: filters.missing_documents,
-        search: filters.search,
-        transfers:
-          filters.transfers === "only"
-            ? true
-            : filters.transfers === "hide"
-              ? false
-              : undefined,
-        date_from: searching ? undefined : dateFrom,
-        date_to: searching ? undefined : dateTo,
+        ...filterQuery,
       },
     }),
     placeholderData: keepPreviousData,
@@ -613,6 +606,10 @@ function Transactions() {
           />
         )}
         <HideAmountsButton />
+        <TransactionExportMenu
+          query={filterQuery}
+          fileName={exportFileName(filters, firstDayStr)}
+        />
         <ImportDialog />
       </PageHeader>
 
