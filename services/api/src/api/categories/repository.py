@@ -13,7 +13,8 @@ class CategoryRepository(RepositoryBase[Category], RepositoryIDMixin[Category, U
   model = Category
 
   async def has_children(self, category: Category) -> bool:
-    statement = select(exists().where(Category.parent_id == category.id, Category.deleted_at.is_(None)))
+    # Soft-deleted children too: deleting the parent cascades to every row, taking their transactions' category with them.
+    statement = select(exists().where(Category.parent_id == category.id))
     return bool((await self.session.execute(statement)).scalar())
 
 

@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import UTC, date, datetime
 from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
 from api.categories.service import slugify
 from api.models.bank_account import BankAccount
+from api.models.category import Category
 from api.models.category_rule import CategoryRule
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.user import User
@@ -172,6 +173,13 @@ class TestDeleting:
 
     assert await _filed(session) == {"ICA Kvantum": (None, None)}
     assert (await client.get("/v1/categories/rules")).json()["items"] == []
+
+  @pytest.mark.asyncio
+  async def test_a_group_holding_a_soft_deleted_category_stays(self, client: AsyncClient, setup: _Setup, user: User) -> None:
+    group = await setup.category("Gammalt")
+    await setup.save_fixture(Category(name="Arkiv", slug="arkiv", parent_id=UUID(group["id"]), user_id=user.id, deleted_at=datetime.now(UTC)))
+
+    assert (await client.delete(f"/v1/categories/{group['id']}")).status_code == 409
 
   @pytest.mark.asyncio
   async def test_a_group_must_be_empty_and_is_no_place_to_move_to(self, client: AsyncClient, session: AsyncSession, setup: _Setup) -> None:
