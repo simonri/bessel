@@ -87,15 +87,14 @@ export function recentPriceChange(
   return age <= window ? latest : null;
 }
 
-/** Money out due within `days` of today, and any that's late, soonest first. */
+/** Money out due within `days` of today, late payments included, soonest first. */
 export function billsDueSoon(
   upcoming: readonly UpcomingPayment[],
   today: string,
   days: number,
 ): UpcomingPayment[] {
   return upcoming.filter(
-    (p) =>
-      p.direction === "debit" && (p.late || daysUntil(p.date, today) < days),
+    (p) => p.direction === "debit" && daysUntil(p.date, today) < days,
   );
 }
 

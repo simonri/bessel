@@ -56,6 +56,15 @@ class TestMonthly:
     # December 27th is a Sunday.
     assert occurrences(series, date(2026, 11, 2), date(2027, 1, 31)) == [date(2026, 11, 27), date(2026, 12, 28), date(2027, 1, 27)]
 
+  def test_the_next_one_is_due_on_its_day_after_a_payment_a_weekend_moved(self) -> None:
+    # September's was taken Monday the 28th, the 27th being a Sunday.
+    days = [date(2026, 4, 27), date(2026, 5, 27), date(2026, 6, 29), date(2026, 7, 27), date(2026, 8, 27), date(2026, 9, 28)]
+    rows = [_row(day, 45_000, "AUTOGIRO HEMFORSAKRING") for day in days]
+
+    [series] = detect(rows, today=date(2026, 10, 1))
+
+    assert series.next_date == date(2026, 10, 27)
+
   def test_salary_due_at_a_weekend_comes_the_friday_before(self) -> None:
     rows = [_row(date(2026, m, 25), 3_000_000, "LON", direction=CREDIT) for m in (1, 2, 3)]
     rows[0] = rows[0]._replace(transaction_date=date(2026, 1, 23))
@@ -72,6 +81,14 @@ class TestMonthly:
     assert series.typical_amount == 12_900
     assert series.price_changes == (PriceChange(date(2026, 9, 12), 9_900, 12_900),)
     assert not series.variable
+
+  def test_a_big_price_rise_is_still_one_series(self) -> None:
+    rows = _monthly(12, MAY_TO_OCT[:4], 9_900, "STREAMIO") + _monthly(12, MAY_TO_OCT[4:], 14_900, "STREAMIO")
+
+    [series] = detect(rows, today=date(2026, 10, 20))
+
+    assert (series.typical_amount, series.count, series.status) == (14_900, 6, RecurringStatus.active)
+    assert series.price_changes == (PriceChange(date(2026, 9, 12), 9_900, 14_900),)
 
   def test_a_rise_seen_only_on_the_latest_charge_already_counts(self) -> None:
     rows = _monthly(12, MAY_TO_OCT[:5], 9_900, "STREAMIO") + _monthly(12, MAY_TO_OCT[5:], 10_900, "STREAMIO")
