@@ -2764,6 +2764,57 @@ export const CalendarUpdateSchema = {
   title: "CalendarUpdate",
 } as const;
 
+export const CategoryCreateSchema = {
+  properties: {
+    name: {
+      type: "string",
+      maxLength: 100,
+      minLength: 1,
+      title: "Name",
+    },
+    color: {
+      type: "string",
+      pattern: "^#[0-9a-fA-F]{6}$",
+      title: "Color",
+      description: "Hex color code for UI display.",
+      default: "#6B7280",
+    },
+    parent_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Parent Id",
+      description: "The group it goes in; a new group when null.",
+    },
+    excluded: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Excluded",
+      description: "Kept out of reports; by default like its group.",
+    },
+    income: {
+      type: "boolean",
+      title: "Income",
+      default: false,
+    },
+  },
+  type: "object",
+  required: ["name"],
+  title: "CategoryCreate",
+} as const;
+
 export const CategoryListResponseSchema = {
   properties: {
     items: {
@@ -2794,6 +2845,8 @@ export const CategoryRuleCreateSchema = {
       maxLength: 255,
       minLength: 2,
       title: "Pattern",
+      description:
+        "Text matched case-insensitively anywhere in the description.",
     },
     scope: {
       $ref: "#/components/schemas/RuleScope",
@@ -2884,10 +2937,17 @@ export const CategoryRuleCreatedSchema = {
       title: "Mark Business",
       description: "Also mark matching transactions as business expenses.",
     },
+    transaction_count: {
+      type: "integer",
+      title: "Transaction Count",
+      description:
+        "Transactions it has sorted that still have the category it gave.",
+      default: 0,
+    },
     categorized: {
       type: "integer",
       title: "Categorized",
-      description: "Transactions already imported that the rules sorted.",
+      description: "Transactions already imported that the rule sorted.",
     },
   },
   type: "object",
@@ -2900,6 +2960,7 @@ export const CategoryRuleCreatedSchema = {
     "scope",
     "direction",
     "mark_business",
+    "transaction_count",
     "categorized",
   ],
   title: "CategoryRuleCreated",
@@ -2918,6 +2979,165 @@ export const CategoryRuleListResponseSchema = {
   type: "object",
   required: ["items"],
   title: "CategoryRuleListResponse",
+} as const;
+
+export const CategoryRuleMatchSchema = {
+  properties: {
+    id: {
+      type: "string",
+      format: "uuid4",
+      title: "Id",
+    },
+    transaction_date: {
+      type: "string",
+      format: "date",
+      title: "Transaction Date",
+    },
+    description: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Description",
+    },
+    name: {
+      anyOf: [
+        {
+          type: "string",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    amount: {
+      type: "integer",
+      title: "Amount",
+      description: "Amount in minor units (cents).",
+    },
+    currency: {
+      type: "string",
+      title: "Currency",
+    },
+    direction: {
+      $ref: "#/components/schemas/TransactionDirection",
+    },
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+      description: "The category it has now.",
+    },
+    by_rule: {
+      type: "boolean",
+      title: "By Rule",
+      description: "Its category came from a rule rather than the user.",
+    },
+    would_sort: {
+      type: "boolean",
+      title: "Would Sort",
+      description:
+        "The rule would give it its category: uncategorized, or sorted by the rule being edited, and no more specific rule wins.",
+    },
+  },
+  type: "object",
+  required: [
+    "id",
+    "transaction_date",
+    "description",
+    "name",
+    "amount",
+    "currency",
+    "direction",
+    "category_id",
+    "by_rule",
+    "would_sort",
+  ],
+  title: "CategoryRuleMatch",
+} as const;
+
+export const CategoryRulePreviewSchema = {
+  properties: {
+    match_count: {
+      type: "integer",
+      title: "Match Count",
+      description:
+        "Existing transactions the rule matches, categorized or not.",
+    },
+    sortable_count: {
+      type: "integer",
+      title: "Sortable Count",
+      description:
+        "Uncategorized ones it would sort when applied to existing transactions.",
+    },
+    items: {
+      items: {
+        $ref: "#/components/schemas/CategoryRuleMatch",
+      },
+      type: "array",
+      title: "Items",
+      description: "The newest matches, at most 50.",
+    },
+  },
+  type: "object",
+  required: ["match_count", "sortable_count", "items"],
+  title: "CategoryRulePreview",
+} as const;
+
+export const CategoryRulePreviewRequestSchema = {
+  properties: {
+    pattern: {
+      type: "string",
+      maxLength: 255,
+      minLength: 2,
+      title: "Pattern",
+      description:
+        "Text matched case-insensitively anywhere in the description.",
+    },
+    scope: {
+      $ref: "#/components/schemas/RuleScope",
+      default: "any",
+    },
+    direction: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/TransactionDirection",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    rule_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Rule Id",
+      description:
+        "The rule being edited, previewed as these settings in its place.",
+    },
+  },
+  type: "object",
+  required: ["pattern"],
+  title: "CategoryRulePreviewRequest",
 } as const;
 
 export const CategoryRuleSchemaSchema = {
@@ -2978,6 +3198,13 @@ export const CategoryRuleSchemaSchema = {
       title: "Mark Business",
       description: "Also mark matching transactions as business expenses.",
     },
+    transaction_count: {
+      type: "integer",
+      title: "Transaction Count",
+      description:
+        "Transactions it has sorted that still have the category it gave.",
+      default: 0,
+    },
   },
   type: "object",
   required: [
@@ -2989,8 +3216,81 @@ export const CategoryRuleSchemaSchema = {
     "scope",
     "direction",
     "mark_business",
+    "transaction_count",
   ],
   title: "CategoryRuleSchema",
+} as const;
+
+export const CategoryRuleUpdateSchema = {
+  properties: {
+    category_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Category Id",
+    },
+    pattern: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 255,
+          minLength: 2,
+          description:
+            "Text matched case-insensitively anywhere in the description.",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Pattern",
+    },
+    scope: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/RuleScope",
+        },
+        {
+          type: "null",
+        },
+      ],
+    },
+    direction: {
+      anyOf: [
+        {
+          $ref: "#/components/schemas/TransactionDirection",
+        },
+        {
+          type: "null",
+        },
+      ],
+      description: "Null matches both directions.",
+    },
+    mark_business: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Mark Business",
+    },
+    apply_now: {
+      type: "boolean",
+      title: "Apply Now",
+      description: "Also sort the uncategorized transactions already imported.",
+      default: false,
+    },
+  },
+  type: "object",
+  title: "CategoryRuleUpdate",
 } as const;
 
 export const CategorySchemaSchema = {
@@ -3059,6 +3359,18 @@ export const CategorySchemaSchema = {
       title: "Parent Id",
       description: "Parent category ID, null for top-level.",
     },
+    transaction_count: {
+      type: "integer",
+      title: "Transaction Count",
+      description: "Transactions filed under it.",
+      default: 0,
+    },
+    rule_count: {
+      type: "integer",
+      title: "Rule Count",
+      description: "Rules that sort transactions into it.",
+      default: 0,
+    },
   },
   type: "object",
   required: [
@@ -3071,6 +3383,8 @@ export const CategorySchemaSchema = {
     "excluded",
     "income",
     "parent_id",
+    "transaction_count",
+    "rule_count",
   ],
   title: "CategorySchema",
 } as const;
@@ -3102,6 +3416,74 @@ export const CategorySpendingSchema = {
   type: "object",
   required: ["category_id", "category_name", "category_color", "total"],
   title: "CategorySpending",
+} as const;
+
+export const CategoryUpdateSchema = {
+  properties: {
+    name: {
+      anyOf: [
+        {
+          type: "string",
+          maxLength: 100,
+          minLength: 1,
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Name",
+    },
+    color: {
+      anyOf: [
+        {
+          type: "string",
+          pattern: "^#[0-9a-fA-F]{6}$",
+          description: "Hex color code for UI display.",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Color",
+    },
+    parent_id: {
+      anyOf: [
+        {
+          type: "string",
+          format: "uuid4",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Parent Id",
+      description: "Moves a category to another group. Groups stay groups.",
+    },
+    excluded: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Excluded",
+    },
+    income: {
+      anyOf: [
+        {
+          type: "boolean",
+        },
+        {
+          type: "null",
+        },
+      ],
+      title: "Income",
+    },
+  },
+  type: "object",
+  title: "CategoryUpdate",
 } as const;
 
 export const ClientDiagnosticsUploadSchema = {
@@ -4548,6 +4930,12 @@ export const CryptoPriceSchemaSchema = {
   type: "object",
   required: ["coin_id", "currency", "price", "price_change_pct_24h"],
   title: "CryptoPriceSchema",
+} as const;
+
+export const CsvDialectSchema = {
+  type: "string",
+  enum: ["swedish", "international"],
+  title: "CsvDialect",
 } as const;
 
 export const CurrencySummarySchema = {

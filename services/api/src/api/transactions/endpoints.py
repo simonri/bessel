@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+from dataclasses import asdict, dataclass
 from datetime import date
 from enum import StrEnum
 from typing import Annotated
@@ -17,6 +18,7 @@ from api.documents.service import document_service
 from api.exceptions import ResourceNotFound, ValidationError
 from api.models.transaction import Transaction
 from api.postgres import AsyncSession, DBSession
+from api.transactions.export import CSV_NAME, CsvDialect, csv_chunks, receipts_zip
 from api.transactions.names import name_all, rename
 from api.transactions.parsers.csv_parser import parse_csv
 from api.transactions.parsers.xlsx_parser import parse_xlsx
@@ -49,6 +51,7 @@ from api.transactions.summary import month_summary
 from api.transactions.tags import set_tags, tag_many, tag_summaries
 from api.users.dependencies import CurrentDBUser
 from fastapi import APIRouter, Depends, Query, UploadFile
+from fastapi.responses import StreamingResponse
 
 router = APIRouter(prefix="/transactions", tags=["transactions"])
 
@@ -87,16 +90,23 @@ class TransactionSortProperty(StrEnum):
 sorting_getter = SortingGetter(TransactionSortProperty, default_sorting=["-transaction_date"])
 
 
-@router.get(
-  "",
-  summary="List Transactions",
-  response_model=TransactionListResponse,
-)
-async def list_transactions(
-  session: DBSession,
-  current_user: CurrentDBUser,
-  pagination: PaginationParamsQuery,
-  sorting: Annotated[list[Sorting[TransactionSortProperty]], Depends(sorting_getter)],
+@dataclass(frozen=True)
+class TransactionFilters:
+  bank_account_ids: list[UUID] | None
+  category_ids: list[UUID] | None
+  uncategorized: bool
+  direction: str | None
+  search: str | None
+  date_from: date | None
+  date_to: date | None
+  is_business: bool | None
+  transfers: bool | None
+  missing_documents: bool
+  tags: list[str] | None
+  to_review: bool
+
+
+def transaction_filters(
   bank_account_id: Annotated[list[UUID] | None, Query(description="Filter by bank account ID(s).")] = None,
   category_id: Annotated[list[UUID] | None, Query(description="Filter by category ID(s).")] = None,
   uncategorized: bool = Query(
@@ -115,11 +125,8 @@ async def list_transactions(
   to_review: Annotated[
     bool, Query(description="If true, only transactions still to be reviewed: not yet looked over, nor investment accounts' movements.")
   ] = False,
-) -> TransactionListResponse:
-  """List transactions."""
-  repo = TransactionRepository.from_session(session)
-  statement = repo.get_filtered_statement(
-    current_user.id,
+) -> TransactionFilters:
+  return TransactionFilters(
     bank_account_ids=bank_account_id,
     category_ids=category_id,
     uncategorized=uncategorized,
@@ -134,12 +141,79 @@ async def list_transactions(
     to_review=to_review,
   )
 
+
+# The list's own filters, so an export holds just what the list shows.
+TransactionFiltersQuery = Annotated[TransactionFilters, Depends(transaction_filters)]
+
+
+@router.get(
+  "",
+  summary="List Transactions",
+  response_model=TransactionListResponse,
+)
+async def list_transactions(
+  session: DBSession,
+  current_user: CurrentDBUser,
+  filters: TransactionFiltersQuery,
+  pagination: PaginationParamsQuery,
+  sorting: Annotated[list[Sorting[TransactionSortProperty]], Depends(sorting_getter)],
+) -> TransactionListResponse:
+  """List transactions."""
+  repo = TransactionRepository.from_session(session)
+  statement = repo.get_filtered_statement(current_user.id, **asdict(filters))
+
   statement = apply_sorting(statement, Transaction, sorting)
   # Stable tiebreaker so row order never shifts after unrelated updates (e.g. category)
   statement = statement.order_by(Transaction.id)
 
   items, total_count = await repo.paginate(statement, limit=pagination.limit, page=pagination.page)
   return TransactionListResponse.from_paginated_results(await _schemas(session, items), total_count, pagination)
+
+
+@router.get(
+  "/export",
+  summary="Export Transactions",
+  response_class=StreamingResponse,
+  responses={200: {"content": {"text/csv": {"schema": {"type": "string", "format": "binary"}}}, "description": "The transactions as CSV."}},
+)
+async def export_transactions(
+  session: DBSession,
+  current_user: CurrentDBUser,
+  filters: TransactionFiltersQuery,
+  dialect: Annotated[
+    CsvDialect, Query(description="'swedish': semicolons and a decimal comma, for Excel set up for Sweden. 'international': commas and a decimal point.")
+  ] = CsvDialect.swedish,
+) -> StreamingResponse:
+  """The transactions the same filters list, oldest first, as a spreadsheet: UTF-8 with a byte order mark, money out negative."""
+  repo = TransactionRepository.from_session(session)
+  rows = repo.stream_export_rows(repo.get_filtered_statement(current_user.id, **asdict(filters)))
+  return StreamingResponse(
+    (chunk.encode() async for chunk in csv_chunks(rows, dialect)),
+    media_type="text/csv; charset=utf-8",
+    headers={"Content-Disposition": f'attachment; filename="{CSV_NAME}"'},
+  )
+
+
+@router.get(
+  "/export/receipts",
+  summary="Export Transactions With Receipts",
+  response_class=StreamingResponse,
+  responses={200: {"content": {"application/zip": {"schema": {"type": "string", "format": "binary"}}}, "description": "The CSV and its receipts."}},
+)
+async def export_transactions_with_receipts(
+  session: DBSession,
+  current_user: CurrentDBUser,
+  filters: TransactionFiltersQuery,
+  dialect: Annotated[CsvDialect, Query(description="How the CSV inside is written, as for the CSV export.")] = CsvDialect.swedish,
+) -> StreamingResponse:
+  """A zip of the transactions' CSV and every invoice and receipt kept with them, such as a month's company costs for the bookkeeper."""
+  repo = TransactionRepository.from_session(session)
+  rows = repo.stream_export_rows(repo.get_filtered_statement(current_user.id, **asdict(filters)))
+  return StreamingResponse(
+    receipts_zip(rows, dialect),
+    media_type="application/zip",
+    headers={"Content-Disposition": 'attachment; filename="transactions-with-receipts.zip"'},
+  )
 
 
 @router.post(

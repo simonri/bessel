@@ -1,5 +1,5 @@
 import re
-from collections.abc import Sequence
+from collections.abc import AsyncIterator, Sequence
 from datetime import date
 from typing import Any, NamedTuple
 from uuid import UUID
@@ -8,13 +8,13 @@ from api.common.repository.base import RepositoryBase, RepositoryIDMixin
 from api.models.bank_account import INVESTMENT_SUBTYPES, BankAccount
 from api.models.bank_profile import BankProfile
 from api.models.category import Category
-from api.models.document import TransactionDocument
+from api.models.document import Document, TransactionDocument
 from api.models.import_batch import ImportBatch
 from api.models.raw_transaction import RawTransaction
 from api.models.transaction import Transaction, TransactionDirection
 from api.models.transaction_name_rule import TransactionNameRule
 from sqlalchemy import ColumnElement, Row, Select, and_, case, delete, exists, extract, false, func, or_, select, update
-from sqlalchemy.dialects.postgresql import distinct_on
+from sqlalchemy.dialects.postgresql import aggregate_order_by, distinct_on
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.orm import aliased
 
@@ -32,11 +32,44 @@ class ReportRow(NamedTuple):
   refund: bool
 
 
+class ExportRow(NamedTuple):
+  transaction_date: date
+  account: str
+  description: str | None
+  name: str | None
+  category: str | None
+  amount: int
+  currency: str
+  direction: TransactionDirection
+  # Marked as the company's, or on one of the company's accounts: the same line the company filter draws.
+  company: bool
+  transfer: bool
+  note: str | None
+  # The invoices and receipts kept with it, oldest first.
+  document_ids: list[UUID]
+  document_filenames: list[str]
+
+
 class RuleCandidate(NamedTuple):
   id: UUID
   description: str | None
   direction: TransactionDirection
   company_account: bool
+
+
+class RuleMatch(NamedTuple):
+  """A transaction a rule could sort, with what it has now, for previewing a rule."""
+
+  id: UUID
+  description: str | None
+  direction: TransactionDirection
+  company_account: bool
+  transaction_date: date
+  name: str | None
+  amount: int
+  currency: str
+  category_id: UUID | None
+  category_rule_id: UUID | None
 
 
 class TransferCandidate(NamedTuple):
@@ -292,6 +325,46 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
     statement = update(Transaction).where(Transaction.user_id == user_id, Transaction.id.in_(ids)).values(reviewed=reviewed)
     return await self.execute_for_rowcount(statement)
 
+  async def stream_export_rows(self, filtered: Select[tuple[Transaction]], *, batch_size: int = 500) -> AsyncIterator[ExportRow]:
+    """The transactions `filtered` picks, oldest first, read from the database a batch at a time."""
+    # Aliased: the filters' own subqueries on bank accounts would otherwise correlate with this join and lose their FROM.
+    account = aliased(BankAccount)
+    category = aliased(Category)
+
+    def documents(column: ColumnElement[Any]) -> ColumnElement[Any]:
+      return (
+        select(func.array_agg(aggregate_order_by(column, TransactionDocument.created_at, Document.id)))
+        .select_from(TransactionDocument)
+        .join(Document, Document.id == TransactionDocument.document_id)
+        .where(TransactionDocument.transaction_id == Transaction.id, Document.deleted_at.is_(None))
+        .scalar_subquery()
+      )
+
+    statement = (
+      filtered.with_only_columns(
+        Transaction.transaction_date,
+        account.name,
+        Transaction.description,
+        Transaction.name,
+        category.name,
+        Transaction.amount,
+        Transaction.currency,
+        Transaction.direction,
+        or_(Transaction.is_business, account.is_business),
+        Transaction.transfer_id.is_not(None),
+        Transaction.note,
+        documents(Document.id),
+        documents(Document.filename),
+      )
+      .join(account, account.id == Transaction.bank_account_id)
+      .outerjoin(category, category.id == Transaction.category_id)
+      .order_by(None)
+      .order_by(Transaction.transaction_date, Transaction.id)
+      .execution_options(yield_per=batch_size)
+    )
+    async for row in await self.session.stream(statement):
+      yield ExportRow._make((*row[:-2], row[-2] or [], row[-1] or []))
+
   async def create_import_batch(self, batch: ImportBatch) -> ImportBatch:
     self.session.add(batch)
     await self.session.flush()
@@ -329,22 +402,82 @@ class TransactionRepository(RepositoryBase[Transaction], RepositoryIDMixin[Trans
       statement = statement.where(Transaction.transaction_date >= since)
     return [TransferCandidate(*row) for row in await self.session.execute(statement)]
 
-  async def rule_candidates(self, user_id: UUID, *, since: date | None) -> list[RuleCandidate]:
-    """Uncategorized transactions a rule may sort: not investment accounts' buys and sells, nor paired transfers."""
-    statement = (
-      select(Transaction.id, Transaction.description, Transaction.direction, BankAccount.is_business)
-      .join(BankAccount, BankAccount.id == Transaction.bank_account_id)
-      .where(
-        Transaction.user_id == user_id,
-        Transaction.deleted_at.is_(None),
-        Transaction.category_id.is_(None),
-        Transaction.transfer_id.is_(None),
-        BankAccount.subtype.not_in(INVESTMENT_SUBTYPES),
-      )
+  @staticmethod
+  def _sortable_by_rules[*Ts](statement: Select[*Ts], user_id: UUID) -> Select[*Ts]:
+    """Transactions rules may sort: not investment accounts' buys and sells, nor paired transfers."""
+    return statement.join(BankAccount, BankAccount.id == Transaction.bank_account_id).where(
+      Transaction.user_id == user_id,
+      Transaction.deleted_at.is_(None),
+      Transaction.transfer_id.is_(None),
+      BankAccount.subtype.not_in(INVESTMENT_SUBTYPES),
+    )
+
+  async def rule_candidates(self, user_id: UUID, *, since: date | None, ids: Sequence[UUID] | None = None) -> list[RuleCandidate]:
+    """Uncategorized transactions a rule may sort."""
+    statement = self._sortable_by_rules(select(Transaction.id, Transaction.description, Transaction.direction, BankAccount.is_business), user_id).where(
+      Transaction.category_id.is_(None)
     )
     if since is not None:
       statement = statement.where(Transaction.transaction_date >= since)
+    if ids is not None:
+      statement = statement.where(Transaction.id.in_(ids))
     return [RuleCandidate(*row) for row in await self.session.execute(statement)]
+
+  async def rule_matches(self, user_id: UUID, *, contains: str) -> list[RuleMatch]:
+    """Transactions rules may sort whose description contains the text, categorized or not, newest first.
+    Filtered loosely here and exactly by the rule's own matching after."""
+    statement = (
+      self._sortable_by_rules(
+        select(
+          Transaction.id,
+          Transaction.description,
+          Transaction.direction,
+          BankAccount.is_business,
+          Transaction.transaction_date,
+          Transaction.name,
+          Transaction.amount,
+          Transaction.currency,
+          Transaction.category_id,
+          Transaction.category_rule_id,
+        ),
+        user_id,
+      )
+      .where(Transaction.description.icontains(contains, autoescape=True))
+      .order_by(Transaction.transaction_date.desc(), Transaction.id)
+    )
+    return [RuleMatch(*row) for row in await self.session.execute(statement)]
+
+  async def count_by_rule(self, user_id: UUID) -> dict[UUID, int]:
+    """How many live transactions each rule has sorted."""
+    statement = (
+      select(Transaction.category_rule_id, func.count())
+      .where(Transaction.user_id == user_id, Transaction.deleted_at.is_(None), Transaction.category_rule_id.is_not(None))
+      .group_by(Transaction.category_rule_id)
+    )
+    return dict((await self.session.execute(statement)).all())
+
+  async def count_by_category(self, user_id: UUID) -> dict[UUID, int]:
+    statement = (
+      select(Transaction.category_id, func.count())
+      .where(Transaction.user_id == user_id, Transaction.deleted_at.is_(None), Transaction.category_id.is_not(None))
+      .group_by(Transaction.category_id)
+    )
+    return dict((await self.session.execute(statement)).all())
+
+  async def release_from_rule(self, user_id: UUID, rule_id: UUID) -> list[UUID]:
+    """Takes back the category the rule gave; returns the transactions now waiting to be sorted again."""
+    statement = (
+      update(Transaction)
+      .where(Transaction.user_id == user_id, Transaction.category_rule_id == rule_id)
+      .values(category_id=None, category_rule_id=None)
+      .returning(Transaction.id)
+    )
+    return list((await self.session.execute(statement)).scalars())
+
+  async def move_category(self, user_id: UUID, source_id: UUID, target_id: UUID) -> int:
+    """Moves every transaction in one category to another. A rule's choice stays the rule's, since its rules move too."""
+    statement = update(Transaction).where(Transaction.user_id == user_id, Transaction.category_id == source_id).values(category_id=target_id)
+    return await self.execute_for_rowcount(statement)
 
   async def set_category_from_rule(self, transaction_id: UUID, category_id: UUID, *, rule_id: UUID, mark_business: bool) -> None:
     values: dict[str, Any] = {"category_id": category_id, "category_rule_id": rule_id}

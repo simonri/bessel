@@ -27,6 +27,7 @@ import {
   correctMemoryFact,
   createBankAccount,
   createCalendarEvent,
+  createCategory,
   createCategoryRule,
   createContact,
   createCounter,
@@ -42,6 +43,7 @@ import {
   createTimeProject,
   deleteBankAccount,
   deleteCalendarEvent,
+  deleteCategory,
   deleteCategoryRule,
   deleteContact,
   deleteContactInteraction,
@@ -65,6 +67,8 @@ import {
   documentPage,
   documentThumbnail,
   downloadDocument,
+  exportTransactions,
+  exportTransactionsWithReceipts,
   forgetMemoryFact,
   getAccountsOverview,
   getActivitySummary,
@@ -152,6 +156,7 @@ import {
   markNotificationRead,
   nameTransactions,
   type Options,
+  previewCategoryRule,
   putGymTopSet,
   removeRecipeCooked,
   removeTransactionDocument,
@@ -184,6 +189,8 @@ import {
   updateBankAccount,
   updateCalendar,
   updateCalendarEvent,
+  updateCategory,
+  updateCategoryRule,
   updateContact,
   updateContactPhoto,
   updateContactTags,
@@ -253,6 +260,9 @@ import type {
   CreateCalendarEventData,
   CreateCalendarEventError,
   CreateCalendarEventResponse,
+  CreateCategoryData,
+  CreateCategoryError,
+  CreateCategoryResponse,
   CreateCategoryRuleData,
   CreateCategoryRuleError,
   CreateCategoryRuleResponse,
@@ -298,6 +308,9 @@ import type {
   DeleteCalendarEventData,
   DeleteCalendarEventError,
   DeleteCalendarEventResponse,
+  DeleteCategoryData,
+  DeleteCategoryError,
+  DeleteCategoryResponse,
   DeleteCategoryRuleData,
   DeleteCategoryRuleError,
   DeleteCategoryRuleResponse,
@@ -362,6 +375,12 @@ import type {
   DocumentThumbnailError,
   DownloadDocumentData,
   DownloadDocumentError,
+  ExportTransactionsData,
+  ExportTransactionsError,
+  ExportTransactionsResponse,
+  ExportTransactionsWithReceiptsData,
+  ExportTransactionsWithReceiptsError,
+  ExportTransactionsWithReceiptsResponse,
   ForgetMemoryFactData,
   ForgetMemoryFactError,
   ForgetMemoryFactResponse,
@@ -590,6 +609,9 @@ import type {
   NameTransactionsData,
   NameTransactionsError,
   NameTransactionsResponse,
+  PreviewCategoryRuleData,
+  PreviewCategoryRuleError,
+  PreviewCategoryRuleResponse,
   PutGymTopSetData,
   PutGymTopSetError,
   PutGymTopSetResponse,
@@ -680,6 +702,12 @@ import type {
   UpdateCalendarEventError,
   UpdateCalendarEventResponse,
   UpdateCalendarResponse,
+  UpdateCategoryData,
+  UpdateCategoryError,
+  UpdateCategoryResponse,
+  UpdateCategoryRuleData,
+  UpdateCategoryRuleError,
+  UpdateCategoryRuleResponse,
   UpdateContactData,
   UpdateContactError,
   UpdateContactPhotoData,
@@ -2972,6 +3000,35 @@ export const listCategoriesInfiniteOptions = (
   return opts as Omit<typeof opts, "initialData">;
 };
 
+/**
+ * Create Category
+ *
+ * A new category in a group, or a new group when it has no parent.
+ */
+export const createCategoryMutation = (
+  options?: Partial<Options<CreateCategoryData>>,
+): UseMutationOptions<
+  CreateCategoryResponse,
+  CreateCategoryError,
+  Options<CreateCategoryData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CreateCategoryResponse,
+    CreateCategoryError,
+    Options<CreateCategoryData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await createCategory({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const listCategoryRulesQueryKey = (
   options?: Options<ListCategoryRulesData>,
 ) => createQueryKey("listCategoryRules", options);
@@ -3030,9 +3087,38 @@ export const createCategoryRuleMutation = (
 };
 
 /**
+ * Preview Category Rule
+ *
+ * The existing transactions a rule with these settings matches, and which of them it would sort. Changes nothing.
+ */
+export const previewCategoryRuleMutation = (
+  options?: Partial<Options<PreviewCategoryRuleData>>,
+): UseMutationOptions<
+  PreviewCategoryRuleResponse,
+  PreviewCategoryRuleError,
+  Options<PreviewCategoryRuleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    PreviewCategoryRuleResponse,
+    PreviewCategoryRuleError,
+    Options<PreviewCategoryRuleData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await previewCategoryRule({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete Category Rule
  *
- * Stops sorting new imports by it; transactions it already sorted keep their category.
+ * Stops sorting new imports by it; by default transactions it already sorted keep their category.
  */
 export const deleteCategoryRuleMutation = (
   options?: Partial<Options<DeleteCategoryRuleData>>,
@@ -3048,6 +3134,91 @@ export const deleteCategoryRuleMutation = (
   > = {
     mutationFn: async (fnOptions) => {
       const { data } = await deleteCategoryRule({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Category Rule
+ *
+ * Transactions the rule sorted follow its new settings; a category the user chose is never touched.
+ */
+export const updateCategoryRuleMutation = (
+  options?: Partial<Options<UpdateCategoryRuleData>>,
+): UseMutationOptions<
+  UpdateCategoryRuleResponse,
+  UpdateCategoryRuleError,
+  Options<UpdateCategoryRuleData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCategoryRuleResponse,
+    UpdateCategoryRuleError,
+    Options<UpdateCategoryRuleData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateCategoryRule({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Delete Category
+ *
+ * Refused while it holds transactions or rules, unless told where they go; a group must be empty first.
+ */
+export const deleteCategoryMutation = (
+  options?: Partial<Options<DeleteCategoryData>>,
+): UseMutationOptions<
+  DeleteCategoryResponse,
+  DeleteCategoryError,
+  Options<DeleteCategoryData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    DeleteCategoryResponse,
+    DeleteCategoryError,
+    Options<DeleteCategoryData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await deleteCategory({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Update Category
+ */
+export const updateCategoryMutation = (
+  options?: Partial<Options<UpdateCategoryData>>,
+): UseMutationOptions<
+  UpdateCategoryResponse,
+  UpdateCategoryError,
+  Options<UpdateCategoryData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateCategoryResponse,
+    UpdateCategoryError,
+    Options<UpdateCategoryData>
+  > = {
+    mutationFn: async (fnOptions) => {
+      const { data } = await updateCategory({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -6021,6 +6192,66 @@ export const listTransactionsInfiniteOptions = (
   );
   return opts as Omit<typeof opts, "initialData">;
 };
+
+export const exportTransactionsQueryKey = (
+  options?: Options<ExportTransactionsData>,
+) => createQueryKey("exportTransactions", options);
+
+/**
+ * Export Transactions
+ *
+ * The transactions the same filters list, oldest first, as a spreadsheet: UTF-8 with a byte order mark, money out negative.
+ */
+export const exportTransactionsOptions = (
+  options?: Options<ExportTransactionsData>,
+) =>
+  queryOptions<
+    ExportTransactionsResponse,
+    ExportTransactionsError,
+    ExportTransactionsResponse,
+    ReturnType<typeof exportTransactionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await exportTransactions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: exportTransactionsQueryKey(options),
+  });
+
+export const exportTransactionsWithReceiptsQueryKey = (
+  options?: Options<ExportTransactionsWithReceiptsData>,
+) => createQueryKey("exportTransactionsWithReceipts", options);
+
+/**
+ * Export Transactions With Receipts
+ *
+ * A zip of the transactions' CSV and every invoice and receipt kept with them, such as a month's company costs for the bookkeeper.
+ */
+export const exportTransactionsWithReceiptsOptions = (
+  options?: Options<ExportTransactionsWithReceiptsData>,
+) =>
+  queryOptions<
+    ExportTransactionsWithReceiptsResponse,
+    ExportTransactionsWithReceiptsError,
+    ExportTransactionsWithReceiptsResponse,
+    ReturnType<typeof exportTransactionsWithReceiptsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await exportTransactionsWithReceipts({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: exportTransactionsWithReceiptsQueryKey(options),
+  });
 
 /**
  * Import Transactions
