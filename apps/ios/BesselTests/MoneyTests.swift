@@ -11,7 +11,8 @@ private func transactionJSON(id: String = transactionID, categoryID: String? = n
     {"created_at":"2026-10-01T08:00:00Z","modified_at":null,"id":"\(id)","amount":8950,"currency":"SEK",
      "transaction_date":"2026-10-14","direction":"debit","description":"KORTKOP CAFE EXEMPEL","name":null,"note":null,
      "category_id":\(category),"document_count":0,"dedup_hash":"abc","bank_account_id":"\(accountID)",
-     "is_business":false,"company_account":false,"transfer_id":null,"investment_kind":null,"same_description_count":0}
+     "is_business":false,"company_account":false,"transfer_id":null,"investment_kind":null,"same_description_count":0,
+     "tags":[],"reviewed":true}
     """
 }
 
