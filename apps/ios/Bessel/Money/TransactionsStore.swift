@@ -55,6 +55,10 @@ struct TransactionDay: Identifiable {
 final class TransactionsStore {
     private(set) var transactions: [MoneyTransaction] = []
     private(set) var shownFilter: TransactionFilter?
+    /// What the latest load asked for, which Retry asks for again.
+    private(set) var requestedFilter: TransactionFilter?
+    /// The filter whose latest load failed, so the page can say so instead of spinning.
+    private(set) var failedFilter: TransactionFilter?
     private(set) var isLoading = false
     /// A change that didn't go through; shown as an alert.
     var errorMessage: String?
@@ -97,6 +101,8 @@ final class TransactionsStore {
     func load(_ filter: TransactionFilter) async {
         let ticket = loads.begin()
         isLoading = true
+        requestedFilter = filter
+        failedFilter = nil
         defer { if loads.isCurrent(ticket) { isLoading = false } }
         do {
             let items: [MoneyTransaction] = try await client.getAllPages(
@@ -114,8 +120,15 @@ final class TransactionsStore {
             }
         } catch {
             guard loads.isCurrent(ticket), !error.isCancellation else { return }
+            failedFilter = filter
             loadError = error.userMessage
         }
+    }
+
+    /// Loads again what the latest load asked for.
+    func retry() async {
+        guard let requestedFilter else { return }
+        await load(requestedFilter)
     }
 
     /// Files a transaction under `categoryID`, or under none when nil.

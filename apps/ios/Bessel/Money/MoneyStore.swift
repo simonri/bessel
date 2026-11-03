@@ -17,6 +17,8 @@ final class MoneyStore {
     private(set) var hasLoadedOverview = false
     private(set) var hasLoadedSummary = false
     private(set) var hasLoadedInvestments = false
+    /// The month whose summary didn't load, so the page can say so instead of spinning.
+    private(set) var summaryFailedFor: MonthKey?
     /// A refresh that didn't go through; shown quietly over what's already there.
     var loadError: String?
 
@@ -94,16 +96,18 @@ final class MoneyStore {
 
     func loadSummary() async {
         let ticket = summaryLoads.begin()
-        let month = month
+        let requested = month
+        summaryFailedFor = nil
         defer { hasLoadedSummary = true }
         do {
-            let response: MoneySummary = try await client.get("/v1/transactions/summary", query: Self.monthQuery(month))
+            let response: MoneySummary = try await client.get("/v1/transactions/summary", query: Self.monthQuery(requested))
             guard summaryLoads.isCurrent(ticket) else { return }
             summary = response
             loadError = nil
             summaryLoads.finish(ticket)
-            if month == .current { cache.save(response, as: Self.summaryKey) }
+            if requested == .current { cache.save(response, as: Self.summaryKey) }
         } catch {
+            if summaryLoads.isCurrent(ticket), !error.isCancellation { summaryFailedFor = requested }
             report(error, ticket: ticket, in: summaryLoads)
         }
     }

@@ -22,6 +22,13 @@ struct TransactionsPage<Header: View>: View {
 
     var body: some View {
         List {
+            if store.failedFilter == filter, !store.hasLoaded(filter) {
+                Section {
+                    EmptyState(emoji: "📡", title: "Couldn't load transactions", detail: "Pull down to try again.")
+                        .padding(.vertical, 40)
+                        .listRowBackground(Color.clear)
+                }
+            }
             if store.hasLoaded(filter) {
                 if store.transactions.isEmpty {
                     Section {
@@ -88,7 +95,7 @@ struct TransactionsPage<Header: View>: View {
         }
         .background(Theme.background)
         .overlay {
-            if !store.hasLoaded(filter) { ProgressView() }
+            if !store.hasLoaded(filter), store.failedFilter != filter { ProgressView() }
         }
         .sheet(item: $selected) { selection in
             TransactionDetailView(store: store, money: money, transactionID: selection.id)
@@ -105,6 +112,7 @@ struct TransactionsPage<Header: View>: View {
             await money.loadOverviewIfStale()
             await store.loadIfStale(filter)
         }
+        .loadErrorToast($store.loadError, isActive: isActive) { await store.retry() }
     }
 
     /// In the page rather than `.searchable`, like Contacts.

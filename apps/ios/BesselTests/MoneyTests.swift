@@ -229,6 +229,33 @@ final class TransactionsStoreTests: XCTestCase {
         XCTAssertNil(sent["bank_account_id"])
     }
 
+    func testRetryAsksAgainForTheFilterThatFailed() async throws {
+        MockURLProtocol.respond(with: [
+            (503, [:], #"{"detail":"Down."}"#),
+            (200, [:], #"{"items":[\#(transactionJSON())],"pagination":{"total_count":1,"max_page":1}}"#),
+        ])
+        let store = makeStore()
+        let filter = TransactionFilter(month: MonthKey(year: 2025, month: 12), accountID: UUID(uuidString: accountID))
+
+        await store.load(filter)
+
+        XCTAssertEqual(store.failedFilter, filter)
+        XCTAssertFalse(store.hasLoaded(filter))
+        XCTAssertNotNil(store.loadError)
+
+        await store.retry()
+
+        XCTAssertEqual(MockURLProtocol.requests.count, 2)
+        let first = query(MockURLProtocol.requests[0])
+        let second = query(MockURLProtocol.requests[1])
+        XCTAssertEqual(second["date_from"], ["2025-12-01"])
+        XCTAssertEqual(second["date_to"], ["2025-12-31"])
+        XCTAssertEqual(second["bank_account_id"], [accountID])
+        XCTAssertEqual(first, second)
+        XCTAssertTrue(store.hasLoaded(filter))
+        XCTAssertNil(store.failedFilter)
+    }
+
     func testFilingSendsOnlyTheCategory() async throws {
         let store = makeStore()
         MockURLProtocol.respond(with: [(200, [:], #"{"items":[\#(transactionJSON())],"pagination":{"total_count":1,"max_page":1}}"#)])

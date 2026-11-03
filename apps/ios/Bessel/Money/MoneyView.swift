@@ -50,7 +50,7 @@ struct MoneyView<Header: View>: View {
         }
         .background(Theme.background)
         .refreshWhileVisible(isActive) { await money.loadCategoriesIfStale() }
-        .loadErrorToast(errorBinding, isActive: isActive) { await retry() }
+        .loadErrorToast(errorBinding, isActive: isActive && page != .transactions) { await retry() }
         .haptic(.selection, trigger: page)
     }
 
@@ -67,16 +67,11 @@ struct MoneyView<Header: View>: View {
         }
     }
 
-    /// The money store's and the transactions' refresh errors, one toast for both.
+    /// The transactions page shows its own.
     private var errorBinding: Binding<String?> {
         Binding(
-            get: { money.loadError ?? transactions.loadError },
-            set: { value in
-                if value == nil {
-                    money.loadError = nil
-                    transactions.loadError = nil
-                }
-            }
+            get: { money.loadError },
+            set: { money.loadError = $0 }
         )
     }
 
@@ -85,8 +80,7 @@ struct MoneyView<Header: View>: View {
         case .accounts: await money.loadOverview()
         case .month: await money.loadSummary()
         case .investments: await money.loadInvestments()
-        case .transactions:
-            if let filter = transactions.shownFilter { await transactions.load(filter) }
+        case .transactions: await transactions.retry()
         }
     }
 }

@@ -42,6 +42,9 @@ struct MonthSummaryPage<Header: View>: View {
                         .foregroundStyle(Theme.mutedForeground)
                         .frame(maxWidth: .infinity)
                     }
+                } else if store.summaryFailedFor == store.month {
+                    EmptyState(emoji: "📡", title: "Couldn't load \(store.month.title)", detail: "Pull down to try again.")
+                        .padding(.top, 40)
                 } else {
                     ProgressView()
                         .frame(maxWidth: .infinity)
