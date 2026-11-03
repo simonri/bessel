@@ -4,6 +4,7 @@ import SwiftUI
 enum MoreSection: String, CaseIterable, Identifiable {
     case places
     case contacts
+    case money
 
     var id: String { rawValue }
 
@@ -11,6 +12,7 @@ enum MoreSection: String, CaseIterable, Identifiable {
         switch self {
         case .places: "Places"
         case .contacts: "Contacts"
+        case .money: "Money"
         }
     }
 }
@@ -30,6 +32,8 @@ struct MoreView: View {
     @AppStorage("more.section") private var section: MoreSection = .places
     @State private var places: PlacesStore
     @State private var contacts: ContactsStore
+    @State private var money: MoneyStore
+    @State private var transactions: TransactionsStore
     @State private var path: [MoreRoute] = []
     @State private var addingPlace = false
 
@@ -38,6 +42,8 @@ struct MoreView: View {
         self.isActive = isActive
         _places = State(initialValue: PlacesStore(services: services))
         _contacts = State(initialValue: ContactsStore(services: services))
+        _money = State(initialValue: MoneyStore(services: services))
+        _transactions = State(initialValue: TransactionsStore(services: services))
     }
 
     var body: some View {
@@ -48,6 +54,8 @@ struct MoreView: View {
                     PlacesView(store: places, isActive: isShowing(.places), adding: $addingPlace) { sectionPicker }
                 case .contacts:
                     ContactsView(store: contacts, isActive: isShowing(.contacts)) { sectionPicker }
+                case .money:
+                    MoneyView(money: money, transactions: transactions, isActive: isShowing(.money)) { sectionPicker }
                 }
             }
             .navigationTitle(section.title)
@@ -58,6 +66,11 @@ struct MoreView: View {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button { addingPlace = true } label: { Image(systemName: "plus") }
                             .accessibilityLabel("Add place")
+                    }
+                }
+                if section == .money {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        HideAmountsButton()
                     }
                 }
                 ProfileToolbarItem(auth: auth)

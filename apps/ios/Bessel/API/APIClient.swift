@@ -81,6 +81,11 @@ final class APIClient {
         try await send(Request(method: "GET", path: path, query: query))
     }
 
+    /// The body as it came, for a file such as an image preview.
+    func getData(_ path: String) async throws -> Data {
+        try await sendRaw(Request(method: "GET", path: path))
+    }
+
     /// Every page of a paginated list, up to `maxPages` so a runaway list
     /// can't keep the app fetching forever.
     func getAllPages<Item: Decodable>(_ path: String, query: [URLQueryItem] = [], maxPages: Int = 20) async throws -> [Item] {
