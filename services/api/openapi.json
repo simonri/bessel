@@ -3395,6 +3395,51 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "Create Category",
+        "description": "A new category in a group, or a new group when it has no parent.",
+        "operationId": "create_category",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategorySchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/v1/categories/rules": {
@@ -3468,13 +3513,117 @@
         ]
       }
     },
+    "/v1/categories/rules/preview": {
+      "post": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "Preview Category Rule",
+        "description": "The existing transactions a rule with these settings matches, and which of them it would sort. Changes nothing.",
+        "operationId": "preview_category_rule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryRulePreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryRulePreview"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/v1/categories/rules/{rule_id}": {
+      "patch": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "Update Category Rule",
+        "description": "Transactions the rule sorted follow its new settings; a category the user chose is never touched.",
+        "operationId": "update_category_rule",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryRuleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryRuleCreated"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "categories"
         ],
         "summary": "Delete Category Rule",
-        "description": "Stops sorting new imports by it; transactions it already sorted keep their category.",
+        "description": "Stops sorting new imports by it; by default transactions it already sorted keep their category.",
         "operationId": "delete_category_rule",
         "security": [
           {
@@ -3491,6 +3640,147 @@
               "format": "uuid",
               "title": "Rule Id"
             }
+          },
+          {
+            "name": "release",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Also take back the category it gave, so other rules or the user sort those again.",
+              "default": false,
+              "title": "Release"
+            },
+            "description": "Also take back the category it gave, so other rules or the user sort those again."
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/categories/{category_id}": {
+      "patch": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "Update Category",
+        "operationId": "update_category",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Category Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CategoryUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategorySchema"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "categories"
+        ],
+        "summary": "Delete Category",
+        "description": "Refused while it holds transactions or rules, unless told where they go; a group must be empty first.",
+        "operationId": "delete_category",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "category_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Category Id"
+            }
+          },
+          {
+            "name": "move_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Category its transactions and rules move to.",
+              "title": "Move To"
+            },
+            "description": "Category its transactions and rules move to."
+          },
+          {
+            "name": "leave_uncategorized",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Leave its transactions uncategorized and delete its rules.",
+              "default": false,
+              "title": "Leave Uncategorized"
+            },
+            "description": "Leave its transactions uncategorized and delete its rules."
           }
         ],
         "responses": {
@@ -12588,6 +12878,58 @@
         ],
         "title": "CalendarUpdate"
       },
+      "CategoryCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "title": "Color",
+            "description": "Hex color code for UI display.",
+            "default": "#6B7280"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id",
+            "description": "The group it goes in; a new group when null."
+          },
+          "excluded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded",
+            "description": "Kept out of reports; by default like its group."
+          },
+          "income": {
+            "type": "boolean",
+            "title": "Income",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "CategoryCreate"
+      },
       "CategoryListResponse": {
         "properties": {
           "items": {
@@ -12619,7 +12961,8 @@
             "type": "string",
             "maxLength": 255,
             "minLength": 2,
-            "title": "Pattern"
+            "title": "Pattern",
+            "description": "Text matched case-insensitively anywhere in the description."
           },
           "scope": {
             "$ref": "#/components/schemas/RuleScope",
@@ -12711,10 +13054,16 @@
             "title": "Mark Business",
             "description": "Also mark matching transactions as business expenses."
           },
+          "transaction_count": {
+            "type": "integer",
+            "title": "Transaction Count",
+            "description": "Transactions it has sorted that still have the category it gave.",
+            "default": 0
+          },
           "categorized": {
             "type": "integer",
             "title": "Categorized",
-            "description": "Transactions already imported that the rules sorted."
+            "description": "Transactions already imported that the rule sorted."
           }
         },
         "type": "object",
@@ -12727,6 +13076,7 @@
           "scope",
           "direction",
           "mark_business",
+          "transaction_count",
           "categorized"
         ],
         "title": "CategoryRuleCreated"
@@ -12746,6 +13096,163 @@
           "items"
         ],
         "title": "CategoryRuleListResponse"
+      },
+      "CategoryRuleMatch": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid4",
+            "title": "Id"
+          },
+          "transaction_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Transaction Date"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "amount": {
+            "type": "integer",
+            "title": "Amount",
+            "description": "Amount in minor units (cents)."
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "direction": {
+            "$ref": "#/components/schemas/TransactionDirection"
+          },
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id",
+            "description": "The category it has now."
+          },
+          "by_rule": {
+            "type": "boolean",
+            "title": "By Rule",
+            "description": "Its category came from a rule rather than the user."
+          },
+          "would_sort": {
+            "type": "boolean",
+            "title": "Would Sort",
+            "description": "The rule would give it its category: uncategorized, or sorted by the rule being edited, and no more specific rule wins."
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "transaction_date",
+          "description",
+          "name",
+          "amount",
+          "currency",
+          "direction",
+          "category_id",
+          "by_rule",
+          "would_sort"
+        ],
+        "title": "CategoryRuleMatch"
+      },
+      "CategoryRulePreview": {
+        "properties": {
+          "match_count": {
+            "type": "integer",
+            "title": "Match Count",
+            "description": "Existing transactions the rule matches, categorized or not."
+          },
+          "sortable_count": {
+            "type": "integer",
+            "title": "Sortable Count",
+            "description": "Uncategorized ones it would sort when applied to existing transactions."
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryRuleMatch"
+            },
+            "type": "array",
+            "title": "Items",
+            "description": "The newest matches, at most 50."
+          }
+        },
+        "type": "object",
+        "required": [
+          "match_count",
+          "sortable_count",
+          "items"
+        ],
+        "title": "CategoryRulePreview"
+      },
+      "CategoryRulePreviewRequest": {
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 2,
+            "title": "Pattern",
+            "description": "Text matched case-insensitively anywhere in the description."
+          },
+          "scope": {
+            "$ref": "#/components/schemas/RuleScope",
+            "default": "any"
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TransactionDirection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rule_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Id",
+            "description": "The rule being edited, previewed as these settings in its place."
+          }
+        },
+        "type": "object",
+        "required": [
+          "pattern"
+        ],
+        "title": "CategoryRulePreviewRequest"
       },
       "CategoryRuleSchema": {
         "properties": {
@@ -12803,6 +13310,12 @@
             "type": "boolean",
             "title": "Mark Business",
             "description": "Also mark matching transactions as business expenses."
+          },
+          "transaction_count": {
+            "type": "integer",
+            "title": "Transaction Count",
+            "description": "Transactions it has sorted that still have the category it gave.",
+            "default": 0
           }
         },
         "type": "object",
@@ -12814,9 +13327,80 @@
           "pattern",
           "scope",
           "direction",
-          "mark_business"
+          "mark_business",
+          "transaction_count"
         ],
         "title": "CategoryRuleSchema"
+      },
+      "CategoryRuleUpdate": {
+        "properties": {
+          "category_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Category Id"
+          },
+          "pattern": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 2,
+                "description": "Text matched case-insensitively anywhere in the description."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pattern"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RuleScope"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TransactionDirection"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null matches both directions."
+          },
+          "mark_business": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mark Business"
+          },
+          "apply_now": {
+            "type": "boolean",
+            "title": "Apply Now",
+            "description": "Also sort the uncategorized transactions already imported.",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "CategoryRuleUpdate"
       },
       "CategorySchema": {
         "properties": {
@@ -12882,6 +13466,18 @@
             ],
             "title": "Parent Id",
             "description": "Parent category ID, null for top-level."
+          },
+          "transaction_count": {
+            "type": "integer",
+            "title": "Transaction Count",
+            "description": "Transactions filed under it.",
+            "default": 0
+          },
+          "rule_count": {
+            "type": "integer",
+            "title": "Rule Count",
+            "description": "Rules that sort transactions into it.",
+            "default": 0
           }
         },
         "type": "object",
@@ -12894,7 +13490,9 @@
           "color",
           "excluded",
           "income",
-          "parent_id"
+          "parent_id",
+          "transaction_count",
+          "rule_count"
         ],
         "title": "CategorySchema"
       },
@@ -12930,6 +13528,73 @@
           "total"
         ],
         "title": "CategorySpending"
+      },
+      "CategoryUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "color": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "Hex color code for UI display."
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Color"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid4"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id",
+            "description": "Moves a category to another group. Groups stay groups."
+          },
+          "excluded": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excluded"
+          },
+          "income": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Income"
+          }
+        },
+        "type": "object",
+        "title": "CategoryUpdate"
       },
       "ClientDiagnosticsUpload": {
         "properties": {

@@ -11,6 +11,7 @@ import type {
   CorrectMemoryFactResponse,
   CreateBankAccountResponse,
   CreateCalendarEventResponse,
+  CreateCategoryResponse,
   CreateCategoryRuleResponse,
   CreateContactResponse,
   CreateCounterResponse,
@@ -83,6 +84,7 @@ import type {
   LogContactInteractionResponse,
   LogRecipeCookedResponse,
   MarkNotificationReadResponse,
+  PreviewCategoryRuleResponse,
   PutGymTopSetResponse,
   RemoveRecipeCookedResponse,
   RenameTransactionResponse,
@@ -93,6 +95,8 @@ import type {
   UndoCompleteTaskResponse,
   UpdateBankAccountResponse,
   UpdateCalendarEventResponse,
+  UpdateCategoryResponse,
+  UpdateCategoryRuleResponse,
   UpdateContactPhotoResponse,
   UpdateContactResponse,
   UpdateContactTagsResponse,
@@ -750,6 +754,13 @@ export const listCategoriesResponseTransformer = async (
   return data;
 };
 
+export const createCategoryResponseTransformer = async (
+  data: any,
+): Promise<CreateCategoryResponse> => {
+  data = categorySchemaSchemaResponseTransformer(data);
+  return data;
+};
+
 const categoryRuleSchemaSchemaResponseTransformer = (data: any) => {
   data.created_at = new Date(data.created_at);
   if (data.modified_at) {
@@ -784,6 +795,39 @@ export const createCategoryRuleResponseTransformer = async (
   data: any,
 ): Promise<CreateCategoryRuleResponse> => {
   data = categoryRuleCreatedSchemaResponseTransformer(data);
+  return data;
+};
+
+const categoryRuleMatchSchemaResponseTransformer = (data: any) => {
+  data.transaction_date = new Date(data.transaction_date);
+  return data;
+};
+
+const categoryRulePreviewSchemaResponseTransformer = (data: any) => {
+  data.items = data.items.map((item: any) =>
+    categoryRuleMatchSchemaResponseTransformer(item),
+  );
+  return data;
+};
+
+export const previewCategoryRuleResponseTransformer = async (
+  data: any,
+): Promise<PreviewCategoryRuleResponse> => {
+  data = categoryRulePreviewSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateCategoryRuleResponseTransformer = async (
+  data: any,
+): Promise<UpdateCategoryRuleResponse> => {
+  data = categoryRuleCreatedSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updateCategoryResponseTransformer = async (
+  data: any,
+): Promise<UpdateCategoryResponse> => {
+  data = categorySchemaSchemaResponseTransformer(data);
   return data;
 };
 
