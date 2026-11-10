@@ -108,6 +108,10 @@ app.setPath("userData", USER_DATA_DIR);
 // before app "ready", since Chromium reads --password-store when os_crypt inits.
 if (process.platform === "linux") {
   app.commandLine.appendSwitch("password-store", "gnome-libsecret");
+  // On NVIDIA cards with a 256 MB BAR1 (no Resizable BAR), renderers mmapping
+  // video frames into GPU memory exhaust BAR1 and lock up the GPU (NVIDIA
+  // open-gpu-kernel-modules #1187/#1396). Keep video frames in shared memory.
+  app.commandLine.appendSwitch("disable-gpu-memory-buffer-video-frames");
 }
 
 // The pin above stops *future* renames from silently switching profiles, but
